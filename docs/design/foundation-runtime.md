@@ -1,6 +1,6 @@
 # Foundation runtime and developer workflow
 
-Status: M0–M3 approved, 2026-10-31. M0 scaffold implemented with verification gaps recorded in the
+Status: M0–M3 approved, 2026-10-31. M0 complete with verification evidence recorded in the
 [checkpoint](../reviews/2026-10-31-m0-checkpoint.md); later host behavior remains planned.
 [Current sibling/environment evidence](../integration-sources.md) supersedes
 the earlier audit snapshots. This scopes [ENGINEERING.md](../../ENGINEERING.md) into independently
@@ -25,7 +25,7 @@ framework, ORM, database service, global frontend state library, or plugin SDK i
 | React / React DOM | 19.3.1, matched versions | [Registry release](https://registry.npmjs.org/react/latest); installed compatibility still to verify |
 | Vite | 8.3.3 | [Official release](https://github.com/vitejs/vite/releases/tag/v8.3.3) |
 | TypeScript | 6.0.3 | [Official release](https://github.com/microsoft/TypeScript/releases/tag/v6.0.3); use established compiler API line for Storybook tooling |
-| Storybook / React-Vite | 10.6.0, matched versions | [Release](https://github.com/storybookjs/storybook/releases/tag/v10.6.0), [framework integration](https://storybook.js.org/docs/get-started/frameworks/react-vite) |
+| Storybook / React-Vite | 10.6.5, matched versions | [Release](https://github.com/storybookjs/storybook/releases/tag/v10.6.5), [framework integration](https://storybook.js.org/docs/get-started/frameworks/react-vite) |
 | Playwright Test | 1.64.1 | [Registry release](https://registry.npmjs.org/@playwright/test/latest); browser and API integration tests |
 
 These are selected starting versions, not a claim all form a tested dependency graph. Resolve

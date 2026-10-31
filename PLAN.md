@@ -2,7 +2,7 @@
 
 Status: M0–M3 approved by the owner on 2026-10-31; implementation started.
 Current implementation evidence: [M0 checkpoint](docs/reviews/2026-10-31-m0-checkpoint.md).
-M0 code is present; Git, browser and advisory checks remain blocked by the execution environment.
+M0 is complete: Git checkpoints, browser tests and advisory checks passed after permissions were enabled.
 The [current review disposition](docs/reviews/2026-10-31-plan-review-disposition.md) records
 changes and validation limits; it is not implementation verification.
 The owner agreed to proceed with foundation planning independently of later tool interfaces.

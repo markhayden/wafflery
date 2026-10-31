@@ -40,8 +40,7 @@ and compares two clean builds. Keep prebuilt assets and their manifest in versio
 For browser checks, first install the matching Chromium/WebKit builds with
 `cd ui && bunx playwright install chromium webkit`, then from the project root run
 `bun run --cwd ui test:browser`. Tests own ports 4173 and 6006 and do not reuse existing servers.
-See the [M0 checkpoint](docs/reviews/2026-10-31-m0-checkpoint.md) for passed checks and environment
-blocks. M0 is not yet signed off; no M1–M3 completion is claimed.
+See the [M0 checkpoint](docs/reviews/2026-10-31-m0-checkpoint.md) for verification evidence. M0 is complete; no M1–M3 completion is claimed.
 
 ## Review the interface
 
