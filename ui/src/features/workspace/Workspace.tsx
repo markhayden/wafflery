@@ -1,3 +1,5 @@
+import {exampleClient,type Example} from "../../api/examples";
+import {Examples} from "./Examples";
 import {watchWorkspace} from "../../api/events";
 import {useEffect,useMemo,useRef,useState} from "react";
 import type {LocalApi} from "../../api/client";
@@ -16,6 +18,8 @@ export function Workspace({api,initial}:{api:LocalApi;initial:Snapshot}) {
  const [snapshot,setSnapshot]=useState(initial);
  const [connection,setConnection]=useState("");
  const client=useMemo(()=>workspaceClient(api),[api]),assets=useMemo(()=>assetClient(api),[api]);
+ const examples=useMemo(()=>exampleClient(api),[api]);
+ const [draftExample,setDraftExample]=useState<Example>();
  const preferred=new URLSearchParams(window.location.search).get("tool");
  const [toolId,setToolId]=useState(snapshot.tools.find(t=>t.id===preferred)?.id??snapshot.tools[0]?.id??"");
  const tool=snapshot.tools.find(tool=>tool.id===toolId);const declaration=tool?.declaration;
@@ -25,8 +29,8 @@ export function Workspace({api,initial}:{api:LocalApi;initial:Snapshot}) {
  const [projections,setProjections]=useState<Record<string,"flat"|"equirectangular">>({});
  const [images,setImages]=useState<Record<string,Asset[]>>({});const [savedImages,setSavedImages]=useState<Asset[]>([]);
  const [selected,setSelected]=useState<Attempt|undefined>();
- const recent=snapshot.attempts;const [selectedId,setSelectedId]=useState<string>();const [busy,setBusy]=useState(false),[error,setError]=useState<string>();
- const [drawer,setDrawer]=useState<{opener:HTMLElement;view:"inspect"|"history"}|null>(null);const submitted=useRef<{body:string;request:Submission}|null>(null);
+ const recent=snapshot.attempts;const [selectedId,setSelectedId]=useState<string|null>();const [busy,setBusy]=useState(false),[error,setError]=useState<string>();
+ const [drawer,setDrawer]=useState<{opener:HTMLElement;view:"inspect"|"history"|"examples"}|null>(null);const submitted=useRef<{body:string;request:Submission}|null>(null);
  useEffect(()=>{void assets.list().then(setSavedImages).catch(()=>{});},[assets]);
  useEffect(()=>{
   const controller=new AbortController();
@@ -38,7 +42,7 @@ export function Workspace({api,initial}:{api:LocalApi;initial:Snapshot}) {
  },[api,client,initial.event_session]);
  useEffect(()=>{
   let active=true;
-  const id=selectedId??snapshot.attempts.find(a=>a.tool===toolId&&a.action===actionId)?.id;
+  const id=selectedId===null?undefined:selectedId??snapshot.attempts.find(a=>a.tool===toolId&&a.action===actionId)?.id;
   if(!id){setSelected(undefined);return;}
   void client.attempt(id).then(attempt=>{if(active)setSelected(attempt);}).catch(failure=>{if(active){setSelected(undefined);setError(failure instanceof Error?failure.message:"Unable to load run.");}});
   return()=>{active=false;};
@@ -50,8 +54,16 @@ export function Workspace({api,initial}:{api:LocalApi;initial:Snapshot}) {
    setSelectedId(id);setSelected(attempt);setDrawer(null);
   }).catch(failure=>setError(String(failure)));
  }
- function chooseTool(id:string){setToolId(id);const action=snapshot.tools.find(t=>t.id===id)?.declaration?.document.actions[0];setActionId(action?.name??"");setParams(initialParameters(action?.params_schema??{}));setImages({});setProjections({});setSelectedId(undefined);setSelected(undefined);setError(undefined);submitted.current=null;}
- function chooseAction(id:string){setActionId(id);setParams(initialParameters(declaration?.document.actions.find(a=>a.name===id)?.params_schema??{}));setImages({});setProjections({});setSelectedId(undefined);setSelected(undefined);setError(undefined);submitted.current=null;}
+ function openExample(example:Example){
+  const current=snapshot.tools.find(tool=>tool.id===example.request.tool)?.declaration;
+  if(!current?.document.actions.some(action=>action.name===example.request.action))throw new Error("This example needs a tool action that is not currently available.");
+  setToolId(example.request.tool);setActionId(example.request.action);setParams(structuredClone(example.request.params));
+  setImages(Object.fromEntries(Object.entries(example.inputs).map(([slot,values])=>[slot,values.map(value=>value.asset)])));
+  setProjections(Object.fromEntries(Object.entries(example.request.frames??{}).map(([slot,values])=>[slot,values[0]?.projection??"flat"])));
+  setSelectedId(null);setSelected(undefined);setDraftExample(example);setError(undefined);submitted.current=null;setDrawer(null);
+ }
+ function chooseTool(id:string){setDraftExample(undefined);setToolId(id);const action=snapshot.tools.find(t=>t.id===id)?.declaration?.document.actions[0];setActionId(action?.name??"");setParams(initialParameters(action?.params_schema??{}));setImages({});setProjections({});setSelectedId(undefined);setSelected(undefined);setError(undefined);submitted.current=null;}
+ function chooseAction(id:string){setDraftExample(undefined);setActionId(id);setParams(initialParameters(declaration?.document.actions.find(a=>a.name===id)?.params_schema??{}));setImages({});setProjections({});setSelectedId(undefined);setSelected(undefined);setError(undefined);submitted.current=null;}
  async function run(){
   if(!action||!declaration||busy)return;setError(undefined);setBusy(true);
   try{
@@ -64,13 +76,13 @@ export function Workspace({api,initial}:{api:LocalApi;initial:Snapshot}) {
  }
  const working=selected&&(["submitted","running","unconfirmed","cancelling"].includes(selected.execution)||selected.preservation.contract==="pending");
  return <div className={styles.workspace}>
-  <div><Button onClick={event=>setDrawer({opener:event.currentTarget,view:"history"})}>History</Button></div>
+  <div><Button onClick={event=>setDrawer({opener:event.currentTarget,view:"history"})}>History</Button> <Button onClick={event=>setDrawer({opener:event.currentTarget,view:"examples"})}>Examples</Button></div>
   <div className={styles.pickers}><Picker label="Tool" value={toolId} onChange={chooseTool} choices={snapshot.tools.map(t=>({id:t.id,title:t.declaration?.document.tool.name??t.id,description:t.error??`Version ${t.declaration?.document.tool.version??"unknown"}`}))}/><Picker label="Action" value={actionId} onChange={chooseAction} disabled={!declaration} choices={(declaration?.document.actions??[]).map(a=>({id:a.name,title:a.title,description:(a.images??[]).length?"Image → Result":"Parameters → Result"}))}/></div>
   {declaration&&<p className={styles.note}>{declaration.document.tool.purpose}</p>}
   {connection&&<p role="status">{connection}</p>}
   {tool?.error&&<p role="alert">{tool.error}</p>}
   <div className={styles.columns}>
-   <form className={styles.panel} onSubmit={event=>{event.preventDefault();void run();}}><h2>Input</h2>
+   <form className={styles.panel} onSubmit={event=>{event.preventDefault();void run();}}><h2>Input</h2>{draftExample&&<p className={styles.note}>From example: {draftExample.name}{draftExample.notes?` · ${draftExample.notes}`:""}</p>}
     {action?<ActionForm key={`${toolId}/${actionId}`} action={action} params={params} onChange={setParams} projections={projections} onProjection={(slot,value)=>setProjections(values=>({...values,[slot]:value}))} images={images} onImages={(slot,value)=>setImages(values=>({...values,[slot]:value}))} upload={async file=>{const asset=await assets.upload(file);setSavedImages(await assets.list());return asset;}} preview={assets.preview}/>:<p>No supported action is available.</p>}
     {action?.images?.length&&savedImages.length>0?<details><summary>Saved images ({savedImages.length})</summary><div className={styles.saved}>{action.images.map(slot=><div key={slot.slot}><p>Use for {slot.slot}</p>{savedImages.slice(0,12).map((asset,index)=><Button key={asset.id} onClick={()=>setImages(values=>({...values,[slot.slot]:[asset]}))}>Image {index+1} · {asset.width} × {asset.height}</Button>)}</div>)}</div></details>:null}
     {error&&<p role="alert">{error}</p>}<div className={styles.run}><p>{action?.cost.may_spend?"Paid actions are unavailable in this foundation.":"Free action · Inputs are saved locally"}</p><Button type="submit" busy={busy} disabled={!action||action.cost.may_spend||!!working||!!tool?.busy||(action.images??[]).some(slot=>slot.required&&!images[slot.slot]?.length)||(action.locations??[]).some(slot=>slot.required)}>Run</Button></div>
@@ -81,6 +93,6 @@ export function Workspace({api,initial}:{api:LocalApi;initial:Snapshot}) {
    </section>
   </div>
   {recent.length>0&&<section className={styles.recent} aria-label="Recent attempts"><h2>Recent attempts</h2>{recent.slice(0,6).map(attempt=><Button key={attempt.id} onClick={()=>openAttempt(attempt.id)}>{attempt.action} · {attempt.execution} · {attempt.id.slice(0,8)}</Button>)}</section>}
-  <Drawer open={drawer!==null} opener={drawer?.opener??null} onClose={()=>setDrawer(null)} title={drawer?.view==="history"?"History":"Run details"} description={drawer?.view==="history"?"Saved local attempts. Opening a run never executes it.":selected?`${selected.request.tool} / ${selected.request.action} · ${selected.id}`:""}>{drawer?.view==="history"?<History client={client} onOpen={openAttempt}/>:selected&&<Inspector key={selected.id} attempt={selected}/>}</Drawer>
+  <Drawer open={drawer!==null} opener={drawer?.opener??null} onClose={()=>setDrawer(null)} title={drawer?.view==="history"?"History":drawer?.view==="examples"?"Examples":"Run details"} description={drawer?.view==="history"?"Saved local attempts. Opening a run never executes it.":drawer?.view==="examples"?"Reusable inputs, saved locally.":selected?`${selected.request.tool} / ${selected.request.action} · ${selected.id}`:""}>{drawer?.view==="history"?<History client={client} onOpen={openAttempt}/>:drawer?.view==="examples"?<Examples client={examples} selectedId={selected?.id} onOpen={openExample}/>:selected&&<Inspector key={selected.id} attempt={selected}/>}</Drawer>
  </div>;
 }

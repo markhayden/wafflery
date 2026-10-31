@@ -1,0 +1,23 @@
+import {test,expect} from "./tool-host";
+import {readFile} from "node:fs/promises";
+import {resolve} from "node:path";
+test("an example owns saved inputs and opens a draft without execution",async({page,host})=>{
+  await host.open(page);
+  await page.locator("input[type=file]").setInputFiles("tests/fixtures/sample.png");
+  await page.getByLabel("Label *",{exact:true}).fill("Saved example input");
+  await page.getByRole("button",{name:"Run",exact:true}).click();
+  await expect(page.getByText("Contract evidence: complete.",{exact:false}).first()).toBeVisible();
+  await page.getByLabel("Label *",{exact:true}).fill("Unsubmitted edits");
+  await page.getByRole("button",{name:"Examples",exact:true}).click();
+  const drawer=page.getByRole("dialog",{name:"Examples",exact:true});
+  await drawer.getByLabel("Example name",{exact:true}).fill("My first example");
+  await drawer.getByLabel("Notes",{exact:true}).fill("Try this again later");
+  await drawer.getByRole("button",{name:"Save example",exact:true}).click();
+  await drawer.getByRole("button",{name:"Open My first example"}).click();
+  await expect(page.getByLabel("Label *",{exact:true})).toHaveValue("Saved example input");
+  await expect(page.getByRole("status").filter({hasText:"Ready"})).toBeVisible();
+  expect((await readFile(resolve(host.root,"../tool/calls.ndjson"),"utf8")).trim().split("\n")).toHaveLength(1);
+  await page.getByRole("button",{name:"Run",exact:true}).click();
+  await expect(page.getByText("Contract evidence: complete.",{exact:false}).first()).toBeVisible();
+  expect((await readFile(resolve(host.root,"../tool/calls.ndjson"),"utf8")).trim().split("\n")).toHaveLength(2);
+});
