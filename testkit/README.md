@@ -19,3 +19,15 @@ never retrieves arbitrary network references.
 
 The host's production version/dispatch guard is implemented with its client in F10/F11; these
 fixture tests do not substitute for that execution boundary.
+
+## Run the wire checks
+
+`cargo test --locked --test fake_wire` builds the `sample-lab` example, then starts it in
+temporary directories using an independently written line-delimited client. The probe checks
+2025-11-25 initialization, roots, tool pagination, both path and inline image calls, expected
+fingerprint refusal, output digests, multiple run resources, cancellation and EOF shutdown.
+
+The example takes `<workspace> [scenario]`. `normal` and `slow` execute the offline image
+operation. `paid`, `unsupported-contract`, `wrong-protocol` and `malformed` are negative test
+scenarios, not full conformance claims; none makes a paid or remote call. Only the host's owned
+test descriptor will opt into this executable. No real tool is discovered or installed by it.
