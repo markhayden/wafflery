@@ -7,20 +7,24 @@
     "ui/bun.lock": "ed6f289670cecf1f4f5acba761e2a3234e40fd0a7b053ecfbee49ac9500a19b9",
     "ui/index.html": "19516a49667e60032840181509e35593e257282f7393c8443e44c27bc955dbcb",
     "ui/package.json": "155700f2c60e2fec0c4ff8878bf68e7c07df406a2c39e86e3d9c26422845ee07",
-    "ui/src/App.tsx": "7079f3918634ab235c9e29b822a8211e5e6c5010d78d4b46767252537de34d9b",
-    "ui/src/api/client.ts": "0a38a64148524e1c3ffbd998fb971783f20ae274c0446455df1b8fa251431780",
+    "ui/src/App.tsx": "97ecb4881af398bb06f7cd2b5335ce2878182c89e8d420eb8f0b9a8f5b3d60f8",
+    "ui/src/api/assets.ts": "919f5f3b6591aab1a61b3fb93033dc0a403f83fb4bcc9c40eb073fe9b8ba049a",
+    "ui/src/api/client.ts": "b5269abe65dc4f0ae6b7f7191b91521814a6458d823d8d263ac95d22c5e4629a",
     "ui/src/api/session.ts": "0e16aa283022013405a8ebcc64c0aa824ef6f97a2932fe87fadba142ded2b326",
     "ui/src/components/Button.module.css": "1ce502acb9d2561471ba7dffe4536d78bd51553a169a36a8fa230502499a9d1a",
     "ui/src/components/Button.stories.tsx": "489b0b293bbeb9f5813829a79bc9e78c5ddffa0116d71b0582985750716136fa",
     "ui/src/components/Button.tsx": "bc7584fc14721cdbeac44997718fbc76da4430695e440f95c22fdd31b4524e6a",
+    "ui/src/components/ImageInput.module.css": "375bd375e56d075d186eed761e1aef80333495d4974e6ef7293d884185ffa323",
+    "ui/src/components/ImageInput.stories.tsx": "25c1107ff6951736cbaa8dccd42c40114c2d3332c71ed415ec4b6f87a08736ba",
+    "ui/src/components/ImageInput.tsx": "03c44ce4f9cb4dfcd8fe364e0d459fd19c719ba470340b771dff53a3ed075703",
     "ui/src/main.tsx": "3458a38ae3d7a0543bf876cf4bc0de43096a4ffb986f143e6fab86b5016833d8",
-    "ui/src/tokens.css": "3b4d0de4533eb0798cdae8cf25081ca9eeaf5a0e5568f3f550063c24c9618e30",
+    "ui/src/tokens.css": "5424ab721405e1fde39937f95329f73eb51031ebe84cba552ee3203ae5450125",
     "ui/tsconfig.json": "cb18bc2ac7dda71c2c6b1688c5af0722292143bafb109a84a1d8464e28733ffe",
     "ui/vite.config.ts": "3aec7d6174ffca99d4d5288bea2f837d5e91335cbd7135a9682e6d18a40476b4"
   },
   "outputs": {
-    "assets/index-CkH5tTbo.js": "e64d7e3254e48fafc5baedc2dd04352581f6ba4f6012f8b1e46202d3385a413a",
-    "assets/index-DqhqDzrn.css": "66b67322b3c485642f65d409e9c0b26110caf97a6d17f45a5c8f0fa3052ba406",
-    "index.html": "44e1e8fdbe9a062fdadbeaf7cd690dfa1d6572350b3eb1ce206c978a7aac0aed"
+    "assets/index-Ca2-nVll.css": "fa52c0bea943adb4fe0b6659d3b6484bb2d2650b7e368bc8114a1b40532bb2ad",
+    "assets/index-DSEcSu6R.js": "c354d1898a1d8f9a50e9bb3e9b508dcf3bf6e19880b614ccbd447f4aaafeb648",
+    "index.html": "bc655bf9db205438efa8ec5b8863aa0fbf641a5adffec72c286af4c425c96e57"
   }
 }

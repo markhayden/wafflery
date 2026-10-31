@@ -28,9 +28,7 @@ async function control(operation: string): Promise<{ bootstrap: string }> {
   });
 }
 
-test.beforeAll(async () => {
-  temporary = await mkdtemp(join(tmpdir(), "wafflehouse-browser-"));
-  root = join(temporary, "data");
+async function startHost() {
   child = spawn(resolve("../target/debug/wafflehouse"), ["--foreground", "--no-open", "--data-dir", root], { stdio: ["ignore", "pipe", "pipe"] });
   origin = await new Promise<string>((resolveOrigin, reject) => {
     child.once("error", reject);
@@ -38,15 +36,54 @@ test.beforeAll(async () => {
     child.stdout?.once("data", chunk => resolveOrigin(String(chunk).trim()));
   });
   await expect.poll(async () => { try { await control("status"); return true; } catch { return false; } }).toBe(true);
-});
+}
 
-test.afterAll(async () => {
+async function stopHost() {
   if (child && child.exitCode === null) {
     const exited = new Promise<void>(resolveExit => child.once("exit", () => resolveExit()));
     child.kill("SIGTERM");
     await exited;
   }
+}
+
+test.beforeAll(async () => {
+  temporary = await mkdtemp(join(tmpdir(), "wafflehouse-browser-"));
+  root = join(temporary, "data");
+  await startHost();
+});
+
+test.afterAll(async () => {
+  await stopHost();
   if (temporary) await rm(temporary, { recursive: true, force: true });
+});
+
+test("imported images deduplicate, release previews and remain available after host restart", async ({ page }, testInfo) => {
+  await page.addInitScript(() => {
+    const target = window as unknown as Window & { revoked: string[] };
+    target.revoked = [];
+    const revoke = URL.revokeObjectURL.bind(URL);
+    URL.revokeObjectURL = url => { target.revoked.push(url); revoke(url); };
+  });
+  const first = await control("bootstrap");
+  await page.setViewportSize({ width: 320, height: 900 });
+  await page.goto(`${origin}/#bootstrap=${first.bootstrap}`);
+  await page.locator("input[type=file]").setInputFiles("tests/fixtures/sample.png");
+  await expect(page.getByRole("img", { name: "Selected image 1" })).toBeVisible();
+  await expect(page.getByText("Saved images (1)", { exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "Remove image 1" }).click();
+  await expect.poll(() => page.evaluate(() => (window as unknown as Window & { revoked: string[] }).revoked.length)).toBeGreaterThan(0);
+  await page.locator("input[type=file]").setInputFiles("tests/fixtures/sample.png");
+  await expect(page.getByRole("img", { name: "Selected image 1" })).toBeVisible();
+  await expect(page.getByText("Saved images (1)", { exact: true })).toBeVisible();
+  await stopHost();
+  await startHost();
+  const reopened = await control("bootstrap");
+  await page.goto(`${origin}/#bootstrap=${reopened.bootstrap}`);
+  await page.getByText("Saved images (1)", { exact: true }).click();
+  await page.getByRole("button", { name: /Use saved image 1/ }).click();
+  await expect(page.getByRole("img", { name: "Selected image 1" })).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(320);
+  await page.screenshot({ path: testInfo.outputPath("retained-image.png"), fullPage: true });
 });
 
 test("bootstrap is removed, credentials stay local and reload reuses the tab session", async ({ page }) => {

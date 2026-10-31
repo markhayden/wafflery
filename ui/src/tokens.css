@@ -54,6 +54,8 @@ a { color: inherit; }
 }
 .workspace-empty h2 { font-size: 1rem; font-weight: 500; }
 .workspace-empty p { color: var(--color-muted); max-width: 42rem; }
+.saved-images { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-3); }
+summary { cursor: pointer; }
 @media (max-width: 40rem) {
   .workspace-header, .workspace-main { padding: var(--space-6) var(--space-4); }
   .workspace-empty { padding: var(--space-6); }
