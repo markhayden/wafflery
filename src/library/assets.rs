@@ -26,6 +26,7 @@ pub struct Asset {
 #[derive(Clone)]
 pub struct AssetStore {
     pub database: Database,
+    pub storage: Arc<tokio::sync::RwLock<()>>,
     root: PathBuf,
     decoder: Arc<tokio::sync::Semaphore>,
 }
@@ -57,6 +58,7 @@ impl AssetStore {
         let database = Database::open(&root.join("library.sqlite3"))?;
         Ok(Self {
             database,
+            storage: Arc::new(tokio::sync::RwLock::new(())),
             root,
             decoder: Arc::new(tokio::sync::Semaphore::new(1)),
         })
@@ -67,6 +69,7 @@ impl AssetStore {
     }
 
     pub async fn import_path(&self, path: PathBuf) -> Result<Asset> {
+        let _storage = self.storage.read().await;
         let permit = self
             .decoder
             .clone()

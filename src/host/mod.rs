@@ -5,6 +5,7 @@ pub mod auth;
 pub mod control;
 mod event_api;
 mod example_api;
+mod export_api;
 pub mod launch;
 mod run_api;
 
