@@ -900,7 +900,9 @@ name = "wafflehouse"
 version = "0.1.0"
 dependencies = [
  "axum",
+ "crc32fast",
  "getrandom",
+ "http-body-util",
  "image",
  "nix",
  "rusqlite",

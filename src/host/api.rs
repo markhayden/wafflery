@@ -17,7 +17,12 @@ struct HostState {
     quit: tokio::sync::watch::Sender<bool>,
 }
 
-pub fn router(origin: &str, auth: Auth, quit: tokio::sync::watch::Sender<bool>) -> Router {
+pub fn router(
+    origin: &str,
+    auth: Auth,
+    quit: tokio::sync::watch::Sender<bool>,
+    store: crate::library::assets::AssetStore,
+) -> Router {
     let state = HostState {
         origin: origin.to_owned(),
         auth,
@@ -31,9 +36,18 @@ pub fn router(origin: &str, auth: Auth, quit: tokio::sync::watch::Sender<bool>) 
         )
         .route("/api/host/quit", post(quit_host))
         .fallback(get(static_asset))
-        .layer(DefaultBodyLimit::max(4096))
+        .with_state(state.clone())
+        .merge(super::asset_api::router(store))
+        .layer(DefaultBodyLimit::max(4 * 1024 * 1024))
         .layer(middleware::from_fn_with_state(state.clone(), boundary))
-        .with_state(state)
+}
+
+pub(super) fn failure(status: StatusCode, code: &str, message: &str) -> Response {
+    (
+        status,
+        Json(serde_json::json!({"error": {"code": code, "message": message}})),
+    )
+        .into_response()
 }
 
 fn one_header<'a>(headers: &'a HeaderMap, name: &str) -> Option<&'a str> {
@@ -54,14 +68,22 @@ async fn boundary(State(state): State<HostState>, request: Request, next: Next) 
         || (!matches!(*request.method(), Method::GET | Method::HEAD)
             && one_header(headers, "origin") != Some(state.origin.as_str()))
     {
-        StatusCode::FORBIDDEN.into_response()
+        failure(
+            StatusCode::FORBIDDEN,
+            "forbidden_origin",
+            "Open this workspace through the Wafflehouse launcher.",
+        )
     } else if request.uri().path().starts_with("/api/")
         && request.uri().path() != "/api/session"
         && !one_header(headers, "authorization")
             .and_then(|value| value.strip_prefix("Bearer "))
             .is_some_and(|token| state.auth.accepts(token))
     {
-        StatusCode::UNAUTHORIZED.into_response()
+        failure(
+            StatusCode::UNAUTHORIZED,
+            "session_required",
+            "Run wafflehouse to open a new workspace session.",
+        )
     } else {
         next.run(request).await
     };

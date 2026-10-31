@@ -18,7 +18,10 @@ fn request(path: &str, method: &str) -> axum::http::request::Builder {
 async fn browser_boundary_requires_exact_origin_host_and_bearer() {
     let auth = Auth::new().unwrap();
     let (quit, _) = tokio::sync::watch::channel(false);
-    let app = api::router(ORIGIN, auth.clone(), quit);
+    let temp = tempfile::tempdir().unwrap();
+    let store =
+        wafflehouse::library::assets::AssetStore::open(&temp.path().join("Library")).unwrap();
+    let app = api::router(ORIGIN, auth.clone(), quit, store.clone());
     let token = auth.issue().unwrap();
     let body = serde_json::json!({"bootstrap": token}).to_string();
     let exchange = || {
