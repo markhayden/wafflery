@@ -17,3 +17,5 @@ Usage: wafflehouse [--tool <id>] [--no-open] [--data-dir <path>]
       --foreground  Keep the host in this terminal (Ctrl-C to quit)
 
 The default launcher starts or attaches to a detached local host.";
+
+pub mod tools;

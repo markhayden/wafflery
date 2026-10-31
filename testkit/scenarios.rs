@@ -24,6 +24,15 @@ pub fn description(scenario: &str) -> Value {
         document["actions"][0]["cost"]["may_spend"] = json!(true);
         document["actions"][0]["cost"]["basis"] = json!("estimated");
     }
+    if scenario == "bad-schema" {
+        document["actions"][0]["params_schema"]["type"] = json!("bogus");
+    }
+    if scenario == "missing-cost" {
+        document["actions"][0]
+            .as_object_mut()
+            .unwrap()
+            .remove("cost");
+    }
     document
 }
 
