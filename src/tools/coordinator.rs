@@ -1,3 +1,4 @@
+mod shutdown;
 use super::{
     Error, Result,
     client::{Declaration, ToolClient, structured_result},
@@ -10,6 +11,7 @@ use crate::library::{
     attempts::{Attempt, AttemptStore, Submission},
 };
 use serde_json::{Value, json};
+pub use shutdown::ShutdownStatus;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::{collections::BTreeMap, os::unix::fs::DirBuilderExt, sync::Arc};
 use tokio::sync::{Mutex, OwnedSemaphorePermit, Semaphore};
@@ -44,6 +46,7 @@ pub struct Coordinator {
     active: Mutex<BTreeMap<String, Active>>,
     workers: Mutex<Vec<tokio::task::JoinHandle<()>>>,
     stopping: AtomicBool,
+    shutdown_phase: std::sync::atomic::AtomicU8,
 }
 impl Coordinator {
     pub async fn open(assets: AssetStore, descriptors: Vec<Descriptor>) -> Result<Self> {
@@ -102,6 +105,7 @@ impl Coordinator {
             active: Mutex::new(BTreeMap::new()),
             workers: Mutex::new(vec![]),
             stopping: AtomicBool::new(false),
+            shutdown_phase: std::sync::atomic::AtomicU8::new(0),
         })
     }
     pub async fn description(&self, id: &str) -> Result<Declaration> {
@@ -354,6 +358,7 @@ impl Coordinator {
                 .await;
                 match saved {
                     Ok(()) => {
+                        self.discard_materialized(&request.id).await;
                         self.active.lock().await.remove(&request.id);
                     }
                     Err(error) => {
@@ -413,6 +418,7 @@ impl Coordinator {
                     })
                     .await;
             }
+            self.discard_materialized(&request.id).await;
             self.active.lock().await.remove(&request.id);
         }
         self.events.changed();
@@ -488,6 +494,7 @@ impl Coordinator {
                 .await
                 .is_ok()
             {
+                self.discard_materialized(&id).await;
                 self.active.lock().await.remove(&id);
                 self.events.changed();
             }
@@ -521,8 +528,12 @@ impl Coordinator {
         Ok(result)
     }
     pub async fn close(&self) -> bool {
-        let mut stopped = true;
-        for entry in self.tools.values() {
+        let preserving = self.preserving_tools().await;
+        let mut stopped = preserving.is_empty();
+        for (id, entry) in &self.tools {
+            if preserving.contains(id) {
+                continue;
+            }
             if let Some(client) = &entry.client {
                 stopped &= client.close().await.unwrap_or(false);
             }
@@ -546,9 +557,37 @@ impl Coordinator {
                         Ok(())
                     })
                     .await;
+                self.discard_materialized(&id).await;
             }
             self.active.lock().await.clear();
         }
         stopped
+    }
+    async fn preserving_tools(&self) -> std::collections::BTreeSet<String> {
+        let ids = self.active.lock().await.keys().cloned().collect::<Vec<_>>();
+        let mut preserving = std::collections::BTreeSet::new();
+        for id in ids {
+            if let Ok(attempt) = self.attempts.get(&id).await
+                && attempt.result.is_some()
+                && attempt.preservation["contract"] == "pending"
+            {
+                preserving.insert(attempt.request.tool);
+            }
+        }
+        preserving
+    }
+    async fn discard_materialized(&self, id: &str) {
+        if let Ok(attempt) = self.attempts.get(id).await
+            && let Err(error) = super::materialized::discard(self.assets.root(), &attempt)
+        {
+            let notice = format!("Disposable input cleanup was incomplete: {error}");
+            let _ = self
+                .attempts
+                .update(id, move |attempt| {
+                    attempt.notices.push(notice);
+                    Ok(())
+                })
+                .await;
+        }
     }
 }

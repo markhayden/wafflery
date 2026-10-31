@@ -33,21 +33,30 @@ pub async fn serve(root: &std::path::Path) -> std::io::Result<()> {
         Some(coordinator.clone()),
     );
     let event_shutdown = coordinator.events.clone();
-    let server = axum::serve(listener, app).with_graceful_shutdown(async move {
+    let signal_coordinator = coordinator.clone();
+    let signal_quit = shutdown.clone();
+    let signals = tokio::spawn(async move {
         let mut terminate =
             tokio::signal::unix::signal(tokio::signal::unix::SignalKind::terminate())
                 .expect("signal handler");
-        tokio::select! { _ = tokio::signal::ctrl_c() => (), _ = terminate.recv() => (), _ = stopping.changed() => () }
+        tokio::select! { _ = tokio::signal::ctrl_c() => (), _ = terminate.recv() => () }
+        let _ = signal_coordinator.begin_shutdown(true, signal_quit).await;
+    });
+    let server = axum::serve(listener, app).with_graceful_shutdown(async move {
+        if !*stopping.borrow() {
+            let _ = stopping.changed().await;
+        }
         event_shutdown.close();
     });
     let result = tokio::select! {
         result = server => result,
         result = control::listen(&owner, &origin, shutdown, auth, coordinator.clone()) => result,
     };
-    if !coordinator.close().await {
-        return Err(std::io::Error::other(
-            "A tool did not stop after EOF; no force kill was performed",
-        ));
+    signals.abort();
+    // Keep ownership on an unexpected server failure; never orphan a still-running tool.
+    while !coordinator.close().await {
+        eprintln!("Waiting for an owned tool to exit; no automatic force kill was performed.");
+        tokio::time::sleep(std::time::Duration::from_secs(1)).await;
     }
     store
         .database

@@ -62,7 +62,7 @@ async fn duplicate_submissions_dispatch_once_and_mutable_originals_are_not_input
     changed.params["label"] = json!("changed");
     assert!(c.submit(changed).await.is_err());
     for _ in 0..100 {
-        if c.attempts.get("attempt-1").await.unwrap().execution == "completed" {
+        if c.attempts.get("attempt-1").await.unwrap().preservation["contract"] == "complete" {
             break;
         }
         tokio::time::sleep(std::time::Duration::from_millis(20)).await;
@@ -82,6 +82,8 @@ async fn duplicate_submissions_dispatch_once_and_mutable_originals_are_not_input
         1
     );
     assert!(c.close().await);
+    assert!(!std::path::Path::new(path).exists());
+    assert!(dir.path().join("original.png").exists());
     c.assets.database.shutdown().await.unwrap();
 }
 #[tokio::test]
@@ -311,5 +313,88 @@ async fn a_cancelled_child_that_exits_later_does_not_hold_the_reservation() {
     assert_eq!(saved.execution, "interrupted");
     assert!(saved.result.is_none());
     assert!(c.close().await);
+    c.assets.database.shutdown().await.unwrap();
+}
+
+#[tokio::test]
+async fn active_shutdown_requires_confirmation_and_keeps_unknown_outcomes_honest() {
+    let (_dir, c, request) = setup("slow").await;
+    c.submit(request).await.unwrap();
+    let (quit, mut stopped) = tokio::sync::watch::channel(false);
+    assert!(c.begin_shutdown(false, quit.clone()).await.is_err());
+    assert_eq!(c.shutdown_status().await.phase, "running");
+    c.begin_shutdown(true, quit).await.unwrap();
+    tokio::time::timeout(
+        std::time::Duration::from_secs(8),
+        stopped.wait_for(|value| *value),
+    )
+    .await
+    .unwrap()
+    .unwrap();
+    assert_eq!(c.shutdown_status().await.phase, "stopped");
+    let attempt = c.attempts.get("attempt-1").await.unwrap();
+    assert!(matches!(
+        attempt.execution.as_str(),
+        "interrupted" | "rejected"
+    ));
+    c.assets.database.shutdown().await.unwrap();
+}
+#[tokio::test]
+async fn an_unresponsive_owned_child_needs_a_separate_force_request() {
+    let (_dir, c, _request) = setup("ignore-eof").await;
+    let (quit, mut stopped) = tokio::sync::watch::channel(false);
+    assert!(c.force_shutdown(quit.clone()).await.is_err());
+    c.begin_shutdown(false, quit.clone()).await.unwrap();
+    tokio::time::timeout(std::time::Duration::from_secs(8), async {
+        while c.shutdown_status().await.phase != "waiting" {
+            tokio::time::sleep(std::time::Duration::from_millis(20)).await;
+        }
+    })
+    .await
+    .unwrap();
+    assert!(!*stopped.borrow());
+    c.force_shutdown(quit).await.unwrap();
+    tokio::time::timeout(
+        std::time::Duration::from_secs(8),
+        stopped.wait_for(|value| *value),
+    )
+    .await
+    .unwrap()
+    .unwrap();
+    assert_eq!(c.shutdown_status().await.phase, "stopped");
+    c.assets.database.shutdown().await.unwrap();
+}
+
+#[tokio::test]
+async fn shutdown_waits_for_terminal_resource_preservation_before_closing_the_peer() {
+    let (_dir, c, request) = setup("slow-resource").await;
+    c.submit(request).await.unwrap();
+    tokio::time::timeout(std::time::Duration::from_secs(5), async {
+        loop {
+            let attempt = c.attempts.get("attempt-1").await.unwrap();
+            if attempt.result.is_some() && attempt.preservation["contract"] == "pending" {
+                break;
+            }
+            tokio::time::sleep(std::time::Duration::from_millis(10)).await;
+        }
+    })
+    .await
+    .unwrap();
+    let (quit, mut stopped) = tokio::sync::watch::channel(false);
+    c.begin_shutdown(true, quit).await.unwrap();
+    tokio::time::timeout(
+        std::time::Duration::from_secs(8),
+        stopped.wait_for(|value| *value),
+    )
+    .await
+    .unwrap()
+    .unwrap();
+    let attempt = c.attempts.get("attempt-1").await.unwrap();
+    assert_eq!(
+        attempt.preservation["contract"], "complete",
+        "{:?}",
+        attempt.notices
+    );
+    assert!(!c.assets.root().join("execution/attempt-1").exists());
     c.assets.database.shutdown().await.unwrap();
 }

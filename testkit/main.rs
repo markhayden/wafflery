@@ -179,6 +179,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 json!({"resources":[{"uri":format!("{}://runs",fixtures::TOOL),"name":"Recent runs","mimeType":"application/json"}]}),
             ),
             "resources/read" if initialized => {
+                if scenario == "slow-resource" {
+                    std::thread::sleep(std::time::Duration::from_millis(600));
+                }
                 match scenarios::resource(
                     &state.lock().unwrap(),
                     &root,
@@ -197,6 +200,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
     for worker in workers {
         let _ = worker.join();
+    }
+    if scenario == "ignore-eof" {
+        loop {
+            std::thread::sleep(std::time::Duration::from_secs(60));
+        }
     }
     Ok(())
 }

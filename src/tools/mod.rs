@@ -1,5 +1,6 @@
 pub mod client;
 pub mod coordinator;
+mod materialized;
 pub mod registration;
 
 #[derive(Debug, thiserror::Error)]

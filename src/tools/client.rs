@@ -294,6 +294,21 @@ impl ToolClient {
         }
         Ok(false)
     }
+    /// Only the still-owned child handle can authorize an explicit force stop.
+    pub async fn force_stop(&self) -> Result<bool> {
+        let mut child = self.child.lock().await;
+        if child.try_wait()?.is_some() {
+            return Ok(true);
+        }
+        child.start_kill()?;
+        match tokio::time::timeout(Duration::from_secs(2), child.wait()).await {
+            Ok(status) => {
+                status?;
+                Ok(true)
+            }
+            Err(_) => Ok(false),
+        }
+    }
     /// Returns false when EOF did not stop the process. The owner retains the handle for explicit force quit.
     pub async fn close(&self) -> Result<bool> {
         self.pipes.lock().unwrap_or_else(|e| e.into_inner()).take();

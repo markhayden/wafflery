@@ -50,6 +50,8 @@ pub fn router_with_tools(
     Router::new()
         .route("/api/session", post(session))
         .route("/api/host/quit", post(quit_host))
+        .route("/api/host/shutdown", get(shutdown_status))
+        .route("/api/host/force-quit", post(force_quit))
         .fallback(get(static_asset))
         .with_state(state.clone())
         .merge(routes)
@@ -139,18 +141,41 @@ async fn session(State(state): State<HostState>, Json(input): Json<Bootstrap>) -
 #[serde(deny_unknown_fields)]
 struct Empty {}
 
-async fn quit_host(State(state): State<HostState>, Json(_): Json<Empty>) -> Response {
-    if let Some(tools) = &state.tools
-        && !tools.try_quit().await
-    {
-        return failure(
-            StatusCode::CONFLICT,
-            "active_work",
-            "This workspace has active or unconfirmed work.",
-        );
+#[derive(serde::Deserialize)]
+#[serde(deny_unknown_fields)]
+struct QuitRequest {
+    #[serde(default)]
+    confirmed: bool,
+}
+async fn quit_host(State(state): State<HostState>, Json(request): Json<QuitRequest>) -> Response {
+    if let Some(tools) = &state.tools {
+        return match tools.begin_shutdown(request.confirmed, state.quit).await {
+            Ok(status) => (StatusCode::ACCEPTED, Json(status)).into_response(),
+            Err(error) => super::run_api::ApiError(error).into_response(),
+        };
     }
     let _ = state.quit.send(true);
     StatusCode::NO_CONTENT.into_response()
+}
+async fn shutdown_status(State(state): State<HostState>) -> Response {
+    if let Some(tools) = state.tools {
+        Json(tools.shutdown_status().await).into_response()
+    } else {
+        Json(serde_json::json!({"phase":"running","active_attempts":0})).into_response()
+    }
+}
+async fn force_quit(State(state): State<HostState>, Json(_): Json<Empty>) -> Response {
+    match state.tools {
+        Some(tools) => match tools.force_shutdown(state.quit).await {
+            Ok(status) => (StatusCode::ACCEPTED, Json(status)).into_response(),
+            Err(error) => super::run_api::ApiError(error).into_response(),
+        },
+        None => failure(
+            StatusCode::CONFLICT,
+            "not_waiting",
+            "No tool is waiting for force quit.",
+        ),
+    }
 }
 
 async fn static_asset(uri: Uri) -> Response {
