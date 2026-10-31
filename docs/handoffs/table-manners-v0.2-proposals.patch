@@ -1,0 +1,62 @@
+--- a/PROPOSALS.md
++++ b/PROPOSALS.md
+@@ -29,3 +29,59 @@
+   interval, works with rmcp and the independent clients of both tools.
+ - `invalid` and `error` as results with `isError`, JSON-RPC errors only before a run exists.
+ - A cancelled request gets no response: rmcp drops it; the run's `run.json` says `cancelled`.
++
++## From Wafflehouse's client review (2026-10-31): run association and budget sessions (C4)
++
++Proposed for v0.2 review, not binding v0.1 fields. Keep MCP revision 2025-11-25. Both current
++servers identify a run only in human progress-message text, with different formats; the host
++will not parse those messages. Both budgets are in-memory per-process ledgers without a shared
++session identity. This proposal adds observation/correlation, not a durable ledger or job service.
++
++### Structured association
++
++- Use MCP's existing notification `_meta` container. Candidate key `table-manners/run` contains
++  `{id, resource, session_id, client_run_id}` on the first and later progress notifications once
++  a run exists; keep the ordinary strictly increasing progress and human message.
++- Accept optional request `_meta["table-manners/client_run_id"]` alongside the progress token.
++  Echo it as proposed `run.client_run_id` plus `run.session_id` in terminal results, and corresponding
++  fields in run-list entries. Final names and nullable/CLI cases need shared schema approval.
++- Persist run/correlation before paid work; reject reused non-null client IDs within a server
++  session before another execution. This is not cross-process exactly-once execution.
++- Resource lookup after a lost notification may use the explicit session/client-ID pair only;
++  never action, timestamp or path similarity. Pre-allocation cancellation may still have no run,
++  and absence from a recent-run list does not prove zero work/spend. No automatic retry.
++- rmcp 3.8.0 ProgressNotificationParam already has metadata support. No MCP version bump or
++  private human-message parser is required. Cancelled calls still return no ordinary result.
++
++### Observable session budget
++
++- Proposed declared resource `<tool>://session`: `{id, started, budget_usd, spent_usd,
++  reserved_usd, remaining_usd}`. Define numeric/nullable rules and rounding tolerance in a shared
++  schema. Null budget/remainder denotes documented uncapped/free sessions, not zero allowance.
++- Session IDs change on every server start and any ledger reset. Return an atomic observation;
++  status/session/run-resource reads stay responsive while execution occupies the serial permit.
++- Give estimates shared session/budget context outside private result bodies, with its placement
++  agreed alongside C1's estimate mapping. The tool's cap/reservation enforcement is authoritative.
++- Squint currently serializes estimates and writes zero-spend estimate run resources. That is
++  allowed; clients can treat their own estimate calls as controls rather than user history.
++- Host config recheck must not silently restart a server. Deliberate restart invalidates estimates
++  and shows a new allowance session. Unknown spend from an old interrupted session stays unknown.
++  A process allowance is not a daily budget or provider account balance.
++
++### Acceptance fixtures
++
++Paired Rascal/Squint examples and independent-client checks for structured first/later progress,
++correlation match/mismatch/reuse, cancel before/after allocation, no response with cancelled run,
++missing resource, live resource reads while busy, estimate session identity, reservations,
++server restart and config-ledger reset. Existing Squint cancelled fixtures plus the v0.1 text
++are the terminal-shape reference; do not invent a Rascal fixture and claim tool provenance.
++No live paid calls are needed. This proposal does not settle native artifacts (C2), reports (C3),
++or the future replacement for roots after the pinned MCP revision.
++
++### Separate host-owned coordination (H1)
++
++Wafflehouse has also drafted the launcher ABI now, not at its later integration milestone:
++canonical `wafflehouse`, `WAFFLEHOUSE_BIN` override, PATH then `~/.local/bin/wafflehouse`, and
++`--tool <id>`. Tools locate/install/invoke only; Wafflehouse owns locks, attach/readiness,
++browser bootstrap and opening. Review that owner packet independently of the core schemas;
++production installer publication remains a separate release subgate.

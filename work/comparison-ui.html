@@ -1,0 +1,29 @@
+<style>
+#wh-hierarchy .wh-baseline-row{margin-top:16px;padding-top:12px;border-top:1px solid var(--wh-line);display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:12px}
+#wh-hierarchy .wh-baseline-row>span{flex:1;min-width:130px;color:var(--wh-muted)}
+#wh-hierarchy .wh-baseline-row button{font-size:12px;padding:5px 8px}
+#wh-hierarchy .wh-comparison{margin:20px 0;border:1px solid var(--wh-line);border-radius:8px;background:var(--wh-surface)}
+#wh-hierarchy .wh-comparison-head{padding:20px;border-bottom:1px solid var(--wh-line)}
+#wh-hierarchy .wh-comparison-head h3{font-size:18px}
+#wh-hierarchy .wh-comparison-head p{font-size:12px;color:var(--wh-muted);margin:8px 0 0}
+#wh-hierarchy .wh-comparison-body{padding:20px}
+#wh-hierarchy .wh-comparison-pair{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:20px}
+#wh-hierarchy .wh-comparison-pair figure{margin:0;min-width:0}
+#wh-hierarchy .wh-comparison-pair figcaption{margin:0 0 10px;font-size:14px;font-weight:500}
+#wh-hierarchy .wh-comparison-pair p{font-size:12px;color:var(--wh-muted);margin:10px 0;overflow-wrap:anywhere}
+#wh-hierarchy .wh-comparison-pair pre{white-space:pre-wrap;overflow-wrap:anywhere;background:var(--wh-fill);padding:16px;border-radius:6px;font:12px/1.6 ui-monospace,monospace}
+#wh-hierarchy .wh-parameter-diff{width:100%;border-collapse:collapse;table-layout:fixed;font-size:12px;margin-top:20px}
+#wh-hierarchy .wh-parameter-diff caption{text-align:left;font-size:14px;font-weight:500;padding-bottom:12px}
+#wh-hierarchy .wh-parameter-diff th,#wh-hierarchy .wh-parameter-diff td{text-align:left;vertical-align:top;padding:10px;border-bottom:1px solid var(--wh-line);overflow-wrap:anywhere;font-weight:400}
+#wh-hierarchy .wh-parameter-diff th{color:var(--wh-muted)}
+#wh-hierarchy .wh-parameter-diff .wh-parameter-changed{background:var(--wh-fill)}
+#wh-hierarchy .wh-compare-empty{padding:32px 16px;background:var(--wh-fill);border-radius:6px;min-height:180px;font-size:13px;color:var(--wh-muted)}
+@media(max-width:560px){#wh-hierarchy .wh-comparison-pair{grid-template-columns:1fr}#wh-hierarchy .wh-comparison-head,#wh-hierarchy .wh-comparison-body{padding:16px}}
+</style>
+<template id="wh-comparison-template">
+ <div class="wh-baseline-row" hidden><span class="wh-baseline-label" role="status"></span><button class="wh-pin-baseline">Pin this run</button><button class="wh-open-comparison" disabled>Compare</button><button class="wh-clear-baseline" hidden>Clear</button></div>
+ <section class="wh-comparison" hidden aria-label="Compare saved runs">
+  <div class="wh-comparison-head"><div class="wh-row"><h3>Compare saved runs</h3><button class="wh-close-comparison">Close</button></div><p class="wh-comparison-caption"></p><div class="wh-comparison-modes" aria-label="Comparison layout"><button data-compare-mode="side" aria-pressed="true">Side by side</button><button data-compare-mode="wipe" aria-pressed="false">Slider</button></div></div>
+  <div class="wh-comparison-body"><div class="wh-comparison-pair"></div><div class="wh-comparison-wipe" hidden></div><p class="wh-comparison-wipe-note" hidden></p><table class="wh-parameter-diff"><caption>Saved settings</caption><thead><tr><th scope="col">Setting</th><th scope="col">Baseline</th><th scope="col">Selected attempt</th></tr></thead><tbody></tbody></table></div>
+ </section>
+</template>

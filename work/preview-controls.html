@@ -1,0 +1,31 @@
+<style>
+html { color-scheme: light dark; }
+body { margin:0; padding:24px; background:light-dark(#eceeea,#111313); color:light-dark(#272a27,#ededeb); font:14px/1.5 system-ui,sans-serif; }
+.preview-wrap { max-width:1320px; margin:0 auto; }
+.preview-controls { display:flex; flex-wrap:wrap; align-items:center; gap:10px; margin:0 0 20px; }
+.preview-controls h1 { font-size:17px; font-weight:500; margin:0 18px 0 0; }
+.preview-controls button { padding:9px 13px; border:1px solid light-dark(#cbd0c8,#424742); border-radius:6px; color:inherit; background:light-dark(#fff,#202420); cursor:pointer; font:inherit; }
+.preview-controls button[aria-pressed=true] { background:light-dark(#34294b,#d6c5f7); color:light-dark(#fff,#251a34); }
+.preview-controls label { margin-left:auto; display:flex; align-items:center; gap:8px; }
+.preview-controls select { background:light-dark(#fff,#202420); color:inherit; font:inherit; padding:8px; border:1px solid light-dark(#cbd0c8,#424742); border-radius:6px; }
+.preview-note { margin:0 0 20px; color:light-dark(#636b61,#abb3a8); }
+#wh-hierarchy .wh-stage { min-height:0; }
+#wh-hierarchy .wh-chrome { padding-right:22px; }
+@media(max-width:600px){body{padding:12px}.preview-controls h1{width:100%}.preview-controls label{margin-left:0}}
+</style>
+<div class="preview-wrap">
+ <nav class="preview-controls" aria-label="Preview appearance">
+  <h1>Wafflehouse · Focused picker</h1>
+  <label>Start from <select id="preview-journey"><option value="wafflehouse">Wafflehouse first</option><option value="rascal">Rascal first</option><option value="squint">Squint first</option><option value="ready">Ready workspace</option></select></label>
+  <label>Appearance <select id="preview-theme"><option value="light dark">System</option><option value="dark">Dark</option><option value="light">Light</option></select></label>
+ </nav>
+ <p class="preview-note">These are browser entry points, after Wafflehouse starts. Tool-first installation happens in the terminal before this screen. Changing the starting point resets the simulated demo.</p>
+ <!--WH_PREVIEW_CONTENT-->
+</div>
+<script>
+(()=>{
+ const controls=document.querySelector('.preview-controls');
+ controls.querySelector('#preview-theme').addEventListener('change',e=>{document.documentElement.style.colorScheme=e.target.value;});
+ controls.querySelector('#preview-journey').addEventListener('change',e=>window.dispatchEvent(new CustomEvent('wh:scenario',{detail:e.target.value})));
+})();
+</script>

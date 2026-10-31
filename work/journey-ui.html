@@ -1,0 +1,54 @@
+<style>
+#wh-hierarchy .wh-manage{margin-left:auto;font-size:12px}
+#wh-hierarchy .wh-onboarding{padding:32px;max-width:960px;margin:auto;min-height:520px}
+#wh-hierarchy .wh-onboarding h2{font-size:26px;font-weight:500;letter-spacing:-.6px;margin:0 0 8px}
+#wh-hierarchy .wh-onboarding p{color:var(--wh-muted);max-width:650px}
+#wh-hierarchy .wh-eyebrow{font-size:12px;color:var(--wh-muted);margin-bottom:12px}
+#wh-hierarchy .wh-setup-tools{display:grid;gap:16px;margin:28px 0}
+#wh-hierarchy .wh-setup-card{padding:20px;border:1px solid var(--wh-line);border-radius:8px;background:var(--wh-surface)}
+#wh-hierarchy .wh-setup-card h3{font-size:18px}
+#wh-hierarchy .wh-setup-card p{font-size:13px;margin:8px 0 16px}
+#wh-hierarchy .wh-actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+#wh-hierarchy .wh-setup-state{font-size:12px;padding:4px 8px;background:var(--wh-fill);border-radius:4px;color:var(--wh-muted)}
+#wh-hierarchy .wh-setup-instructions{margin:16px 0 0;padding:16px;background:var(--wh-fill);border-radius:6px;font-size:13px}
+#wh-hierarchy .wh-setup-instructions p{margin:0 0 12px}
+#wh-hierarchy .wh-readiness{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;background:var(--wh-fill);border:1px solid var(--wh-line);border-radius:6px;padding:12px 16px;margin-bottom:18px;font-size:12px}
+#wh-hierarchy .wh-readiness p{margin:2px 0;color:var(--wh-muted)}
+#wh-hierarchy .wh-readiness strong{font-weight:500}
+#wh-hierarchy button:disabled{opacity:.5;cursor:not-allowed}
+#wh-hierarchy .wh-progress{margin:0 0 16px;padding:16px;background:var(--wh-fill);border-radius:6px}
+#wh-hierarchy .wh-progress progress{width:100%;height:6px;accent-color:var(--wh-accent)}
+#wh-hierarchy .wh-progress p{font-size:12px;color:var(--wh-muted);margin:0 0 10px}
+#wh-hierarchy .wh-run-banner{font-size:12px;color:var(--wh-muted);margin-bottom:12px}
+#wh-hierarchy .wh-pipeline{border:1px solid var(--wh-line);border-radius:8px;background:var(--wh-surface);margin:20px 0}
+#wh-hierarchy .wh-pipeline-head{padding:20px;border-bottom:1px solid var(--wh-line)}
+#wh-hierarchy .wh-pipeline h3{font-size:18px}
+#wh-hierarchy .wh-pipeline p{font-size:13px;color:var(--wh-muted);margin:8px 0 0}
+#wh-hierarchy .wh-pipeline-body{padding:20px}
+#wh-hierarchy .wh-pipeline-tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+#wh-hierarchy .wh-pipeline-tabs button{font-size:12px;background:transparent;border-color:transparent}
+#wh-hierarchy .wh-pipeline-tabs button[aria-pressed=true]{background:var(--wh-fill);border-color:var(--wh-line)}
+#wh-hierarchy .wh-export-code{white-space:pre-wrap;overflow-wrap:anywhere;font:12px/1.8 ui-monospace,monospace;background:var(--wh-fill);padding:16px;border-radius:6px;min-height:140px;margin:0 0 12px}
+#wh-hierarchy .wh-export-note{padding:12px 0 16px}
+#wh-hierarchy .wh-snapshot-list{display:grid;gap:8px;margin-top:16px}
+#wh-hierarchy .wh-snapshot-list button{justify-content:space-between;text-align:left;padding:12px;font-size:13px}
+#wh-hierarchy .wh-findings{padding:16px;background:var(--wh-fill);border-radius:6px;margin-top:16px}
+#wh-hierarchy .wh-findings h4{font-size:14px;font-weight:500;margin:0 0 8px}
+#wh-hierarchy .wh-findings p{font-size:13px;margin:6px 0;color:var(--wh-muted)}
+@media(max-width:560px){#wh-hierarchy .wh-onboarding{padding:20px 16px}#wh-hierarchy .wh-pipeline-head,#wh-hierarchy .wh-pipeline-body{padding:16px}#wh-hierarchy .wh-onboarding h2{font-size:23px}}
+</style>
+<template id="wh-journey-template">
+ <section class="wh-onboarding" aria-label="Getting started"></section>
+ <div class="wh-readiness" hidden><div><strong></strong><p></p></div><button class="wh-readiness-action">Review setup</button></div>
+ <div class="wh-progress" hidden aria-live="polite"><p></p><progress max="100" value="0" aria-label="Run progress"></progress><button class="wh-stop">Stop run</button></div>
+ <div class="wh-run-banner" aria-live="polite"></div>
+ <section class="wh-findings" hidden><h4>Needs review · illustrative finding</h4><p>The foreground chair’s silhouette may differ from the source.</p><p>Evidence: compare the left arm and front edge. Confidence: unsure.</p><p>Example report content, not a judgment produced by Squint.</p></section>
+ <section class="wh-pipeline" hidden aria-label="Use in your pipeline">
+  <div class="wh-pipeline-body">
+   <div class="wh-pipeline-tabs" aria-label="Export format"><button data-export="command" aria-pressed="true">Command</button><button data-export="mcp" aria-pressed="false">MCP</button><button data-export="configuration" aria-pressed="false">Configuration</button><button data-export="inputs" aria-pressed="false">Inputs &amp; setup</button></div>
+   <pre class="wh-export-code"></pre><p class="wh-export-note"></p>
+   <div class="wh-actions"><button class="wh-copy-export">Copy command</button><button class="wh-download-export">Download run manifest</button></div>
+   <p class="wh-export-feedback" role="status"></p>
+  </div>
+ </section>
+</template>

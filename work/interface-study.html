@@ -1,0 +1,90 @@
+<style>
+#wh-study { --wh-bg:light-dark(#fcfbf8,#1b1c1a); --wh-panel:light-dark(#f2f1ec,#242622); --wh-ink:light-dark(#242822,#edf0e8); --wh-muted:light-dark(#62675f,#aeb5a8); --wh-line:light-dark(#dadcd3,#40463b); --wh-active:light-dark(#34452a,#d3dfc7); --wh-on:light-dark(#ffffff,#202b19); color:var(--wh-ink); font:14px/1.5 system-ui,sans-serif; }
+#wh-study * {box-sizing:border-box}
+#wh-study .wh-app {background:var(--wh-bg); border:1px solid var(--wh-line); border-radius:12px; overflow:hidden}
+#wh-study header {padding:18px 110px 16px 20px; display:flex; align-items:center; flex-wrap:wrap; gap:14px; border-bottom:1px solid var(--wh-line)}
+#wh-study strong,#wh-study h2,#wh-study h3 {font-weight:500}
+#wh-study h2 {font-size:23px; margin:0 0 4px}
+#wh-study h3 {font-size:15px; margin:0 0 12px}
+#wh-study p {margin:0 0 14px}
+#wh-study small,.wh-muted {color:var(--wh-muted); font-size:12px}
+#wh-study .wh-layout {display:grid; grid-template-columns:155px minmax(0,1fr)}
+#wh-study nav {padding:20px 12px; background:var(--wh-panel); border-right:1px solid var(--wh-line)}
+#wh-study button {font:inherit; color:inherit; background:var(--wh-bg); border:1px solid var(--wh-line); border-radius:6px; padding:8px 11px; cursor:pointer}
+#wh-study nav button {display:block; width:100%; text-align:left; margin-bottom:7px; background:transparent; border-color:transparent}
+#wh-study button[aria-pressed=true],#wh-study .wh-main {background:var(--wh-active); color:var(--wh-on); border-color:transparent}
+#wh-study button:disabled {opacity:.6; cursor:default}
+#wh-study main {padding:24px; min-width:0}
+#wh-study .wh-row {display:flex; align-items:center; gap:10px; flex-wrap:wrap}
+#wh-study .wh-form-grid {display:grid; grid-template-columns:minmax(180px, .9fr) minmax(220px,1.3fr); gap:24px; margin-top:24px}
+#wh-study label {display:block; margin-bottom:14px}
+#wh-study select,#wh-study textarea {display:block; width:100%; min-width:0; background:var(--wh-bg); color:var(--wh-ink); font:inherit; border:1px solid var(--wh-line); border-radius:6px; padding:8px; margin-top:5px}
+#wh-study textarea {resize:vertical}
+#wh-study .wh-preview {min-height:205px; background:var(--wh-panel); border:1px solid var(--wh-line); border-radius:8px; display:grid; place-content:center; text-align:center; padding:20px; gap:10px}
+#wh-study .wh-preview span {font-size:13px; color:var(--wh-muted)}
+#wh-study .wh-steps {padding-left:22px; margin:15px 0 20px}
+#wh-study .wh-steps li {padding:6px 0}
+#wh-study .wh-tools {display:flex; flex-wrap:wrap; gap:8px; margin:16px 0}
+#wh-study .wh-tools span {padding:5px 9px; background:var(--wh-panel); border-radius:5px; font-size:12px}
+#wh-study details {border-top:1px solid var(--wh-line); padding:14px 0 0; margin-top:22px}
+#wh-study summary {cursor:pointer; font-weight:500}
+#wh-study .wh-debug {display:grid; grid-template-columns:120px minmax(0,1fr); gap:10px; padding-top:14px; font-size:13px}
+#wh-study .wh-debug code {overflow-wrap:anywhere}
+#wh-study .wh-status {margin-top:12px; color:var(--wh-muted); font-size:13px}
+#wh-study .wh-foot {padding:10px 20px; border-top:1px solid var(--wh-line); color:var(--wh-muted); font-size:12px}
+#wh-study .wh-note {border-left:2px solid var(--wh-line); padding-left:14px; margin:18px 0}
+@media(max-width:650px){#wh-study .wh-layout {grid-template-columns:1fr} #wh-study nav {display:flex; flex-wrap:wrap; gap:5px; border-right:0; border-bottom:1px solid var(--wh-line); padding:10px} #wh-study nav button {width:auto;margin:0} #wh-study nav small {display:none} #wh-study main{padding:18px} #wh-study .wh-form-grid {grid-template-columns:1fr} #wh-study header{padding-right:20px} #wh-study .wh-debug {grid-template-columns:1fr}}
+@media(pointer:coarse){#wh-study button,#wh-study select{min-height:44px} #wh-study textarea,#wh-study select{font-size:16px}}
+</style>
+<div id="wh-study">
+ <div class="wh-app">
+  <header><strong>wafflehouse</strong><small>LOCAL WORKSHOP · INTERFACE STUDY</small></header>
+  <div class="wh-layout">
+   <nav aria-label="Workshop spaces">
+    <button data-space="tools" aria-pressed="true">Tools</button>
+    <button data-space="workflows" aria-pressed="false">Workflows</button>
+    <button data-space="pixel" aria-pressed="false">Pixel</button>
+    <small>One workspace.<br>Shared run history.</small>
+   </nav>
+   <main>
+    <div class="wh-row"><label>Installation scenario<select id="wh-install"><option value="rascal">Rascal only</option><option value="all">Full pipeline configured</option></select></label></div>
+    <div id="wh-content"></div>
+   </main>
+  </div>
+  <div class="wh-foot">Concept only · Sample inputs and simulated runs · No tools are executed</div>
+ </div>
+</div>
+<script>
+(()=>{
+ const root=document.getElementById('wh-study');
+ const content=root.querySelector('#wh-content');
+ const install=root.querySelector('#wh-install');
+ const saved=window.openai?.widgetState?.modelContent;
+ let space=['tools','workflows','pixel'].includes(saved?.space)?saved.space:'tools';
+ let full=saved?.full===true;
+ install.value=full?'all':'rascal';
+ const tools=()=>'<div class="wh-tools"><span>Rascal · ready</span><span>Segmenter · '+(full?'ready':'optional setup')+'</span><span>Filler · '+(full?'ready':'not configured')+'</span><span>Squint · '+(full?'ready':'not installed')+'</span></div>';
+ const preview=(name,sub)=>'<div class="wh-preview"><strong>'+name+'</strong><span>'+sub+'</span></div>';
+ const inspector='<details><summary>Run inspector · inputs, steps, artifacts, cost</summary><div class="wh-debug"><span>Invocation</span><code>Exact action + submitted parameters</code><span>Steps</span><span>Progress and tool-owned journal</span><span>Artifacts</span><span>Input, mask, fill, composite — where available</span><span>Cost</span><span>Estimate, actual spend, cache status</span><span>Tool report</span><span>Embedded detailed view supplied by the tool</span></div></details>';
+ function draw(){
+  root.querySelectorAll('[data-space]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.space===space)));
+  if(space==='tools') content.innerHTML='<h2>Rascal</h2><p class="wh-muted">Find a region. Shape a mask. Control the edit.</p>'+tools()+'<div class="wh-form-grid"><section><label>Activity<select id="wh-activity"><option>Make a rectangle mask</option><option>Find an object by prompt</option><option>Heal a seam</option></select></label><label>Source image<textarea rows="1" aria-label="Sample source image">room.png</textarea></label><div id="wh-params"></div><button class="wh-main" id="wh-run">Preview mask</button><div class="wh-status" id="wh-status" aria-live="polite"></div></section><section><h3>Image workspace</h3>'+preview('room.png','Source / mask overlay / mask rendering')+'<div class="wh-note" id="wh-next">Next: paint through this mask with a filler, then check the edit with Squint.</div></section></div>'+inspector;
+  if(space==='workflows') content.innerHTML='<h2>Remove an object</h2><p class="wh-muted">A guided sequence with an inspectable result at every step.</p>'+tools()+'<div class="wh-form-grid"><section><label>Source image<textarea rows="1">room.png</textarea></label><label>What should go?<textarea rows="3">The chair beside the window. Keep the wall and floor unchanged.</textarea></label><button class="wh-main" id="wh-run">'+(full?'Preview workflow':'Start with a manual mask')+'</button><div class="wh-status" id="wh-status" aria-live="polite"></div></section><section><h3>Steps</h3><ol class="wh-steps"><li>Find and mask · Rascal'+(full?'':' · draw a region')+'</li><li>Paint the region · '+(full?'configured filler':'configure a filler')+'</li><li>Composite · Rascal</li><li>Check preservation · '+(full?'Squint':'add Squint')+'</li></ol>'+preview('Review the selected step','Every intermediate result stays available')+'</section></div>'+inspector;
+  if(space==='pixel') content.innerHTML='<h2>Work with Pixel</h2><p class="wh-muted">An agent session with visible tools, steps, and results.</p>'+tools()+'<div class="wh-form-grid"><section><label>Agent model<select><option>Select from configured models…</option></select></label><label>How should Pixel work?<select id="wh-behavior"><option>Guide me through the steps</option><option>Run and let me intervene</option><option>Test an agent configuration</option></select></label><label>Brief<textarea rows="3">Remove the chair without changing the room. Show me the mask before painting.</textarea></label><button class="wh-main" id="wh-run">Preview Pixel’s plan</button><div class="wh-status" id="wh-status" aria-live="polite"></div></section><section><h3>Pixel’s workspace</h3>'+preview('Brief + references + results','Agent conversation beside the visual work')+'<div class="wh-note">Agent model and image model are separate choices. Pixel can use only tools enabled for this session.</div></section></div>'+inspector;
+  if(space==='tools'){
+   const activity=content.querySelector('#wh-activity');
+   const update=()=>{const i=activity.selectedIndex;content.querySelector('#wh-params').innerHTML=i===0?'<label>Region<textarea rows="1">Rectangle drawn on image</textarea></label>':i===1?'<label>Find<textarea rows="2">The chair beside the window</textarea></label>':'<label>Seam location<textarea rows="1">Panorama wrap edge</textarea></label>';const unavailable=i===1&&!full;content.querySelector('#wh-run').disabled=unavailable;content.querySelector('#wh-status').textContent=unavailable?'Prompt-based finding needs the segmenter pack. Manual masks remain available.':'';};
+   activity.addEventListener('change',update);update();
+  }
+  content.querySelector('#wh-run').addEventListener('click',()=>{
+   content.querySelector('#wh-status').textContent=space==='tools'?'Simulated result: mask ready to inspect.':space==='workflows'?(full?'Simulated workflow: review mask → paint → composite → check.':'Begin with Rascal. Painting and checking become available when configured.'):'Proposed: locate the chair → review the mask → paint → verify preservation. Agent execution is a separate design decision.';
+   content.querySelector('details').open=true;
+  });
+ }
+ function persist(){window.openai?.setWidgetState({modelContent:{space,full},privateContent:null}).catch(()=>{});}
+ root.querySelectorAll('[data-space]').forEach(b=>b.addEventListener('click',()=>{space=b.dataset.space;draw();persist();}));
+ install.addEventListener('change',()=>{full=install.value==='all';draw();persist();});
+ window.addEventListener('openai:set_globals',e=>{const s=e.detail?.globals?.widgetState?.modelContent;if(s){space=['tools','workflows','pixel'].includes(s.space)?s.space:'tools';full=s.full===true;install.value=full?'all':'rascal';draw();}});
+ draw();
+})();
+</script>

@@ -1,0 +1,84 @@
+# Squint handoff: generic check workspace
+
+Status: refreshed 2026-10-31. M7 serve work is merged locally; do not describe it as released.
+These are remaining integration requests, not a replacement implementation plan. No sibling files changed.
+
+## Current evidence
+
+HEAD `eef1f10`, clean; 15 commits ahead of local origin/main, no `m7` tag and checkpoint not
+checked. The [source inventory](../integration-sources.md#squint) records exact paths and limits.
+Five use-case tools now match description/call/result names. Serve, resources, progress/cancellation,
+cap/session enforcement and estimates are implemented. `estimate` calls `finished()` and creates
+zero-spend run records visible in the tool's runs resource; its calls pass through the semaphore.
+
+The testkit-only `serve --provider-script` already selects ScriptedProvider before credentials,
+with serve_check_cli/serve_progress_cli tests. No request to build this again is needed. The
+production provider path remains configured/authenticated; offline checks use the tool's testkit.
+
+## S1 — Callable tasks, readiness, and supported overrides
+
+**Request:** let a generic client discover, configure, estimate, call, and inspect each supported
+check without knowing the judging loop or parsing Squint-private namespaces.
+
+1. **Resolved:** the five use-case names align across description, tools/list, calls and results.
+   Retain that conformance and its tests; no new naming adapter is requested.
+2. Define bootstrap behavior without a config. `DescribeArgs` currently requires `--config`;
+   Wafflehouse must distinguish installed-but-unconfigured from unavailable and explain how to
+   configure it. Choose a supported discovery/config-selection interface with C1.
+3. Declare required/optional candidate/source/reference slots, brief and rule requirements, and
+   the actual supported selectable defaults/overrides. The host must not read `x-squint` or
+   parse private config files to build controls. Detailed rule schemas need enough structure
+   for supported inputs or a documented typed editor, not guessed fields.
+4. Existing estimate/cap/session behavior is implemented. Coordinate the remaining shared
+   C1/C4 request/result mapping and session identity semantics using the [C4 v0.2 proposal](C4-v0.2-proposal.md).
+   Wafflehouse keeps estimate runs out of user history by tracking its own control requests. Missing credentials, invalid authentication, and insufficient budget
+   are separate outcomes; key presence is not a provider health check or account-balance API.
+5. Keep findings, evidence, locations, and verdict in the tool report plus shared result fields.
+   A completed `fail`/`unsure` judgment is not a failed execution. Do not advertise internal
+   evidence tools as standalone operations unless they genuinely expose that interface.
+
+**Accept:** a generic independent client discovers a supported source-fidelity use case, provides
+its declared slots/requirements, obtains the correct estimate, runs against a scripted provider,
+and inspects findings and the tool report. Verify ready/missing-config/missing-key/provider-failure
+states, unsupported overrides, cap refusal before spending, cancellation with spend, monotonic
+progress, and reconnect through resources without another call. AC03/04/07/08/09/10.
+
+**Deliver:** coherent callable descriptions/schema fixtures, readiness/configuration mechanism,
+estimate fixtures, offline independent-client evidence, and remaining exceptions after M7.
+
+## Pipeline handoff and report embedding
+
+- C2: the host records outgoing MCP calls, but needs effective settings, provider/model/rule
+  versions and supported CLI mapping to reproduce a selected check. A report-export command
+  does not by itself export the invocation or its required image inputs.
+- C3: `report view` currently prints a human sentence containing the URL. Agree machine-readable
+  readiness and viewer lifetime/framing with Rascal and the host. Keep richer evidence/report
+  rendering inside Squint. Clarify how reports/assets survive relocation or host-managed history.
+- Required candidates/references should be portable through the example export, with original
+  identity and setup names preserved and credentials excluded. Verify replay with scripted
+  providers; do not promise deterministic live judgments.
+
+## Launcher coordination
+
+Task 7.9 is H1-blocked. Review the [Wafflehouse launcher proposal](H1-launcher-proposal.md)
+now: binary/override/install path, `--tool squint`, exit behavior and host-owned attachment.
+Production installer publication and MCP configuration/registration remain separate subgates.
+The first browser screen is Squint's workspace/setup state after Wafflehouse is installed and
+running. No UI is embedded in Squint and no host-install screen appears inside Wafflehouse.
+Use fake executable/installer tests for yes, no, failure, and already-running-host cases. AC01/02.
+
+## Verification and response
+
+Use Squint's scripted providers, independent MCP client and server tests already present, contract validation,
+and existing repository checks. No live paid verification is required for these handoffs.
+Return the implemented revision, fixtures and callable examples, test evidence, and any
+unsupported choices to the Wafflehouse spec before integration is treated as complete.
+
+## Sources checked
+
+- [CLI description](../integration-sources.md#squint).
+- [Shared description/result construction](../integration-sources.md#squint):
+  `description`, `params_schema`, and result action attribution.
+- [M7 plan](../integration-sources.md#squint): 7.5–7.10.
+- [Report command](../integration-sources.md#squint).
+- [Shared requests C1–C4/H1](table-manners.md) and [product acceptance](../../ACCEPTANCE.md).

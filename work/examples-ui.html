@@ -1,0 +1,25 @@
+<style>
+#wh-hierarchy .wh-examples,#wh-hierarchy .wh-save-example{border:1px solid var(--wh-line);border-radius:8px;padding:20px;margin:0 0 20px;background:var(--wh-surface)}
+#wh-hierarchy .wh-save-example{margin:16px 0 0}
+#wh-hierarchy .wh-examples h3,#wh-hierarchy .wh-save-example h3{font-size:18px}
+#wh-hierarchy .wh-examples p,#wh-hierarchy .wh-save-example p{font-size:12px;color:var(--wh-muted);margin:8px 0 16px}
+#wh-hierarchy .wh-examples h4{font-size:13px;font-weight:500;margin:20px 0 8px}
+#wh-hierarchy .wh-example-entry{display:flex;gap:16px;justify-content:space-between;align-items:center;padding:12px 0;border-top:1px solid var(--wh-line)}
+#wh-hierarchy .wh-example-entry>div{min-width:0}
+#wh-hierarchy .wh-example-entry strong{font-size:13px;font-weight:500;overflow-wrap:anywhere}
+#wh-hierarchy .wh-example-entry p{margin:4px 0 0;overflow-wrap:anywhere}
+#wh-hierarchy .wh-example-entry button{flex-shrink:0;font-size:12px}
+#wh-hierarchy .wh-save-example label{display:block;font-size:12px;margin-bottom:12px}
+#wh-hierarchy .wh-save-example input,#wh-hierarchy .wh-save-example textarea{display:block;width:100%;margin-top:6px}
+#wh-hierarchy .wh-save-example textarea{resize:vertical}
+</style>
+<template id="wh-examples-template">
+ <section class="wh-examples" hidden aria-label="Examples"><p>Start from a bundled example or a setup you saved. Opening one fills the form; it does not run the tool.</p><div class="wh-example-groups"></div></section>
+ <form class="wh-save-example" hidden aria-label="Save example">
+  <p class="wh-example-source"></p>
+  <label>Name<input name="example_name" maxlength="120" required></label>
+  <label>Notes <span class="wh-muted">(optional)</span><textarea name="example_notes" rows="2" maxlength="500"></textarea></label>
+  <p class="wh-example-error" role="alert" hidden></p>
+  <div class="wh-actions"><button type="submit">Save example</button><button type="button" class="wh-cancel-example">Cancel</button></div>
+ </form>
+</template>

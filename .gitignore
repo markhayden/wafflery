@@ -1,0 +1,15 @@
+.DS_Store
+.env
+.env.*
+!.env.example
+*.pem
+/target/
+node_modules/
+/ui/dist/
+/ui/storybook-static/
+/ui/test-results/
+/ui/playwright-report/
+/ui/.prebuilt-*/
+/local-data/
+*.log
+# ui/prebuilt is intentionally versioned for Rust-only builds.
