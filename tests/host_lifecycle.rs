@@ -94,3 +94,75 @@ fn a_symlinked_data_root_is_refused_without_modifying_the_target() {
     assert!(!result.status.success());
     assert_eq!(std::fs::read_dir(other).unwrap().count(), 0);
 }
+
+#[test]
+fn concurrent_launchers_attach_and_the_host_survives_their_exit() {
+    let temp = tempfile::tempdir().unwrap();
+    let root = temp.path().join("library with spaces");
+    let spawn = || {
+        Command::new(env!("CARGO_BIN_EXE_wafflehouse"))
+            .args(["--no-open", "--tool", "unknown-tool", "--data-dir"])
+            .arg(&root)
+            .stdout(Stdio::piped())
+            .stderr(Stdio::piped())
+            .spawn()
+            .unwrap()
+    };
+    let first = spawn();
+    let second = spawn();
+    let a = first.wait_with_output().unwrap();
+    let b = second.wait_with_output().unwrap();
+    assert!(a.status.success(), "{}", String::from_utf8_lossy(&a.stderr));
+    assert!(b.status.success(), "{}", String::from_utf8_lossy(&b.stderr));
+    assert_eq!(a.stdout, b.stdout);
+    ready(&root);
+    wafflehouse::host::control::request(&root, "quit").unwrap();
+    let deadline = Instant::now() + Duration::from_secs(5);
+    while wafflehouse::host::control::request(&root, "status").is_ok() {
+        assert!(Instant::now() < deadline, "host did not quit");
+        std::thread::sleep(Duration::from_millis(20));
+    }
+}
+
+#[test]
+fn malformed_launcher_arguments_never_start_a_host() {
+    for arguments in [
+        vec!["--tool"],
+        vec!["--tool", "../rascal"],
+        vec!["--tool", "rascal", "--tool", "squint"],
+        vec!["--no-open", "--no-open"],
+        vec!["--unknown"],
+    ] {
+        let output = Command::new(env!("CARGO_BIN_EXE_wafflehouse"))
+            .args(arguments)
+            .output()
+            .unwrap();
+        assert_eq!(output.status.code(), Some(64));
+    }
+}
+
+#[test]
+fn an_incompatible_live_host_is_refused_without_starting_another() {
+    use std::os::unix::net::UnixListener;
+    let temp = tempfile::tempdir().unwrap();
+    let data = temp.path().join("data");
+    let owner = wafflehouse::host::control::Ownership::acquire(&data).unwrap();
+    let listener = UnixListener::bind(&owner.socket).unwrap();
+    let root = owner.root.clone();
+    let server = std::thread::spawn(move || {
+        let (mut stream, _) = listener.accept().unwrap();
+        let mut request = String::new();
+        stream.read_to_string(&mut request).unwrap();
+        let reply = serde_json::json!({"protocol": 1, "root": root, "version": "incompatible", "origin": "http://127.0.0.1:1"});
+        stream.write_all(reply.to_string().as_bytes()).unwrap();
+    });
+    let result = Command::new(env!("CARGO_BIN_EXE_wafflehouse"))
+        .args(["--no-open", "--data-dir"])
+        .arg(&data)
+        .output()
+        .unwrap();
+    server.join().unwrap();
+    assert_eq!(result.status.code(), Some(69));
+    assert!(String::from_utf8_lossy(&result.stderr).contains("incompatible host"));
+    assert!(owner.socket.exists());
+}

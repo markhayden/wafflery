@@ -68,8 +68,9 @@ impl Ownership {
         {
             return Err(io::Error::other("invalid host lock"));
         }
-        lock.try_lock()
-            .map_err(|_| io::Error::other("another host owns this library"))?;
+        lock.try_lock().map_err(|_| {
+            io::Error::new(io::ErrorKind::WouldBlock, "another host owns this library")
+        })?;
         let socket = socket_path(&root)?;
         // A stale socket is removable only after winning the lifetime lock.
         match fs::symlink_metadata(&socket) {
@@ -117,12 +118,19 @@ pub fn request(root: &Path, operation: &str) -> io::Result<Value> {
         || result["root"] != json!(root)
         || result["version"] != crate::VERSION
     {
-        return Err(io::Error::other("incompatible host identity"));
+        return Err(io::Error::new(
+            io::ErrorKind::InvalidData,
+            "incompatible host identity; quit the existing host before restarting",
+        ));
     }
     Ok(result)
 }
 
-pub async fn listen(owner: &Ownership, origin: &str) -> io::Result<()> {
+pub async fn listen(
+    owner: &Ownership,
+    origin: &str,
+    shutdown: tokio::sync::watch::Sender<bool>,
+) -> io::Result<()> {
     use tokio::io::{AsyncReadExt, AsyncWriteExt};
     let listener = tokio::net::UnixListener::bind(&owner.socket)?;
     fs::set_permissions(&owner.socket, fs::Permissions::from_mode(0o600))?;
@@ -140,14 +148,18 @@ pub async fn listen(owner: &Ownership, origin: &str) -> io::Result<()> {
             let message: Value = serde_json::from_slice(&bytes)?;
             if message["protocol"] != 1
                 || message["root"] != json!(root)
-                || message["operation"] != "status"
+                || !matches!(message["operation"].as_str(), Some("status" | "quit"))
             {
                 return Ok(());
             }
             let reply =
                 json!({"protocol": 1, "root": root, "version": crate::VERSION, "origin": origin});
             stream.write_all(reply.to_string().as_bytes()).await?;
-            stream.shutdown().await
+            stream.shutdown().await?;
+            if message["operation"] == "quit" {
+                let _ = shutdown.send(true);
+            }
+            Ok(())
         })
         .await;
     }

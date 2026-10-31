@@ -1,5 +1,6 @@
 pub mod assets;
 pub mod control;
+pub mod launch;
 
 pub async fn serve(root: &std::path::Path) -> std::io::Result<()> {
     use axum::{
@@ -11,6 +12,7 @@ pub async fn serve(root: &std::path::Path) -> std::io::Result<()> {
     let owner = control::Ownership::acquire(root)?;
     let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await?;
     let origin = format!("http://{}", listener.local_addr()?);
+    println!("{origin}");
     let app = Router::new().fallback(axum::routing::get(|uri: Uri| async move {
         match assets::get(uri.path()) {
             Some(bytes) => {
@@ -33,14 +35,15 @@ pub async fn serve(root: &std::path::Path) -> std::io::Result<()> {
                 .expect("static response"),
         }
     }));
-    let server = axum::serve(listener, app).with_graceful_shutdown(async {
+    let (shutdown, mut stopping) = tokio::sync::watch::channel(false);
+    let server = axum::serve(listener, app).with_graceful_shutdown(async move {
         let mut terminate =
             tokio::signal::unix::signal(tokio::signal::unix::SignalKind::terminate())
                 .expect("signal handler");
-        tokio::select! { _ = tokio::signal::ctrl_c() => (), _ = terminate.recv() => () }
+        tokio::select! { _ = tokio::signal::ctrl_c() => (), _ = terminate.recv() => (), _ = stopping.changed() => () }
     });
     tokio::select! {
         result = server => result,
-        result = control::listen(&owner, &origin) => result,
+        result = control::listen(&owner, &origin, shutdown) => result,
     }
 }

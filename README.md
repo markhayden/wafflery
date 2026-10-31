@@ -19,7 +19,11 @@ bun run --cwd ui dev
 
 The UI opens at `http://127.0.0.1:5173`. To develop the shared component in Storybook,
 run `bun run --cwd ui storybook` and open `http://127.0.0.1:6006`.
-The Rust executable currently supports help/version only; the HTTP host is M1.
+The M1 host now serves the embedded UI. Run `cargo run -- --foreground --no-open` to keep
+it attached to the terminal, or `cargo run -- --no-open` to start/attach to a detached host
+and print its local address. Omit `--no-open` to open the browser. `--tool rascal` selects a
+workspace context; registration and execution are still being built. Development/tests can
+isolate their data with `--data-dir <path>`. Closing a browser tab does not quit the host.
 
 ```sh
 bun run --cwd ui typecheck
