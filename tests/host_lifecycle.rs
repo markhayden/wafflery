@@ -148,6 +148,7 @@ fn an_incompatible_live_host_is_refused_without_starting_another() {
     let data = temp.path().join("data");
     let owner = wafflehouse::host::control::Ownership::acquire(&data).unwrap();
     let listener = UnixListener::bind(&owner.socket).unwrap();
+    owner.publish().unwrap();
     let root = owner.root.clone();
     let server = std::thread::spawn(move || {
         let (mut stream, _) = listener.accept().unwrap();
@@ -165,4 +166,29 @@ fn an_incompatible_live_host_is_refused_without_starting_another() {
     assert_eq!(result.status.code(), Some(69));
     assert!(String::from_utf8_lossy(&result.stderr).contains("incompatible host"));
     assert!(owner.socket.exists());
+}
+
+#[test]
+fn launchers_with_a_different_temporary_directory_attach_to_the_existing_host() {
+    let temp = tempfile::tempdir().unwrap();
+    let root = temp.path().join("data");
+    let _host = start(&root);
+    let state = ready(&root);
+    let alternate = temp.path().join("different-temp");
+    std::fs::create_dir(&alternate).unwrap();
+    let result = Command::new(env!("CARGO_BIN_EXE_wafflehouse"))
+        .args(["--no-open", "--data-dir"])
+        .arg(&root)
+        .env("TMPDIR", &alternate)
+        .output()
+        .unwrap();
+    assert!(
+        result.status.success(),
+        "{}",
+        String::from_utf8_lossy(&result.stderr)
+    );
+    assert_eq!(
+        String::from_utf8(result.stdout).unwrap().trim(),
+        format!("{}/", state["origin"].as_str().unwrap())
+    );
 }

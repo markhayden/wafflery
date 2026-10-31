@@ -1,9 +1,8 @@
 import { test, expect } from "@playwright/test";
 import { spawn, type ChildProcess } from "node:child_process";
-import { mkdtemp, realpath, rm } from "node:fs/promises";
+import { mkdtemp, readFile, realpath, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
-import { createHash } from "node:crypto";
 import { createConnection } from "node:net";
 
 let child: ChildProcess;
@@ -14,9 +13,9 @@ let origin: string;
 // Test-only private IPC client; production browser code never accesses host discovery.
 async function control(operation: string): Promise<{ bootstrap: string }> {
   const canonical = await realpath(root);
-  const hash = createHash("sha256").update(canonical).digest("hex").slice(0, 32);
+  const discovery = JSON.parse(await readFile(join(root, "host.json"), "utf8")) as { socket: string };
   return new Promise((resolveReply, reject) => {
-    const socket = createConnection(join(tmpdir(), `wh-${process.getuid?.()}`, `${hash}.sock`));
+    const socket = createConnection(discovery.socket);
     let response = "";
     socket.setTimeout(2000, () => socket.destroy(new Error("control timeout")));
     socket.on("error", reject);

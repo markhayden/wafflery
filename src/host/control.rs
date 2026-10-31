@@ -50,6 +50,18 @@ fn socket_path(root: &Path) -> io::Result<PathBuf> {
 }
 
 impl Ownership {
+    /// Publish only after binding the socket; a discovery file alone never proves readiness.
+    pub fn publish(&self) -> io::Result<()> {
+        fs::set_permissions(&self.socket, fs::Permissions::from_mode(0o600))?;
+        let mut record = tempfile::NamedTempFile::new_in(&self.root)?;
+        serde_json::to_writer(&mut record, &json!({"socket": self.socket}))?;
+        record.as_file().sync_all()?;
+        record
+            .persist(self.root.join("host.json"))
+            .map_err(|error| error.error)?;
+        Ok(())
+    }
+
     pub fn acquire(root: &Path) -> io::Result<Self> {
         private_directory(root)?;
         let root = root.canonicalize()?;
@@ -97,12 +109,59 @@ impl Ownership {
 impl Drop for Ownership {
     fn drop(&mut self) {
         let _ = fs::remove_file(&self.socket);
+        let _ = fs::remove_file(self.root.join("host.json"));
     }
 }
 
 pub fn request(root: &Path, operation: &str) -> io::Result<Value> {
     let root = root.canonicalize()?;
-    let mut stream = UnixStream::connect(socket_path(&root)?)?;
+    let record = OpenOptions::new()
+        .read(true)
+        .custom_flags(nix::libc::O_NOFOLLOW | nix::libc::O_NONBLOCK)
+        .open(root.join("host.json"))?;
+    let metadata = record.metadata()?;
+    if !metadata.is_file()
+        || metadata.uid() != nix::unistd::geteuid().as_raw()
+        || metadata.mode() & 0o077 != 0
+        || metadata.len() > 4096
+    {
+        return Err(io::Error::new(
+            io::ErrorKind::InvalidData,
+            "invalid host discovery record",
+        ));
+    }
+    let discovery: Value = serde_json::from_reader(record.take(4097))?;
+    let socket = Path::new(
+        discovery["socket"]
+            .as_str()
+            .ok_or_else(|| io::Error::new(io::ErrorKind::InvalidData, "missing control socket"))?,
+    );
+    let directory =
+        fs::symlink_metadata(socket.parent().ok_or_else(|| {
+            io::Error::new(io::ErrorKind::InvalidData, "invalid control directory")
+        })?)?;
+    if !socket.is_absolute()
+        || !directory.is_dir()
+        || directory.uid() != nix::unistd::geteuid().as_raw()
+        || directory.mode() & 0o077 != 0
+    {
+        return Err(io::Error::new(
+            io::ErrorKind::InvalidData,
+            "control directory is not private",
+        ));
+    }
+    let metadata = fs::symlink_metadata(socket)?;
+    use std::os::unix::fs::FileTypeExt;
+    if !metadata.file_type().is_socket()
+        || metadata.uid() != nix::unistd::geteuid().as_raw()
+        || metadata.mode() & 0o077 != 0
+    {
+        return Err(io::Error::new(
+            io::ErrorKind::InvalidData,
+            "invalid private control socket",
+        ));
+    }
+    let mut stream = UnixStream::connect(socket)?;
     stream.set_read_timeout(Some(Duration::from_secs(2)))?;
     stream.set_write_timeout(Some(Duration::from_secs(2)))?;
     let message = json!({"protocol": 1, "root": root, "operation": operation});
@@ -134,7 +193,7 @@ pub async fn listen(
 ) -> io::Result<()> {
     use tokio::io::{AsyncReadExt, AsyncWriteExt};
     let listener = tokio::net::UnixListener::bind(&owner.socket)?;
-    fs::set_permissions(&owner.socket, fs::Permissions::from_mode(0o600))?;
+    owner.publish()?;
     loop {
         let (mut stream, _) = listener.accept().await?;
         let root = owner.root.clone();
