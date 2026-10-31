@@ -19,12 +19,15 @@ installation remains gated on an actual release artifact. [Source inventory](../
 
 Lookup order: explicit absolute **`WAFFLEHOUSE_BIN`**, then PATH `wafflehouse`, then
 `~/.local/bin/wafflehouse`. An invalid explicit override fails with an actionable message;
-do not fall through to an unrelated executable. Check it is an executable regular file.
+do not fall through to an unrelated executable (exit 69, naming the invalid variable). Check
+it is an executable regular file after following symlinks; Homebrew-style symlinks are valid.
 This binary location is separate from `~/Library/Application Support/Wafflehouse`, which stores
 library/settings/tool workspaces. Installation must not rewrite shell profiles or require sudo.
 
 When absent in an interactive terminal, explain that Wafflehouse is a separate shared local
-program and offer installation. No leaves the system unchanged and returns 0. Yes invokes only
+program and offer installation. Interactive means stdin and stderr are both terminals; the
+prompt goes to stderr, defaults to No, and EOF means No. No leaves the system unchanged and
+returns 0. Yes invokes only
 the owner-agreed versioned installer/release artifact, verifies it, installs to `~/.local/bin`,
 then invokes that absolute path. On a noninteractive invocation, return 69 with instructions;
 never prompt indefinitely or infer consent. A failed installation does not open a browser.
@@ -33,6 +36,13 @@ The release channel, artifact naming, integrity/signature mechanism and first pu
 still require the distribution decision. Do not invent a live URL now. Launcher implementations
 can complete against an injected fake installer/executable; production auto-install remains
 explicitly unavailable until the approved artifact exists. No hidden curl-to-shell fallback.
+An accepted offer before that artifact exists returns 69 without installing anything. Inject
+fake installers through a test-only implementation seam; no public installer override is
+needed for this milestone. The approved installer will take `--prefix <absolute-bin-directory>`;
+success requires exit 0 and a valid installed executable, otherwise return 74.
+
+Each tool's `playground` subcommand takes no extra arguments (exit 64 otherwise), and invokes
+exactly `--tool <id>`. It does not forward arbitrary flags to the host.
 
 | Exit | Meaning |
 |---|---|
@@ -42,6 +52,10 @@ explicitly unavailable until the approved artifact exists. No hidden curl-to-she
 | 70 | Host startup/internal failure |
 | 74 | Installation or local I/O failure |
 | 130 | User interrupted launcher/installer |
+| 143 | Launcher/installer terminated by SIGTERM |
+
+Other signal deaths map to 128 plus the signal number. Host exit codes, including 70 and 74,
+pass through unchanged. When no host executable exists, the tool itself returns 69.
 
 Browser-launch failure prints the ready local address and reports a failure rather than claiming
 the browser opened. Browser bootstrap material is short-lived and must not enter ordinary logs.

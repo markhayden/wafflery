@@ -6,6 +6,14 @@ rust-version = "1.99"
 publish = false
 description = "A local workshop for visual pipeline tools"
 
+[dependencies]
+axum = "=0.8.9"
+tokio = { version = "=1.54.1", features = ["rt-multi-thread", "macros", "net", "io-util", "sync", "time", "signal", "process"] }
+serde = { version = "=1.0.229", features = ["derive"] }
+serde_json = "=1.0.154"
+sha2 = "=0.11.1"
+nix = { version = "=0.31.3", features = ["user", "process", "fs"] }
+
 [build-dependencies]
 serde_json = "=1.0.154"
 sha2 = "=0.11.1"
@@ -13,6 +21,7 @@ sha2 = "=0.11.1"
 [dev-dependencies]
 serde_json = "=1.0.154"
 sha2 = "=0.11.1"
+tempfile = "=3.27.0"
 
 [lints.rust]
 unsafe_code = "forbid"
