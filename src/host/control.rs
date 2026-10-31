@@ -130,6 +130,7 @@ pub async fn listen(
     owner: &Ownership,
     origin: &str,
     shutdown: tokio::sync::watch::Sender<bool>,
+    auth: super::auth::Auth,
 ) -> io::Result<()> {
     use tokio::io::{AsyncReadExt, AsyncWriteExt};
     let listener = tokio::net::UnixListener::bind(&owner.socket)?;
@@ -148,12 +149,18 @@ pub async fn listen(
             let message: Value = serde_json::from_slice(&bytes)?;
             if message["protocol"] != 1
                 || message["root"] != json!(root)
-                || !matches!(message["operation"].as_str(), Some("status" | "quit"))
+                || !matches!(
+                    message["operation"].as_str(),
+                    Some("status" | "quit" | "bootstrap")
+                )
             {
                 return Ok(());
             }
-            let reply =
+            let mut reply =
                 json!({"protocol": 1, "root": root, "version": crate::VERSION, "origin": origin});
+            if message["operation"] == "bootstrap" {
+                reply["bootstrap"] = json!(auth.issue()?);
+            }
             stream.write_all(reply.to_string().as_bytes()).await?;
             stream.shutdown().await?;
             if message["operation"] == "quit" {

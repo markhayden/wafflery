@@ -124,6 +124,11 @@ pub fn attach(options: &Options) -> io::Result<String> {
     if options.no_open {
         println!("{url}");
     } else {
+        let bootstrap = control::request(&options.root, "bootstrap")?;
+        let token = bootstrap["bootstrap"]
+            .as_str()
+            .ok_or_else(|| io::Error::other("host omitted browser bootstrap"))?;
+        url.push_str(&format!("#bootstrap={token}"));
         open_browser(&url).inspect_err(|_| {
             eprintln!("Host is ready at {origin}; browser handoff failed.");
         })?;

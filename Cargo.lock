@@ -633,12 +633,14 @@ name = "wafflehouse"
 version = "0.1.0"
 dependencies = [
  "axum",
+ "getrandom",
  "nix",
  "serde",
  "serde_json",
  "sha2",
  "tempfile",
  "tokio",
+ "tower",
 ]
 
 [[package]]
