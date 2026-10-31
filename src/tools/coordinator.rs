@@ -502,6 +502,24 @@ impl Coordinator {
         self.stopping.store(true, Ordering::Release);
         true
     }
+    pub async fn cleanup(
+        &self,
+        selection: crate::library::cleanup::Selection,
+        token: String,
+    ) -> Result<crate::library::cleanup::Outcome> {
+        let _submission = self.submission.lock().await;
+        self.reap_exited().await;
+        if self.stopping.load(Ordering::Acquire) || !self.active.lock().await.is_empty() {
+            return Err(Error::Conflict(
+                "Wait until all tool activity has stopped before cleaning the library",
+            ));
+        }
+        let result = crate::library::cleanup::Cleanup(self.assets.clone())
+            .confirm(selection, token)
+            .await?;
+        self.events.changed();
+        Ok(result)
+    }
     pub async fn close(&self) -> bool {
         let mut stopped = true;
         for entry in self.tools.values() {

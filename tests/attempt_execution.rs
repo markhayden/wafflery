@@ -225,6 +225,7 @@ async fn cancellation_without_a_run_reference_stays_unconfirmed_and_reserved() {
     another.id = "attempt-2".into();
     assert!(c.submit(another).await.is_err());
     assert!(!c.try_quit().await);
+    assert!(c.cleanup(Default::default(), String::new()).await.is_err());
     let result: serde_json::Value =
         serde_json::from_slice(&std::fs::read(dir.path().join("runs/run-0001/run.json")).unwrap())
             .unwrap();

@@ -22,7 +22,8 @@ pub fn router(coordinator: Arc<Coordinator>) -> Router {
         .with_state(coordinator.clone())
         .merge(super::event_api::router(coordinator.events.clone()))
         .merge(super::example_api::router(coordinator.clone()))
-        .merge(super::export_api::router(coordinator))
+        .merge(super::export_api::router(coordinator.clone()))
+        .merge(super::cleanup_api::router(coordinator))
 }
 pub struct ApiError(pub Error);
 impl<E: Into<Error>> From<E> for ApiError {

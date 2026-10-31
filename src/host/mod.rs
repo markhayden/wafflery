@@ -2,6 +2,7 @@ pub mod api;
 mod asset_api;
 pub mod assets;
 pub mod auth;
+mod cleanup_api;
 pub mod control;
 mod event_api;
 mod example_api;

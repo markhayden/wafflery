@@ -1,6 +1,7 @@
 pub mod assets;
 pub mod attempts;
 pub mod baselines;
+pub mod cleanup;
 pub mod db;
 pub mod examples;
 pub mod export;
