@@ -1,0 +1,24 @@
+{
+  "version": 1,
+  "inputs": {
+    "scripts/build-ui.ts": "0fbdfa1de3a5f914b6e45f49ef034b5d27ae1ae6f7f759959f00604ac8f64ee3",
+    "scripts/check-ui.ts": "b0c221eeec45d5b7bdfe81781c2635f448213346d5e73ce8c85f974c27063d05",
+    "scripts/ui-manifest.ts": "7d1f54ac5a1cd4164cbc61b5385b59c6138c01eda8e72ca18b2aa4f319284e89",
+    "ui/bun.lock": "ed6f289670cecf1f4f5acba761e2a3234e40fd0a7b053ecfbee49ac9500a19b9",
+    "ui/index.html": "19516a49667e60032840181509e35593e257282f7393c8443e44c27bc955dbcb",
+    "ui/package.json": "c476adf9bc670a23ffa23b96e6e47833559625ccc9c869b5c324f9b9c7d638f4",
+    "ui/src/App.tsx": "9b1e07e5347cc4c4b81078c45537dfa8cb645aa2580cb280ef5e3cb211a90b7a",
+    "ui/src/components/Button.module.css": "1ce502acb9d2561471ba7dffe4536d78bd51553a169a36a8fa230502499a9d1a",
+    "ui/src/components/Button.stories.tsx": "489b0b293bbeb9f5813829a79bc9e78c5ddffa0116d71b0582985750716136fa",
+    "ui/src/components/Button.tsx": "bc7584fc14721cdbeac44997718fbc76da4430695e440f95c22fdd31b4524e6a",
+    "ui/src/main.tsx": "3458a38ae3d7a0543bf876cf4bc0de43096a4ffb986f143e6fab86b5016833d8",
+    "ui/src/tokens.css": "3b4d0de4533eb0798cdae8cf25081ca9eeaf5a0e5568f3f550063c24c9618e30",
+    "ui/tsconfig.json": "cb18bc2ac7dda71c2c6b1688c5af0722292143bafb109a84a1d8464e28733ffe",
+    "ui/vite.config.ts": "3aec7d6174ffca99d4d5288bea2f837d5e91335cbd7135a9682e6d18a40476b4"
+  },
+  "outputs": {
+    "assets/index-BrJwQh8J.js": "eff1ca3a4b2ec7c8c84305cc9d4811779dda66e531edd599246ee731d56ba930",
+    "assets/index-DqhqDzrn.css": "66b67322b3c485642f65d409e9c0b26110caf97a6d17f45a5c8f0fa3052ba406",
+    "index.html": "4fd3943bcfaa092b44708f74b6d38ec86adea391d61e47c9631d2c5897901a74"
+  }
+}
