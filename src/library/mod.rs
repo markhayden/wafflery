@@ -9,6 +9,8 @@ pub enum Error {
     Io(#[from] std::io::Error),
     #[error("library schema {0} requires a newer Wafflehouse")]
     NewerSchema(i64),
+    #[error("library schema revision {0} is invalid")]
+    InvalidSchema(i64),
     #[error("the library worker is unavailable")]
     Unavailable,
     #[error("{0}")]

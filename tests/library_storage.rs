@@ -133,3 +133,16 @@ fn database_symlinks_are_not_followed() {
     assert!(Database::open(&link).is_err());
     assert_eq!(std::fs::read_to_string(original).unwrap(), "untouched");
 }
+
+#[test]
+fn invalid_schema_revisions_are_reported_without_worker_panics() {
+    let temp = tempfile::tempdir().unwrap();
+    let path = temp.path().join("library.sqlite3");
+    let connection = rusqlite::Connection::open(&path).unwrap();
+    connection.pragma_update(None, "user_version", -1).unwrap();
+    drop(connection);
+    assert!(matches!(
+        Database::open(&path),
+        Err(wafflehouse::library::Error::InvalidSchema(-1))
+    ));
+}

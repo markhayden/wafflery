@@ -148,6 +148,9 @@ fn open_connection(path: &Path) -> Result<Connection> {
         include_str!("migrations/002-assets.sql"),
     ];
     let latest = MIGRATIONS.len() as i64;
+    if version < 0 {
+        return Err(Error::InvalidSchema(version));
+    }
     if version > latest {
         return Err(Error::NewerSchema(version));
     }
