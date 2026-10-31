@@ -146,6 +146,7 @@ fn open_connection(path: &Path) -> Result<Connection> {
     const MIGRATIONS: &[&str] = &[
         include_str!("migrations/001-library.sql"),
         include_str!("migrations/002-assets.sql"),
+        include_str!("migrations/003-attempts.sql"),
     ];
     let latest = MIGRATIONS.len() as i64;
     if version < 0 {

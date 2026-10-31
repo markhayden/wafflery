@@ -1,8 +1,15 @@
 pub mod assets;
+pub mod attempts;
 pub mod db;
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
+    #[error(transparent)]
+    Json(#[from] serde_json::Error),
+    #[error("{0}")]
+    Conflict(&'static str),
+    #[error("{0}")]
+    Missing(&'static str),
     #[error(transparent)]
     Sql(#[from] rusqlite::Error),
     #[error(transparent)]

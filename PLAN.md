@@ -213,6 +213,11 @@ join these tracks rather than forcing a dependency that does not exist.
 - **Verify:** Count calls at fake: prohibited/stale actions cause zero execution requests. Test bypass via direct API, duplicate tabs/clicks, same ID/different body, busy tool and pre-run rejection.
 - **Depends:** F10a/F07b. **Commit:** `guard and persist dispatch` with the appropriate conventional prefix.
 
+F11a is implemented in three verified commits to keep its storage and wire boundaries reviewable:
+F11a.1 stores immutable submissions and restart state; F11a.2 persists the SDK-assigned request
+identity before transport writes; F11a.3 adds reservation, fresh cost/schema checks and the API.
+These preserve the acceptance criteria above; no dispatch is exposed before F11a.3.
+
 ### F11b — Preserve terminal contract evidence
 
 - **Accept:** Bind explicit result run identity, persist result then capture verified output/journal/location evidence; separate native/report preservation categories and incomplete saves.

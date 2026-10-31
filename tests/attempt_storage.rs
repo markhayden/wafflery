@@ -1,0 +1,43 @@
+use serde_json::json;
+use wafflehouse::library::{
+    assets::AssetStore,
+    attempts::{AttemptStore, Submission},
+};
+#[tokio::test]
+async fn submission_is_immutable_idempotent_and_restart_never_replays_it() {
+    let root = tempfile::tempdir().unwrap();
+    let assets = AssetStore::open(&root.path().join("Library")).unwrap();
+    let store = AttemptStore::new(assets.database.clone());
+    let submission: Submission = serde_json::from_value(json!({"id":"attempt-1","tool":"fixture","action":"mark_band","revision":"a","params":{"label":"original"},"images":{}})).unwrap();
+    store
+        .create(
+            submission.clone(),
+            json!({"label":"original"}),
+            json!({}),
+            json!({}),
+        )
+        .await
+        .unwrap();
+    let saved = store.find(&submission).await.unwrap().unwrap();
+    assert_eq!(saved.request.params["label"], "original");
+    let mut changed = submission.clone();
+    changed.params = json!({"label":"different"});
+    assert!(store.find(&changed).await.is_err());
+    store
+        .record_wire(
+            "attempt-1",
+            json!({"id":7,"params":{"_meta":{"progressToken":4}}}),
+        )
+        .await
+        .unwrap();
+    assert_eq!(store.get("attempt-1").await.unwrap().wire.unwrap()["id"], 7);
+    assets.database.shutdown().await.unwrap();
+    let assets = AssetStore::open(&root.path().join("Library")).unwrap();
+    let store = AttemptStore::new(assets.database.clone());
+    store.recover().await.unwrap();
+    let saved = store.get("attempt-1").await.unwrap();
+    assert_eq!(saved.execution, "interrupted");
+    assert_eq!(saved.request.params["label"], "original");
+    assert_eq!(saved.wire.unwrap()["params"]["_meta"]["progressToken"], 4);
+    assets.database.shutdown().await.unwrap();
+}
