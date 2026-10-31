@@ -19,3 +19,5 @@ Usage: wafflehouse [--tool <id>] [--no-open] [--data-dir <path>]
 The default launcher starts or attaches to a detached local host.";
 
 pub mod tools;
+
+pub mod events;

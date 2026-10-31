@@ -1,3 +1,4 @@
+import {watchWorkspace} from "../../api/events";
 import {useEffect,useMemo,useRef,useState} from "react";
 import type {LocalApi} from "../../api/client";
 import {assetClient,type Asset} from "../../api/assets";
@@ -11,26 +12,29 @@ import {ImageCompare,type CompareImage} from "../../components/ImageCompare";
 import {Inspector} from "./Inspector";
 import styles from "./Workspace.module.css";
 export function Workspace({api,initial}:{api:LocalApi;initial:Snapshot}) {
+ const [snapshot,setSnapshot]=useState(initial);
+ const [connection,setConnection]=useState("");
  const client=useMemo(()=>workspaceClient(api),[api]),assets=useMemo(()=>assetClient(api),[api]);
  const preferred=new URLSearchParams(window.location.search).get("tool");
- const [toolId,setToolId]=useState(initial.tools.find(t=>t.id===preferred)?.id??initial.tools[0]?.id??"");
- const tool=initial.tools.find(tool=>tool.id===toolId);const declaration=tool?.declaration;
+ const [toolId,setToolId]=useState(snapshot.tools.find(t=>t.id===preferred)?.id??snapshot.tools[0]?.id??"");
+ const tool=snapshot.tools.find(tool=>tool.id===toolId);const declaration=tool?.declaration;
  const [actionId,setActionId]=useState(declaration?.document.actions[0]?.name??"");
  const action=declaration?.document.actions.find(a=>a.name===actionId);
  const [params,setParams]=useState<Schema>(()=>initialParameters(action?.params_schema??{}));
  const [images,setImages]=useState<Record<string,Asset[]>>({});const [savedImages,setSavedImages]=useState<Asset[]>([]);
- const [selected,setSelected]=useState<Attempt|undefined>(initial.attempts.find(a=>a.request.tool===toolId));
- const [recent,setRecent]=useState(initial.attempts);const [busy,setBusy]=useState(false),[error,setError]=useState<string>();
+ const [selected,setSelected]=useState<Attempt|undefined>(snapshot.attempts.find(a=>a.request.tool===toolId));
+ const [recent,setRecent]=useState(snapshot.attempts);const [busy,setBusy]=useState(false),[error,setError]=useState<string>();
  const [drawer,setDrawer]=useState<{opener:HTMLElement}|null>(null);const submitted=useRef<{body:string;request:Submission}|null>(null);
  useEffect(()=>{void assets.list().then(setSavedImages).catch(()=>{});},[assets]);
- // Active-only refresh for this execution slice; F13 replaces it with bounded invalidations.
  useEffect(()=>{
-  if(!selected||!["submitted","running"].includes(selected.execution)&&selected.preservation.contract!=="pending")return;
-  let active=true;let timer:ReturnType<typeof setTimeout>;
-  const refresh=async()=>{try{const attempt=await client.attempt(selected.id);if(active){setSelected(attempt);setRecent(values=>[attempt,...values.filter(value=>value.id!==attempt.id)]);}}catch(failure){if(active)setError(failure instanceof Error?failure.message:"Unable to refresh attempt.");}if(active)timer=setTimeout(()=>{void refresh();},500);};
-  timer=setTimeout(()=>{void refresh();},200);return()=>{active=false;clearTimeout(timer);};
- },[selected?.id,selected?.execution,selected?.preservation.contract,client]);
- function chooseTool(id:string){setToolId(id);const action=initial.tools.find(t=>t.id===id)?.declaration?.document.actions[0];setActionId(action?.name??"");setParams(initialParameters(action?.params_schema??{}));setImages({});setSelected(undefined);setError(undefined);submitted.current=null;}
+  const controller=new AbortController();
+  if(initial.event_session)void watchWorkspace(api,initial.event_session,async()=>{
+   const next=await client.snapshot();if(controller.signal.aborted)return;
+   setSnapshot(next);setRecent(next.attempts);setSelected(previous=>next.attempts.find(a=>a.id===previous?.id)??previous??next.attempts[0]);
+  },message=>{if(!controller.signal.aborted)setConnection(message);},controller.signal);
+  return()=>controller.abort();
+ },[api,client,initial.event_session]);
+ function chooseTool(id:string){setToolId(id);const action=snapshot.tools.find(t=>t.id===id)?.declaration?.document.actions[0];setActionId(action?.name??"");setParams(initialParameters(action?.params_schema??{}));setImages({});setSelected(undefined);setError(undefined);submitted.current=null;}
  function chooseAction(id:string){setActionId(id);setParams(initialParameters(declaration?.document.actions.find(a=>a.name===id)?.params_schema??{}));setImages({});setSelected(undefined);setError(undefined);submitted.current=null;}
  async function run(){
   if(!action||!declaration||busy)return;setError(undefined);setBusy(true);
@@ -45,8 +49,9 @@ export function Workspace({api,initial}:{api:LocalApi;initial:Snapshot}) {
  const source=selected?Object.values(selected.inputs).flat()[0]:undefined,candidate=selected?.outputs[0];
  const left:CompareImage|undefined=source?{...source,label:"Source"}:undefined,right:CompareImage|undefined=candidate?{...candidate,label:"Candidate"}:undefined;
  return <div className={styles.workspace}>
-  <div className={styles.pickers}><Picker label="Tool" value={toolId} onChange={chooseTool} choices={initial.tools.map(t=>({id:t.id,title:t.declaration?.document.tool.name??t.id,description:t.error??`Version ${t.declaration?.document.tool.version??"unknown"}`}))}/><Picker label="Action" value={actionId} onChange={chooseAction} disabled={!declaration} choices={(declaration?.document.actions??[]).map(a=>({id:a.name,title:a.title,description:(a.images??[]).length?"Image → Result":"Parameters → Result"}))}/></div>
+  <div className={styles.pickers}><Picker label="Tool" value={toolId} onChange={chooseTool} choices={snapshot.tools.map(t=>({id:t.id,title:t.declaration?.document.tool.name??t.id,description:t.error??`Version ${t.declaration?.document.tool.version??"unknown"}`}))}/><Picker label="Action" value={actionId} onChange={chooseAction} disabled={!declaration} choices={(declaration?.document.actions??[]).map(a=>({id:a.name,title:a.title,description:(a.images??[]).length?"Image → Result":"Parameters → Result"}))}/></div>
   {declaration&&<p className={styles.note}>{declaration.document.tool.purpose}</p>}
+  {connection&&<p role="status">{connection}</p>}
   {tool?.error&&<p role="alert">{tool.error}</p>}
   <div className={styles.columns}>
    <form className={styles.panel} onSubmit={event=>{event.preventDefault();void run();}}><h2>Input</h2>
@@ -55,7 +60,7 @@ export function Workspace({api,initial}:{api:LocalApi;initial:Snapshot}) {
     {error&&<p role="alert">{error}</p>}<div className={styles.run}><p>{action?.cost.may_spend?"Paid actions are unavailable in this foundation.":"Free action · Inputs are saved locally"}</p><Button type="submit" busy={busy} disabled={!action||action.cost.may_spend||!!working}>Run</Button></div>
    </form>
    <section className={styles.panel} aria-label="Result"><div className={styles.resultHeading}><h2>Result</h2><span role="status">{selected?selected.execution:"Ready"}</span></div>
-    {selected?<><ImageCompare left={left} right={right} load={assets.preview}/><div className={styles.resultHeading}><p>Saved attempt · {selected.id.slice(0,8)}</p><Button onClick={event=>setDrawer({opener:event.currentTarget})}>Inspect run</Button></div><p className={styles.note}>Contract evidence: {selected.preservation.contract}. Editing the inputs starts a new draft.</p>{selected.notices.map((notice,index)=><p className={styles.note} key={index}>{notice}</p>)}</>:<div className={styles.empty}><p>Choose your inputs and run an action.</p><p>The result and its saved evidence will appear here.</p></div>}
+    {selected?<>{working&&tool?.progress?.message&&<p className={styles.note}>{tool.progress.message}</p>}<ImageCompare left={left} right={right} load={assets.preview}/><div className={styles.resultHeading}><p>Saved attempt · {selected.id.slice(0,8)}</p><Button onClick={event=>setDrawer({opener:event.currentTarget})}>Inspect run</Button></div><p className={styles.note}>Contract evidence: {selected.preservation.contract}. Editing the inputs starts a new draft.</p>{selected.notices.map((notice,index)=><p className={styles.note} key={index}>{notice}</p>)}</>:<div className={styles.empty}><p>Choose your inputs and run an action.</p><p>The result and its saved evidence will appear here.</p></div>}
    </section>
   </div>
   {recent.length>0&&<section className={styles.recent} aria-label="Recent attempts"><h2>Recent attempts</h2>{recent.slice(0,6).map(attempt=><Button key={attempt.id} onClick={()=>setSelected(attempt)}>{attempt.request.action} · {attempt.execution} · {attempt.id.slice(0,8)}</Button>)}</section>}

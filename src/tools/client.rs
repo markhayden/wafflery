@@ -56,7 +56,10 @@ impl ClientHandler for Handler {
         _: NotificationContext<RoleClient>,
     ) {
         // Display-only data: never scrape the message for a run identity.
-        if let Ok(value) = serde_json::to_value(params) {
+        if let Ok(mut value) = serde_json::to_value(params) {
+            if let Some(message) = value["message"].as_str() {
+                value["message"] = json!(message.chars().take(2048).collect::<String>());
+            }
             self.progress.send_replace(Some(value));
         }
     }

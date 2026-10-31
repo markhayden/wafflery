@@ -25,6 +25,7 @@ struct Active {
 }
 pub struct Coordinator {
     pub assets: AssetStore,
+    pub events: crate::events::Events,
     pub attempts: AttemptStore,
     tools: BTreeMap<String, Entry>,
     submission: Mutex<()>,
@@ -83,6 +84,7 @@ impl Coordinator {
         }
         Ok(Self {
             assets,
+            events: crate::events::Events::new()?,
             attempts,
             tools,
             submission: Mutex::new(()),
@@ -100,8 +102,10 @@ impl Coordinator {
             .ok_or_else(|| Error::Invalid("This tool has no supported declaration".into()))
     }
     pub async fn snapshot(&self) -> Result<Value> {
-        let tools:Vec<_>=self.tools.iter().map(|(id,entry)|json!({"id":id,"declaration":entry.declaration,"error":entry.error,"busy":entry.reservation.available_permits()==0})).collect();
-        Ok(json!({"tools":tools,"attempts":self.attempts.list(None,50).await?}))
+        let tools:Vec<_>=self.tools.iter().map(|(id,entry)|json!({"id":id,"declaration":entry.declaration,"error":entry.error,"busy":entry.reservation.available_permits()==0,"progress":entry.client.as_ref().and_then(|client|client.progress().borrow().clone())})).collect();
+        Ok(
+            json!({"tools":tools,"attempts":self.attempts.list(None,50).await?,"event_session":self.events.session()}),
+        )
     }
     pub async fn submit(self: &Arc<Self>, request: Submission) -> Result<Attempt> {
         if request.id.is_empty()
@@ -238,6 +242,7 @@ impl Coordinator {
             coordinator.execute(client, request, arguments).await;
         });
         self.workers.lock().await.push(worker);
+        self.events.changed();
         Ok(attempt)
     }
     async fn execute(&self, client: Arc<ToolClient>, request: Submission, arguments: Value) {
@@ -256,6 +261,7 @@ impl Coordinator {
                     let attempt = self.attempts.get(&request.id).await?;
                     super::evidence::check_association(&attempt, &result)?;
                     let attempt = self.attempts.bind_result(&request.id, result).await?;
+                    self.events.changed();
                     let (outputs, journal, notices) =
                         super::evidence::capture(&self.assets, &client, &attempt).await;
                     self.attempts
@@ -307,7 +313,9 @@ impl Coordinator {
                     .await;
             }
         }
+        self.events.changed();
     }
+
     pub async fn try_quit(&self) -> bool {
         let _submission = self.submission.lock().await;
         if !self.active.lock().await.is_empty() {

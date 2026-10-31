@@ -3,6 +3,7 @@ mod asset_api;
 pub mod assets;
 pub mod auth;
 pub mod control;
+mod event_api;
 pub mod launch;
 mod run_api;
 
@@ -35,11 +36,13 @@ pub async fn serve(root: &std::path::Path) -> std::io::Result<()> {
         store.clone(),
         Some(coordinator.clone()),
     );
+    let event_shutdown = coordinator.events.clone();
     let server = axum::serve(listener, app).with_graceful_shutdown(async move {
         let mut terminate =
             tokio::signal::unix::signal(tokio::signal::unix::SignalKind::terminate())
                 .expect("signal handler");
         tokio::select! { _ = tokio::signal::ctrl_c() => (), _ = terminate.recv() => (), _ = stopping.changed() => () }
+        event_shutdown.close();
     });
     let result = tokio::select! {
         result = server => result,

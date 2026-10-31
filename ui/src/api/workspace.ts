@@ -5,8 +5,8 @@ import type {Coordinates} from "../components/comparison";
 export type SavedImage={asset:Asset;image:Coordinates;role:string};
 export type Submission={id:string;tool:string;action:string;revision:string;params:Schema;images:Record<string,string[]>};
 export type Attempt={id:string;sequence:number;created_ms:number;request:Submission;arguments:Json;declaration:Declaration;inputs:Record<string,SavedImage[]>;wire:Json;raw_response:Json;result:Json;execution:string;preservation:{contract:string;native:string;report:string};outputs:SavedImage[];journal:Json;notices:string[]};
-export type RegisteredTool={id:string;declaration:Declaration|null;error:string|null;busy:boolean};
-export type Snapshot={tools:RegisteredTool[];attempts:Attempt[]};
+export type RegisteredTool={id:string;declaration:Declaration|null;error:string|null;busy:boolean;progress?:{message?:string}|null};
+export type Snapshot={event_session?:string;tools:RegisteredTool[];attempts:Attempt[]};
 function record(value:unknown):value is Record<string,unknown>{return typeof value==="object"&&value!==null&&!Array.isArray(value);}
 function declaration(value:unknown):value is Declaration {
  if(!record(value)||typeof value.revision!=="string"||!record(value.document)||value.document.contract!=="0.1.0"||!record(value.document.tool)||typeof value.document.tool.name!=="string"||!Array.isArray(value.document.actions))return false;

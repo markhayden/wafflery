@@ -10,8 +10,9 @@
     "ui/src/App.tsx": "efc0beb6ee1cd7707dabdc2bae9b74759697641a279407b2540fc4ff23c33ca4",
     "ui/src/api/assets.ts": "919f5f3b6591aab1a61b3fb93033dc0a403f83fb4bcc9c40eb073fe9b8ba049a",
     "ui/src/api/client.ts": "b5269abe65dc4f0ae6b7f7191b91521814a6458d823d8d263ac95d22c5e4629a",
+    "ui/src/api/events.ts": "e3adfef22b18e9df73485703bd9e34acf2ccefeee21eb82a17653e1a2438c70f",
     "ui/src/api/session.ts": "0e16aa283022013405a8ebcc64c0aa824ef6f97a2932fe87fadba142ded2b326",
-    "ui/src/api/workspace.ts": "fb556e9542f024e49424fee00c7db36ff94dd1f5b37a4a24935b326ce25da09a",
+    "ui/src/api/workspace.ts": "05f43a3013c80b5a4e6e92fbcdebee47009fbbf5a866e78cffe8f860f253c54b",
     "ui/src/components/Button.module.css": "1ce502acb9d2561471ba7dffe4536d78bd51553a169a36a8fa230502499a9d1a",
     "ui/src/components/Button.stories.tsx": "489b0b293bbeb9f5813829a79bc9e78c5ddffa0116d71b0582985750716136fa",
     "ui/src/components/Button.tsx": "bc7584fc14721cdbeac44997718fbc76da4430695e440f95c22fdd31b4524e6a",
@@ -34,7 +35,7 @@
     "ui/src/features/actions/model.ts": "c4d3d81fa494d82527e6cfdacf5adaf8a9160cfb1d7dc6fc041a80cb036056c7",
     "ui/src/features/workspace/Inspector.tsx": "084bc91324680f98d8caab75a4f25470dc9d129062ad594c5e0fa46d23274a45",
     "ui/src/features/workspace/Workspace.module.css": "ac431ce0c083c29ff184e46eebe01463db80625f17b494225c0f6ae60fb03e64",
-    "ui/src/features/workspace/Workspace.tsx": "fd2baaf29215b44ed0958fbd631fe423f1cc22e20ef336721814c1220226425c",
+    "ui/src/features/workspace/Workspace.tsx": "2dbf3edaab1e6fce50095ac81974bd2656c9ab8643803b7de6e3f75433411eae",
     "ui/src/main.tsx": "3458a38ae3d7a0543bf876cf4bc0de43096a4ffb986f143e6fab86b5016833d8",
     "ui/src/tokens.css": "5424ab721405e1fde39937f95329f73eb51031ebe84cba552ee3203ae5450125",
     "ui/tsconfig.json": "cb18bc2ac7dda71c2c6b1688c5af0722292143bafb109a84a1d8464e28733ffe",
@@ -42,7 +43,7 @@
   },
   "outputs": {
     "assets/index-BUHmL5wp.css": "e0fcf2a73331531ae138ad079c4e640e0bee8450c678f6af2abd59a074337e9b",
-    "assets/index-C1AsD_Mp.js": "9c88f8ff20a231c7cbd96abae161a6e3388e357e97f97b87c197eae245baf421",
-    "index.html": "e3a6dc80725d3c717ad4c5e8d0acca52bd87229252a2c1a26c7a19646e1aab53"
+    "assets/index-Dl9TzSha.js": "ac12c0920c8efd352d10ebf3e266f6c5cca460b771d278c0e1b826814fa54bec",
+    "index.html": "4b0077c6830c35c81005fbf6800dcf8badeb883d7898f9d8279cd0d1a7fe021d"
   }
 }
