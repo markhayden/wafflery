@@ -50,3 +50,5 @@ pub fn validate_contract(kind: &str, value: &serde_json::Value) -> Result<()> {
         .validate(value)
         .map_err(|e| Error::Invalid(format!("Invalid contract document: {e}")))
 }
+
+mod dispatch_transport;

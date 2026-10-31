@@ -1,5 +1,6 @@
 // Roots are part of our pinned 2025-11-25 protocol; upgrading requires a new file boundary.
 #![allow(deprecated)]
+use super::dispatch_transport::{Gate, RecordedTransport};
 use super::{Error, Result, registration::Descriptor, validate_contract, validator};
 use rmcp::{
     ClientHandler, RoleClient,
@@ -70,6 +71,7 @@ pub struct Declaration {
 /// Keeps ownership even when initialization fails; close never force-kills a child.
 pub struct ToolClient {
     pub descriptor: Descriptor,
+    pub(crate) gate: Gate,
     child: Mutex<Child>,
     pipes: Option<(ChildStdout, ChildStdin)>,
     service: Mutex<Option<RunningService<RoleClient, Handler>>>,
@@ -99,6 +101,7 @@ impl ToolClient {
         let (progress, _) = watch::channel(None);
         Ok(Self {
             descriptor,
+            gate: Gate::default(),
             child: Mutex::new(child),
             pipes: Some((stdout, stdin)),
             service: Mutex::new(None),
@@ -129,9 +132,19 @@ impl ToolClient {
         };
         let transport =
             AsyncRwTransport::new_client(stdout, stdin).with_max_line_length(32 * 1024 * 1024);
-        let service = tokio::time::timeout(CONTROL_TIMEOUT, serve_client(handler, transport))
-            .await?
-            .map_err(|e| Error::Invalid(format!("MCP initialize failed: {e}")))?;
+        let service = tokio::time::timeout(
+            CONTROL_TIMEOUT,
+            serve_client(
+                handler,
+                RecordedTransport {
+                    inner: transport,
+                    gate: self.gate.clone(),
+                    generation: self.generation.clone(),
+                },
+            ),
+        )
+        .await?
+        .map_err(|e| Error::Invalid(format!("MCP initialize failed: {e}")))?;
         let compatible = service.peer_info().is_some_and(|info| {
             info.protocol_version == ProtocolVersion::V_2025_11_25
                 && info.capabilities.tools.is_some()
@@ -253,11 +266,13 @@ impl ToolClient {
         if let Some(service) = self.service.get_mut().as_mut() {
             let _ = service.close_with_timeout(Duration::from_secs(2)).await;
         }
-        Ok(
-            tokio::time::timeout(Duration::from_secs(2), self.child.get_mut().wait())
-                .await
-                .is_ok(),
-        )
+        match tokio::time::timeout(Duration::from_secs(2), self.child.get_mut().wait()).await {
+            Ok(status) => {
+                status?;
+                Ok(true)
+            }
+            Err(_) => Ok(false),
+        }
     }
 }
 pub fn structured_result(response: &Value) -> Result<Value> {
