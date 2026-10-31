@@ -70,7 +70,9 @@ async fn boundary(State(state): State<HostState>, request: Request, next: Next) 
         ("cache-control", "no-store"),
         ("x-content-type-options", "nosniff"),
         ("x-frame-options", "DENY"),
-        ("referrer-policy", "no-referrer"),
+        // Fetch's Origin algorithm can use null for same-origin POST under no-referrer.
+        // https://fetch.spec.whatwg.org/#append-a-request-origin-header
+        ("referrer-policy", "same-origin"),
         (
             "content-security-policy",
             "default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' blob:; connect-src 'self'; font-src 'self'; object-src 'none'; base-uri 'none'; frame-src 'none'; frame-ancestors 'none'; form-action 'none'",

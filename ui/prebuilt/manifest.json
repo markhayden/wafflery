@@ -6,8 +6,10 @@
     "scripts/ui-manifest.ts": "7d1f54ac5a1cd4164cbc61b5385b59c6138c01eda8e72ca18b2aa4f319284e89",
     "ui/bun.lock": "ed6f289670cecf1f4f5acba761e2a3234e40fd0a7b053ecfbee49ac9500a19b9",
     "ui/index.html": "19516a49667e60032840181509e35593e257282f7393c8443e44c27bc955dbcb",
-    "ui/package.json": "c476adf9bc670a23ffa23b96e6e47833559625ccc9c869b5c324f9b9c7d638f4",
-    "ui/src/App.tsx": "9b1e07e5347cc4c4b81078c45537dfa8cb645aa2580cb280ef5e3cb211a90b7a",
+    "ui/package.json": "155700f2c60e2fec0c4ff8878bf68e7c07df406a2c39e86e3d9c26422845ee07",
+    "ui/src/App.tsx": "7079f3918634ab235c9e29b822a8211e5e6c5010d78d4b46767252537de34d9b",
+    "ui/src/api/client.ts": "0a38a64148524e1c3ffbd998fb971783f20ae274c0446455df1b8fa251431780",
+    "ui/src/api/session.ts": "0e16aa283022013405a8ebcc64c0aa824ef6f97a2932fe87fadba142ded2b326",
     "ui/src/components/Button.module.css": "1ce502acb9d2561471ba7dffe4536d78bd51553a169a36a8fa230502499a9d1a",
     "ui/src/components/Button.stories.tsx": "489b0b293bbeb9f5813829a79bc9e78c5ddffa0116d71b0582985750716136fa",
     "ui/src/components/Button.tsx": "bc7584fc14721cdbeac44997718fbc76da4430695e440f95c22fdd31b4524e6a",
@@ -17,8 +19,8 @@
     "ui/vite.config.ts": "3aec7d6174ffca99d4d5288bea2f837d5e91335cbd7135a9682e6d18a40476b4"
   },
   "outputs": {
-    "assets/index-BrJwQh8J.js": "eff1ca3a4b2ec7c8c84305cc9d4811779dda66e531edd599246ee731d56ba930",
+    "assets/index-CkH5tTbo.js": "e64d7e3254e48fafc5baedc2dd04352581f6ba4f6012f8b1e46202d3385a413a",
     "assets/index-DqhqDzrn.css": "66b67322b3c485642f65d409e9c0b26110caf97a6d17f45a5c8f0fa3052ba406",
-    "index.html": "4fd3943bcfaa092b44708f74b6d38ec86adea391d61e47c9631d2c5897901a74"
+    "index.html": "44e1e8fdbe9a062fdadbeaf7cd690dfa1d6572350b3eb1ce206c978a7aac0aed"
   }
 }
