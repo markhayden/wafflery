@@ -111,12 +111,7 @@ fn migration_failure_rolls_back_and_retains_a_readable_backup() {
     let backup = std::fs::read_dir(temp.path())
         .unwrap()
         .filter_map(|entry| entry.ok())
-        .find(|entry| {
-            entry
-                .file_name()
-                .to_string_lossy()
-                .starts_with("before-v1-")
-        })
+        .find(|entry| entry.file_name().to_string_lossy().starts_with("before-v"))
         .unwrap();
     let connection = rusqlite::Connection::open(backup.path()).unwrap();
     assert_eq!(

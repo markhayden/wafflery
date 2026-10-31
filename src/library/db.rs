@@ -143,12 +143,17 @@ fn open_connection(path: &Path) -> Result<Connection> {
             | OpenFlags::SQLITE_OPEN_NOFOLLOW,
     )?;
     let version: i64 = connection.pragma_query_value(None, "user_version", |row| row.get(0))?;
-    if version > 1 {
+    const MIGRATIONS: &[&str] = &[
+        include_str!("migrations/001-library.sql"),
+        include_str!("migrations/002-assets.sql"),
+    ];
+    let latest = MIGRATIONS.len() as i64;
+    if version > latest {
         return Err(Error::NewerSchema(version));
     }
-    if version < 1 && populated {
+    if version < latest && populated {
         let backup = tempfile::Builder::new()
-            .prefix("before-v1-")
+            .prefix(&format!("before-v{latest}-"))
             .suffix(".sqlite3")
             .tempfile_in(
                 path.parent()
@@ -167,10 +172,12 @@ fn open_connection(path: &Path) -> Result<Connection> {
     connection.pragma_update(None, "synchronous", "FULL")?;
     connection.pragma_update(None, "foreign_keys", true)?;
     connection.pragma_update(None, "trusted_schema", false)?;
-    if version < 1 {
+    if version < latest {
         let transaction = connection.transaction()?;
-        transaction.execute_batch(include_str!("migrations/001-library.sql"))?;
-        transaction.pragma_update(None, "user_version", 1)?;
+        for migration in &MIGRATIONS[version as usize..] {
+            transaction.execute_batch(migration)?;
+        }
+        transaction.pragma_update(None, "user_version", latest)?;
         transaction.commit()?;
     }
     Ok(connection)
