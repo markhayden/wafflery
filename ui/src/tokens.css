@@ -60,3 +60,6 @@ summary { cursor: pointer; }
   .workspace-header, .workspace-main { padding: var(--space-6) var(--space-4); }
   .workspace-empty { padding: var(--space-6); }
 }
+
+.workspace-header > button { margin-left:auto; }
+@media(max-width:30rem){.workspace-header > span {display:none;}}

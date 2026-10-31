@@ -1,3 +1,4 @@
+import {Shutdown} from "./components/Shutdown";
 import { Workspace } from "./features/workspace/Workspace";
 import { workspaceClient, type Snapshot } from "./api/workspace";
 import { Button } from "./components/Button";
@@ -38,6 +39,7 @@ export function App() {
       <header className="workspace-header">
         <strong>wafflehouse</strong>
         <span>Local workspace</span>
+        {api&&<Shutdown api={api}/>}
       </header>
       <main className="workspace-main">
         <h1>Your workshop</h1>
