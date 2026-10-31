@@ -27,6 +27,9 @@ pub fn description(scenario: &str) -> Value {
     if scenario == "bad-schema" {
         document["actions"][0]["params_schema"]["type"] = json!("bogus");
     }
+    if scenario == "malformed-cost" {
+        document["actions"][0]["cost"]["may_spend"] = json!("false");
+    }
     if scenario == "missing-cost" {
         document["actions"][0]
             .as_object_mut()

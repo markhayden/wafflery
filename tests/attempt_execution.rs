@@ -1,0 +1,160 @@
+use serde_json::json;
+use std::{
+    path::{Path, PathBuf},
+    process::Command,
+    sync::{Arc, OnceLock},
+};
+use wafflehouse::{
+    library::{assets::AssetStore, attempts::Submission},
+    tools::{coordinator::Coordinator, registration::Descriptor},
+};
+fn binary() -> PathBuf {
+    static BIN: OnceLock<PathBuf> = OnceLock::new();
+    BIN.get_or_init(|| {
+        assert!(
+            Command::new(env!("CARGO"))
+                .args(["build", "--locked", "--example", "sample-lab"])
+                .status()
+                .unwrap()
+                .success()
+        );
+        Path::new(env!("CARGO_MANIFEST_DIR")).join("target/debug/examples/sample-lab")
+    })
+    .clone()
+}
+async fn setup(scenario: &str) -> (tempfile::TempDir, Arc<Coordinator>, Submission) {
+    let dir = tempfile::tempdir().unwrap();
+    let store = AssetStore::open(&dir.path().join("Library")).unwrap();
+    let input = dir.path().join("original.png");
+    std::fs::write(&input, include_bytes!("../ui/tests/fixtures/sample.png")).unwrap();
+    let asset = store.import_path(input).await.unwrap();
+    let c = Arc::new(
+        Coordinator::open(
+            store,
+            vec![Descriptor {
+                id: "example".into(),
+                executable: binary(),
+                args: vec![
+                    dir.path().join("runs").display().to_string(),
+                    scenario.into(),
+                ],
+                cwd: dir.path().to_owned(),
+                roots: vec![dir.path().to_owned()],
+            }],
+        )
+        .await
+        .unwrap(),
+    );
+    let revision = c
+        .description("example")
+        .await
+        .map(|d| d.revision)
+        .unwrap_or_default();
+    let request=serde_json::from_value(json!({"id":"attempt-1","tool":"example","action":"mark_band","revision":revision,"params":{"label":"original"},"images":{"source":[asset.id]}})).unwrap();
+    (dir, c, request)
+}
+#[tokio::test]
+async fn duplicate_submissions_dispatch_once_and_mutable_originals_are_not_inputs() {
+    let (dir, c, request) = setup("normal").await;
+    let (a, b) = tokio::join!(c.submit(request.clone()), c.submit(request.clone()));
+    assert_eq!(a.unwrap().id, b.unwrap().id);
+    let mut changed = request.clone();
+    changed.params["label"] = json!("changed");
+    assert!(c.submit(changed).await.is_err());
+    for _ in 0..100 {
+        if c.attempts.get("attempt-1").await.unwrap().execution == "completed" {
+            break;
+        }
+        tokio::time::sleep(std::time::Duration::from_millis(20)).await;
+    }
+    let saved = c.attempts.get("attempt-1").await.unwrap();
+    assert_eq!(saved.execution, "completed");
+    assert!(saved.wire.is_some());
+    assert_eq!(saved.request.params["label"], "original");
+    let path = saved.arguments["source"]["path"].as_str().unwrap();
+    assert!(!path.contains("assets/sha256"));
+    assert_ne!(path, dir.path().join("original.png").to_str().unwrap());
+    assert_eq!(
+        std::fs::read_to_string(dir.path().join("runs/calls.ndjson"))
+            .unwrap()
+            .lines()
+            .count(),
+        1
+    );
+    assert!(c.close().await);
+    c.assets.database.shutdown().await.unwrap();
+}
+#[tokio::test]
+async fn paid_missing_malformed_and_stale_cost_declarations_cannot_dispatch() {
+    for scenario in [
+        "paid",
+        "becomes-paid",
+        "missing-cost",
+        "malformed-cost",
+        "unsupported-contract",
+        "normal",
+    ] {
+        let (dir, c, mut request) = setup(scenario).await;
+        if scenario == "normal" {
+            request.revision = "stale".into();
+        }
+        assert!(c.submit(request).await.is_err(), "{scenario}");
+        assert!(!dir.path().join("runs/calls.ndjson").exists(), "{scenario}");
+        assert!(c.close().await);
+        c.assets.database.shutdown().await.unwrap();
+    }
+}
+#[tokio::test]
+async fn invalid_parameters_and_busy_tool_are_refused() {
+    let (dir, c, mut request) = setup("slow").await;
+    request.params = json!({"label":"x","unknown":true});
+    assert!(c.submit(request.clone()).await.is_err());
+    assert!(!dir.path().join("runs/calls.ndjson").exists());
+    request.params = json!({"label":"x"});
+    c.submit(request.clone()).await.unwrap();
+    request.id = "attempt-2".into();
+    assert!(c.submit(request).await.is_err());
+    assert!(c.close().await);
+    c.assets.database.shutdown().await.unwrap();
+}
+#[tokio::test]
+async fn direct_browser_api_cannot_bypass_no_paid_guard() {
+    use axum::{
+        body::Body,
+        http::{Request, StatusCode},
+    };
+    use tower::ServiceExt;
+    let (dir, c, request) = setup("paid").await;
+    let auth = wafflehouse::host::auth::Auth::new().unwrap();
+    let token = auth
+        .exchange(&auth.issue().unwrap())
+        .unwrap()
+        .unwrap()
+        .token;
+    let (quit, _) = tokio::sync::watch::channel(false);
+    let app = wafflehouse::host::api::router_with_tools(
+        "http://127.0.0.1:9999",
+        auth,
+        quit,
+        c.assets.clone(),
+        Some(c.clone()),
+    );
+    let response = app
+        .oneshot(
+            Request::builder()
+                .method("POST")
+                .uri("/api/attempts")
+                .header("host", "127.0.0.1:9999")
+                .header("origin", "http://127.0.0.1:9999")
+                .header("authorization", format!("Bearer {token}"))
+                .header("content-type", "application/json")
+                .body(Body::from(serde_json::to_vec(&request).unwrap()))
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    assert_eq!(response.status(), StatusCode::CONFLICT);
+    assert!(!dir.path().join("runs/calls.ndjson").exists());
+    assert!(c.close().await);
+    c.assets.database.shutdown().await.unwrap();
+}

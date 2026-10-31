@@ -1,8 +1,15 @@
 pub mod client;
+pub mod coordinator;
 pub mod registration;
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
+    #[error(transparent)]
+    Library(#[from] crate::library::Error),
+    #[error("{0}")]
+    Conflict(&'static str),
+    #[error("{0}")]
+    Missing(&'static str),
     #[error("{0}")]
     Invalid(String),
     #[error("{0}")]

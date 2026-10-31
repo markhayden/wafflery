@@ -73,7 +73,7 @@ pub struct ToolClient {
     pub descriptor: Descriptor,
     pub(crate) gate: Gate,
     child: Mutex<Child>,
-    pipes: Option<(ChildStdout, ChildStdin)>,
+    pipes: std::sync::Mutex<Option<(ChildStdout, ChildStdin)>>,
     service: Mutex<Option<RunningService<RoleClient, Handler>>>,
     peer: Option<Peer<RoleClient>>,
     generation: Arc<AtomicU64>,
@@ -103,7 +103,7 @@ impl ToolClient {
             descriptor,
             gate: Gate::default(),
             child: Mutex::new(child),
-            pipes: Some((stdout, stdin)),
+            pipes: std::sync::Mutex::new(Some((stdout, stdin))),
             service: Mutex::new(None),
             peer: None,
             generation: Arc::new(AtomicU64::new(0)),
@@ -123,6 +123,8 @@ impl ToolClient {
             .collect::<Result<Vec<_>>>()?;
         let (stdout, stdin) = self
             .pipes
+            .get_mut()
+            .unwrap_or_else(|e| e.into_inner())
             .take()
             .ok_or_else(|| Error::Invalid("Tool already initialized".into()))?;
         let handler = Handler {
@@ -261,12 +263,12 @@ impl ToolClient {
         self.control("resources/read", json!({"uri":uri})).await
     }
     /// Returns false when EOF did not stop the process. The owner retains the handle for explicit force quit.
-    pub async fn close(&mut self) -> Result<bool> {
-        self.pipes.take();
-        if let Some(service) = self.service.get_mut().as_mut() {
+    pub async fn close(&self) -> Result<bool> {
+        self.pipes.lock().unwrap_or_else(|e| e.into_inner()).take();
+        if let Some(service) = self.service.lock().await.as_mut() {
             let _ = service.close_with_timeout(Duration::from_secs(2)).await;
         }
-        match tokio::time::timeout(Duration::from_secs(2), self.child.get_mut().wait()).await {
+        match tokio::time::timeout(Duration::from_secs(2), self.child.lock().await.wait()).await {
             Ok(status) => {
                 status?;
                 Ok(true)

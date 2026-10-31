@@ -15,6 +15,7 @@ struct HostState {
     origin: String,
     auth: Auth,
     quit: tokio::sync::watch::Sender<bool>,
+    tools: Option<std::sync::Arc<crate::tools::coordinator::Coordinator>>,
 }
 
 pub fn router(
@@ -23,20 +24,35 @@ pub fn router(
     quit: tokio::sync::watch::Sender<bool>,
     store: crate::library::assets::AssetStore,
 ) -> Router {
+    router_with_tools(origin, auth, quit, store, None)
+}
+pub fn router_with_tools(
+    origin: &str,
+    auth: Auth,
+    quit: tokio::sync::watch::Sender<bool>,
+    store: crate::library::assets::AssetStore,
+    tools: Option<std::sync::Arc<crate::tools::coordinator::Coordinator>>,
+) -> Router {
+    let routes = if let Some(coordinator) = &tools {
+        super::run_api::router(coordinator.clone())
+    } else {
+        Router::new().route(
+            "/api/state",
+            get(|| async { Json(serde_json::json!({"tools": [], "attempts": []})) }),
+        )
+    };
     let state = HostState {
         origin: origin.to_owned(),
         auth,
         quit,
+        tools,
     };
     Router::new()
         .route("/api/session", post(session))
-        .route(
-            "/api/state",
-            get(|| async { Json(serde_json::json!({"tools": [], "attempts": []})) }),
-        )
         .route("/api/host/quit", post(quit_host))
         .fallback(get(static_asset))
         .with_state(state.clone())
+        .merge(routes)
         .merge(super::asset_api::router(store))
         .layer(DefaultBodyLimit::max(4 * 1024 * 1024))
         .layer(middleware::from_fn_with_state(state.clone(), boundary))
@@ -123,9 +139,18 @@ async fn session(State(state): State<HostState>, Json(input): Json<Bootstrap>) -
 #[serde(deny_unknown_fields)]
 struct Empty {}
 
-async fn quit_host(State(state): State<HostState>, Json(_): Json<Empty>) -> StatusCode {
+async fn quit_host(State(state): State<HostState>, Json(_): Json<Empty>) -> Response {
+    if let Some(tools) = &state.tools
+        && !tools.try_quit().await
+    {
+        return failure(
+            StatusCode::CONFLICT,
+            "active_work",
+            "This workspace has active or unconfirmed work.",
+        );
+    }
     let _ = state.quit.send(true);
-    StatusCode::NO_CONTENT
+    StatusCode::NO_CONTENT.into_response()
 }
 
 async fn static_asset(uri: Uri) -> Response {

@@ -190,6 +190,7 @@ pub async fn listen(
     origin: &str,
     shutdown: tokio::sync::watch::Sender<bool>,
     auth: super::auth::Auth,
+    tools: std::sync::Arc<crate::tools::coordinator::Coordinator>,
 ) -> io::Result<()> {
     use tokio::io::{AsyncReadExt, AsyncWriteExt};
     let listener = tokio::net::UnixListener::bind(&owner.socket)?;
@@ -220,9 +221,14 @@ pub async fn listen(
             if message["operation"] == "bootstrap" {
                 reply["bootstrap"] = json!(auth.issue()?);
             }
+            let quitting = message["operation"] == "quit" && tools.try_quit().await;
+            if message["operation"] == "quit" && !quitting {
+                reply["error"] =
+                    json!("Active or unconfirmed work requires explicit shutdown confirmation");
+            }
             stream.write_all(reply.to_string().as_bytes()).await?;
             stream.shutdown().await?;
-            if message["operation"] == "quit" {
+            if quitting {
                 let _ = shutdown.send(true);
             }
             Ok(())
