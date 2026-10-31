@@ -177,6 +177,16 @@ impl Coordinator {
         {
             return Err(Error::Invalid("Undeclared image slot".into()));
         }
+        if request.frames.iter().any(|(slot, frames)| {
+            request
+                .images
+                .get(slot)
+                .is_none_or(|images| images.len() != frames.len())
+        }) {
+            return Err(Error::Invalid(
+                "Image coordinate metadata must match its image bindings".into(),
+            ));
+        }
         let directory = self.assets.root().join("execution").join(&request.id);
         std::fs::DirBuilder::new().mode(0o700).create(&directory)?;
         let materialized=async {
@@ -190,12 +200,16 @@ impl Coordinator {
                     let (asset,bytes)=self.assets.read(id).await?;
                     let path=directory.join(format!("input-{index}.{}",if asset.media_type=="image/png"{"png"}else{"jpg"}));
                     tokio::fs::write(&path,bytes).await?;
-                    let reference=json!({"file_sha256":asset.sha256,"width":asset.width,"height":asset.height,"projection":"flat","topology":"bounded"});
+                    let frame=request.frames.get(name).and_then(|frames|frames.first()).cloned().unwrap_or_default();
+                    let reference=json!({"file_sha256":asset.sha256,"width":asset.width,"height":asset.height,"projection":frame.projection,"topology":frame.topology});
+                    validator(&json!({"$ref":"urn:table-manners:images:image-reference"}))?.validate(&reference).map_err(|e|Error::Invalid(format!("Invalid image coordinates: {e}")))?;
                     arguments.insert(name.into(),json!({"path":path,"expect":reference}));
                     inputs.insert(name.into(),json!([{ "asset":asset,"image":reference,"role":slot["role"] }]));
                 }
             }
-            arguments.insert("return_images".into(),json!("path"));arguments.insert("image_blocks".into(),json!(false));
+            if current.document["profiles"].as_array().is_some_and(|profiles|profiles.iter().any(|profile|profile=="images")) {
+                arguments.insert("return_images".into(),json!("path"));arguments.insert("image_blocks".into(),json!(false));
+            }
             let arguments=Value::Object(arguments);
             let schema=current.schemas.get(&request.action).ok_or(Error::Missing("No MCP action schema"))?;
             validator(schema)?.validate(&arguments).map_err(|e|Error::Invalid(format!("Invalid action inputs: {e}")))?;

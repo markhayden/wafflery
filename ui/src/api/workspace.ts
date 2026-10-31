@@ -3,7 +3,7 @@ import {isAsset,type Asset} from "./assets";
 import type {Declaration,Json,Schema} from "../features/actions/model";
 import type {Coordinates} from "../components/comparison";
 export type SavedImage={asset:Asset;image:Coordinates;role:string};
-export type Submission={id:string;tool:string;action:string;revision:string;params:Schema;images:Record<string,string[]>};
+export type Submission={id:string;tool:string;action:string;revision:string;params:Schema;images:Record<string,string[]>;frames?:Record<string,{projection:"flat"|"equirectangular";topology:"bounded"|"wrap"}[]>};
 export type Attempt={id:string;sequence:number;created_ms:number;request:Submission;arguments:Json;declaration:Declaration;inputs:Record<string,SavedImage[]>;wire:Json;raw_response:Json;result:Json;execution:string;preservation:{contract:string;native:string;report:string};outputs:SavedImage[];journal:Json;notices:string[]};
 export type RegisteredTool={id:string;declaration:Declaration|null;error:string|null;busy:boolean;progress?:{message?:string}|null};
 export type Snapshot={event_session?:string;tools:RegisteredTool[];attempts:Attempt[]};

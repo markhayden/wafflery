@@ -3,7 +3,7 @@ import { ImageInput } from "../../components/ImageInput";
 import type { Asset } from "../../api/assets";
 import { fieldMode, object, type Action, type Json, type Schema } from "./model";
 import styles from "./ActionForm.module.css";
-type Props = { action: Action; params: Schema; onChange: (params: Schema) => void; images: Record<string,Asset[]>; onImages: (slot:string, images:Asset[]) => void; upload: (file:File) => Promise<Asset>; preview: (asset:Asset) => Promise<Blob>; disabled?:boolean };
+type Props = { action: Action; params: Schema; onChange: (params: Schema) => void; images: Record<string,Asset[]>; onImages: (slot:string, images:Asset[]) => void; upload: (file:File) => Promise<Asset>; preview: (asset:Asset) => Promise<Blob>; disabled?:boolean;projections?:Record<string,"flat"|"equirectangular">;onProjection?:(slot:string,value:"flat"|"equirectangular")=>void };
 function JsonField({label,value,onChange,disabled}:{label:string;value:Json|undefined;onChange:(value:Json|undefined)=>void;disabled?:boolean}) {
   const labelId=useId();
   const [text,setText] = useState(() => value === undefined ? "" : JSON.stringify(value,null,2));
@@ -12,7 +12,7 @@ function JsonField({label,value,onChange,disabled}:{label:string;value:Json|unde
     setText(event.target.value); event.target.setCustomValidity(""); try { onChange(event.target.value.trim() ? JSON.parse(event.target.value) as Json : undefined);setError(false); } catch {setError(true);event.target.setCustomValidity("Enter valid JSON.");}
   }} />{error && <small role="alert">Enter valid JSON before running. The last valid value is retained.</small>}</label>;
 }
-export function ActionForm({action,params,onChange,images,onImages,upload,preview,disabled=false}:Props) {
+export function ActionForm({action,params,onChange,images,onImages,upload,preview,disabled=false,projections,onProjection}:Props) {
   const id = useId();
   const schema = action.params_schema;
   const properties = object(schema.properties);
@@ -21,7 +21,9 @@ export function ActionForm({action,params,onChange,images,onImages,upload,previe
   const simple = schema.type === "object" && properties && !schema.anyOf && !schema.oneOf && !schema.allOf && !schema.if && !schema.$ref;
   return <div className={styles.form}>
     <p className={styles.purpose}>{action.purpose}</p>
-    {(action.images ?? []).map(slot => <ImageInput key={slot.slot} label={`${slot.slot} · ${slot.role}`} value={images[slot.slot] ?? []} min={slot.required?1:0} max={1} onChange={value=>onImages(slot.slot,value)} upload={upload} preview={preview} disabled={disabled} />)}
+    {(action.images ?? []).map(slot => <section key={slot.slot} className={styles.form}><ImageInput label={slot.slot===slot.role?slot.slot:`${slot.slot} · ${slot.role}`} value={images[slot.slot] ?? []} min={slot.required?1:0} max={1} onChange={value=>onImages(slot.slot,value)} upload={upload} preview={preview} disabled={disabled} />
+      {onProjection&&<label className={styles.field}>{slot.slot} coordinates<select value={projections?.[slot.slot]??"flat"} disabled={disabled} onChange={event=>onProjection(slot.slot,event.target.value==="equirectangular"?"equirectangular":"flat")}><option value="flat">Flat image · bounded edges</option><option value="equirectangular">Panorama · equirectangular, horizontal wrap</option></select></label>}
+    </section>)}
     {simple ? Object.entries(properties).map(([key,entry]) => {
       const field = object(entry) ?? {};
       const label = `${typeof field.title === "string" ? field.title : key}${required.includes(key) ? " *" : ""}`;

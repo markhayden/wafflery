@@ -235,3 +235,15 @@ async fn cancellation_without_a_run_reference_stays_unconfirmed_and_reserved() {
     );
     c.assets.database.shutdown().await.unwrap();
 }
+#[tokio::test]
+async fn impossible_image_coordinate_metadata_is_rejected_before_dispatch() {
+    let (dir, c, mut request) = setup("normal").await;
+    request.frames = serde_json::from_value(
+        json!({"source":[{"projection":"equirectangular","topology":"bounded"}]}),
+    )
+    .unwrap();
+    assert!(c.submit(request).await.is_err());
+    assert!(!dir.path().join("runs/calls.ndjson").exists());
+    assert!(c.close().await);
+    c.assets.database.shutdown().await.unwrap();
+}

@@ -31,3 +31,27 @@ The example takes `<workspace> [scenario]`. `normal` and `slow` execute the offl
 operation. `paid`, `unsupported-contract`, `wrong-protocol` and `malformed` are negative test
 scenarios, not full conformance claims; none makes a paid or remote call. Only the host's owned
 test descriptor will opt into this executable. No real tool is discovered or installed by it.
+
+## Optional real Rascal smoke
+
+Select a local binary explicitly (never discovered or installed automatically):
+
+```sh
+WAFFLEHOUSE_RASCAL_BIN=/absolute/path/to/rascal cargo test --locked --test rascal_smoke -- --ignored --nocapture
+```
+
+This uses the same host coordinator, fresh no-paid check, exact contract-version allowlist,
+image fingerprints and evidence capture as the fake. The child inherits no environment,
+receives no config or filler, and gets temporary workspace/run directories. It checks a real
+`seam` result, zero spend, verified outputs/journal and unchanged original bytes. `mask_rect`
+requires a location binding, which is outside the foundation's image-and-parameters form.
+
+The seam needs explicit equirectangular/wrap image coordinates. The host's optional `frames`
+field records that shared image-reference metadata alongside ordered asset bindings. Ordinary
+images default to flat/bounded. This metadata is validated using the published image-reference
+schema; the host never interprets a tool's private projection parameter. The smoke explicitly
+sets Rascal's declared parameter as well. A flat seam can complete without producing an image,
+so that alone is not a successful output smoke.
+
+Missing binaries or unsupported contract versions print an explicit `SKIPPED` reason. Other
+failures remain failures; do not loosen the version, spend or fingerprint guards to pass them.

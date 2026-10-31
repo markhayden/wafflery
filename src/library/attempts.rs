@@ -13,6 +13,34 @@ pub struct Submission {
     pub revision: String,
     pub params: Value,
     pub images: BTreeMap<String, Vec<String>>,
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    pub frames: BTreeMap<String, Vec<ImageFrame>>,
+}
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
+#[serde(deny_unknown_fields)]
+pub struct ImageFrame {
+    pub projection: Projection,
+    pub topology: Topology,
+}
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
+#[serde(rename_all = "snake_case")]
+pub enum Projection {
+    Flat,
+    Equirectangular,
+}
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
+#[serde(rename_all = "snake_case")]
+pub enum Topology {
+    Bounded,
+    Wrap,
+}
+impl Default for ImageFrame {
+    fn default() -> Self {
+        Self {
+            projection: Projection::Flat,
+            topology: Topology::Bounded,
+        }
+    }
 }
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Attempt {
