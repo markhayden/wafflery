@@ -4,9 +4,9 @@ A local browser workspace for trying visual pipeline tools, inspecting their beh
 taking a tested configuration into your own code. The first release focuses on Rascal and
 Squint independently. Pixel, cross-tool workflows, and batch evaluations follow later.
 
-This directory contains the approved plan, an interactive mock, and the M1 Rust/React application.
-The application starts locally, authenticates browser tabs and stores imported images across
-restarts. It does not yet run tools or store runs. Mock installation, provider calls, run
+This directory contains the approved plan, an interactive mock, and the M2 Rust/React application.
+The application starts locally, authenticates browser tabs, executes explicitly registered offline
+MCP tools and preserves verified run evidence across restarts. Mock installation, provider calls, run
 outputs, costs, and persistence remain simulated; a mock manifest is not a runnable bundle.
 
 ## Develop the foundation
@@ -20,10 +20,10 @@ bun run --cwd ui dev
 
 The UI opens at `http://127.0.0.1:5173`. To develop the shared component in Storybook,
 run `bun run --cwd ui storybook` and open `http://127.0.0.1:6006`.
-The M1 host serves the embedded UI. Run `cargo run -- --foreground --no-open` to keep
+The local host serves the embedded UI. Run `cargo run -- --foreground --no-open` to keep
 it attached to the terminal, or `cargo run -- --no-open` to start/attach to a detached host
 and print its local address. Omit `--no-open` to open the browser. `--tool rascal` selects a
-workspace context; registration and execution are still being built. Development/tests can
+workspace context; explicit development registration is documented in [the test kit](testkit/README.md). Development/tests can
 isolate their data with `--data-dir <path>`. Closing a browser tab does not quit the host.
 An address printed with `--no-open` contains no authentication secret; run the launcher again
 without that flag to open an authenticated tab. Images live under
@@ -51,7 +51,8 @@ For browser checks, first install the matching Chromium/WebKit builds with
 `cd ui && bunx playwright install chromium webkit`, then from the project root run
 `bun run --cwd ui test:browser`. Tests own ports 4173 and 6006 and do not reuse existing servers.
 See the [M0 checkpoint](docs/reviews/2026-10-31-m0-checkpoint.md) and
-[M1 checkpoint](docs/reviews/2026-10-31-m1-checkpoint.md) for verification evidence. M2–M3 are pending.
+[M1 checkpoint](docs/reviews/2026-10-31-m1-checkpoint.md) and
+[M2 checkpoint](docs/reviews/2026-10-31-m2-checkpoint.md) for verification evidence. M3 is pending.
 
 ## Review the interface
 
