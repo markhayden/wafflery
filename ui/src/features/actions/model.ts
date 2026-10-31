@@ -2,7 +2,7 @@ export type Json = null | boolean | number | string | Json[] | { [key: string]: 
 export type Schema = { [key: string]: Json };
 export type ImageSlot = { slot: string; role: string; required: boolean };
 export type Action = { name: string; title: string; purpose: string; params_schema: Schema; images?: ImageSlot[]; locations?: {slot:string;required:boolean}[]; cost: { may_spend: boolean; needs_env: string[] } };
-export type Declaration = { document: { contract: string; tool: {name:string;version:string}; actions:Action[] }; revision: string; generation: number; schemas: Record<string, Schema> };
+export type Declaration = { document: { contract: string; tool: {name:string;version:string;purpose:string}; actions:Action[] }; revision: string; generation: number; schemas: Record<string, Schema> };
 export function object(value: Json | undefined): Schema | undefined { return value !== null && typeof value === "object" && !Array.isArray(value) ? value : undefined; }
 export function initialParameters(schema: Schema): Schema {
   return Object.fromEntries(Object.entries(object(schema.properties) ?? {}).flatMap(([key,value]) => {

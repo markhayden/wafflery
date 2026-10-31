@@ -1,0 +1,23 @@
+import {test,expect} from "./tool-host";
+test("run a real offline action and inspect immutable evidence after editing the draft",async({page,host},testInfo)=>{
+ const errors:string[]=[];page.on("pageerror",error=>errors.push(error.message));
+ await host.open(page);
+ await expect(page.getByRole("button",{name:/Action Add a test band/})).toBeVisible();
+ await page.locator("input[type=file]").setInputFiles("tests/fixtures/sample.png");
+ await page.getByLabel("Label *",{exact:true}).fill("Saved first experiment");
+ await page.getByRole("button",{name:"Run",exact:true}).click();
+ await expect(page.getByText("Contract evidence: complete.",{exact:false}).first()).toBeVisible();
+ await expect(page.getByRole("slider",{name:"Before and after divider"})).toBeVisible();
+ await page.getByLabel("Label *",{exact:true}).fill("Unsubmitted draft");
+ await page.getByRole("button",{name:"Inspect run"}).click();
+ const drawer=page.getByRole("dialog",{name:"Run details"});
+ await expect(drawer.getByLabel("Saved evidence")).toContainText("Saved first experiment");
+ await expect(drawer.getByLabel("Saved evidence")).not.toContainText("Unsubmitted draft");
+ await drawer.getByRole("button",{name:"Recorded call"}).click();await expect(drawer.getByLabel("Saved evidence")).toContainText("progressToken");await expect(drawer.getByLabel("Saved evidence")).toContainText("Saved first experiment");
+ await drawer.getByRole("button",{name:"Close"}).click();
+ await page.screenshot({path:testInfo.outputPath("offline-result.png"),fullPage:true});
+ await host.stop();await host.start();await host.open(page);
+ await expect(page.getByRole("slider",{name:"Before and after divider"})).toBeVisible();
+ await page.getByRole("button",{name:"Inspect run"}).click();await expect(drawer.getByLabel("Saved evidence")).toContainText("Saved first experiment");
+ expect(errors).toEqual([]);
+});

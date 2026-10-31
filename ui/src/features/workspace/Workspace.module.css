@@ -1,0 +1,19 @@
+.workspace {margin-top:2rem;display:grid;gap:1.75rem;}
+.pickers {display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;}
+.columns {display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);gap:1.5rem;align-items:start;}
+.panel {min-width:0;display:grid;gap:1.5rem;padding:1.5rem;border:1px solid var(--color-line);border-radius:var(--radius-panel);background:var(--color-surface);}
+.panel h2,.recent h2 {font-size:1rem;font-weight:500;}
+.resultHeading,.run {display:flex;justify-content:space-between;align-items:center;gap:1rem;flex-wrap:wrap;}
+.resultHeading p,.resultHeading span,.run p,.note {font-size:.8125rem;color:var(--color-muted);}
+.run {border-top:1px solid var(--color-line);padding-top:1.25rem;}
+.run button {background:var(--color-text);color:var(--color-background);min-width:5rem;}
+.empty {min-height:22rem;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.5rem;color:var(--color-muted);text-align:center;font-size:.875rem;}
+.saved,.saved>div,.recent {display:flex;gap:.5rem;flex-wrap:wrap;}
+.saved p,.recent h2 {width:100%;}
+.saved {margin-top:1rem;}
+:global(.inspector) {display:grid;gap:1.5rem;}
+:global(.inspector nav) {display:flex;gap:.5rem;flex-wrap:wrap;}
+:global(.inspector nav button[aria-pressed=true]) {border-color:var(--color-muted);}
+:global(.inspector p) {color:var(--color-muted);font-size:.875rem;}
+@media(max-width:60rem){.columns{grid-template-columns:1fr;}}
+@media(max-width:36rem){.pickers{grid-template-columns:1fr;}.panel{padding:1rem;}}
