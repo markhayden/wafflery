@@ -1,5 +1,6 @@
 pub mod assets;
 pub mod attempts;
+pub mod baselines;
 pub mod db;
 
 #[derive(Debug, thiserror::Error)]

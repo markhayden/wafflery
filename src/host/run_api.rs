@@ -18,6 +18,7 @@ pub fn router(coordinator: Arc<Coordinator>) -> Router {
         .route("/api/attempts", get(list).post(submit))
         .route("/api/attempts/{id}", get(attempt))
         .route("/api/attempts/{id}/cancel", post(cancel))
+        .route("/api/baselines", get(baseline).post(pin))
         .with_state(coordinator.clone())
         .merge(super::event_api::router(coordinator.events.clone()))
 }
@@ -99,4 +100,38 @@ async fn cancel(
     Json(_): Json<Empty>,
 ) -> Result<Json<crate::library::attempts::Attempt>, ApiError> {
     Ok(Json(c.cancel(&id).await?))
+}
+
+#[derive(serde::Deserialize)]
+#[serde(deny_unknown_fields)]
+struct Context {
+    tool: String,
+    action: String,
+}
+async fn baseline(
+    State(c): State<Arc<Coordinator>>,
+    Query(context): Query<Context>,
+) -> Result<Json<Option<String>>, ApiError> {
+    Ok(Json(
+        crate::library::baselines::BaselineStore(c.assets.database.clone())
+            .get(context.tool, context.action)
+            .await?,
+    ))
+}
+#[derive(serde::Deserialize)]
+#[serde(deny_unknown_fields)]
+struct Pin {
+    tool: String,
+    action: String,
+    attempt_id: Option<String>,
+}
+async fn pin(
+    State(c): State<Arc<Coordinator>>,
+    Json(pin): Json<Pin>,
+) -> Result<StatusCode, ApiError> {
+    crate::library::baselines::BaselineStore(c.assets.database.clone())
+        .set(pin.tool, pin.action, pin.attempt_id)
+        .await?;
+    c.events.changed();
+    Ok(StatusCode::NO_CONTENT)
 }

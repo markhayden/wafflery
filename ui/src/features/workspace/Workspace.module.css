@@ -17,3 +17,7 @@
 :global(.inspector p) {color:var(--color-muted);font-size:.875rem;}
 @media(max-width:60rem){.columns{grid-template-columns:1fr;}}
 @media(max-width:36rem){.pickers{grid-template-columns:1fr;}.panel{padding:1rem;}}
+:global(.comparison-actions) {display:flex;align-items:center;gap:.75rem;flex-wrap:wrap;margin-top:1rem;font-size:.8125rem;color:var(--color-muted);}
+:global(.settings-comparison) {display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:1rem;margin-top:1rem;}
+:global(.settings-comparison h3) {font-size:.875rem;font-weight:500;}
+@media(max-width:36rem){:global(.settings-comparison){grid-template-columns:1fr;}}

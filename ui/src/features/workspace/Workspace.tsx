@@ -8,7 +8,7 @@ import {ActionForm} from "../actions/ActionForm";
 import {Button} from "../../components/Button";
 import {Picker} from "../../components/Picker";
 import {Drawer} from "../../components/Drawer";
-import {ImageCompare,type CompareImage} from "../../components/ImageCompare";
+import {SavedComparison} from "./SavedComparison";
 import {History} from "./History";
 import {Inspector} from "./Inspector";
 import styles from "./Workspace.module.css";
@@ -63,8 +63,6 @@ export function Workspace({api,initial}:{api:LocalApi;initial:Snapshot}) {
   }catch(failure){setError(failure instanceof Error?failure.message:"The attempt could not be submitted.");}finally{setBusy(false);}
  }
  const working=selected&&(["submitted","running","unconfirmed","cancelling"].includes(selected.execution)||selected.preservation.contract==="pending");
- const source=selected?Object.values(selected.inputs).flat()[0]:undefined,candidate=selected?.outputs[0];
- const left:CompareImage|undefined=source?{...source,label:"Source"}:undefined,right:CompareImage|undefined=candidate?{...candidate,label:candidate.role.charAt(0).toUpperCase()+candidate.role.slice(1)}:undefined;
  return <div className={styles.workspace}>
   <div><Button onClick={event=>setDrawer({opener:event.currentTarget,view:"history"})}>History</Button></div>
   <div className={styles.pickers}><Picker label="Tool" value={toolId} onChange={chooseTool} choices={snapshot.tools.map(t=>({id:t.id,title:t.declaration?.document.tool.name??t.id,description:t.error??`Version ${t.declaration?.document.tool.version??"unknown"}`}))}/><Picker label="Action" value={actionId} onChange={chooseAction} disabled={!declaration} choices={(declaration?.document.actions??[]).map(a=>({id:a.name,title:a.title,description:(a.images??[]).length?"Image → Result":"Parameters → Result"}))}/></div>
@@ -79,7 +77,7 @@ export function Workspace({api,initial}:{api:LocalApi;initial:Snapshot}) {
    </form>
    <section className={styles.panel} aria-label="Result"><div className={styles.resultHeading}><h2>Result</h2><span role="status">{selected?(selected.execution==="unconfirmed"?"Cancellation requested · outcome unconfirmed":selected.execution):"Ready"}</span></div>
     {selected&&["submitted","running"].includes(selected.execution)&&<Button onClick={()=>{void client.cancel(selected.id).then(setSelected).catch(failure=>setError(failure instanceof Error?failure.message:"Unable to request cancellation."));}}>Cancel run</Button>}
-    {selected?<>{working&&tool?.progress?.message&&<p className={styles.note}>{tool.progress.message}</p>}<ImageCompare left={left} right={right} load={assets.preview}/><div className={styles.resultHeading}><p>Saved attempt · {selected.id.slice(0,8)}</p><Button onClick={event=>setDrawer({opener:event.currentTarget,view:"inspect"})}>Inspect run</Button></div><p className={styles.note}>Contract evidence: {selected.preservation.contract}. Editing the inputs starts a new draft.</p>{selected.notices.map((notice,index)=><p className={styles.note} key={index}>{notice}</p>)}</>:<div className={styles.empty}><p>Choose your inputs and run an action.</p><p>The result and its saved evidence will appear here.</p></div>}
+    {selected?<>{working&&tool?.progress?.message&&<p className={styles.note}>{tool.progress.message}</p>}<SavedComparison attempt={selected} client={client} load={assets.preview} revision={snapshot}/><div className={styles.resultHeading}><p>Saved attempt · {selected.id.slice(0,8)}</p><Button onClick={event=>setDrawer({opener:event.currentTarget,view:"inspect"})}>Inspect run</Button></div><p className={styles.note}>Contract evidence: {selected.preservation.contract}. Editing the inputs starts a new draft.</p>{selected.notices.map((notice,index)=><p className={styles.note} key={index}>{notice}</p>)}</>:<div className={styles.empty}><p>Choose your inputs and run an action.</p><p>The result and its saved evidence will appear here.</p></div>}
    </section>
   </div>
   {recent.length>0&&<section className={styles.recent} aria-label="Recent attempts"><h2>Recent attempts</h2>{recent.slice(0,6).map(attempt=><Button key={attempt.id} onClick={()=>openAttempt(attempt.id)}>{attempt.action} · {attempt.execution} · {attempt.id.slice(0,8)}</Button>)}</section>}

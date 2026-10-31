@@ -29,6 +29,11 @@ export function workspaceClient(api:LocalApi) {
    const value:unknown=await(await api.request(`/api/attempts?${query}`)).json();
    if(!record(value)||!Array.isArray(value.items)||!value.items.every(summary)||(value.cursor!==null&&typeof value.cursor!=="number"))throw new Error("History could not be read.");return value as HistoryPage;
   },
+  async baseline(tool:string,action:string):Promise<Attempt|null>{
+   const value:unknown=await(await api.request(`/api/baselines?${new URLSearchParams({tool,action})}`)).json();
+   if(value===null)return null;if(typeof value!=="string")throw new Error("Baseline could not be read.");return getAttempt(`/api/attempts/${encodeURIComponent(value)}`);
+  },
+  async pin(tool:string,action:string,id:string|null):Promise<void>{await api.request("/api/baselines",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({tool,action,attempt_id:id})});},
   attempt:(id:string)=>getAttempt(`/api/attempts/${encodeURIComponent(id)}`),
   cancel:(id:string)=>getAttempt(`/api/attempts/${encodeURIComponent(id)}/cancel`,{method:"POST",headers:{"Content-Type":"application/json"},body:"{}"}),
   submit:(request:Submission)=>getAttempt("/api/attempts",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(request)}),
