@@ -4,6 +4,7 @@ pub mod assets;
 pub mod auth;
 pub mod control;
 mod event_api;
+mod example_api;
 pub mod launch;
 mod run_api;
 

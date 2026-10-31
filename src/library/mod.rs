@@ -2,6 +2,7 @@ pub mod assets;
 pub mod attempts;
 pub mod baselines;
 pub mod db;
+pub mod examples;
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {

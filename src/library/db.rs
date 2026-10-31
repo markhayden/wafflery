@@ -148,6 +148,7 @@ fn open_connection(path: &Path) -> Result<Connection> {
         include_str!("migrations/002-assets.sql"),
         include_str!("migrations/003-attempts.sql"),
         include_str!("migrations/004-baselines.sql"),
+        include_str!("migrations/005-examples.sql"),
     ];
     let latest = MIGRATIONS.len() as i64;
     if version < 0 {
