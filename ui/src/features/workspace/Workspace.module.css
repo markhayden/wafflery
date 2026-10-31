@@ -26,3 +26,6 @@
 :global(.examples h3) {font-size:1rem;font-weight:500;}
 :global(.examples p) {color:var(--color-muted);font-size:.875rem;}
 :global(.examples ul),:global([aria-label="Saved history"] ul) {list-style:none;padding:0;display:grid;gap:1rem;}
+:global(.examples fieldset) {display:grid;gap:.75rem;border:1px solid var(--color-line);padding:1rem;min-width:0;}
+:global(.examples label:has(input[type=checkbox])) {display:flex;align-items:flex-start;gap:.75rem;font-size:.875rem;}
+:global(.examples input[type=checkbox]) {width:auto;margin-top:.2rem;}

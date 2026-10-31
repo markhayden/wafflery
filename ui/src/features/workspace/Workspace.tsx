@@ -1,3 +1,4 @@
+import {Cleanup} from "./Cleanup";
 import {Pipeline} from "./Pipeline";
 import {exampleClient,type Example} from "../../api/examples";
 import {Examples} from "./Examples";
@@ -31,7 +32,7 @@ export function Workspace({api,initial}:{api:LocalApi;initial:Snapshot}) {
  const [images,setImages]=useState<Record<string,Asset[]>>({});const [savedImages,setSavedImages]=useState<Asset[]>([]);
  const [selected,setSelected]=useState<Attempt|undefined>();
  const recent=snapshot.attempts;const [selectedId,setSelectedId]=useState<string|null>();const [busy,setBusy]=useState(false),[error,setError]=useState<string>();
- const [drawer,setDrawer]=useState<{opener:HTMLElement;view:"inspect"|"history"|"examples"|"pipeline"}|null>(null);const submitted=useRef<{body:string;request:Submission}|null>(null);
+ const [drawer,setDrawer]=useState<{opener:HTMLElement;view:"inspect"|"history"|"examples"|"pipeline"|"cleanup"}|null>(null);const submitted=useRef<{body:string;request:Submission}|null>(null);
  useEffect(()=>{void assets.list().then(setSavedImages).catch(()=>{});},[assets]);
  useEffect(()=>{
   const controller=new AbortController();
@@ -77,7 +78,7 @@ export function Workspace({api,initial}:{api:LocalApi;initial:Snapshot}) {
  }
  const working=selected&&(["submitted","running","unconfirmed","cancelling"].includes(selected.execution)||selected.preservation.contract==="pending");
  return <div className={styles.workspace}>
-  <div><Button onClick={event=>setDrawer({opener:event.currentTarget,view:"history"})}>History</Button> <Button onClick={event=>setDrawer({opener:event.currentTarget,view:"examples"})}>Examples</Button></div>
+  <div><Button onClick={event=>setDrawer({opener:event.currentTarget,view:"history"})}>History</Button> <Button onClick={event=>setDrawer({opener:event.currentTarget,view:"examples"})}>Examples</Button> <Button onClick={event=>setDrawer({opener:event.currentTarget,view:"cleanup"})}>Clean up library</Button></div>
   <div className={styles.pickers}><Picker label="Tool" value={toolId} onChange={chooseTool} choices={snapshot.tools.map(t=>({id:t.id,title:t.declaration?.document.tool.name??t.id,description:t.error??`Version ${t.declaration?.document.tool.version??"unknown"}`}))}/><Picker label="Action" value={actionId} onChange={chooseAction} disabled={!declaration} choices={(declaration?.document.actions??[]).map(a=>({id:a.name,title:a.title,description:(a.images??[]).length?"Image → Result":"Parameters → Result"}))}/></div>
   {declaration&&<p className={styles.note}>{declaration.document.tool.purpose}</p>}
   {connection&&<p role="status">{connection}</p>}
@@ -94,6 +95,6 @@ export function Workspace({api,initial}:{api:LocalApi;initial:Snapshot}) {
    </section>
   </div>
   {recent.length>0&&<section className={styles.recent} aria-label="Recent attempts"><h2>Recent attempts</h2>{recent.slice(0,6).map(attempt=><Button key={attempt.id} onClick={()=>openAttempt(attempt.id)}>{attempt.action} · {attempt.execution} · {attempt.id.slice(0,8)}</Button>)}</section>}
-  <Drawer open={drawer!==null} opener={drawer?.opener??null} onClose={()=>setDrawer(null)} title={drawer?.view==="history"?"History":drawer?.view==="examples"?"Examples":drawer?.view==="pipeline"?"Use in your pipeline":"Run details"} description={drawer?.view==="history"?"Saved local attempts. Opening a run never executes it.":drawer?.view==="examples"?"Reusable inputs, saved locally.":selected?`${selected.request.tool} / ${selected.request.action} · ${selected.id}`:""}>{drawer?.view==="history"?<History client={client} onOpen={openAttempt}/>:drawer?.view==="examples"?<Examples client={examples} selectedId={selected?.id} onOpen={openExample}/>:drawer?.view==="pipeline"&&selected?<Pipeline attempt={selected} api={api}/>:selected&&<Inspector key={selected.id} attempt={selected}/>}</Drawer>
+  <Drawer open={drawer!==null} opener={drawer?.opener??null} onClose={()=>setDrawer(null)} title={drawer?.view==="history"?"History":drawer?.view==="examples"?"Examples":drawer?.view==="pipeline"?"Use in your pipeline":drawer?.view==="cleanup"?"Clean up library":"Run details"} description={drawer?.view==="history"?"Saved local attempts. Opening a run never executes it.":drawer?.view==="examples"?"Reusable inputs, saved locally.":drawer?.view==="cleanup"?"Preview changes before deleting saved records.":selected?`${selected.request.tool} / ${selected.request.action} · ${selected.id}`:""}>{drawer?.view==="history"?<History client={client} onOpen={openAttempt}/>:drawer?.view==="examples"?<Examples client={examples} selectedId={selected?.id} onOpen={openExample}/>:drawer?.view==="pipeline"&&selected?<Pipeline attempt={selected} api={api}/>:drawer?.view==="cleanup"?<Cleanup api={api} runs={recent} onDone={async()=>{setSelectedId(null);setSelected(undefined);setSnapshot(await client.snapshot());setSavedImages(await assets.list());}}/>:selected&&<Inspector key={selected.id} attempt={selected}/>}</Drawer>
  </div>;
 }
