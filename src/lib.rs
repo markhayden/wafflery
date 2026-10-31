@@ -1,6 +1,7 @@
 //! Wafflehouse's local host. Foundation modules are added as their slices land.
 
 pub mod host;
+pub mod library;
 
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 pub const HELP: &str = "Wafflehouse — local visual pipeline workshop
