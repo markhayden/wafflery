@@ -1,8 +1,9 @@
 # Wafflehouse foundation implementation plan
 
 Status: M0–M3 approved by the owner on 2026-10-31; implementation started.
-Current implementation evidence: [M0 checkpoint](docs/reviews/2026-10-31-m0-checkpoint.md).
-M0 is complete: Git checkpoints, browser tests and advisory checks passed after permissions were enabled.
+Current implementation evidence: [M0 checkpoint](docs/reviews/2026-10-31-m0-checkpoint.md) and
+[M1 checkpoint](docs/reviews/2026-10-31-m1-checkpoint.md). M0 and M1 are complete, including
+browser/storage verification and dependency audits. M2 is next.
 The [current review disposition](docs/reviews/2026-10-31-plan-review-disposition.md) records
 changes and validation limits; it is not implementation verification.
 The owner agreed to proceed with foundation planning independently of later tool interfaces.

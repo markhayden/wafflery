@@ -1,7 +1,9 @@
 # H1: shared Wafflehouse launcher proposal
 
-Status: concrete proposal for Rascal/Squint owner agreement, 2026-10-31. Not implemented or
-published. Wafflehouse owns this interface now; foundation task F05a verifies it, while real
+Status: concrete proposal for Rascal/Squint owner agreement, 2026-10-31. The host-side launcher,
+attachment and browser authentication are implemented and verified in the
+[M1 checkpoint](../reviews/2026-10-31-m1-checkpoint.md); distribution is not published.
+Wafflehouse owns this interface now; foundation task F05a verifies it, while real
 installation remains gated on an actual release artifact. [Source inventory](../integration-sources.md).
 
 ## Canonical public surface

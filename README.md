@@ -4,8 +4,9 @@ A local browser workspace for trying visual pipeline tools, inspecting their beh
 taking a tested configuration into your own code. The first release focuses on Rascal and
 Squint independently. Pixel, cross-tool workflows, and batch evaluations follow later.
 
-This directory contains the approved plan, an interactive mock, and the M0 Rust/React scaffold.
-The application does not yet run tools or store runs. Mock installation, provider calls, run
+This directory contains the approved plan, an interactive mock, and the M1 Rust/React application.
+The application starts locally, authenticates browser tabs and stores imported images across
+restarts. It does not yet run tools or store runs. Mock installation, provider calls, run
 outputs, costs, and persistence remain simulated; a mock manifest is not a runnable bundle.
 
 ## Develop the foundation
@@ -19,11 +20,16 @@ bun run --cwd ui dev
 
 The UI opens at `http://127.0.0.1:5173`. To develop the shared component in Storybook,
 run `bun run --cwd ui storybook` and open `http://127.0.0.1:6006`.
-The M1 host now serves the embedded UI. Run `cargo run -- --foreground --no-open` to keep
+The M1 host serves the embedded UI. Run `cargo run -- --foreground --no-open` to keep
 it attached to the terminal, or `cargo run -- --no-open` to start/attach to a detached host
 and print its local address. Omit `--no-open` to open the browser. `--tool rascal` selects a
 workspace context; registration and execution are still being built. Development/tests can
 isolate their data with `--data-dir <path>`. Closing a browser tab does not quit the host.
+An address printed with `--no-open` contains no authentication secret; run the launcher again
+without that flag to open an authenticated tab. Images live under
+`~/Library/Application Support/Wafflehouse/Library` by default. The development foreground host
+stops with Ctrl-C; an idle detached host supports authenticated Quit via its API, with the visible
+Quit control arriving alongside active-run handling.
 
 ```sh
 bun run --cwd ui typecheck
@@ -44,7 +50,8 @@ and compares two clean builds. Keep prebuilt assets and their manifest in versio
 For browser checks, first install the matching Chromium/WebKit builds with
 `cd ui && bunx playwright install chromium webkit`, then from the project root run
 `bun run --cwd ui test:browser`. Tests own ports 4173 and 6006 and do not reuse existing servers.
-See the [M0 checkpoint](docs/reviews/2026-10-31-m0-checkpoint.md) for verification evidence. M0 is complete; no M1–M3 completion is claimed.
+See the [M0 checkpoint](docs/reviews/2026-10-31-m0-checkpoint.md) and
+[M1 checkpoint](docs/reviews/2026-10-31-m1-checkpoint.md) for verification evidence. M2–M3 are pending.
 
 ## Review the interface
 
@@ -79,7 +86,7 @@ alone do not establish those properties.
 - [Integration source inventory](docs/integration-sources.md): current sibling revisions and verified capabilities.
 - [H1 launcher proposal](docs/handoffs/H1-launcher-proposal.md) and [C4 contract proposal](docs/handoffs/C4-v0.2-proposal.md): ready for owner/schema review.
 - [Foundation runtime](docs/design/foundation-runtime.md): selected stack, boundaries and planned
-  developer commands. M0 commands above are implemented; host commands remain planned.
+  developer commands. The host and image-library commands above are implemented.
 - [ENGINEERING.md](ENGINEERING.md): proposed storage, process ownership, lifecycle, and boundaries.
 - [Spec review disposition](docs/reviews/2026-10-30-spec-review-disposition.md): Claude's findings,
   corrections, and remaining integration limits.
