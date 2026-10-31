@@ -68,7 +68,7 @@ async fn duplicate_submissions_dispatch_once_and_mutable_originals_are_not_input
         tokio::time::sleep(std::time::Duration::from_millis(20)).await;
     }
     let saved = c.attempts.get("attempt-1").await.unwrap();
-    assert_eq!(saved.execution, "completed");
+    assert_eq!(saved.execution, "completed", "{:?}", saved.notices);
     assert!(saved.wire.is_some());
     assert_eq!(saved.request.params["label"], "original");
     let path = saved.arguments["source"]["path"].as_str().unwrap();
@@ -157,4 +157,48 @@ async fn direct_browser_api_cannot_bypass_no_paid_guard() {
     assert!(!dir.path().join("runs/calls.ndjson").exists());
     assert!(c.close().await);
     c.assets.database.shutdown().await.unwrap();
+}
+#[tokio::test]
+async fn terminal_evidence_is_verified_and_save_failure_does_not_change_tool_outcome() {
+    for scenario in [
+        "normal",
+        "digest-mismatch",
+        "missing-output",
+        "conflicting-run",
+    ] {
+        let (_dir, c, request) = setup(scenario).await;
+        c.submit(request).await.unwrap();
+        let mut saved = c.attempts.get("attempt-1").await.unwrap();
+        for _ in 0..100 {
+            saved = c.attempts.get("attempt-1").await.unwrap();
+            if saved.preservation["contract"] != "pending" {
+                break;
+            }
+            tokio::time::sleep(std::time::Duration::from_millis(20)).await;
+        }
+        if scenario == "conflicting-run" {
+            assert_eq!(saved.execution, "interrupted");
+        } else {
+            assert_eq!(saved.execution, "completed", "{:?}", saved.notices);
+            assert_eq!(saved.result.as_ref().unwrap()["status"], "completed");
+            assert_eq!(
+                saved.preservation["contract"],
+                if scenario == "normal" {
+                    "complete"
+                } else {
+                    "incomplete"
+                }
+            );
+            assert_eq!(saved.preservation["native"], "unsupported");
+            if scenario == "normal" {
+                assert_eq!(saved.outputs.len(), 1);
+                assert!(saved.journal.is_some());
+            } else {
+                assert!(saved.outputs.is_empty());
+                assert!(!saved.notices.is_empty());
+            }
+        }
+        assert!(c.close().await);
+        c.assets.database.shutdown().await.unwrap();
+    }
 }

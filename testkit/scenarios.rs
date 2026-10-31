@@ -185,6 +185,15 @@ pub fn execute(
         run["status"] = json!(if io_failure { "error" } else { "invalid" });
         run["error"] = json!({"code":if io_failure {"io"} else {"input"},"retryable":false,"reason":error.to_string()});
     }
+    if scenario == "digest-mismatch" {
+        run["images"]["out"][0]["image"]["file_sha256"] = json!("0".repeat(64));
+    }
+    if scenario == "missing-output" {
+        let _ = fs::remove_file(directory.join("candidate.png"));
+    }
+    if scenario == "conflicting-run" {
+        run["run"]["resource"] = json!("sample-lab://run/different/run.json");
+    }
     run["finished"] = json!(timestamp());
     run["duration_ms"] = json!(started.elapsed().as_millis() as u64);
     if let Err(error) = fs::write(directory.join("run.json"), run.to_string()) {

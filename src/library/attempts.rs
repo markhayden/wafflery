@@ -26,6 +26,8 @@ pub struct Attempt {
     pub wire: Option<Value>,
     pub execution: String,
     pub result: Option<Value>,
+    #[serde(default)]
+    pub raw_response: Option<Value>,
     pub preservation: Value,
     pub outputs: Vec<Value>,
     pub journal: Option<Value>,
@@ -86,6 +88,7 @@ impl AttemptStore {
             wire: None,
             execution: "submitted".into(),
             result: None,
+            raw_response: None,
             preservation: json!({"contract":"pending","native":"unsupported","report":"unsupported"}),
             outputs: vec![],
             journal: None,
@@ -161,6 +164,19 @@ impl AttemptStore {
         })
         .await?;
         Ok(())
+    }
+    pub async fn bind_result(&self, id: &str, result: Value) -> Result<Attempt> {
+        let id = id.to_owned();
+        self.database.call(move |db| {
+            let tx=db.transaction()?;
+            let record:String=tx.query_row("SELECT record FROM attempts WHERE id=?1",[&id],|r|r.get(0))?;
+            let mut attempt:Attempt=serde_json::from_str(&record)?;
+            let reused:bool=tx.query_row("SELECT EXISTS(SELECT 1 FROM attempts WHERE id != ?1 AND json_extract(record,'$.request.tool') = ?2 AND json_extract(record,'$.declaration.session') = ?3 AND json_extract(record,'$.result.run.resource') = ?4)",params![id,attempt.request.tool,attempt.declaration["session"].as_str(),result["run"]["resource"].as_str()],|r|r.get(0))?;
+            if reused || attempt.result.is_some() {return Err(Error::Conflict("Tool run identity is already bound to another result"));}
+            attempt.execution=result["status"].as_str().unwrap_or("interrupted").into();attempt.result=Some(result);
+            tx.execute("UPDATE attempts SET record=?1 WHERE id=?2",params![serde_json::to_string(&attempt)?,id])?;
+            tx.commit()?;Ok(attempt)
+        }).await
     }
     pub async fn list(&self, before: Option<i64>, limit: usize) -> Result<Vec<Attempt>> {
         let limit = limit.clamp(1, 100) as i64;

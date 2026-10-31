@@ -41,3 +41,29 @@ async fn submission_is_immutable_idempotent_and_restart_never_replays_it() {
     assert_eq!(saved.wire.unwrap()["params"]["_meta"]["progressToken"], 4);
     assets.database.shutdown().await.unwrap();
 }
+#[tokio::test]
+async fn a_tool_run_resource_can_only_bind_once_within_the_same_process_session() {
+    let dir = tempfile::tempdir().unwrap();
+    let assets = AssetStore::open(&dir.path().join("Library")).unwrap();
+    let store = AttemptStore::new(assets.database.clone());
+    for id in ["first", "second"] {
+        let submission: Submission = serde_json::from_value(
+            json!({"id":id,"tool":"fixture","action":"op","revision":"a","params":{},"images":{}}),
+        )
+        .unwrap();
+        store
+            .create(
+                submission,
+                json!({}),
+                json!({"session":"same-process"}),
+                json!({}),
+            )
+            .await
+            .unwrap();
+    }
+    let result = json!({"status":"completed","run":{"resource":"fixture://run/one/run.json"}});
+    store.bind_result("first", result.clone()).await.unwrap();
+    assert!(store.bind_result("second", result).await.is_err());
+    assert!(store.get("second").await.unwrap().result.is_none());
+    assets.database.shutdown().await.unwrap();
+}

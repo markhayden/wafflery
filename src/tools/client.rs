@@ -71,6 +71,7 @@ pub struct Declaration {
 /// Keeps ownership even when initialization fails; close never force-kills a child.
 pub struct ToolClient {
     pub descriptor: Descriptor,
+    pub session: String,
     pub(crate) gate: Gate,
     child: Mutex<Child>,
     pipes: std::sync::Mutex<Option<(ChildStdout, ChildStdin)>>,
@@ -82,6 +83,9 @@ pub struct ToolClient {
 impl ToolClient {
     pub fn spawn(descriptor: Descriptor) -> Result<Self> {
         let descriptor = descriptor.validate()?;
+        let mut random = [0u8; 32];
+        getrandom::fill(&mut random).map_err(|e| Error::Invalid(e.to_string()))?;
+        let session = random.iter().map(|b| format!("{b:02x}")).collect();
         let mut child = Command::new(&descriptor.executable)
             .args(&descriptor.args)
             .current_dir(&descriptor.cwd)
@@ -101,6 +105,7 @@ impl ToolClient {
         let (progress, _) = watch::channel(None);
         Ok(Self {
             descriptor,
+            session,
             gate: Gate::default(),
             child: Mutex::new(child),
             pipes: std::sync::Mutex::new(Some((stdout, stdin))),

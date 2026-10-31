@@ -207,7 +207,11 @@ impl Coordinator {
             .create(
                 request.clone(),
                 arguments.clone(),
-                serde_json::to_value(&current)?,
+                {
+                    let mut declaration = serde_json::to_value(&current)?;
+                    declaration["session"] = json!(client.session);
+                    declaration
+                },
                 inputs,
             )
             .await;
@@ -248,21 +252,46 @@ impl Coordinator {
         }.await;
         match result {
             Ok(result) => {
-                let saved = self
-                    .attempts
-                    .update(&request.id, move |attempt| {
-                        attempt.execution =
-                            result["status"].as_str().unwrap_or("interrupted").into();
-                        attempt.result = Some(result);
-                        attempt.preservation["contract"] = json!("incomplete");
-                        attempt
-                            .notices
-                            .push("Output and journal capture has not completed.".into());
-                        Ok(())
-                    })
-                    .await;
-                if saved.is_ok() {
-                    self.active.lock().await.remove(&request.id);
+                let saved = async {
+                    let attempt = self.attempts.get(&request.id).await?;
+                    super::evidence::check_association(&attempt, &result)?;
+                    let attempt = self.attempts.bind_result(&request.id, result).await?;
+                    let (outputs, journal, notices) =
+                        super::evidence::capture(&self.assets, &client, &attempt).await;
+                    self.attempts
+                        .update(&request.id, move |attempt| {
+                            attempt.preservation["contract"] = json!(if notices.is_empty() {
+                                "complete"
+                            } else {
+                                "incomplete"
+                            });
+                            attempt.outputs = outputs;
+                            attempt.journal = journal;
+                            attempt.notices.extend(notices);
+                            Ok(())
+                        })
+                        .await?;
+                    Ok::<_, Error>(())
+                }
+                .await;
+                match saved {
+                    Ok(()) => {
+                        self.active.lock().await.remove(&request.id);
+                    }
+                    Err(error) => {
+                        let message = error.to_string();
+                        let _ = self
+                            .attempts
+                            .update(&request.id, move |attempt| {
+                                if attempt.result.is_none() {
+                                    attempt.execution = "interrupted".into();
+                                }
+                                attempt.preservation["contract"] = json!("incomplete");
+                                attempt.notices.push(message);
+                                Ok(())
+                            })
+                            .await;
+                    }
                 }
             }
             Err(error) => {

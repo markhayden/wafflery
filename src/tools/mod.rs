@@ -59,3 +59,5 @@ pub fn validate_contract(kind: &str, value: &serde_json::Value) -> Result<()> {
 }
 
 mod dispatch_transport;
+
+mod evidence;
