@@ -7,7 +7,7 @@ use axum::{
     extract::{Path, Query, State},
     http::StatusCode,
     response::{IntoResponse, Response},
-    routing::get,
+    routing::{get, post},
 };
 use std::sync::Arc;
 
@@ -17,6 +17,7 @@ pub fn router(coordinator: Arc<Coordinator>) -> Router {
         .route("/api/tools/{id}/description", get(description))
         .route("/api/attempts", get(list).post(submit))
         .route("/api/attempts/{id}", get(attempt))
+        .route("/api/attempts/{id}/cancel", post(cancel))
         .with_state(coordinator.clone())
         .merge(super::event_api::router(coordinator.events.clone()))
 }
@@ -82,4 +83,15 @@ async fn list(
         None
     };
     Ok(Json(serde_json::json!({"items":items,"cursor":cursor})))
+}
+
+#[derive(serde::Deserialize)]
+#[serde(deny_unknown_fields)]
+struct Empty {}
+async fn cancel(
+    State(c): State<Arc<Coordinator>>,
+    Path(id): Path<String>,
+    Json(_): Json<Empty>,
+) -> Result<Json<crate::library::attempts::Attempt>, ApiError> {
+    Ok(Json(c.cancel(&id).await?))
 }

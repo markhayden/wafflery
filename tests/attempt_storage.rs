@@ -67,3 +67,22 @@ async fn a_tool_run_resource_can_only_bind_once_within_the_same_process_session(
     assert!(store.get("second").await.unwrap().result.is_none());
     assets.database.shutdown().await.unwrap();
 }
+#[tokio::test]
+async fn cancelling_a_prepared_attempt_atomically_prevents_its_transport_record() {
+    let dir = tempfile::tempdir().unwrap();
+    let assets = AssetStore::open(&dir.path().join("Library")).unwrap();
+    let store = AttemptStore::new(assets.database.clone());
+    let submission: Submission = serde_json::from_value(
+        json!({"id":"early","tool":"fixture","action":"op","revision":"a","params":{},"images":{}}),
+    )
+    .unwrap();
+    store
+        .create(submission, json!({}), json!({}), json!({}))
+        .await
+        .unwrap();
+    let cancelled = store.request_cancel("early").await.unwrap();
+    assert_eq!(cancelled.execution, "rejected");
+    assert!(cancelled.result.is_none());
+    assert!(store.record_wire("early", json!({"id":4})).await.is_err());
+    assets.database.shutdown().await.unwrap();
+}

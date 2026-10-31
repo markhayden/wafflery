@@ -165,6 +165,19 @@ impl AttemptStore {
         .await?;
         Ok(())
     }
+    pub async fn request_cancel(&self, id: &str) -> Result<Attempt> {
+        self.update(id,|attempt| {
+            if attempt.result.is_some() || !matches!(attempt.execution.as_str(),"submitted"|"running") {return Ok(());}
+            if attempt.wire.is_none() {
+                attempt.execution="rejected".into();
+                attempt.notices.push("Cancelled before dispatch; no tool call was sent.".into());
+            } else {
+                attempt.execution="unconfirmed".into();
+                attempt.notices.push("Cancellation requested; final outcome unconfirmed. This contract does not provide a structured run reference before the result.".into());
+            }
+            attempt.preservation["contract"]=json!("incomplete");Ok(())
+        }).await
+    }
     pub async fn bind_result(&self, id: &str, result: Value) -> Result<Attempt> {
         let id = id.to_owned();
         self.database.call(move |db| {

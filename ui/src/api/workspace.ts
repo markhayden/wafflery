@@ -22,6 +22,7 @@ export function workspaceClient(api:LocalApi) {
   async snapshot():Promise<Snapshot>{const value:unknown=await(await api.request("/api/state")).json();if(!record(value)||!Array.isArray(value.tools)||!Array.isArray(value.attempts)||!value.attempts.every(attempt)||!value.tools.every((tool:unknown)=>record(tool)&&typeof tool.id==="string"&&(tool.declaration===null||declaration(tool.declaration))))throw new Error("Workspace state could not be read.");return value as Snapshot;},
   async description(id:string):Promise<Declaration>{const value:unknown=await(await api.request(`/api/tools/${encodeURIComponent(id)}/description`)).json();if(!declaration(value))throw new Error("Tool declaration is unsupported.");return value;},
   attempt:(id:string)=>getAttempt(`/api/attempts/${encodeURIComponent(id)}`),
+  cancel:(id:string)=>getAttempt(`/api/attempts/${encodeURIComponent(id)}/cancel`,{method:"POST",headers:{"Content-Type":"application/json"},body:"{}"}),
   submit:(request:Submission)=>getAttempt("/api/attempts",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(request)}),
  };
 }

@@ -21,6 +21,7 @@ pub(crate) struct Permit {
     pub action: String,
     pub arguments: Value,
     pub generation: u64,
+    pub written: tokio::sync::watch::Sender<bool>,
 }
 pub(crate) type Gate = Arc<Mutex<Option<Permit>>>;
 pub(crate) struct RecordedTransport<T> {
@@ -47,6 +48,7 @@ impl<T: Transport<RoleClient, Error = io::Error>> Transport<RoleClient> for Reco
         let write = self.inner.send(item);
         async move {
             let wire = wire?;
+            let mut written = None;
             if let Some(permit) = permit {
                 let permit = permit
                     .ok_or_else(|| io::Error::other("No persisted dispatch authorization"))?;
@@ -66,8 +68,13 @@ impl<T: Transport<RoleClient, Error = io::Error>> Transport<RoleClient> for Reco
                 if generation.load(Ordering::SeqCst) != permit.generation {
                     return Err(io::Error::other("Declaration changed before dispatch"));
                 }
+                written = Some(permit.written);
             }
-            write.await
+            write.await?;
+            if let Some(written) = written {
+                written.send_replace(true);
+            }
+            Ok(())
         }
     }
     async fn receive(&mut self) -> Option<RxJsonRpcMessage<RoleClient>> {
@@ -138,6 +145,7 @@ mod tests {
             action: "op".into(),
             arguments: json!({}),
             generation: 0,
+            written: tokio::sync::watch::channel(false).0,
         });
         assets.database.shutdown().await.unwrap();
         assert!(
@@ -155,6 +163,7 @@ mod tests {
             action: "op".into(),
             arguments: json!({}),
             generation: 0,
+            written: tokio::sync::watch::channel(false).0,
         });
         transport
             .send(serde_json::from_value(message.clone()).unwrap())

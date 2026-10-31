@@ -22,6 +22,8 @@ struct Entry {
 }
 struct Active {
     _permit: OwnedSemaphorePermit,
+    written: tokio::sync::watch::Receiver<bool>,
+    cancel_requested: bool,
 }
 pub struct Coordinator {
     pub assets: AssetStore,
@@ -226,17 +228,23 @@ impl Coordinator {
                 return Err(error.into());
             }
         };
+        let (written, dispatched) = tokio::sync::watch::channel(false);
         *client.gate.lock().unwrap_or_else(|e| e.into_inner()) = Some(Permit {
             id: request.id.clone(),
             store: self.attempts.clone(),
             action: request.action.clone(),
             arguments: arguments.clone(),
             generation: current.generation,
+            written,
         });
-        self.active
-            .lock()
-            .await
-            .insert(request.id.clone(), Active { _permit: permit });
+        self.active.lock().await.insert(
+            request.id.clone(),
+            Active {
+                _permit: permit,
+                written: dispatched,
+                cancel_requested: false,
+            },
+        );
         let coordinator = self.clone();
         let worker = tokio::spawn(async move {
             coordinator.execute(client, request, arguments).await;
@@ -301,10 +309,17 @@ impl Coordinator {
                 }
             }
             Err(error) => {
+                let locally_cancelled =
+                    matches!(error, Error::Mcp(rmcp::ServiceError::Cancelled { .. }));
                 let message = error.to_string();
                 let _ = self
                     .attempts
                     .update(&request.id, move |attempt| {
+                        if attempt.execution == "rejected"
+                            || (locally_cancelled && attempt.execution == "unconfirmed")
+                        {
+                            return Ok(());
+                        }
                         attempt.execution = "interrupted".into();
                         attempt.preservation["contract"] = json!("incomplete");
                         attempt.notices.push(message);
@@ -313,7 +328,54 @@ impl Coordinator {
                     .await;
             }
         }
+        client.gate.lock().unwrap_or_else(|e| e.into_inner()).take();
+        if self
+            .attempts
+            .get(&request.id)
+            .await
+            .is_ok_and(|a| a.execution == "rejected")
+        {
+            self.active.lock().await.remove(&request.id);
+        }
         self.events.changed();
+    }
+    pub async fn cancel(self: &Arc<Self>, id: &str) -> Result<Attempt> {
+        let mut active = self.active.lock().await;
+        let Some(running) = active.get_mut(id) else {
+            return Ok(self.attempts.get(id).await?);
+        };
+        if running.cancel_requested {
+            return Ok(self.attempts.get(id).await?);
+        }
+        let attempt = self.attempts.request_cancel(id).await?;
+        running.cancel_requested = true;
+        let mut written = running.written.clone();
+        if attempt.execution == "unconfirmed" {
+            let client = self
+                .tools
+                .get(&attempt.request.tool)
+                .and_then(|e| e.client.clone())
+                .ok_or(Error::Missing("Tool is unavailable"))?;
+            let request_id = attempt
+                .wire
+                .as_ref()
+                .and_then(|wire| wire.get("id"))
+                .cloned()
+                .ok_or_else(|| Error::Invalid("Request identity missing".into()))?;
+            let coordinator = self.clone();
+            let id = id.to_owned();
+            self.workers.lock().await.push(tokio::spawn(async move {
+                // A cancellation must not overtake the call while its DB write is pending.
+                if written.wait_for(|sent|*sent).await.is_ok() {
+                    let sent=async {let params=serde_json::from_value(serde_json::json!({"requestId":request_id,"reason":"Cancelled by the workspace user"}))?;client.peer()?.notify_cancelled(params).await?;Ok::<_,Error>(())}.await;
+                    if let Err(error)=sent {let message=format!("Cancellation could not be delivered: {error}");let _=coordinator.attempts.update(&id,move|a|{a.notices.push(message);Ok(())}).await;}
+                    coordinator.events.changed();
+                }
+            }));
+        }
+        drop(active);
+        self.events.changed();
+        Ok(attempt)
     }
 
     pub async fn try_quit(&self) -> bool {
@@ -332,8 +394,24 @@ impl Coordinator {
             }
         }
         if stopped {
-            for task in self.workers.lock().await.drain(..) {
+            let tasks = self.workers.lock().await.drain(..).collect::<Vec<_>>();
+            for task in tasks {
                 let _ = task.await;
+            }
+            let ids = self.active.lock().await.keys().cloned().collect::<Vec<_>>();
+            for id in ids {
+                let _ = self
+                    .attempts
+                    .update(&id, |attempt| {
+                        if attempt.result.is_none() && attempt.execution != "rejected" {
+                            attempt.execution = "interrupted".into();
+                            attempt.notices.push(
+                                "Tool session ended without a confirmed final result.".into(),
+                            );
+                        }
+                        Ok(())
+                    })
+                    .await;
             }
             self.active.lock().await.clear();
         }
