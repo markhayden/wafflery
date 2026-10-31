@@ -10,6 +10,7 @@ test("another tab follows a run after a stream reconnect and the launching tab c
  await expect.poll(()=>connections).toBeGreaterThanOrEqual(2);
  await page.locator("input[type=file]").setInputFiles("tests/fixtures/sample.png");await page.getByLabel("Label *",{exact:true}).fill("Survives a closed tab");await page.getByRole("button",{name:"Run",exact:true}).click();
  await expect(other.getByRole("status").filter({hasText:"running"})).toBeVisible();
+ await expect(other.getByText("Waiting in the offline test tool",{exact:true})).toBeVisible();
  await page.close();
  await expect(other.getByText("Contract evidence: complete.",{exact:false}).first()).toBeVisible({timeout:15000});
  await expect(other.getByRole("slider")).toBeVisible();

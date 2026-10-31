@@ -16,14 +16,24 @@ use tokio::sync::{Mutex, OwnedSemaphorePermit, Semaphore};
 
 struct Entry {
     client: Option<Arc<ToolClient>>,
+    state: std::sync::RwLock<DeclarationState>,
+    reservation: Arc<Semaphore>,
+}
+struct DeclarationState {
     declaration: Option<Declaration>,
     error: Option<String>,
-    reservation: Arc<Semaphore>,
 }
 struct Active {
     _permit: OwnedSemaphorePermit,
     written: tokio::sync::watch::Receiver<bool>,
     cancel_requested: bool,
+}
+// Declare before the local permit so rejected submissions publish after releasing it.
+struct SubmissionChange(crate::events::Events);
+impl Drop for SubmissionChange {
+    fn drop(&mut self) {
+        self.0.changed();
+    }
 }
 pub struct Coordinator {
     pub assets: AssetStore,
@@ -78,8 +88,7 @@ impl Coordinator {
                 id,
                 Entry {
                     client,
-                    declaration,
-                    error,
+                    state: std::sync::RwLock::new(DeclarationState { declaration, error }),
                     reservation: Arc::new(Semaphore::new(1)),
                 },
             );
@@ -99,12 +108,21 @@ impl Coordinator {
         self.tools
             .get(id)
             .ok_or(Error::Missing("Tool not registered"))?
+            .state
+            .read()
+            .unwrap_or_else(|e| e.into_inner())
             .declaration
             .clone()
             .ok_or_else(|| Error::Invalid("This tool has no supported declaration".into()))
     }
     pub async fn snapshot(&self) -> Result<Value> {
-        let tools:Vec<_>=self.tools.iter().map(|(id,entry)|json!({"id":id,"declaration":entry.declaration,"error":entry.error,"busy":entry.reservation.available_permits()==0,"progress":entry.client.as_ref().and_then(|client|client.progress().borrow().clone())})).collect();
+        self.reap_exited().await;
+        let tools: Vec<_> = self.tools.iter().map(|(id, entry)| {
+            let state = entry.state.read().unwrap_or_else(|e| e.into_inner());
+            json!({"id":id,"declaration":state.declaration,"error":state.error,
+                "busy":entry.reservation.available_permits()==0,
+                "progress":entry.client.as_ref().and_then(|client|client.progress().borrow().clone())})
+        }).collect();
         Ok(
             json!({"tools":tools,"attempts":self.attempts.list(None,50).await?,"event_session":self.events.session()}),
         )
@@ -120,6 +138,7 @@ impl Coordinator {
             return Err(Error::Invalid("Invalid submission ID".into()));
         }
         let _submission = self.submission.lock().await;
+        let _change = SubmissionChange(self.events.clone());
         if self.stopping.load(Ordering::Acquire) {
             return Err(Error::Conflict("The host is shutting down"));
         }
@@ -138,7 +157,21 @@ impl Coordinator {
             .clone()
             .ok_or(Error::Missing("Tool is unavailable"))?;
         // Re-read the live declaration under the reservation. Never authorize using UI metadata.
-        let current = client.describe().await?;
+        let refreshed = client.describe().await;
+        {
+            let mut state = entry.state.write().unwrap_or_else(|e| e.into_inner());
+            match &refreshed {
+                Ok(current) => {
+                    state.declaration = Some(current.clone());
+                    state.error = None;
+                }
+                Err(error) => {
+                    state.declaration = None;
+                    state.error = Some(error.to_string());
+                }
+            }
+        }
+        let current = refreshed?;
         if current.revision != request.revision {
             return Err(Error::Conflict(
                 "Tool description changed. Reload its inputs before running.",
@@ -268,14 +301,31 @@ impl Coordinator {
         Ok(attempt)
     }
     async fn execute(&self, client: Arc<ToolClient>, request: Submission, arguments: Value) {
-        let result=async {
-            let message=serde_json::from_value(json!({"method":"tools/call","params":{"name":request.action,"arguments":arguments}}))?;
-            let result=client.peer()?.send_request(message).await?;
-            let raw=serde_json::to_value(result)?;
-            let result=structured_result(&raw)?;
-            validate_contract("urn:table-manners:core:result",&result)?;
-            if result["action"]!=request.action {return Err(Error::Invalid("Result action does not match the submitted action".into()));}
-            Ok::<_,Error>(result)
+        let result = async {
+            let message = serde_json::from_value(json!({"method":"tools/call","params":{"name":request.action,"arguments":arguments}}))?;
+            let mut progress = client.progress();
+            let call = client.peer()?.send_request(message);
+            tokio::pin!(call);
+            let response = loop {
+                tokio::select! {
+                    response = &mut call => break response?,
+                    changed = progress.changed() => {
+                        if changed.is_ok() { self.events.changed(); }
+                    }
+                }
+            };
+            let raw = serde_json::to_value(response)?;
+            let saved_raw = raw.clone();
+            self.attempts.update(&request.id, move |attempt| {
+                attempt.raw_response = Some(saved_raw);
+                Ok(())
+            }).await?;
+            let result = structured_result(&raw)?;
+            validate_contract("urn:table-manners:core:result", &result)?;
+            if result["action"] != request.action {
+                return Err(Error::Invalid("Result action does not match the submitted action".into()));
+            }
+            Ok::<_, Error>(result)
         }.await;
         match result {
             Ok(result) => {
@@ -343,12 +393,26 @@ impl Coordinator {
             }
         }
         client.gate.lock().unwrap_or_else(|e| e.into_inner()).take();
-        if self
-            .attempts
-            .get(&request.id)
-            .await
-            .is_ok_and(|a| a.execution == "rejected")
+        let child_exited = client.confirm_exit().await.unwrap_or(false);
+        if child_exited
+            || self
+                .attempts
+                .get(&request.id)
+                .await
+                .is_ok_and(|a| a.execution == "rejected")
         {
+            if child_exited {
+                let _ = self
+                    .attempts
+                    .update(&request.id, |attempt| {
+                        if attempt.result.is_none() && attempt.execution != "rejected" {
+                            attempt.execution = "interrupted".into();
+                            attempt.preservation["contract"] = json!("incomplete");
+                        }
+                        Ok(())
+                    })
+                    .await;
+            }
             self.active.lock().await.remove(&request.id);
         }
         self.events.changed();
@@ -392,8 +456,46 @@ impl Coordinator {
         Ok(attempt)
     }
 
+    async fn reap_exited(&self) {
+        let ids = self.active.lock().await.keys().cloned().collect::<Vec<_>>();
+        for id in ids {
+            let Ok(attempt) = self.attempts.get(&id).await else {
+                continue;
+            };
+            let Some(client) = self
+                .tools
+                .get(&attempt.request.tool)
+                .and_then(|entry| entry.client.as_ref())
+            else {
+                continue;
+            };
+            if !client.has_exited().await.unwrap_or(false) {
+                continue;
+            }
+            // A terminal result may still be getting its evidence saved by the worker.
+            if attempt.result.is_some() && attempt.preservation["contract"] == "pending" {
+                continue;
+            }
+            if self
+                .attempts
+                .update(&id, |attempt| {
+                    if attempt.result.is_none() && attempt.execution != "rejected" {
+                        attempt.execution = "interrupted".into();
+                        attempt.preservation["contract"] = json!("incomplete");
+                    }
+                    Ok(())
+                })
+                .await
+                .is_ok()
+            {
+                self.active.lock().await.remove(&id);
+                self.events.changed();
+            }
+        }
+    }
     pub async fn try_quit(&self) -> bool {
         let _submission = self.submission.lock().await;
+        self.reap_exited().await;
         if !self.active.lock().await.is_empty() {
             return false;
         }

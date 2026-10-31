@@ -1,6 +1,28 @@
 use super::{Error, Result};
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
+use std::{io::Read, os::unix::fs::OpenOptionsExt};
+
+pub fn load(path: &std::path::Path) -> std::io::Result<Vec<Descriptor>> {
+    let file = match std::fs::OpenOptions::new()
+        .read(true)
+        .custom_flags(nix::libc::O_NOFOLLOW | nix::libc::O_NONBLOCK)
+        .open(path)
+    {
+        Ok(file) => file,
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => return Ok(vec![]),
+        Err(error) => return Err(error),
+    };
+    if !file.metadata()?.is_file() {
+        return Err(std::io::Error::other("tools.json must be a regular file"));
+    }
+    let mut bytes = Vec::new();
+    file.take(1024 * 1024 + 1).read_to_end(&mut bytes)?;
+    if bytes.len() > 1024 * 1024 {
+        return Err(std::io::Error::other("tools.json exceeds 1 MiB"));
+    }
+    serde_json::from_slice(&bytes).map_err(std::io::Error::other)
+}
 
 /// Explicit, local-only development registration. No shell expansion or environment overrides.
 #[derive(Clone, Debug, Deserialize, Serialize)]

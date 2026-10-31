@@ -198,6 +198,7 @@ async fn terminal_evidence_is_verified_and_save_failure_does_not_change_tool_out
                 assert!(!saved.notices.is_empty());
             }
         }
+        assert!(saved.raw_response.as_ref().unwrap()["structuredContent"].is_object());
         assert!(c.close().await);
         c.assets.database.shutdown().await.unwrap();
     }
@@ -244,6 +245,70 @@ async fn impossible_image_coordinate_metadata_is_rejected_before_dispatch() {
     .unwrap();
     assert!(c.submit(request).await.is_err());
     assert!(!dir.path().join("runs/calls.ndjson").exists());
+    assert!(c.close().await);
+    c.assets.database.shutdown().await.unwrap();
+}
+
+#[tokio::test]
+async fn refreshed_declarations_replace_the_browser_snapshot_without_dispatch() {
+    let (dir, c, request) = setup("becomes-paid").await;
+    let old = request.revision.clone();
+    assert!(c.submit(request).await.is_err());
+    let current = c.description("example").await.unwrap();
+    assert_ne!(current.revision, old);
+    assert_eq!(current.document["actions"][0]["cost"]["may_spend"], true);
+    assert_eq!(
+        c.snapshot().await.unwrap()["tools"][0]["declaration"]["revision"],
+        current.revision
+    );
+    assert!(!dir.path().join("runs/calls.ndjson").exists());
+    assert!(c.close().await);
+    c.assets.database.shutdown().await.unwrap();
+}
+
+#[tokio::test]
+async fn child_exit_releases_the_reservation_without_claiming_a_tool_outcome() {
+    let (_dir, c, request) = setup("exit-during-call").await;
+    c.submit(request).await.unwrap();
+    tokio::time::timeout(std::time::Duration::from_secs(4), async {
+        loop {
+            if c.attempts.get("attempt-1").await.unwrap().execution == "interrupted"
+                && c.try_quit().await
+            {
+                break;
+            }
+            tokio::time::sleep(std::time::Duration::from_millis(20)).await;
+        }
+    })
+    .await
+    .expect("dead child must not block quit");
+    assert!(c.attempts.get("attempt-1").await.unwrap().result.is_none());
+    assert!(c.close().await);
+    c.assets.database.shutdown().await.unwrap();
+}
+
+#[tokio::test]
+async fn a_cancelled_child_that_exits_later_does_not_hold_the_reservation() {
+    let (dir, c, request) = setup("exit-after-cancel").await;
+    c.submit(request).await.unwrap();
+    for _ in 0..100 {
+        if dir.path().join("runs/calls.ndjson").exists() {
+            break;
+        }
+        tokio::time::sleep(std::time::Duration::from_millis(10)).await;
+    }
+    c.cancel("attempt-1").await.unwrap();
+    assert!(!c.try_quit().await);
+    tokio::time::sleep(std::time::Duration::from_millis(900)).await;
+    assert!(
+        !c.snapshot().await.unwrap()["tools"][0]["busy"]
+            .as_bool()
+            .unwrap()
+    );
+    assert!(c.try_quit().await);
+    let saved = c.attempts.get("attempt-1").await.unwrap();
+    assert_eq!(saved.execution, "interrupted");
+    assert!(saved.result.is_none());
     assert!(c.close().await);
     c.assets.database.shutdown().await.unwrap();
 }

@@ -11,14 +11,7 @@ pub async fn serve(root: &std::path::Path) -> std::io::Result<()> {
     let owner = control::Ownership::acquire(root)?;
     let store = crate::library::assets::AssetStore::open(&owner.root.join("Library"))
         .map_err(std::io::Error::other)?;
-    let descriptors = match std::fs::read(owner.root.join("tools.json")) {
-        Ok(bytes) if bytes.len() <= 1024 * 1024 => {
-            serde_json::from_slice(&bytes).map_err(std::io::Error::other)?
-        }
-        Ok(_) => return Err(std::io::Error::other("tools.json exceeds 1 MiB")),
-        Err(error) if error.kind() == std::io::ErrorKind::NotFound => vec![],
-        Err(error) => return Err(error),
-    };
+    let descriptors = crate::tools::registration::load(&owner.root.join("tools.json"))?;
     let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await?;
     let origin = format!("http://{}", listener.local_addr()?);
     println!("{origin}");

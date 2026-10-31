@@ -14,6 +14,8 @@ test("run a real offline action and inspect immutable evidence after editing the
  await expect(drawer.getByLabel("Saved evidence")).toContainText("Saved first experiment");
  await expect(drawer.getByLabel("Saved evidence")).not.toContainText("Unsubmitted draft");
  await drawer.getByRole("button",{name:"Recorded call"}).click();await expect(drawer.getByLabel("Saved evidence")).toContainText("progressToken");await expect(drawer.getByLabel("Saved evidence")).toContainText("Saved first experiment");
+ await drawer.getByRole("button",{name:"Raw result"}).click();
+ await expect(drawer.getByLabel("Saved evidence")).toContainText("structuredContent");
  await drawer.getByRole("button",{name:"Close"}).click();
  await page.screenshot({path:testInfo.outputPath("offline-result.png"),fullPage:true});
  await host.stop();await host.start();await host.open(page);

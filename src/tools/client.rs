@@ -270,6 +270,30 @@ impl ToolClient {
     pub async fn read_resource(&self, uri: &str) -> Result<Value> {
         self.control("resources/read", json!({"uri":uri})).await
     }
+    /// Transport loss alone is not proof that the owned process stopped.
+    pub async fn has_exited(&self) -> Result<bool> {
+        Ok(self.child.lock().await.try_wait()?.is_some())
+    }
+    pub async fn confirm_exit(&self) -> Result<bool> {
+        let mut child = self.child.lock().await;
+        if child.try_wait()?.is_some() {
+            return Ok(true);
+        }
+        if self
+            .peer
+            .as_ref()
+            .is_some_and(|peer| peer.is_transport_closed())
+        {
+            return match tokio::time::timeout(Duration::from_millis(250), child.wait()).await {
+                Ok(status) => {
+                    status?;
+                    Ok(true)
+                }
+                Err(_) => Ok(false),
+            };
+        }
+        Ok(false)
+    }
     /// Returns false when EOF did not stop the process. The owner retains the handle for explicit force quit.
     pub async fn close(&self) -> Result<bool> {
         self.pipes.lock().unwrap_or_else(|e| e.into_inner()).take();

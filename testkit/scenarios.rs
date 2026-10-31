@@ -142,7 +142,14 @@ pub fn execute(
             json!({"name":"mark_band","arguments":params})
         )?;
         notify(&format!("{resource} started"));
-        let delay = if scenario == "slow" { 10_000 } else { 100 };
+        if scenario == "exit-during-call" {
+            std::process::exit(0);
+        }
+        let delay = if matches!(scenario.as_str(), "slow" | "exit-after-cancel") {
+            10_000
+        } else {
+            100
+        };
         for tick in 0..(delay / 50) {
             if cancelled.load(Ordering::Acquire) {
                 return Ok(());
@@ -220,6 +227,10 @@ pub fn execute(
             &message["id"],
             json!({"structuredContent":run,"content":content,"isError":run["status"] != "completed"}),
         );
+    }
+    if is_cancelled && scenario == "exit-after-cancel" {
+        std::thread::sleep(Duration::from_millis(600));
+        std::process::exit(0);
     }
 }
 
