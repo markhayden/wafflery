@@ -70,13 +70,18 @@ async fn attempt(
 struct Page {
     cursor: Option<i64>,
     limit: Option<usize>,
+    tool: Option<String>,
+    action: Option<String>,
 }
 async fn list(
     State(c): State<Arc<Coordinator>>,
     Query(page): Query<Page>,
 ) -> Result<Json<serde_json::Value>, ApiError> {
     let limit = page.limit.unwrap_or(50).clamp(1, 100);
-    let items = c.attempts.list(page.cursor, limit).await?;
+    let items = c
+        .attempts
+        .history(page.cursor, limit, page.tool, page.action)
+        .await?;
     let cursor = if items.len() == limit {
         items.last().map(|a| a.sequence)
     } else {

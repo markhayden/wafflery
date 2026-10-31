@@ -124,7 +124,7 @@ impl Coordinator {
                 "progress":entry.client.as_ref().and_then(|client|client.progress().borrow().clone())})
         }).collect();
         Ok(
-            json!({"tools":tools,"attempts":self.attempts.list(None,50).await?,"event_session":self.events.session()}),
+            json!({"tools":tools,"attempts":self.attempts.history(None,50,None,None).await?,"event_session":self.events.session()}),
         )
     }
     pub async fn submit(self: &Arc<Self>, request: Submission) -> Result<Attempt> {

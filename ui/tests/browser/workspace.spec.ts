@@ -21,5 +21,10 @@ test("run a real offline action and inspect immutable evidence after editing the
  await host.stop();await host.start();await host.open(page);
  await expect(page.getByRole("slider",{name:"Before and after divider"})).toBeVisible();
  await page.getByRole("button",{name:"Inspect run"}).click();await expect(drawer.getByLabel("Saved evidence")).toContainText("Saved first experiment");
+ await drawer.getByRole("button",{name:"Close"}).click();
+ await page.getByRole("button",{name:"History",exact:true}).click();
+ const history=page.getByRole("dialog",{name:"History",exact:true});
+ await history.getByRole("button",{name:/sample \/ mark_band/}).click();
+ await expect(page.getByRole("slider")).toBeVisible();
  expect(errors).toEqual([]);
 });

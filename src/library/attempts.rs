@@ -65,6 +65,15 @@ pub struct Attempt {
 pub struct AttemptStore {
     pub database: Database,
 }
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct AttemptSummary {
+    pub id: String,
+    pub sequence: i64,
+    pub created_ms: u64,
+    pub tool: String,
+    pub action: String,
+    pub execution: String,
+}
 impl AttemptStore {
     pub fn new(database: Database) -> Self {
         Self { database }
@@ -219,17 +228,23 @@ impl AttemptStore {
             tx.commit()?;Ok(attempt)
         }).await
     }
-    pub async fn list(&self, before: Option<i64>, limit: usize) -> Result<Vec<Attempt>> {
+    pub async fn history(
+        &self,
+        before: Option<i64>,
+        limit: usize,
+        tool: Option<String>,
+        action: Option<String>,
+    ) -> Result<Vec<AttemptSummary>> {
         let limit = limit.clamp(1, 100) as i64;
         self.database
             .call(move |db| {
                 let mut query = db.prepare(
-                    "SELECT record FROM attempts WHERE seq < ?1 ORDER BY seq DESC LIMIT ?2",
+                    "SELECT id,seq,json_extract(record,'$.created_ms'),json_extract(record,'$.request.tool'),json_extract(record,'$.request.action'),json_extract(record,'$.execution') FROM attempts WHERE seq < ?1 AND (?3 IS NULL OR json_extract(record,'$.request.tool')=?3) AND (?4 IS NULL OR json_extract(record,'$.request.action')=?4) ORDER BY seq DESC LIMIT ?2",
                 )?;
-                let rows = query.query_map(params![before.unwrap_or(i64::MAX), limit], |row| {
-                    row.get::<_, String>(0)
+                let rows = query.query_map(params![before.unwrap_or(i64::MAX), limit, tool, action], |row| {
+                    Ok(AttemptSummary { id: row.get(0)?, sequence: row.get(1)?, created_ms: row.get::<_, i64>(2)?.max(0) as u64, tool: row.get(3)?, action: row.get(4)?, execution: row.get(5)? })
                 })?;
-                rows.map(|row| Ok(serde_json::from_str(&row?)?)).collect()
+                rows.map(|row| Ok(row?)).collect()
             })
             .await
     }
