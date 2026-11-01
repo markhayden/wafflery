@@ -21,7 +21,7 @@ tempfile = "=3.27.0"
 image = { version = "=0.25.10", default-features = false, features = ["png", "jpeg"] }
 
 rmcp = { version = "=3.8.0", default-features = false, features = ["client", "transport-async-rw"] }
-table-manners = "=0.1.0"
+table-manners = "=0.2.0"
 jsonschema = { version = "=0.60.2", default-features = false }
 url = "=2.5.8"
 

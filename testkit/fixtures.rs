@@ -26,7 +26,7 @@ pub fn description(version: &str) -> Value {
         "vocabulary": {"disposition": [], "confidence": [], "evidence": [], "score_kind": []},
         "limits": {"inline_bytes": 16777216},
         "progress_interval_s": 1,
-        "resources": [format!("{TOOL}://runs"), format!("{TOOL}://run/{{id}}/run.json"), format!("{TOOL}://run/{{id}}/journal")]
+        "resources": [format!("{TOOL}://session"), format!("{TOOL}://runs{{?cursor}}"), format!("{TOOL}://run/{{id}}/run.json"), format!("{TOOL}://run/{{id}}/journal")]
     })
 }
 
@@ -41,10 +41,10 @@ pub fn reference(bytes: &[u8], width: u32, height: u32) -> Value {
 pub fn result(status: &str) -> Value {
     let reference = reference(SAMPLE, 160, 100);
     json!({
-        "contract": "0.1.0", "tool": {"name": TOOL, "version": "0.1.0"}, "action": "mark_band",
-        "run": {"id": "fixture-001", "resource": format!("{TOOL}://run/fixture-001/run.json"), "dir": null},
+        "contract": "0.2.0", "tool": {"name": TOOL, "version": "0.1.0"}, "action": "mark_band",
+        "run": {"id": "fixture-001", "resource": format!("{TOOL}://run/fixture-001/run.json"), "dir": null, "session_id": null, "client_run_id": null},
         "status": status, "error": null, "started": "2026-01-01T00:00:00.000Z", "finished": "2026-01-01T00:00:00.000Z", "duration_ms": 0,
-        "input_identity": format!("sha256:{}", "0".repeat(64)), "spend": {"usd": 0, "basis": "measured"}, "cache": "off",
+        "input_identity": format!("sha256:{}", "0".repeat(64)), "spend": {"usd": 0, "unresolved_usd": 0, "basis": "measured"}, "cache": "off",
         "images": {"in": [{"slot": "source", "role": "source", "image": reference}], "out": []},
         "locations": {"used": [], "found": []}, "notes": ["Owned schema fixture; no real provider or image repair."], "body": {"illustrative": true}
     })
