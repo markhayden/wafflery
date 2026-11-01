@@ -1,29 +1,34 @@
 # Integration source inventory
 
-Rechecked 2026-10-31 for the foundation-plan review. This is source/fixture inspection, not a
-fresh run of sibling test suites. Use repository identity and repository-relative paths below;
+Rechecked 2026-10-31 for the first M4 real-tool entry slice. This is source/fixture inspection,
+plus Wafflehouse's explicit real-Rascal coordinator/browser checks, not a fresh run of sibling
+test suites. Use repository identity and repository-relative paths below;
 do not make links depend on Squint's temporary checkout folder name.
 
 ## Table-manners
 
 Repository: [markhayden/table-manners](https://github.com/markhayden/table-manners).
-Current checkout: `../table-manners`, HEAD `8e4d0c3`, clean during inspection.
+Current checkout: `../table-manners`, HEAD `b260527`, clean during inspection.
 Published contract remains `table-manners = "=0.1.0"`; tag baseline `d5a2d8e`.
-`PROPOSALS.md` contains draft v0.2 work, not a released or accepted replacement schema.
+The checkout contains v0.2 draft schemas and proposal text; v0.2 has not been tagged.
+These are not a released replacement for the host's exact v0.1.0 dependency.
 
 Relevant paths: `CONTRACT.md`, `schemas/`, `tests/fixtures.rs`, `fixtures/squint/`,
 `PROPOSALS.md`. The fixture test resolves schema URNs through the crate's embedded `SCHEMAS`.
 Squint's cancelled fixture exists at `fixtures/squint/run-cancelled.json`.
 Proposals cover list image slots (`many`), future MCP roots replacement, unconfigured readiness,
 nonretryable authentication failures and renderer readiness. C4 association/session semantics
-are not yet among them; Wafflehouse prepares a separate proposal for the owner.
+now include the Rascal/Squint review amendments. Adoption still waits for a tagged contract.
 
 ## Rascal
 
 Repository: [markhayden/rascal](https://github.com/markhayden/rascal).
-Current checkout: `../rascal`, HEAD `f0e45fb`, clean during inspection. M8 is merged; annotated
-tag `m8` resolves to commit `ebb773f`, an ancestor of HEAD. Do not confuse the tag object ID
-with its target commit. The plan records M8 checks passed; this audit did not rerun them.
+Current checkout: `../rascal`, HEAD `9c52138` during the final read-only audit. M9 is merged;
+the plan records its checks/tag. This audit did not rerun Rascal's full suite. The initial local
+binary identified itself as 0.1.0 and emitted contract 0.1.0, without an embedded source revision.
+During verification its owner rebuilt that mutable binary against the 0.2 draft; Wafflehouse
+correctly refused it. Final v0.1 checks use an offline build from a separate `git archive 9c52138`
+snapshot in Wafflehouse-owned temporary storage. No sibling working files were changed.
 
 Relevant paths: `crates/rascal-mask/src/{describe,actions,serve,playground}.rs`,
 `docs/contract.md`, `docs/adr/0020-table-manners.md`, `PLAN.md` tasks 8.6–8.8.
@@ -31,23 +36,22 @@ The current description needs no configuration: with no fillers, actions are `ma
 and `needs_env: []`. `mask_rect` and `seam` without a filler are candidate offline smoke actions.
 Use isolated workspace/run directories and the live description before any execution.
 
-The launcher currently searches `PLAYGROUND`, PATH for `playground`, then
-`$XDG_DATA_HOME/waffle/bin` or `~/.local/share/waffle/bin`, invokes `--tool rascal`, and exits 69
-when absent without an installation offer. This is implemented, not unfinished task 8.7.
-It needs alignment with the proposed H1 canonical Wafflehouse launcher.
+The launcher now searches `WAFFLEHOUSE_BIN`, PATH for `wafflehouse`, then `~/.local/bin`,
+and invokes exactly `--tool rascal`. Production installation remains unavailable without an
+approved release artifact. Wafflehouse's `dev-rascal.ts` successfully exercised this actual
+entry point with the selected binary and an isolated host-owned data directory.
 
-ADR 0020 explicitly keeps native op envelopes outside the shared v0.1 action interface. No
-R3 delivery milestone is scheduled in the inspected PLAN. C2/C3 and optional R2 also have no
-committed delivery schedule. Wafflehouse cannot treat an unscheduled dependency as imminent.
+ADR 0020 keeps native op envelopes outside the shared v0.1 action interface. R3 now has a
+supplier milestone, M10; C4 adoption is planned in M11 after v0.2. Scheduled work is not a
+claim that these interfaces are already implemented. C2/C3 remain integration follow-ups.
 
 ## Squint
 
 Repository: [markhayden/squint](https://github.com/markhayden/squint).
 Current checkout: `../dejaview`; when locating it, check `../squint` and then `../dejaview`, and
-verify repository identity rather than assuming both exist. HEAD `eef1f10`, clean at inspection;
-15 commits ahead of the locally recorded `origin/main`, no `m7` tag, checkpoint unticked.
-No fetch was performed: ahead/behind describes local remote-tracking state, not a fresh remote
-query. M7 server work is merged locally; do not call the milestone released.
+verify repository identity rather than assuming both exist. HEAD `ae6cfb8` during inspection,
+with active uncommitted work. A local `m7` tag exists; the owner reports M7 pushed/released.
+No fetch was performed and the current working changes were not modified or treated as a release.
 
 Relevant paths: `crates/squint-cli/src/serve/mod.rs`, `crates/squint-cli/src/main.rs`,
 `crates/squint-core/src/contract.rs`, `crates/squint-cli/tests/serve_check_cli.rs`,
@@ -56,8 +60,8 @@ Five named use-case tools match discovery/result attribution; S1's old naming mi
 `serve` still requires config; list-valued references are currently described under `x-squint`.
 
 `estimate` calls `finished()` and writes a zero-spend run directory visible through resources.
-Its call passes through the server semaphore, like checks/describe. Wafflehouse need not import
-these control records into its user-facing history.
+Commit `ae6cfb8` moves the execution permit to checks and adds queued cancellation without a run.
+Wafflehouse need not import estimate/control records into its user-facing history.
 
 Contrary to the supplied review's replay inference, a testkit-only `serve --provider-script`
 already exists. `provider_for` selects the ScriptedProvider before credential resolution.

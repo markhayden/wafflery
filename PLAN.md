@@ -4,17 +4,17 @@ Status: M0–M3 approved by the owner on 2026-10-31; implementation started.
 Current implementation evidence: [M0 checkpoint](docs/reviews/2026-10-31-m0-checkpoint.md) and
 [M1 checkpoint](docs/reviews/2026-10-31-m1-checkpoint.md), and
 [M2 checkpoint](docs/reviews/2026-10-31-m2-checkpoint.md), and
-[M3 checkpoint](docs/reviews/2026-10-31-m3-checkpoint.md). M0–M2 are complete. M3 is implemented
-on `feat/m3-saved-experiments`; automated and packaged-source checks pass. Its native Safari
-smoke remains blocked by Computer Use app access, so the milestone has not merged to main.
+[M3 checkpoint](docs/reviews/2026-10-31-m3-checkpoint.md). M0–M3 are complete: automated and
+packaged-source checks pass, and the owner explicitly confirmed the native Safari checklist.
+M4's explicit real-Rascal entry slice is implemented; automatic discovery and provider setup
+remain follow-on work. See its [checkpoint](docs/reviews/2026-10-31-m4-entry-checkpoint.md).
 The [current review disposition](docs/reviews/2026-10-31-plan-review-disposition.md) records
 changes and validation limits; it is not implementation verification.
 The owner agreed to proceed with foundation planning independently of later tool interfaces.
 The owner authorized continuing into real-tool integration on 2026-10-31; the concrete next
 slices are in [M4: real tool entry](docs/plans/m4-real-tool-entry.md). Paid runs are also authorized
 once estimates/caps/session handling are implemented; the current dispatch guard remains offline-only.
-Publishing and production installation are not authorized by this continuation. M3's native Safari
-check remains pending; M4 is stacked on its verified implementation without claiming that gate passed.
+Publishing and production installation are not authorized by this continuation.
 
 ## Outcome
 
@@ -361,7 +361,7 @@ These preserve the acceptance criteria above; no dispatch is exposed before F11a
 | Milestone | Work | Gate that applies only here |
 |---|---|---|
 | M4 — Real tool entry/setup | Discovery, Rascal first, Squint next, three launch paths | Implement the early H1 agreement; production installer/registration subgates, C1 unconfigured discovery, R1/S1 evidence |
-| M5 — Full tasks and operations | Metadata-driven grouping/readiness, native dependencies, supported CLI/bundle replay | C1/C2/R3; R3 has no scheduled supplier milestone yet; actual action coverage, no private-layout parsing |
+| M5 — Full tasks and operations | Metadata-driven grouping/readiness, native dependencies, supported CLI/bundle replay | C1/C2/R3; R3 is scheduled in Rascal M10 but not implemented; actual action coverage, no private-layout parsing |
 | M6 — Paid runs and reports | Estimate/cap sessions, known-run cancellation, embedded tool pages | C1/C4 spending + association; C3 report readiness/isolation/preservation |
 | M7 — Distribution and full acceptance | Library relocation, packaged macOS support matrix, signed/checksummed install path, release verification | Tool relocation dependencies, release source/signing decision, all applicable AC01–AC22 |
 
@@ -413,7 +413,7 @@ checkpoint to save time. No backward-compatibility shims are added for unrelease
 | Stable tool workspaces grow beyond movable library | Show storage locations separately; cleanup/relocation never guesses ownership |
 | Too much infrastructure before a working screen | M1 import loop and M2 execution loop are visible checkpoints; no speculative packages/services |
 
-M0–M3 do not require another product decision. R3 scheduling must be settled separately with the
-Rascal owner because independent Operations is core to the full release and currently unscheduled.
+M0–M3 do not require another product decision. R3 now has a supplier milestone (Rascal M10);
+its shared profile still needs agreement because independent Operations is core to the full release.
 C2/C3 need named owner delivery checkpoints too; R2 remains optional. Do not imply an Actions-only
 development build satisfies those release requirements. Product choices remain Q1–Q19.

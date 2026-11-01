@@ -12,6 +12,10 @@ installation remains gated on an actual release artifact. [Source inventory](../
 - Invocation from a tool: executable argv `--tool`, `<tool-id>`; e.g. `wafflehouse --tool rascal`
   or `wafflehouse --tool squint`. Tool selection is a hint to the shared UI, not an executable
   name to run. Unknown IDs show the host's unavailable/setup state; they do not trigger installation.
+- Wafflehouse also accepts host-owned `WAFFLEHOUSE_DATA_DIR` as an absolute library parent.
+  This lets development entry points share an isolated library without changing tool argv.
+  Explicit Wafflehouse `--data-dir` wins; otherwise the personal default applies. Tools should
+  simply inherit the caller's environment, not interpret or append this option.
 - Direct invocation: `wafflehouse`. Public `--help` and `--version` are supported. Duplicate or
   malformed selector flags are usage errors. Tools do not append private host-mode flags.
 - The tool process waits for this short launcher command and propagates its exit code. The
@@ -83,7 +87,9 @@ host. Quit Wafflehouse owns graceful child shutdown. There is no auto-start logi
 
 H1's launcher surface does not solve tool MCP registration. The host still needs an explicit
 executable/argv/config/workspace descriptor to start each server. Foundation smoke descriptors
-remain local test data. Specify that registration interface separately with tool owners; do
+can now be imported explicitly with `wafflehouse --register <descriptors.json>` while the host
+is stopped. This setup operation does not launch tools or install software. Automatic discovery
+still requires a shared startup declaration. Specify that interface separately with tool owners; do
 not hold up agreement on the binary name and `--tool` launcher surface waiting for it.
 
 ## Required owner changes and verification

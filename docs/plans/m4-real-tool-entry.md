@@ -1,7 +1,8 @@
 # M4: real tool entry
 
-Status: authorized continuation, 2026-10-31. Work starts with explicit local registration and
-the real Rascal workflow; automatic discovery and provider setup retain their interface gates.
+Status: G01–G04 explicit-entry slice complete, 2026-10-31. See the
+[checkpoint](../reviews/2026-10-31-m4-entry-checkpoint.md). Automatic discovery and provider setup
+retain their interface gates.
 The owner also permits paid runs. That permission does not make the current client implement
 estimates, caps or a session ledger; those remain required before enabling paid dispatch.
 
@@ -28,7 +29,8 @@ estimates, caps or a session ledger; those remain required before enabling paid 
 ## G01 — Persist explicit tool registrations
 
 - Accept: bounded regular-file JSON descriptor list, validate all incoming records before writing;
-  canonical absolute executable/cwd/roots, executable permission, unique IDs and max 32 tools.
+  canonical absolute executable/cwd/roots, executable permission, unique IDs and max 32 tools;
+  at most 31 user roots, reserving one additional root for host materialized inputs.
   An identical registration is idempotent; a changed record with an existing ID is refused.
 - Accept: acquire the normal host lifetime lock, append atomically with a private synced file,
   preserve existing records and reject symlinks/malformed input without changing configuration.
@@ -48,6 +50,10 @@ estimates, caps or a session ledger; those remain required before enabling paid 
 
 ## G03 — Run real Rascal in the browser
 
+G02 follow-up: preserve an unknown launcher tool selection and show registration guidance,
+rather than silently falling back to another tool. Verify Run is disabled and choosing an
+available tool recovers the form (workspace component plus its existing browser tests).
+
 - Accept: an explicit-path helper builds only Wafflehouse, registers Rascal in a fresh owned
   workspace via G02, and enters through the actual `rascal playground` launcher. Print a safe
   reopen command with the same data directory. A no-open option uses direct host startup.
@@ -64,7 +70,7 @@ estimates, caps or a session ledger; those remain required before enabling paid 
 - Accept: record actual binary/version/contract and invocation evidence, source audit revisions,
   implemented journey and unsupported capabilities. Open the real Rascal workspace for owner use.
 - Verify: targeted checks then relevant complete suites, embedded assets reproducible, review diff;
-  report native Safari separately. No automatic merge past the pending M3 Safari gate.
+  report native Safari separately. M3’s Safari gate is closed by the owner’s explicit report.
 - Files: checkpoint, README/testkit docs, this plan/H1 documentation. Depends G03.
 
 ## Follow-on interfaces, not implied complete by this slice
@@ -82,5 +88,5 @@ estimates, caps or a session ledger; those remain required before enabling paid 
 - Installer release, C2 native replay and C3 report pages remain separately gated. Squint follows
   Rascal using the same generic host once its supported configuration is ready.
 
-M4 entry work can proceed while M3's native Safari checklist remains outstanding. A general
-visual approval is not a claim that its full manual workflow check passed.
+The owner explicitly confirmed the M3 run/save/export checklist passed in Safari on 2026-10-31.
+That manual gate is closed; M4 entry work still requires its own automated checks and review.
