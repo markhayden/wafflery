@@ -1,8 +1,9 @@
 # M3 checkpoint: saved experiments and evidence export
 
-Status: implementation and automated verification complete on `feat/m3-saved-experiments`;
-native Safari verification is blocked. M3 has not merged to main. F14–F18u are implemented;
-F18b has one remaining manual check. M4 is outside the current authorization.
+Status: complete. Implementation and automated verification finished on
+`feat/m3-saved-experiments`; on 2026-10-31 the owner explicitly confirmed that the run/save/export
+checklist passed in native Safari. This closes F18b. M4 continuation is separately authorized and
+planned in [real tool entry](../plans/m4-real-tool-entry.md).
 
 ## Working behavior
 
@@ -44,9 +45,10 @@ Closing a tab leaves the host running; the printed reopen command preserves that
 - The opt-in real Rascal smoke passes against local binary 0.1.0 and contract 0.1.0. The no-config,
   no-filler seam call reports zero spend, with output fingerprints/journal verified and the original
   unchanged. This is an optional offline integration probe, not completed production registration.
-- Native Safari: **not run**. Computer Use returned `Computer Use was not approved to use Safari`,
-  including after the user's general permission grant. Automated WebKit is not represented as
-  native Safari coverage. No alternate automation path was used to bypass that permission.
+- Native Safari: **passed by owner report** on 2026-10-31, in direct response to the question
+  about the run/save/export checklist. Agent-driven Safari remained unavailable because Computer
+  Use returned `Computer Use was not approved to use Safari`. Automated WebKit is not represented
+  as native Safari coverage; no alternate automation path bypassed that permission.
 
 The release smoke harness initially concatenated a relative script URL incorrectly; using URL
 resolution fixed the harness, and the full smoke then passed. No application change was needed.
@@ -66,7 +68,7 @@ for actual fake-tool allocation and bounded terminal evidence rather than assumi
 persistence means the tool has allocated a run. Production cancellation still never scrapes text.
 
 The final independent review reported no remaining important issue, contingent on the now-passing
-regressions and final checks. Native Safari remains a separate outstanding milestone gate.
+regressions and final checks. The owner subsequently closed the native Safari milestone gate.
 
 Work was split into behavior commits, review corrections, and a separate mechanical formatting
 commit. Several connected API/migration/UI/test slices exceeded the approximate five-authored-file
@@ -79,7 +81,7 @@ This is a development foundation pinned to table-manners 0.1.0 and MCP 2025-11-2
 guard refuses paid actions. Production discovery/installers, provider setup, operations profiles,
 portable native replay, structured paid sessions and tool-owned report framing retain their later
 contract/integration gates. No paid calls, sibling edits, production installs, pushes or publishing
-were performed. Complete native Safari verification, then close F18b and merge this milestone.
+were performed. F18b is closed with the owner's Safari verification; the milestone is ready to merge.
 
 ## Owner interface follow-up
 
@@ -89,5 +91,5 @@ only when a pointer gesture starts and ends outside; inside clicks and selection
 Escape and opener focus restoration are preserved. The close icon retains its accessible name and
 44-pixel target. The supplied mark is a compact transparent SVG; the embedded host serves SVG with
 the correct media type. Targeted Chromium/WebKit checks cover dismissal, focus, narrow layouts,
-and actual image decoding through the host. This follow-up does not infer that the full native
-Safari checklist was completed from the owner's general visual approval.
+and actual image decoding through the host. Native Safari completion was recorded separately
+from general visual approval, through the owner's explicit checklist confirmation.
