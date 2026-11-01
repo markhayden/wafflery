@@ -40,9 +40,7 @@ export function Workspace({
   const [draftExample, setDraftExample] = useState<Example>();
   const preferred = new URLSearchParams(window.location.search).get("tool");
   const [toolId, setToolId] = useState(
-    snapshot.tools.find((t) => t.id === preferred)?.id ??
-      snapshot.tools[0]?.id ??
-      "",
+    preferred ?? snapshot.tools[0]?.id ?? "",
   );
   const tool = snapshot.tools.find((tool) => tool.id === toolId);
   const declaration = tool?.declaration;
@@ -338,6 +336,12 @@ export function Workspace({
       </div>
       {declaration && (
         <p className={styles.note}>{declaration.document.tool.purpose}</p>
+      )}
+      {!tool && toolId && (
+        <p role="status">
+          Tool “{toolId}” is not registered in this workspace. Register it while
+          the host is stopped, or choose a connected tool.
+        </p>
       )}
       {connection && <p role="status">{connection}</p>}
       {tool?.error && <p role="alert">{tool.error}</p>}

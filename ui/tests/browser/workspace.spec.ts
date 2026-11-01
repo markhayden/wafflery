@@ -1,4 +1,27 @@
 import { test, expect } from "./tool-host";
+test("an unavailable launcher selection never silently opens another tool", async ({
+  page,
+  host,
+}) => {
+  await host.open(page);
+  // Let the one-use bootstrap establish this tab's session before navigating again.
+  await expect(page.getByRole("button", { name: "Tool sample-lab", exact: true })).toBeVisible();
+  await page.goto(`${host.origin}/?tool=not-installed`);
+  await expect(
+    page.getByRole("status").filter({ hasText: "not-installed" }),
+  ).toContainText("not registered");
+  await expect(
+    page.getByRole("button", { name: "Run", exact: true }),
+  ).toBeDisabled();
+  await expect(page.locator("input[type=file]")).toHaveCount(0);
+  await page
+    .getByRole("button", { name: "Tool Choose tool", exact: true })
+    .click();
+  await page.getByRole("button", { name: /sample-lab Version/ }).click();
+  await expect(
+    page.getByRole("button", { name: "Action Add a test band" }),
+  ).toBeVisible();
+});
 test("run a real offline action and inspect immutable evidence after editing the draft", async ({
   page,
   host,
@@ -7,9 +30,15 @@ test("run a real offline action and inspect immutable evidence after editing the
   page.on("pageerror", (error) => errors.push(error.message));
   await host.open(page);
   await expect(page.locator(".workspace-brand img")).toBeVisible();
-  await expect.poll(() => page.locator(".workspace-brand img").evaluate(
-    (image: HTMLImageElement) => image.complete && image.naturalWidth > 0,
-  )).toBe(true);
+  await expect
+    .poll(() =>
+      page
+        .locator(".workspace-brand img")
+        .evaluate(
+          (image: HTMLImageElement) => image.complete && image.naturalWidth > 0,
+        ),
+    )
+    .toBe(true);
   await expect(
     page.getByRole("button", { name: /Action Add a test band/ }),
   ).toBeVisible();
