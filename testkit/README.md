@@ -142,3 +142,17 @@ V02 discovery negatives (`v03-legacy`, `v03-no-estimate`, `v03-no-cap`) intentio
 one live boundary. The older `paid`/`becomes-paid` scenarios remain dispatch-guard probes:
 they advertise the reserved estimate control but do not implement a paid execution flow.
 Only the control-only v03 scenarios currently implement estimate responses.
+
+## Readiness scenarios
+
+`readiness` and `readiness-held` describe an offline action with an optional missing filler,
+beside a paid action which the host’s current guard blocks. `credential-state` under the peer
+root selects present/valid/invalid/missing/unknown on the next description, without reading any
+credential. Only requesting the optional filler produces -32602 not_ready, before claiming the
+client ID or allocating a run; an omitted filler remains usable. Wire coverage reuses that
+released ID successfully. The held variant uses the existing release-run gate for concurrent
+refresh tests. The paid action is discovery-only; estimate execution remains in v03-control.
+
+V03a validation: five wire tests and fake-peer clippy passed. Review found and corrected an
+image-free action schema that incorrectly required source; input schemas now derive image fields
+from declared slots. Both optional setup and that schema regression failed before their fixes.

@@ -1,5 +1,6 @@
 //! Independent, line-delimited MCP peer. Deliberately does not import rmcp or wafflery.
 mod fixtures;
+mod readiness;
 mod scenarios;
 mod v03_control;
 mod v03_fixtures;
@@ -148,12 +149,18 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             }
             "ping" if initialized => reply(&output, id, json!({})),
             "tools/list" if initialized => {
-                let description = scenarios::description(&scenario);
+                let description = readiness::description(&root, &scenario);
                 if params.get("cursor").is_none() {
                     let mut controls = vec![
                         json!({"name":"describe","description":"Shared contract description","inputSchema":{"type":"object","additionalProperties":false}}),
                     ];
-                    if matches!(scenario.as_str(), "paid" | "becomes-paid") {
+                    if scenario == "becomes-paid"
+                        || description["actions"]
+                            .as_array()
+                            .unwrap()
+                            .iter()
+                            .any(|action| action["cost"]["may_spend"] == true)
+                    {
                         controls.push(json!({"name":"estimate","description":"Reserved paid control","inputSchema":{"type":"object"}}));
                     }
                     reply(
@@ -165,7 +172,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     reply(
                         &output,
                         id,
-                        json!({"tools":[{"name":"mark_band","description":"Add an illustrative test band", "inputSchema":scenarios::input_schema(&description["actions"][0])}]}),
+                        json!({"tools":description["actions"].as_array().unwrap().iter().map(|action| json!({"name":action["name"],"description":action["purpose"],"inputSchema": if action.get("images").is_some() { scenarios::input_schema(action) } else { action["params_schema"].clone() }})).collect::<Vec<_>>()}),
                     );
                 } else {
                     reject(&output, id, -32602, "invalid cursor");
@@ -182,7 +189,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 } else {
                     &scenario
                 };
-                let description = scenarios::description(effective);
+                let description = readiness::description(&root, effective);
                 reply(
                     &output,
                     id,
@@ -195,10 +202,19 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     continue;
                 }
                 if let Err(error) = scenarios::validate(
-                    &scenarios::input_schema(&scenarios::description(&scenario)["actions"][0]),
+                    &scenarios::input_schema(
+                        &readiness::description(&root, &scenario)["actions"][0],
+                    ),
                     &params["arguments"],
                 ) {
                     reject(&output, id, -32602, &error);
+                    continue;
+                }
+                if let Some(data) = readiness::refusal(&scenario, &params["arguments"]) {
+                    send(
+                        &output,
+                        json!({"jsonrpc":"2.0","id":id,"error":{"code":-32602,"message":"This call needs setup","data":data}}),
+                    );
                     continue;
                 }
                 if let Some(correlation) = params["_meta"]["table-manners/client_run_id"].as_str() {
@@ -241,7 +257,18 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     message.clone(),
                 );
                 workers.push(std::thread::spawn(move || {
-                    scenarios::execute(output, state, root, scenario, message, cancelled)
+                    scenarios::execute(
+                        output,
+                        state,
+                        root,
+                        if scenario == "readiness-held" {
+                            "held".into()
+                        } else {
+                            scenario
+                        },
+                        message,
+                        cancelled,
+                    )
                 }));
             }
             "resources/list" if initialized => reply(

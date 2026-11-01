@@ -233,3 +233,57 @@ fn inline_images_and_mismatched_fingerprints_follow_the_shared_contract() {
     let _: table_manners::RunResult =
         serde_json::from_value(refused["result"]["structuredContent"].clone()).unwrap();
 }
+
+#[test]
+fn optional_setup_refuses_only_needed_calls_and_releases_the_correlation_id() {
+    let temp = tempfile::tempdir().unwrap();
+    let source = temp.path().join("source.png");
+    std::fs::write(&source, include_bytes!("../ui/tests/fixtures/sample.png")).unwrap();
+    let mut peer = Peer::start(temp.path(), "readiness");
+    peer.initialize();
+    let description = peer.call(3, "tools/call", json!({"name":"describe","arguments":{}}))["result"]["structuredContent"].clone();
+    assert_eq!(
+        description["actions"][0]["readiness"]["state"],
+        "needs_setup"
+    );
+    assert_eq!(
+        description["actions"][1]["readiness"]["requirements"][0]["state"],
+        "present"
+    );
+    let listed = peer.call(20, "tools/list", json!({"cursor":"actions"}));
+    let paid_schema = &listed["result"]["tools"][1]["inputSchema"];
+    assert!(
+        wafflery::tools::validator(paid_schema)
+            .unwrap()
+            .is_valid(&json!({"label":"No images needed","max_spend_usd":0.5}))
+    );
+    for state in ["valid", "invalid", "missing", "unknown"] {
+        std::fs::create_dir_all(temp.path().join("runs")).unwrap();
+        std::fs::write(temp.path().join("runs/credential-state"), state).unwrap();
+        let refreshed = peer.call(4, "tools/call", json!({"name":"describe","arguments":{}}))["result"]["structuredContent"].clone();
+        wafflery::tools::validate_contract("urn:table-manners:core:description", &refreshed)
+            .unwrap();
+        assert_eq!(
+            refreshed["actions"][1]["readiness"]["requirements"][0]["state"],
+            state
+        );
+    }
+    let mut arguments = json!({"source":{"path":source},"label":"optional setup","filler":true});
+    let refused = peer.call(5, "tools/call", json!({"name":"mark_band","arguments":arguments,"_meta":{"table-manners/client_run_id":"released-id"}}));
+    assert_eq!(refused["error"]["code"], -32602);
+    assert_eq!(refused["error"]["data"]["reason"], "not_ready");
+    assert_eq!(refused["error"]["data"]["run"], Value::Null);
+    assert!(!temp.path().join("runs/calls.ndjson").exists());
+    let runs = peer.call(6, "resources/read", json!({"uri":"sample-lab://runs"}));
+    assert_eq!(
+        serde_json::from_str::<Value>(runs["result"]["contents"][0]["text"].as_str().unwrap())
+            .unwrap()["runs"],
+        json!([])
+    );
+    arguments.as_object_mut().unwrap().remove("filler");
+    let completed = peer.call(7, "tools/call", json!({"name":"mark_band","arguments":arguments,"_meta":{"table-manners/client_run_id":"released-id"}}));
+    assert_eq!(
+        completed["result"]["structuredContent"]["status"],
+        "completed"
+    );
+}

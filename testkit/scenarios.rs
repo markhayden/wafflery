@@ -55,13 +55,23 @@ pub fn description(scenario: &str) -> Value {
 
 pub fn input_schema(action: &Value) -> Value {
     let mut schema = action["params_schema"].clone();
-    schema["properties"]["source"] = json!({"$ref":"urn:table-manners:images:image-in"});
+    for slot in action["images"].as_array().into_iter().flatten() {
+        let name = slot["slot"].as_str().unwrap();
+        let item = json!({"$ref":"urn:table-manners:images:image-in"});
+        schema["properties"][name] = if slot["many"] == true {
+            json!({"type":"array","minItems":1,"items":item})
+        } else {
+            item
+        };
+        if slot["required"] == true {
+            if schema.get("required").is_none() {
+                schema["required"] = json!([]);
+            }
+            schema["required"].as_array_mut().unwrap().push(json!(name));
+        }
+    }
     schema["properties"]["return_images"] = json!({"enum":["path","inline","resource"]});
     schema["properties"]["image_blocks"] = json!({"type":"boolean"});
-    schema["required"]
-        .as_array_mut()
-        .unwrap()
-        .push(json!("source"));
     schema
 }
 
