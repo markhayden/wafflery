@@ -78,7 +78,7 @@ export function App() {
         <span>Local workspace</span>
         {api && <Shutdown api={api} />}
       </header>
-      <main className="workspace-main">
+      <main className="workspace-main" data-connected={api && snapshot && snapshot.tools.length > 0 ? "true" : undefined}>
         <h1>Your workshop</h1>
         <p className="workspace-intro">
           Try a tool. Inspect the result. Take it into your pipeline.

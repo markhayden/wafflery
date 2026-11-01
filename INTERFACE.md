@@ -66,6 +66,15 @@ closing, scrolling, and keyboard behavior consistent. On narrow screens the draw
 available width. Keep navigation compact; stack the main input/result sections when needed.
 An image result gets substantial space; an empty screen explains which input is needed.
 
+In a sufficiently wide and tall desktop window, keep the workspace within the viewport. Input
+and Result scroll independently, with Run and the saved-result actions outside their scroll
+areas. Keep the header compact. Narrow or short windows use ordinary page scrolling so controls
+remain reachable at larger text sizes. Scroll regions are named and keyboard-focusable.
+
+Opening an example restores input settings into a new draft. Result explicitly confirms which
+example loaded, explains that Run creates a new result, and links to history for previous results.
+Do not show an old result as if it came from the unexecuted draft.
+
 For compatible images, offer a draggable comparison divider with a native keyboard-operable
 control. Label the actual sides (Source/Result, Source/Mask overlay, or Baseline/Attempt).
 Preserve aspect ratio and use the declared image frames; do not stretch mismatched images into

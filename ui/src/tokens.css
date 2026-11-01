@@ -65,3 +65,27 @@ summary { cursor: pointer; }
 
 .workspace-header > button { margin-left:auto; }
 @media(max-width:30rem){.workspace-header > span {display:none;}}
+
+/* Long forms share the available desktop height; small/short windows use page scrolling. */
+@media (min-width: 60.01rem) and (min-height: 48rem) {
+  #root:has(.workspace-main[data-connected="true"]) {
+    height: 100dvh;
+    display: flex;
+    flex-direction: column;
+  }
+  .workspace-header { flex: none; }
+  .workspace-main[data-connected="true"] {
+    flex: 1;
+    min-height: 0;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    padding-block: var(--space-6);
+  }
+  .workspace-main[data-connected="true"] h1 { font-size: 1.25rem; }
+  .workspace-main[data-connected="true"] > [role="status"] {
+    color: var(--color-muted);
+    font-size: 0.8125rem;
+  }
+  .workspace-main[data-connected="true"] .workspace-intro { display: none; }
+}

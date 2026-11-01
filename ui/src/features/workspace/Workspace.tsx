@@ -131,6 +131,7 @@ export function Workspace({
             (a) => a.name === attempt.request.action,
           );
         setDraftRevision((value) => value + 1);
+        setDraftExample(undefined);
         setToolId(attempt.request.tool);
         setActionId(attempt.request.action);
         setParams(initialParameters(action?.params_schema ?? {}));
@@ -353,63 +354,73 @@ export function Workspace({
             void run();
           }}
         >
-          <h2>Input</h2>
-          {draftExample && (
-            <p className={styles.note}>
-              From example: {draftExample.name}
-              {draftExample.notes ? ` · ${draftExample.notes}` : ""}
-            </p>
-          )}
-          {action ? (
-            <ActionForm
-              key={`${toolId}/${actionId}/${draftRevision}/${declaration?.revision}`}
-              action={action}
-              params={params}
-              onChange={setParams}
-              projections={projections}
-              onProjection={(slot, value) =>
-                setProjections((values) => ({ ...values, [slot]: value }))
-              }
-              images={images}
-              onImages={(slot, value) =>
-                setImages((values) => ({ ...values, [slot]: value }))
-              }
-              upload={async (file) => {
-                const asset = await assets.upload(file);
-                setSavedImages(await assets.list());
-                return asset;
-              }}
-              preview={assets.preview}
-            />
-          ) : (
-            <p>No supported action is available.</p>
-          )}
-          {action?.images?.length && savedImages.length > 0 ? (
-            <details>
-              <summary>Saved images ({savedImages.length})</summary>
-              <div className={styles.saved}>
-                {action.images.map((slot) => (
-                  <div key={slot.slot}>
-                    <p>Use for {slot.slot}</p>
-                    {savedImages.slice(0, 12).map((asset, index) => (
-                      <Button
-                        key={asset.id}
-                        onClick={() =>
-                          setImages((values) => ({
-                            ...values,
-                            [slot.slot]: [asset],
-                          }))
-                        }
-                      >
-                        Image {index + 1} · {asset.width} × {asset.height}
-                      </Button>
-                    ))}
-                  </div>
-                ))}
-              </div>
-            </details>
-          ) : null}
-          {error && <p role="alert">{error}</p>}
+          <header className={styles.panelHeading}>
+            <h2>Input</h2>
+          </header>
+          <div
+            className={styles.panelBody}
+            role="region"
+            aria-label="Input settings"
+            tabIndex={0}
+            key={draftRevision}
+          >
+            {draftExample && (
+              <p className={styles.note}>
+                From example: {draftExample.name}
+                {draftExample.notes ? ` · ${draftExample.notes}` : ""}
+              </p>
+            )}
+            {action ? (
+              <ActionForm
+                key={`${toolId}/${actionId}/${draftRevision}/${declaration?.revision}`}
+                action={action}
+                params={params}
+                onChange={setParams}
+                projections={projections}
+                onProjection={(slot, value) =>
+                  setProjections((values) => ({ ...values, [slot]: value }))
+                }
+                images={images}
+                onImages={(slot, value) =>
+                  setImages((values) => ({ ...values, [slot]: value }))
+                }
+                upload={async (file) => {
+                  const asset = await assets.upload(file);
+                  setSavedImages(await assets.list());
+                  return asset;
+                }}
+                preview={assets.preview}
+              />
+            ) : (
+              <p>No supported action is available.</p>
+            )}
+            {action?.images?.length && savedImages.length > 0 ? (
+              <details>
+                <summary>Saved images ({savedImages.length})</summary>
+                <div className={styles.saved}>
+                  {action.images.map((slot) => (
+                    <div key={slot.slot}>
+                      <p>Use for {slot.slot}</p>
+                      {savedImages.slice(0, 12).map((asset, index) => (
+                        <Button
+                          key={asset.id}
+                          onClick={() =>
+                            setImages((values) => ({
+                              ...values,
+                              [slot.slot]: [asset],
+                            }))
+                          }
+                        >
+                          Image {index + 1} · {asset.width} × {asset.height}
+                        </Button>
+                      ))}
+                    </div>
+                  ))}
+                </div>
+              </details>
+            ) : null}
+            {error && <p role="alert">{error}</p>}
+          </div>
           <div className={styles.run}>
             <p>
               {action?.cost.may_spend
@@ -435,7 +446,7 @@ export function Workspace({
           </div>
         </form>
         <section className={styles.panel} aria-label="Result">
-          <div className={styles.resultHeading}>
+          <div className={`${styles.resultHeading} ${styles.panelHeading}`}>
             <h2>Result</h2>
             <span role="status">
               {selected
@@ -445,67 +456,98 @@ export function Workspace({
                 : "Ready"}
             </span>
           </div>
-          {selected &&
-            ["submitted", "running"].includes(selected.execution) && (
-              <Button
-                onClick={() => {
-                  void client
-                    .cancel(selected.id)
-                    .then(setSelected)
-                    .catch((failure) =>
-                      setError(
-                        failure instanceof Error
-                          ? failure.message
-                          : "Unable to request cancellation.",
-                      ),
-                    );
-                }}
-              >
-                Cancel run
-              </Button>
-            )}
-          {selected ? (
-            <>
-              {working && tool?.progress?.message && (
-                <p className={styles.note}>{tool.progress.message}</p>
+          <div
+            className={styles.panelBody}
+            role="region"
+            aria-label="Result content"
+            tabIndex={0}
+          >
+            {selected &&
+              ["submitted", "running"].includes(selected.execution) && (
+                <Button
+                  onClick={() => {
+                    void client
+                      .cancel(selected.id)
+                      .then(setSelected)
+                      .catch((failure) =>
+                        setError(
+                          failure instanceof Error
+                            ? failure.message
+                            : "Unable to request cancellation.",
+                        ),
+                      );
+                  }}
+                >
+                  Cancel run
+                </Button>
               )}
-              <SavedComparison
-                attempt={selected}
-                client={client}
-                load={assets.preview}
-                revision={snapshot}
-              />
-              <div className={styles.resultHeading}>
-                <p>Saved attempt · {selected.id.slice(0, 8)}</p>
-                <Button
-                  onClick={(event) =>
-                    setDrawer({ opener: event.currentTarget, view: "inspect" })
-                  }
-                >
-                  Inspect run
-                </Button>
-                <Button
-                  onClick={(event) =>
-                    setDrawer({ opener: event.currentTarget, view: "pipeline" })
-                  }
-                >
-                  Use in your pipeline
-                </Button>
-              </div>
-              <p className={styles.note}>
-                Contract evidence: {selected.preservation.contract}. Editing the
-                inputs starts a new draft.
-              </p>
-              {selected.notices.map((notice, index) => (
-                <p className={styles.note} key={index}>
-                  {notice}
+            {selected ? (
+              <>
+                {working && tool?.progress?.message && (
+                  <p className={styles.note}>{tool.progress.message}</p>
+                )}
+                <SavedComparison
+                  attempt={selected}
+                  client={client}
+                  load={assets.preview}
+                  revision={snapshot}
+                />
+                <p className={styles.note}>
+                  Contract evidence: {selected.preservation.contract}. Editing
+                  the inputs starts a new draft.
                 </p>
-              ))}
-            </>
-          ) : (
-            <div className={styles.empty}>
-              <p>Choose your inputs and run an action.</p>
-              <p>The result and its saved evidence will appear here.</p>
+                {selected.notices.map((notice, index) => (
+                  <p className={styles.note} key={index}>
+                    {notice}
+                  </p>
+                ))}
+              </>
+            ) : (
+              <div className={styles.empty}>
+                {draftExample ? (
+                  <>
+                    <strong>Example loaded: {draftExample.name}</strong>
+                    <p>
+                      Your saved inputs are ready. Click Run to create a new
+                      result.
+                    </p>
+                    <Button
+                      onClick={(event) =>
+                        setDrawer({
+                          opener: event.currentTarget,
+                          view: "history",
+                        })
+                      }
+                    >
+                      Browse run history
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <p>Choose your inputs and run an action.</p>
+                    <p>The result and its saved evidence will appear here.</p>
+                  </>
+                )}
+              </div>
+            )}
+          </div>
+          {selected && (
+            <div className={`${styles.resultHeading} ${styles.panelFooter}`}>
+              <p>Saved attempt · {selected.id.slice(0, 8)}</p>
+              <Button
+                onClick={(event) =>
+                  setDrawer({ opener: event.currentTarget, view: "inspect" })
+                }
+              >
+                Inspect run
+              </Button>
+              <Button
+                onClick={(event) =>
+                  setDrawer({ opener: event.currentTarget, view: "pipeline" })
+                }
+              >
+                Use in your pipeline
+              </Button>
             </div>
           )}
         </section>

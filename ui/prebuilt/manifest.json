@@ -7,7 +7,7 @@
     "ui/bun.lock": "ed6f289670cecf1f4f5acba761e2a3234e40fd0a7b053ecfbee49ac9500a19b9",
     "ui/index.html": "19516a49667e60032840181509e35593e257282f7393c8443e44c27bc955dbcb",
     "ui/package.json": "155700f2c60e2fec0c4ff8878bf68e7c07df406a2c39e86e3d9c26422845ee07",
-    "ui/src/App.tsx": "9ae98593022889b27cc3491cda609e940c396bb8f595d38bf3930cc7f1a36266",
+    "ui/src/App.tsx": "efc1cff41407f6a9ae1ffdd12c9509ce07707ee0f1f30c5cfe848fada0ef5c49",
     "ui/src/api/assets.ts": "919f5f3b6591aab1a61b3fb93033dc0a403f83fb4bcc9c40eb073fe9b8ba049a",
     "ui/src/api/client.ts": "b5269abe65dc4f0ae6b7f7191b91521814a6458d823d8d263ac95d22c5e4629a",
     "ui/src/api/events.ts": "67446ff89fd64d2ebd673619be429155ce11736b48d932ce9a371ea782322e1d",
@@ -43,17 +43,17 @@
     "ui/src/features/workspace/Inspector.tsx": "372841ba18de813aef5ea7ab1e0e885d59b9b1efe2bdfeecf8fd59f6740518fb",
     "ui/src/features/workspace/Pipeline.tsx": "ff6765f4474b7b823ffde03cbcb635d15d5faacfba9ac3c7976abcc0209cb73d",
     "ui/src/features/workspace/SavedComparison.tsx": "07e2b01a7e146cea427dc9fc7b96c2ec330142cf4bdf83a0998b2a73ad449eb4",
-    "ui/src/features/workspace/Workspace.module.css": "2d99d9f6878e677f64a4dde07314f77f02d85370f0e4407ce22c27072fcee2e9",
-    "ui/src/features/workspace/Workspace.tsx": "2ada772d40b924eecf9acbe996e48f64a66bba45e63987cc4f302ec369dbd4da",
+    "ui/src/features/workspace/Workspace.module.css": "e938cf79a6ac6b9fb9cb0fe7e344968bdb0a31bc7497749becba43ff1d895788",
+    "ui/src/features/workspace/Workspace.tsx": "ab859cc7889dd3bc5822890963546a8435bcbc349640fa3ac7ef06d7f264069e",
     "ui/src/main.tsx": "3458a38ae3d7a0543bf876cf4bc0de43096a4ffb986f143e6fab86b5016833d8",
-    "ui/src/tokens.css": "29ce32561446e44a598a706567fff4178a365f7d857b6e0122cac3e5603da884",
+    "ui/src/tokens.css": "c3b0eee13fac143223d12e52a63497a6dab95065469028a0c3e49e4532b603ef",
     "ui/tsconfig.json": "cb18bc2ac7dda71c2c6b1688c5af0722292143bafb109a84a1d8464e28733ffe",
     "ui/vite.config.ts": "3aec7d6174ffca99d4d5288bea2f837d5e91335cbd7135a9682e6d18a40476b4"
   },
   "outputs": {
-    "assets/index-BdM0B0JH.js": "ff5e4b224cccd2bf6688c4f898a6fe37644d76d9076cb947e5c14db497ca1256",
-    "assets/index-Ct3m83B2.css": "c3abfcc10cd8297b6059eba128755f6b702762d4202ff9b1ef069ec6d65651f2",
+    "assets/index-C6F-wRjx.css": "de8d705651916adeabe9e1b477ff2c14c880672382f113ff74087852dff87692",
+    "assets/index-DTNLwZOb.js": "73339a756474c2ec2edeed3d9201ef3a17bcc51c733dc09d7098fe89c10ef3a3",
     "assets/wafflehouse-mark-CML0EpfM.svg": "51bc8a040e26b897a948238598b8cabdf69bf4687c2b1a70613b542de1c99f1f",
-    "index.html": "9fcf06714c58376a4f7efb1a47c56141693c8c2e6ae6a0a342de770c921ce96d"
+    "index.html": "562b8f4a1b0e7addd575ca5dec9a18a4f0fdcc16a582c9dfdb5d910e813b8df1"
   }
 }

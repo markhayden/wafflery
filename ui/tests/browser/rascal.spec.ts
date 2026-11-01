@@ -3,7 +3,7 @@ import { readFile, readdir } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import { spawnSync } from "node:child_process";
 
-test.use({ hostKind: "rascal" });
+test.use({ hostKind: "rascal", viewport: { width: 1440, height: 900 } });
 test.skip(
   !process.env.WAFFLEHOUSE_RASCAL_BIN,
   "Opt in with an absolute WAFFLEHOUSE_RASCAL_BIN",

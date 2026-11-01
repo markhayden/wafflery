@@ -38,11 +38,20 @@ test("an example owns saved inputs and opens a draft without execution", async (
   await expect(
     page.getByRole("status").filter({ hasText: "Ready" }),
   ).toBeVisible();
+  const result = page.getByRole("region", { name: "Result", exact: true });
+  await expect(result).toContainText("Example loaded: My first example");
+  await expect(result).toContainText("Click Run to create a new result.");
   expect(
     (await readFile(resolve(host.root, "../tool/calls.ndjson"), "utf8"))
       .trim()
       .split("\n"),
   ).toHaveLength(1);
+  await result.getByRole("button", { name: "Browse run history" }).click();
+  await page.getByRole("dialog", { name: "History", exact: true })
+    .getByRole("button", { name: /sample \/ mark_band · completed/ }).click();
+  await expect(page.getByText("From example:", { exact: false })).toHaveCount(0);
+  await page.getByRole("button", { name: "Examples", exact: true }).click();
+  await drawer.getByRole("button", { name: "Open My first example" }).click();
   await page.getByRole("button", { name: "Run", exact: true }).click();
   await expect(
     page.getByText("Contract evidence: complete.", { exact: false }).first(),
