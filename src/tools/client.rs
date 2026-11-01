@@ -212,7 +212,9 @@ impl ToolClient {
                 let name = tool["name"]
                     .as_str()
                     .ok_or_else(|| Error::Invalid("Missing tool name".into()))?;
-                validator(&tool["inputSchema"])?;
+                validator(&tool["inputSchema"]).map_err(|error| {
+                    Error::Invalid(format!("MCP tool '{name}' input schema: {error}"))
+                })?;
                 if schemas
                     .insert(name.to_string(), tool["inputSchema"].clone())
                     .is_some()
@@ -246,7 +248,10 @@ impl ToolClient {
             .as_array()
             .ok_or_else(|| Error::Invalid("Missing actions".into()))?
         {
-            validator(&action["params_schema"])?;
+            validator(&action["params_schema"]).map_err(|error| {
+                let name = action["name"].as_str().unwrap_or("unknown");
+                Error::Invalid(format!("Action '{name}' parameter schema: {error}"))
+            })?;
             if !action["name"]
                 .as_str()
                 .is_some_and(|name| schemas.contains_key(name))

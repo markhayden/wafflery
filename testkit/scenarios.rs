@@ -27,6 +27,15 @@ pub fn description(scenario: &str) -> Value {
     if scenario == "bad-schema" {
         document["actions"][0]["params_schema"]["type"] = json!("bogus");
     }
+    if scenario == "misplaced-definitions" {
+        // A fragment's root-relative reference becomes invalid when embedded unchanged.
+        document["actions"][0]["params_schema"]["properties"]["requirements"] = json!({
+            "type":"array", "items": {
+                "$defs":{"Kind":{"type":"string"}},
+                "type":"object", "properties":{"kind":{"$ref":"#/$defs/Kind"}}
+            }
+        });
+    }
     if scenario == "malformed-cost" {
         document["actions"][0]["cost"]["may_spend"] = json!("false");
     }
