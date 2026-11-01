@@ -4,45 +4,74 @@ A local browser workspace for trying visual pipeline tools, inspecting their beh
 taking a tested configuration into your own code. The first release focuses on Rascal and
 Squint independently. Pixel, cross-tool workflows, and batch evaluations follow later.
 
-This directory contains the approved plan, an interactive mock, and the M2 Rust/React application.
-The application starts locally, authenticates browser tabs, executes explicitly registered offline
-MCP tools and preserves verified run evidence across restarts. Mock installation, provider calls, run
-outputs, costs, and persistence remain simulated; a mock manifest is not a runnable bundle.
+This directory contains the Rust/React development application, its reviewed plans, and an earlier
+interactive mock. The application runs real offline MCP actions, preserves evidence, reopens
+history, compares baselines, saves examples and exports recorded calls/evidence. Production tool
+installation, paid runs, native replay and tool-owned reports remain later integration work.
 
-## Develop the foundation
+## Try the working application
 
 From this directory, with Rust 1.99.1, Bun 1.4.3 and Node 22.13.1:
 
 ```sh
 bun install --cwd ui --frozen-lockfile
-bun run --cwd ui dev
+bun run scripts/dev-fake.ts
 ```
 
-The UI opens at `http://127.0.0.1:5173`. To develop the shared component in Storybook,
-run `bun run --cwd ui storybook` and open `http://127.0.0.1:6006`.
-The local host serves the embedded UI. Run `cargo run -- --foreground --no-open` to keep
-it attached to the terminal, or `cargo run -- --no-open` to start/attach to a detached host
-and print its local address. Omit `--no-open` to open the browser. `--tool rascal` selects a
-workspace context; explicit development registration is documented in [the test kit](testkit/README.md). Development/tests can
-isolate their data with `--data-dir <path>`. Closing a browser tab does not quit the host.
-An address printed with `--no-open` contains no authentication secret; run the launcher again
-without that flag to open an authenticated tab. Images live under
-`~/Library/Application Support/Wafflehouse/Library` by default. The development foreground host
-stops with Ctrl-C; an idle detached host supports authenticated Quit via its API, with the visible
-Quit control arriving alongside active-run handling.
+This builds the embedded UI and independent `sample-lab` tool, creates an isolated development
+library and opens an authenticated browser tab. The tool adds an illustrative band to an image;
+it does not repair images. It requires no provider keys and makes no paid calls. The script prints
+its data directory and the command to reopen that same library. `--no-open` starts it without
+opening a browser; the printed address contains no authentication secret.
+
+Choose a PNG/JPEG, enter a label, and run. Inspect saved inputs/raw result/recorded MCP/journal in
+the shared drawer, drag the before/after divider, pin a baseline, or save an example. Opening an
+example fills a new draft without executing it. History and examples are separate. The pipeline
+drawer copies the saved request/setup and downloads a `.tar.gz` evidence package, optionally
+including image bytes. It does not claim a portable native replay bundle or generate unverified CLI
+flags. Editing the draft never changes a saved run.
+
+**Clean up library** previews selected runs/examples and reclaimable image bytes. Shared examples
+retain their images; deleting a baseline run clears its pin. Cleanup requires idle tools, rechecks
+references, and never deletes originals or opaque tool workspaces. SQLite metadata/backups and
+unconfirmed execution copies are additional storage, outside the image-byte preview. Known
+disposable inputs are removed after preservation or confirmed process exit. Crash leftovers whose
+owner cannot be proven stopped are retained. There is no automatic expiration.
+
+Closing a tab leaves the host running. **Quit workspace** asks before cancelling active work,
+waits for evidence and owned tools, and offers a separate force action if they do not stop. A
+cancelled call without a structured run identity remains unconfirmed until its process stops;
+it is never automatically retried.
+
+The development script uses a temporary directory, which macOS may eventually remove. Ordinary
+launches use `~/Library/Application Support/Wafflehouse/Library` for durable personal storage.
+To run that host use `cargo run --`; to isolate it use `--data-dir <path>`. `--foreground --no-open`
+keeps it attached to the terminal, and Ctrl-C requests orderly shutdown. Registered tool descriptors
+are currently explicit development configuration; see [the test kit](testkit/README.md), including
+the opt-in real Rascal offline smoke. Automatic discovery and installation remain M4 work.
+
+## Develop and verify
+
+The frontend is React + Vite; the local host is Rust with bundled SQLite. Shared controls have
+Storybook stories. JavaScript tooling is needed to develop the UI, not to run a built binary.
 
 ```sh
+bun run --cwd ui dev
+bun run --cwd ui storybook
 bun run --cwd ui typecheck
 bun run --cwd ui test:unit
 bun test scripts/ui-manifest.test.ts
 bun run --cwd ui build:storybook
 bun run scripts/build-ui.ts
 bun run scripts/check-ui.ts
+cargo fmt --all -- --check
 cargo test --locked --all-targets
 cargo clippy --locked --all-targets --all-features -- -D warnings
-cargo build --locked --release
+cargo build --locked --release --bin wafflehouse
 ```
 
+Vite opens at `http://127.0.0.1:5173`; Storybook at `http://127.0.0.1:6006`.
+The connected development flow uses the host’s embedded UI through `dev-fake.ts`.
 Rust builds use `ui/prebuilt` without invoking JavaScript. Regenerate it after changing UI
 inputs; debug builds warn when stale, release/CI builds fail. `check-ui.ts` verifies the manifest
 and compares two clean builds. Keep prebuilt assets and their manifest in version control.
@@ -50,9 +79,13 @@ and compares two clean builds. Keep prebuilt assets and their manifest in versio
 For browser checks, first install the matching Chromium/WebKit builds with
 `cd ui && bunx playwright install chromium webkit`, then from the project root run
 `bun run --cwd ui test:browser`. Tests own ports 4173 and 6006 and do not reuse existing servers.
-See the [M0 checkpoint](docs/reviews/2026-10-31-m0-checkpoint.md) and
-[M1 checkpoint](docs/reviews/2026-10-31-m1-checkpoint.md) and
-[M2 checkpoint](docs/reviews/2026-10-31-m2-checkpoint.md) for verification evidence. M3 is pending.
+They use disposable libraries, actual MCP processes, and no paid providers. Native Safari is a
+separate manual check, not an assertion based on automated WebKit.
+
+See the [M0](docs/reviews/2026-10-31-m0-checkpoint.md),
+[M1](docs/reviews/2026-10-31-m1-checkpoint.md),
+[M2](docs/reviews/2026-10-31-m2-checkpoint.md), and
+[M3](docs/reviews/2026-10-31-m3-checkpoint.md) checkpoints for exact verification and remaining gates.
 
 ## Review the interface
 

@@ -3,7 +3,10 @@
 Status: M0–M3 approved by the owner on 2026-10-31; implementation started.
 Current implementation evidence: [M0 checkpoint](docs/reviews/2026-10-31-m0-checkpoint.md) and
 [M1 checkpoint](docs/reviews/2026-10-31-m1-checkpoint.md), and
-[M2 checkpoint](docs/reviews/2026-10-31-m2-checkpoint.md). M0–M2 are complete. M3 is next.
+[M2 checkpoint](docs/reviews/2026-10-31-m2-checkpoint.md), and
+[M3 checkpoint](docs/reviews/2026-10-31-m3-checkpoint.md). M0–M2 are complete. M3 is implemented
+on `feat/m3-saved-experiments`; automated and packaged-source checks pass. Its native Safari
+smoke remains blocked by Computer Use app access, so the milestone has not merged to main.
 The [current review disposition](docs/reviews/2026-10-31-plan-review-disposition.md) records
 changes and validation limits; it is not implementation verification.
 The owner agreed to proceed with foundation planning independently of later tool interfaces.
@@ -380,8 +383,8 @@ bun run scripts/check-ui.ts
 cargo build --locked --release --bin wafflehouse
 ```
 
-Commands and named integration test targets above are planned interfaces, not existing files.
-The foundation runtime document specifies their implementations. Don't rerun expensive complete
+The command matrix above is implemented. The foundation runtime document records its design.
+Don't rerun expensive complete
 suites after unchanged documentation; broaden checks when code changes or evidence requires it.
 
 Create a short-lived milestone branch after the docs baseline. Each passing task gets a clear

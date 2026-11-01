@@ -84,3 +84,13 @@ cache presence does not prove the selected Playwright version can launch them un
 
 Historical review files retain their dated source revisions. Current integration claims should
 reference this inventory instead of rewriting historical evidence.
+
+
+## M3 evidence archives and formatting
+
+- [tar 0.4.46 Builder](https://docs.rs/tar/0.4.46/tar/struct.Builder.html): explicit `append_data`
+  entries, fixed safe paths, regular-file headers, and explicit archive completion. No directory walk.
+- flate2 1.1.10 local crate source: `write::GzEncoder::finish` completes the compressed stream;
+  the writer has an independent byte limit.
+- [Prettier CLI](https://prettier.io/docs/cli): scoped `--write` formatting used for the workspace
+  and browser tests with ephemeral Prettier 3.6.2. It is not an application dependency.
