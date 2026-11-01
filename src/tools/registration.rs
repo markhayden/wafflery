@@ -91,6 +91,12 @@ pub fn register(root: &std::path::Path, source: &std::path::Path) -> std::io::Re
         .map(Descriptor::validate)
         .collect::<Result<_>>()
         .map_err(io::Error::other)?;
+    // Coordinator adds its execution root before the client's 32-root validation.
+    if incoming.iter().any(|tool| tool.roots.len() > 31) {
+        return Err(io::Error::other(
+            "At most 31 user roots may be registered; one root is reserved for host inputs",
+        ));
+    }
     let mut ids = HashSet::new();
     if incoming.iter().any(|tool| !ids.insert(tool.id.clone())) {
         return Err(io::Error::other("Duplicate tool IDs in registration"));

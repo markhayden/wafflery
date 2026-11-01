@@ -104,3 +104,41 @@ fn invalid_input_never_creates_a_library() {
     assert!(registration::register(&root, &link).is_err());
     assert!(!root.exists());
 }
+
+#[tokio::test]
+async fn maximum_registered_roots_leave_room_for_host_inputs_at_startup() {
+    use wafflehouse::{library::assets::AssetStore, tools::coordinator::Coordinator};
+    assert!(
+        std::process::Command::new(env!("CARGO"))
+            .args(["build", "--locked", "--example", "sample-lab"])
+            .status()
+            .unwrap()
+            .success()
+    );
+    let dir = tempfile::tempdir().unwrap();
+    let root = dir.path().join("data");
+    let roots: Vec<_> = (0..32)
+        .map(|n| {
+            let path = dir.path().join(format!("root-{n}"));
+            fs::create_dir(&path).unwrap();
+            path
+        })
+        .collect();
+    let mut value = json!({"id":"sample", "executable":std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("target/debug/examples/sample-lab"),
+        "args":[dir.path().join("runs"),"normal"],"cwd":dir.path(),"roots":roots});
+    assert!(registration::register(&root, &input(dir.path(), json!([value.clone()]))).is_err());
+    assert!(!root.exists());
+    value["roots"].as_array_mut().unwrap().pop();
+    registration::register(&root, &input(dir.path(), json!([value]))).unwrap();
+    let assets = AssetStore::open(&root.join("Library")).unwrap();
+    let host = Coordinator::open(
+        assets,
+        registration::load(&root.join("tools.json")).unwrap(),
+    )
+    .await
+    .unwrap();
+    let description = host.description("sample").await;
+    assert!(host.close().await);
+    host.assets.database.shutdown().await.unwrap();
+    assert_eq!(description.unwrap().document["tool"]["name"], "sample-lab");
+}
