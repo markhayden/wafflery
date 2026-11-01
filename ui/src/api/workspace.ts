@@ -25,6 +25,7 @@ export type Attempt = {
   inputs: Record<string, SavedImage[]>;
   wire: Json;
   raw_response: Json;
+  observations?: Json;
   result: Json;
   execution: string;
   preservation: { contract: string; native: string; report: string };
@@ -71,7 +72,7 @@ function declaration(value: unknown): value is Declaration {
     !record(value) ||
     typeof value.revision !== "string" ||
     !record(value.document) ||
-    value.document.contract !== "0.1.0" ||
+    value.document.contract !== "0.2.0" ||
     !record(value.document.tool) ||
     typeof value.document.tool.name !== "string" ||
     !Array.isArray(value.document.actions)

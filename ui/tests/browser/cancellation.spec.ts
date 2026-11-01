@@ -1,5 +1,5 @@
 import { test, expect } from "./tool-host";
-test.use({ hostScenario: "slow" });
+test.use({ hostScenario: "unassociated" });
 test("cancelled calls without a structured run identity stay unconfirmed", async ({
   page,
   host,

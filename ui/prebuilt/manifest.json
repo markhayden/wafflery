@@ -13,7 +13,7 @@
     "ui/src/api/events.ts": "67446ff89fd64d2ebd673619be429155ce11736b48d932ce9a371ea782322e1d",
     "ui/src/api/examples.ts": "ac29ab8bd91da377bd783d7e118b1791c1599784ad0ab92874293c31b0a0bac4",
     "ui/src/api/session.ts": "0e16aa283022013405a8ebcc64c0aa824ef6f97a2932fe87fadba142ded2b326",
-    "ui/src/api/workspace.ts": "781bb668202067fd9634066c60f829a2f0e17a3d27d1b8ed1aa89bafc4bcbfe9",
+    "ui/src/api/workspace.ts": "0f10c457dad498f5bff5249e25084646bb15fdd2f0559aa0125452af29aea9d5",
     "ui/src/assets/wafflehouse-mark.svg": "51bc8a040e26b897a948238598b8cabdf69bf4687c2b1a70613b542de1c99f1f",
     "ui/src/components/Button.module.css": "1ce502acb9d2561471ba7dffe4536d78bd51553a169a36a8fa230502499a9d1a",
     "ui/src/components/Button.stories.tsx": "489b0b293bbeb9f5813829a79bc9e78c5ddffa0116d71b0582985750716136fa",
@@ -36,12 +36,12 @@
     "ui/src/features/actions/ActionForm.module.css": "d2a8a7d8479e2e97a0c87dfb43fa230cbf3c43f17ace910a1f276df0acec8222",
     "ui/src/features/actions/ActionForm.stories.tsx": "95e53c2b2dcff07cd051c916d3f875e8bc026dbcd695ddfc3b6c31a4f3c239ae",
     "ui/src/features/actions/ActionForm.tsx": "bad8d9547fe069060395292b9c043f2e52e0d87165c926a49207be266a7cc09c",
-    "ui/src/features/actions/model.ts": "978753997ed5fefc949268c87aab1c3d3474b2608ccffbb7e6b55ea8d00654c5",
+    "ui/src/features/actions/model.ts": "758563cb8380397e6deab9b47953d1307562bc39712c35aac329384213a85c26",
     "ui/src/features/workspace/Cleanup.tsx": "2ed0a0ac38e30af5b9f52d411bf63f505a2910072083a403aecc91be180e04c7",
     "ui/src/features/workspace/Examples.stories.tsx": "6d0e7e3e581eeb52d04ccc499ac2fdd21a63d2f238c3f7e1deac565ee4847ad3",
     "ui/src/features/workspace/Examples.tsx": "bfce4c5e80882a5a06170d3f421adf5f957d279d869710f44308fce1b6278b6d",
     "ui/src/features/workspace/History.tsx": "020455e1cf9685dc9bba7d3489169fd4f2c95d05e2a84a2e8eacefdd7e6e123d",
-    "ui/src/features/workspace/Inspector.tsx": "372841ba18de813aef5ea7ab1e0e885d59b9b1efe2bdfeecf8fd59f6740518fb",
+    "ui/src/features/workspace/Inspector.tsx": "b2d9c8945f3988dfffd764ae358af384ec1d1c41b669e8a9c8e2017379bca624",
     "ui/src/features/workspace/Pipeline.tsx": "ff6765f4474b7b823ffde03cbcb635d15d5faacfba9ac3c7976abcc0209cb73d",
     "ui/src/features/workspace/SavedComparison.tsx": "8a02acee808c1f7df4de346272875c90a65719c132286f3b394bfeb017e007c0",
     "ui/src/features/workspace/Workspace.module.css": "bcd0fa6100ee5ca966508dff99172e6ffb6faea23bb80f4ff41aa290463fa8b2",
@@ -53,8 +53,8 @@
   },
   "outputs": {
     "assets/index-BScJ1dIf.css": "29011b325dfc6c9b8c8623f80d1a61af960d317143b39c05a08dc50f5d013e96",
-    "assets/index-DHWDyBFi.js": "471b0b0d865149f88c71ccfc38db56ff791ecd112a5be2b465ff0bef53a6e9f6",
+    "assets/index-Z0QOdhrK.js": "761cc1c941e05d2a427f5b0e0c4e555b8770846fab03eda937d5c8892a0fd1c0",
     "assets/wafflehouse-mark-CML0EpfM.svg": "51bc8a040e26b897a948238598b8cabdf69bf4687c2b1a70613b542de1c99f1f",
-    "index.html": "9ff586721ae25c743d3fb9ace59b938f5e66f1d245f4d556c0e2dff9e83a7041"
+    "index.html": "f7d651a6249130bb40ec7dfc93dd54492fa417713e329130d8cdfa3e70cbd20e"
   }
 }

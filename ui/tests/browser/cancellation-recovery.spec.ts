@@ -1,0 +1,20 @@
+import { test, expect } from "./tool-host";
+test.use({ hostScenario: "slow" });
+test("associated cancellation preserves the result and session evidence", async ({ page, host }) => {
+  await host.open(page);
+  await page.locator("input[type=file]").setInputFiles("tests/fixtures/sample.png");
+  await page.getByLabel("Label *", { exact: true }).fill("Recover this cancellation");
+  await page.getByRole("button", { name: "Run", exact: true }).click();
+  await expect(page.getByText(/Started|Waiting in the offline test tool/, { exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "Cancel run" }).click();
+  await expect(page.getByRole("status").filter({ hasText: "cancelled" })).toBeVisible();
+  await page.getByRole("button", { name: "Inspect run" }).click();
+  const drawer = page.getByRole("dialog");
+  await expect(drawer).toContainText("Contract evidence: complete");
+  await drawer.getByRole("button", { name: "Session", exact: true }).click();
+  await expect(drawer.getByLabel("Saved evidence")).toContainText('"session_after"');
+  await expect(drawer.getByLabel("Saved evidence")).toContainText('"reconciled_from"');
+  await drawer.getByRole("button", { name: "Raw result", exact: true }).click();
+  await expect(drawer.getByLabel("Saved evidence")).toContainText('"status": "cancelled"');
+  await page.screenshot({ path: "test-results/cancellation-session.png" });
+});

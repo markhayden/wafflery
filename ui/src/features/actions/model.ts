@@ -22,6 +22,7 @@ export type Declaration = {
     tool: { name: string; version: string; purpose: string };
     actions: Action[];
   };
+  tool_session?: Json;
   revision: string;
   generation: number;
   schemas: Record<string, Schema>;
@@ -56,7 +57,7 @@ export function encodeBindings(
   slots: ImageSlot[],
   selected: Record<string, string[]>,
 ): Record<string, string[]> {
-  if (version !== "0.1.0") throw new Error("Unsupported contract version.");
+  if (version !== "0.2.0") throw new Error("Unsupported contract version.");
   const result: Record<string, string[]> = {};
   for (const slot of slots) {
     const value = selected[slot.slot] ?? [];
