@@ -1,6 +1,7 @@
 mod association;
 pub mod client;
 pub mod coordinator;
+mod environment;
 mod materialized;
 pub mod registration;
 mod session;

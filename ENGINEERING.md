@@ -72,6 +72,26 @@ whole configuration files or process environments into history. Preserve declare
 data under that same non-secret contract; diagnostic stderr is not automatically exportable data.
 Bound diagnostic capture and mark truncation; exclude credentials and authentication headers.
 
+## Child process environment
+
+Every tool starts with a cleared environment. Wafflery copies only inherited `HOME`,
+`XDG_CONFIG_HOME`, `XDG_DATA_HOME`, `XDG_CACHE_HOME`, `TMPDIR`, `LANG` and `LC_ALL` when present,
+and supplies the fixed system `PATH` `/usr/bin:/bin:/usr/sbin:/sbin`. This supports default
+configuration lookup without inheriting unrelated provider credentials or shell settings.
+
+The environment selector additionally permits declared `credential` and `env` requirement names
+matching `[A-Za-z_][A-Za-z0-9_]*`. These cannot override base variables or forward `WAFFLERY_*`,
+`DYLD_*` or `LD_*`. Excluded and non-identifier names remain valid displayable requirements; the
+host does not reject the description or attempt to resolve credentials held elsewhere.
+Missing variables remain absent. Values are copied only from the host environment directly into
+the child command; registration, logs and saved evidence never receive those values, including
+non-secret `env` values. Requirement names alone are safe to retain.
+
+V04a installs the base environment at startup. V04b adds the discovery probe that selects declared
+credential/env names for the final serving process. External environment changes require
+relaunching Wafflery; restarting a tool cannot refresh its parent process's inherited environment.
+The host does not read configuration contents or load shell profiles to discover credentials.
+
 ## Capturing inputs and results
 
 1. Import a user-selected file into host staging, hash the copied bytes, and validate its limits

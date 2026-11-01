@@ -28,8 +28,9 @@ Publishing and production installation are not authorized by this continuation.
 Current integration update (2026-11-01): published v0.2.0 and both tools are adopted on main.
 See [the v0.2 integration plan](docs/plans/table-manners-v02.md) and [verified checkpoint](docs/reviews/2026-11-01-table-manners-v02.md). The initial v0.1 fixture/version
 requirements below describe the completed foundation checkpoint, not the current live allowlist.
-The [v0.3 client task list](#v03-client--proposed-task-list) below is planning only, awaiting
-Mark's approval. The live client still requires v0.2 and refuses paid dispatch.
+The [v0.3 client task list](#v03-client--proposed-task-list) below is approved. V01–V03 are
+merged locally; the live client requires exactly v0.3 and still refuses paid dispatch until
+its estimate/cap guards are implemented. See [execution checkpoints](docs/plans/v03-execution.md).
 
 ## Outcome
 
@@ -478,7 +479,7 @@ exist. Verify an unconfigured optional filler can be
 omitted without blocking the free call, and needed missing requirements yield `not_ready`. Depends: V02.
 Commit: `feat: explain action readiness in tool setup`.
 
-**V04a — Define the minimal child environment.** Document an explicit host allowlist in
+**V04a — Define the minimal child environment. Complete.** Document an explicit host allowlist in
 ENGINEERING.md: HOME and optional XDG_CONFIG_HOME/XDG_DATA_HOME/XDG_CACHE_HOME for tool default
 lookup; TMPDIR, LANG/LC_ALL, and a fixed system PATH (`/usr/bin:/bin:/usr/sbin:/sbin`). Never
 inherit the whole environment. Forward both `credential` and non-secret `env` requirements when

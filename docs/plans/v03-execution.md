@@ -147,3 +147,18 @@ real-tool opt-in skips. The final browser/typecheck rerun corrected a test locat
 both result guidance and its notification; no product change or timeout/retry adjustment was
 needed. The requirements screenshot was visually inspected. Generated assets and lockfiles
 remained stable. Paid calls remain disabled; no provider calls, sibling edits, push or tags.
+
+## V04a verification
+
+The minimal child environment is implemented and reviewed. Four tests failed against an empty
+selector before implementation, then passed: HOME/XDG/locale lookup with fixed PATH, declared
+credential and non-secret env selection, excluded/non-identifier names without lookup or base
+override, and real child configuration lookup with spaced paths. Values remain in the process
+boundary only; no registration or evidence fields were added. Startup currently supplies only
+the base environment; V04b supplies names discovered by the separate probe. README and ENGINEERING
+record this boundary and the need to relaunch the host after external environment changes.
+
+The full matrix passed under the shared lock: formatting, clippy, 88 Rust tests (three opt-in
+ignores), typecheck, 14 UI unit tests, two asset-tooling tests, Storybook, two byte-identical clean
+UI builds, release build, and 78 browser cases (four real-tool opt-in skips). Assets and lockfiles
+remained unchanged. No provider calls, sibling edits, push or tags.

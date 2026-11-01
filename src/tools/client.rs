@@ -99,10 +99,11 @@ impl ToolClient {
         let mut random = [0u8; 32];
         getrandom::fill(&mut random).map_err(|e| Error::Invalid(e.to_string()))?;
         let session = random.iter().map(|b| format!("{b:02x}")).collect();
-        let mut child = Command::new(&descriptor.executable)
+        let mut command = Command::new(&descriptor.executable);
+        super::environment::apply(&mut command, &[]);
+        let mut child = command
             .args(&descriptor.args)
             .current_dir(&descriptor.cwd)
-            .env_clear()
             .stdin(Stdio::piped())
             .stdout(Stdio::piped())
             .stderr(Stdio::null())

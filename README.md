@@ -122,7 +122,9 @@ The host accepts a JSON array of descriptors with `id`, absolute `executable`, `
 never a shell command), absolute `cwd`, and absolute directory `roots`. See the real-tool helper
 for a concrete Rascal descriptor. These records select programs that will execute when the host
 starts; only register executables you intend to run. The host supplies its own input staging root
-and starts the tool with an empty environment. Provider setup comes in a later integration slice.
+and starts the tool with a minimal environment for default configuration lookup and locale,
+plus a fixed system PATH. See the [environment policy](ENGINEERING.md#child-process-environment).
+Credential discovery comes in the next integration slice.
 
 While the host is stopped:
 
