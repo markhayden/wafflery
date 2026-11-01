@@ -76,3 +76,16 @@ fixture rounds Rascal's default band below a pixel, so an image-presence asserti
 miss an empty mask. The panorama uses default recipe parameters. Source and cut-space mask have
 different coordinates; the test requires side-by-side viewing and a disabled wipe, not invented
 alignment. With no filler this verifies mask preparation, not a repaired image or model quality.
+
+## Optional Squint integration gate (currently blocked)
+
+```sh
+WAFFLEHOUSE_SQUINT_BIN=/absolute/path/to/stable/testkit/squint cargo test --locked --test squint_smoke -- --ignored --nocapture
+```
+
+Select a contract 0.1.0 binary built with Squint's `testkit` feature. The test owns configuration,
+script and files, clears the child environment, and supplies no credentials. It is ignored by
+default. At Squint `fcde474` it fails during schema discovery; do not count it as a passed smoke.
+The intended paid-refusal and offline-estimate preservation assertions have not yet been reached.
+See [the exact blockers and reproduction](../docs/handoffs/squint-discovery-blockers.md). The
+scripted fixture is test evidence only, not a real model judgment.

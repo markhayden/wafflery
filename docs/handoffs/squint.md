@@ -1,15 +1,17 @@
 # Squint handoff: generic check workspace
 
-Status: refreshed 2026-10-31. M7 serve work is merged locally; do not describe it as released.
+Status: refreshed 2026-10-31. M7 has a local tag and the owner reports it pushed/released.
 These are remaining integration requests, not a replacement implementation plan. No sibling files changed.
 
 ## Current evidence
 
-HEAD `eef1f10`, clean; 15 commits ahead of local origin/main, no `m7` tag and checkpoint not
-checked. The [source inventory](../integration-sources.md#squint) records exact paths and limits.
+HEAD `fcde474`, with active uncommitted v0.2 work. The [source inventory](../integration-sources.md#squint)
+records exact paths and limits. A frozen committed-source testkit build exposes two immediate
+[discovery/scripted-cost blockers](squint-discovery-blockers.md); the MCP smoke is not passed.
 Five use-case tools now match description/call/result names. Serve, resources, progress/cancellation,
 cap/session enforcement and estimates are implemented. `estimate` calls `finished()` and creates
-zero-spend run records visible in the tool's runs resource; its calls pass through the semaphore.
+zero-spend run records visible in the tool's runs resource. Commit `ae6cfb8` moves the execution
+permit to checks and handles queued cancellation without allocating a run.
 
 The testkit-only `serve --provider-script` already selects ScriptedProvider before credentials,
 with serve_check_cli/serve_progress_cli tests. No request to build this again is needed. The
@@ -60,8 +62,10 @@ estimate fixtures, offline independent-client evidence, and remaining exceptions
 
 ## Launcher coordination
 
-Task 7.9 is H1-blocked. Review the [Wafflehouse launcher proposal](H1-launcher-proposal.md)
-now: binary/override/install path, `--tool squint`, exit behavior and host-owned attachment.
+The `fcde474` source includes the H1 launcher: `WAFFLEHOUSE_BIN`, PATH, then `~/.local/bin`,
+invoking exactly `--tool squint`. Retain the [agreed launcher semantics](H1-launcher-proposal.md):
+exit behavior and host-owned attachment. Wafflehouse has not yet exercised Squint's launcher in
+its own two-tool browser journey.
 Production installer publication and MCP configuration/registration remain separate subgates.
 The first browser screen is Squint's workspace/setup state after Wafflehouse is installed and
 running. No UI is embedded in Squint and no host-install screen appears inside Wafflehouse.

@@ -23,7 +23,8 @@ now include the Rascal/Squint review amendments. Adoption still waits for a tagg
 ## Rascal
 
 Repository: [markhayden/rascal](https://github.com/markhayden/rascal).
-Current checkout: `../rascal`, HEAD `9c52138` during the final read-only audit. M9 is merged;
+Current checkout: `../rascal`, HEAD `fc819f7` at the later Squint-entry audit, with active
+uncommitted work. The completed Rascal integration used `9c52138`. M9 is merged;
 the plan records its checks/tag. This audit did not rerun Rascal's full suite. The initial local
 binary identified itself as 0.1.0 and emitted contract 0.1.0, without an embedded source revision.
 During verification its owner rebuilt that mutable binary against the 0.2 draft; Wafflehouse
@@ -49,7 +50,7 @@ claim that these interfaces are already implemented. C2/C3 remain integration fo
 
 Repository: [markhayden/squint](https://github.com/markhayden/squint).
 Current checkout: `../dejaview`; when locating it, check `../squint` and then `../dejaview`, and
-verify repository identity rather than assuming both exist. HEAD `ae6cfb8` during inspection,
+verify repository identity rather than assuming both exist. HEAD `fcde474` during inspection,
 with active uncommitted work. A local `m7` tag exists; the owner reports M7 pushed/released.
 No fetch was performed and the current working changes were not modified or treated as a release.
 
@@ -68,6 +69,12 @@ already exists. `provider_for` selects the ScriptedProvider before credential re
 `serve_check_cli.rs` and `serve_progress_cli.rs` use this path. No duplicate implementation
 request is needed. Production calls without that test feature still require their configured
 provider setup; `replay: None` alone does not establish the testkit path is unavailable.
+
+The Squint-entry probe built an isolated `git archive fcde474` with `--offline --locked
+--features testkit`. Its CLI offline estimate succeeds, but MCP discovery fails compiling the
+embedded `#/$defs/Kind` reference. Scripted checks also still advertise `may_spend: true`.
+The host retains its schema and spend guards. See [the focused handoff](handoffs/squint-discovery-blockers.md)
+for exact evidence and the blocked optional test. No Squint UI run has passed yet.
 
 ## Shared unresolved behavior
 

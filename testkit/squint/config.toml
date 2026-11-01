@@ -1,0 +1,13 @@
+# Owned offline integration configuration. Only a Squint testkit build is supported here.
+# Squint requires this privacy opt-in even for its scripted provider. No credentials are supplied.
+# The catalog model is used for offline estimates; no live model is invoked.
+[provider]
+profile = "fake"
+model = "claude-haiku-5-5"
+
+[privacy]
+cloud_calls = true
+account = "fake:wafflehouse-test"
+
+[output]
+dir = "./runs"
