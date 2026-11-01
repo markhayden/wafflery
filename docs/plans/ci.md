@@ -42,3 +42,20 @@ commit, never by disabling an existing gate. Runner or registry availability is 
 
 All action commit pins are resolved from upstream tags during implementation. The local machine
 is a newer macOS version; the first hosted macOS 15 run remains separate evidence.
+
+## First hosted-run correction
+
+Run 41355373149 failed three evidence-completion browser assertions (events in both engines,
+pipeline in WebKit). The owner authorized diagnosis and a fix on `fix-hosted-browser-races`.
+
+1. Reproduce and preserve evidence; add a deterministic regression for the actual cause. Fix
+   product state/lifetime if responsible, or wait on observable state if the test is responsible.
+   Commit the focused fix and matching tests/docs; do not add retries or extend deadlines.
+2. Add failure-only Playwright diagnostic artifacts with a pinned upload action. Use only the
+   isolated test outputs and short retention; no real provider credentials or library dumps.
+   Commit workflow/docs separately. This supersedes the initial no-upload choice above.
+3. Repeat events/pipeline specs 20 times in both engines, run the full PLAN matrix, review and
+   merge locally. The coordinator pushes and verifies the next hosted run.
+
+Rollback the diagnostic upload independently. Revert the behavioral fix only with its tests;
+retain the failure record. No library migration, contract change, sibling edit or release work.
