@@ -102,7 +102,7 @@ export const test = base.extend<{
         socket.on("error", reject);
         socket.on("connect", () =>
           socket.end(
-            JSON.stringify({ protocol: 1, root: canonical, operation }),
+            JSON.stringify({ protocol: 1, product: "wafflery", root: canonical, operation }),
           ),
         );
         socket.on("data", (chunk) => {

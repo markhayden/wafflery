@@ -164,7 +164,8 @@ pub fn request(root: &Path, operation: &str) -> io::Result<Value> {
     let mut stream = UnixStream::connect(socket)?;
     stream.set_read_timeout(Some(Duration::from_secs(2)))?;
     stream.set_write_timeout(Some(Duration::from_secs(2)))?;
-    let message = json!({"protocol": 1, "root": root, "operation": operation});
+    let message =
+        json!({"protocol": 1, "product": "wafflery", "root": root, "operation": operation});
     stream.write_all(message.to_string().as_bytes())?;
     stream.shutdown(std::net::Shutdown::Write)?;
     let mut bytes = Vec::new();
@@ -174,6 +175,7 @@ pub fn request(root: &Path, operation: &str) -> io::Result<Value> {
     }
     let result: Value = serde_json::from_slice(&bytes)?;
     if result["protocol"] != 1
+        || result["product"] != "wafflery"
         || result["root"] != json!(root)
         || result["version"] != crate::VERSION
     {
@@ -208,6 +210,7 @@ pub async fn listen(
             }
             let message: Value = serde_json::from_slice(&bytes)?;
             if message["protocol"] != 1
+                || message["product"] != "wafflery"
                 || message["root"] != json!(root)
                 || !matches!(
                     message["operation"].as_str(),
@@ -217,7 +220,7 @@ pub async fn listen(
                 return Ok(());
             }
             let mut reply =
-                json!({"protocol": 1, "root": root, "version": crate::VERSION, "origin": origin});
+                json!({"protocol": 1, "product": "wafflery", "root": root, "version": crate::VERSION, "origin": origin});
             if message["operation"] == "bootstrap" {
                 reply["bootstrap"] = json!(auth.issue()?);
             }

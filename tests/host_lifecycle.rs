@@ -143,6 +143,15 @@ fn malformed_launcher_arguments_never_start_a_host() {
 
 #[test]
 fn an_incompatible_live_host_is_refused_without_starting_another() {
+    incompatible_host_is_refused("incompatible", Some("wafflery"));
+}
+
+#[test]
+fn a_same_version_host_without_product_identity_is_refused() {
+    incompatible_host_is_refused(wafflery::VERSION, None);
+}
+
+fn incompatible_host_is_refused(version: &'static str, product: Option<&'static str>) {
     use std::os::unix::net::UnixListener;
     let temp = tempfile::tempdir().unwrap();
     let data = temp.path().join("data");
@@ -154,7 +163,7 @@ fn an_incompatible_live_host_is_refused_without_starting_another() {
         let (mut stream, _) = listener.accept().unwrap();
         let mut request = String::new();
         stream.read_to_string(&mut request).unwrap();
-        let reply = serde_json::json!({"protocol": 1, "root": root, "version": "incompatible", "origin": "http://127.0.0.1:1"});
+        let reply = serde_json::json!({"protocol": 1, "root": root, "version": version, "product": product, "origin": "http://127.0.0.1:1"});
         stream.write_all(reply.to_string().as_bytes()).unwrap();
     });
     let result = Command::new(env!("CARGO_BIN_EXE_wafflery"))
