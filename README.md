@@ -60,6 +60,14 @@ the opt-in real Rascal offline smoke. Automatic discovery and installation remai
 
 ## Develop and verify
 
+[CI](.github/workflows/ci.yml) runs the full PLAN matrix on `macos-15` for pull requests,
+pushes to main and manual dispatch. Action revisions and runtime versions are pinned; Cargo
+and Bun dependencies are cached, and matching Chromium/WebKit browsers are installed explicitly.
+CI uses the independent offline peer without provider keys or sibling checkouts. The three Rust
+and four browser real-tool probes remain explicit opt-ins. Checked-in UI assets are verified
+before any build can regenerate them. Browser traces are not uploaded automatically.
+See the [CI checkpoint](docs/reviews/2026-11-01-ci.md) for local versus hosted verification.
+
 ### Try real Rascal
 
 With a stable contract 0.2.0 Rascal binary already built or installed, select its absolute path:

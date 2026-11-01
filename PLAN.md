@@ -1,5 +1,10 @@
 # Wafflery foundation implementation plan
 
+Repository update (2026-11-01): the canonical checkout is `wafflery`; the coordinator has
+published main and manages subsequent pushes. The [CI gate](docs/plans/ci.md) runs this plan's
+full matrix on `macos-15`; its [checkpoint](docs/reviews/2026-11-01-ci.md) separates local checks
+from the first hosted run. Local merges remain subject to review; no automatic pushes or tags.
+
 Status: M0–M3 approved by the owner on 2026-10-31; implementation started.
 Current implementation evidence: [M0 checkpoint](docs/reviews/2026-10-31-m0-checkpoint.md) and
 [M1 checkpoint](docs/reviews/2026-10-31-m1-checkpoint.md), and
