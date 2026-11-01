@@ -26,7 +26,7 @@ export const test = base.extend<{
 }>({
   hostScenario: ["normal", { option: true }],
   hostKind: ["sample", { option: true }],
-  host: async ({ hostScenario, hostKind }, use) => {
+  host: async ({ hostScenario, hostKind }, use, testInfo) => {
     const build = spawnSync(
       "cargo",
       ["build", "--locked", "--example", "sample-lab", "--bin", "wafflery"],
@@ -210,8 +210,42 @@ export const test = base.extend<{
       await host.start();
       await use(host);
     } finally {
-      await host.stop();
-      await rm(temporary, { recursive: true, force: true });
+      try {
+        if (testInfo.status !== testInfo.expectedStatus) {
+          // Observe before shutdown changes unfinished attempts. Never attach the database,
+          // browser credentials, inputs or full recorded calls to a public CI artifact.
+          const summary = spawnSync(
+            "/usr/bin/sqlite3",
+            [
+              "-readonly",
+              join(root, "Library", "library.sqlite3"),
+              `SELECT json_object('id',id,'execution',json_extract(record,'$.execution'),
+                'preservation',json_extract(record,'$.preservation'),
+                'notices',json_extract(record,'$.notices'),
+                'result_status',json_extract(record,'$.result.status'),
+                'error_code',json_extract(record,'$.result.error.code'))
+                FROM attempts ORDER BY seq LIMIT 50;`,
+            ],
+            { encoding: "utf8", timeout: 2000, maxBuffer: 256 * 1024 },
+          );
+          const diagnostics = testInfo.outputPath(
+            "attempt-state-before-shutdown.ndjson",
+          );
+          await writeFile(
+            diagnostics,
+            summary.status === 0
+              ? summary.stdout
+              : `${JSON.stringify({ unavailable: true, status: summary.status })}\n`,
+          );
+          await testInfo.attach("attempt-state-before-shutdown", {
+            path: diagnostics,
+            contentType: "application/x-ndjson",
+          });
+        }
+      } finally {
+        await host.stop();
+        await rm(temporary, { recursive: true, force: true });
+      }
     }
   },
 });

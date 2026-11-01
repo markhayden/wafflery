@@ -99,7 +99,21 @@ jobs:
         run: bunx playwright install --with-deps chromium webkit
 
       - name: Test Chromium and WebKit
+        id: browser
         run: bun run --cwd ui test:browser
+
+      - name: Preserve failed browser diagnostics
+        if: ${{ failure() && steps.browser.outcome == 'failure' }}
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: browser-failures-${{ github.run_attempt }}
+          path: |
+            ui/test-results/**/trace.zip
+            ui/test-results/**/test-failed-*.png
+            ui/test-results/**/error-context.md
+            ui/test-results/**/attempt-state-before-shutdown.ndjson
+          retention-days: 3
+          if-no-files-found: warn
 
       - name: Build release binary
         run: cargo build --locked --release --bin wafflery

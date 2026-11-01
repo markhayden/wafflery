@@ -53,7 +53,10 @@ pipeline in WebKit). The owner authorized diagnosis and a fix on `fix-hosted-bro
    Commit the focused fix and matching tests/docs; do not add retries or extend deadlines.
 2. Add failure-only Playwright diagnostic artifacts with a pinned upload action. Use only the
    isolated test outputs and short retention; no real provider credentials or library dumps.
-   Commit workflow/docs separately. This supersedes the initial no-upload choice above.
+   Commit workflow/fixture diagnostics and their verification record together, separately from
+   any demonstrated behavioral fix. This supersedes the initial no-upload choice above.
+   If local repetitions do not reproduce the failure, land diagnostics first and use the next
+   hosted run to establish the cause; do not label that diagnostic checkpoint a fix.
 3. Repeat events/pipeline specs 20 times in both engines, run the full PLAN matrix, review and
    merge locally. The coordinator pushes and verifies the next hosted run.
 
