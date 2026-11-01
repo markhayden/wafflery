@@ -119,6 +119,16 @@ impl Coordinator {
             .clone()
             .ok_or_else(|| Error::Invalid("This tool has no supported declaration".into()))
     }
+    pub async fn session(&self, id: &str) -> Result<Value> {
+        let declaration = self.description(id).await?;
+        let client = self
+            .tools
+            .get(id)
+            .and_then(|entry| entry.client.as_ref())
+            .ok_or(Error::Missing("Tool is unavailable"))?;
+        // A resource read needs no execution permit and must not restart a busy server.
+        client.observe_session(&declaration.document["tool"]).await
+    }
     pub async fn snapshot(&self) -> Result<Value> {
         self.reap_exited().await;
         let tools: Vec<_> = self.tools.iter().map(|(id, entry)| {

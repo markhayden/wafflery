@@ -15,6 +15,7 @@ pub fn router(coordinator: Arc<Coordinator>) -> Router {
     Router::new()
         .route("/api/state", get(state))
         .route("/api/tools/{id}/description", get(description))
+        .route("/api/tools/{id}/session", get(session))
         .route("/api/attempts", get(list).post(submit))
         .route("/api/attempts/{id}", get(attempt))
         .route("/api/attempts/{id}/cancel", post(cancel))
@@ -62,6 +63,12 @@ async fn submit(
     Json(request): Json<Submission>,
 ) -> Result<(StatusCode, Json<crate::library::attempts::Attempt>), ApiError> {
     Ok((StatusCode::ACCEPTED, Json(c.submit(request).await?)))
+}
+async fn session(
+    State(c): State<Arc<Coordinator>>,
+    Path(id): Path<String>,
+) -> Result<Json<serde_json::Value>, ApiError> {
+    Ok(Json(c.session(&id).await?))
 }
 async fn attempt(
     State(c): State<Arc<Coordinator>>,
