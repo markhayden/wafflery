@@ -14,13 +14,13 @@ test("real Rascal runs offline and preserves browser evidence across restart", a
 }, testInfo) => {
   test.setTimeout(60_000);
   page.setDefaultTimeout(10_000);
-  const original = await readFile("tests/fixtures/sample.png");
+  const original = await readFile("tests/fixtures/panorama.png");
   await host.open(page);
   await page.getByRole("button", { name: /^Action / }).click();
   await page.getByRole("button", { name: /Heal a seam/ }).click();
   await page
     .locator("input[type=file]")
-    .setInputFiles("tests/fixtures/sample.png");
+    .setInputFiles("tests/fixtures/panorama.png");
   await page
     .getByRole("combobox", { name: "image coordinates", exact: true })
     .selectOption("equirectangular");
@@ -37,6 +37,27 @@ test("real Rascal runs offline and preserves browser evidence across restart", a
   await expect(
     page.getByRole("img", { name: "Mask", exact: true }),
   ).toBeVisible();
+  const maskRange = await page
+    .getByRole("img", { name: "Mask", exact: true })
+    .evaluate(async (element) => {
+      const image = element as HTMLImageElement;
+      await image.decode();
+      const canvas = document.createElement("canvas");
+      canvas.width = image.naturalWidth;
+      canvas.height = image.naturalHeight;
+      const context = canvas.getContext("2d")!;
+      context.drawImage(image, 0, 0);
+      const pixels = context.getImageData(0, 0, canvas.width, canvas.height).data;
+      let min = 255;
+      let max = 0;
+      for (let offset = 0; offset < pixels.length; offset += 4) {
+        min = Math.min(min, pixels[offset]!);
+        max = Math.max(max, pixels[offset]!);
+      }
+      return { min, max };
+    });
+  expect(maskRange.min).toBe(0);
+  expect(maskRange.max).toBeGreaterThan(127);
   // Rascal's mask preview has different coordinates; the host must not invent alignment.
   await expect(
     page.getByRole("button", { name: "Wipe", exact: true }),
@@ -109,7 +130,7 @@ test("real Rascal runs offline and preserves browser evidence across restart", a
     path: testInfo.outputPath("real-rascal.png"),
     fullPage: true,
   });
-  expect(await readFile("tests/fixtures/sample.png")).toEqual(original);
+  expect(await readFile("tests/fixtures/panorama.png")).toEqual(original);
   expect((await readdir(join(host.root, "../tool/runs"))).sort()).toEqual(
     toolFiles,
   );

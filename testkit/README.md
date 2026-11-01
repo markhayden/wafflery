@@ -55,3 +55,24 @@ so that alone is not a successful output smoke.
 
 Missing binaries or unsupported contract versions print an explicit `SKIPPED` reason. Other
 failures remain failures; do not loosen the version, spend or fingerprint guards to pass them.
+
+## Optional real Rascal browser journey
+
+```sh
+WAFFLEHOUSE_RASCAL_BIN=/absolute/path/to/rascal bun run --cwd ui test:browser
+```
+
+The optional Chromium/WebKit journey uses explicit registration and the same generic UI as any
+tool. It checks a real seam mask, saved inputs, recorded call, image evidence download, independent
+example loading, and history/output preservation across a host restart. Without the environment
+variable those two cases are reported skipped. Choose a stable contract 0.1.0 executable; rebuilding
+a selected binary against a newer draft during the suite will correctly make it unavailable.
+
+`ui/tests/fixtures/panorama.png` is an owned, procedurally generated 2048×1024 RGBA gradient:
+`R = 60 + floor(80*x/2048)`, `G = 80 + floor(100*y/1024)`, `B = 110`, `A = 255`.
+Its unequal left/right edges create a deterministic wrap seam. The browser checks actual mask
+pixels contain both protected black and paint values above 127. The small 160×100 fake-tool
+fixture rounds Rascal's default band below a pixel, so an image-presence assertion alone would
+miss an empty mask. The panorama uses default recipe parameters. Source and cut-space mask have
+different coordinates; the test requires side-by-side viewing and a disabled wipe, not invented
+alignment. With no filler this verifies mask preparation, not a repaired image or model quality.

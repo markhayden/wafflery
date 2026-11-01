@@ -22,7 +22,7 @@ async fn real_rascal_offline_seam_uses_the_same_dispatch_and_evidence_guards() {
     std::fs::create_dir(&tool).unwrap();
     let assets = AssetStore::open(&dir.path().join("Library")).unwrap();
     let input = dir.path().join("owned-source.png");
-    let bytes = include_bytes!("../ui/tests/fixtures/sample.png");
+    let bytes = include_bytes!("../ui/tests/fixtures/panorama.png");
     std::fs::write(&input, bytes).unwrap();
     let asset = assets.import_path(input.clone()).await.unwrap();
     let descriptor = Descriptor {

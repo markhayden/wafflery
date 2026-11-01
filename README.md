@@ -54,7 +54,7 @@ the opt-in real Rascal offline smoke. Automatic discovery and installation remai
 
 ### Try real Rascal
 
-With Rascal already built or installed, select its absolute executable path:
+With a stable contract 0.1.0 Rascal binary already built or installed, select its absolute path:
 
 ```sh
 bun run scripts/dev-rascal.ts /absolute/path/to/rascal
@@ -63,7 +63,8 @@ bun run scripts/dev-rascal.ts /absolute/path/to/rascal
 This creates an isolated library and Rascal workspace, registers the executable explicitly,
 then opens Wafflehouse through the actual `rascal playground` launcher. It supplies no provider
 configuration or credentials. Choose **Heal a seam**, upload an image, and set both **image
-coordinates** and **projection** to equirectangular to exercise the wrap-edge mask. Without a
+coordinates** and **projection** to equirectangular to exercise the wrap-edge mask. The owned
+`ui/tests/fixtures/panorama.png` provides a suitable test image. Without a
 filler this produces mask evidence, not an AI repair. Required location actions remain unavailable
 until location binding is implemented; prompt-based actions may require unconfigured dependencies.
 
