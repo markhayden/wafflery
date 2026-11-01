@@ -80,3 +80,14 @@ guard refuses paid actions. Production discovery/installers, provider setup, ope
 portable native replay, structured paid sessions and tool-owned report framing retain their later
 contract/integration gates. No paid calls, sibling edits, production installs, pushes or publishing
 were performed. Complete native Safari verification, then close F18b and merge this milestone.
+
+## Owner interface follow-up
+
+After trying the development build, the owner requested outside-click dismissal, an icon-only
+drawer close control, and their supplied mark beside the wordmark. The shared drawer now dismisses
+only when a pointer gesture starts and ends outside; inside clicks and selection drags remain open.
+Escape and opener focus restoration are preserved. The close icon retains its accessible name and
+44-pixel target. The supplied mark is a compact transparent SVG; the embedded host serves SVG with
+the correct media type. Targeted Chromium/WebKit checks cover dismissal, focus, narrow layouts,
+and actual image decoding through the host. This follow-up does not infer that the full native
+Safari checklist was completed from the owner's general visual approval.

@@ -7,6 +7,7 @@ import { connect } from "./api/session";
 import type { LocalApi } from "./api/client";
 import { assetClient, type Asset } from "./api/assets";
 import { ImageInput } from "./components/ImageInput";
+import mark from "./assets/wafflehouse-mark.svg";
 
 export function App() {
   const [snapshot, setSnapshot] = useState<Snapshot>();
@@ -73,7 +74,7 @@ export function App() {
   return (
     <>
       <header className="workspace-header">
-        <strong>wafflehouse</strong>
+        <strong className="workspace-brand"><img src={mark} alt="" width="40" height="24" />wafflehouse</strong>
         <span>Local workspace</span>
         {api && <Shutdown api={api} />}
       </header>

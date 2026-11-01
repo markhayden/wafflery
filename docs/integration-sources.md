@@ -94,3 +94,11 @@ reference this inventory instead of rewriting historical evidence.
   the writer has an independent byte limit.
 - [Prettier CLI](https://prettier.io/docs/cli): scoped `--write` formatting used for the workspace
   and browser tests with ephemeral Prettier 3.6.2. It is not an application dependency.
+
+## Temporary Wafflehouse mark
+
+`ui/src/assets/wafflehouse-mark.svg` traces the owner-supplied waffle-in-a-hammock image
+(2026-10-31). ImageTracerJS 1.2.6 and pngjs 7.0.0 were used in a disposable tooling directory,
+following their packaged Node examples. The two-color trace removes the white background,
+crops empty margins and uses the header foreground color. Neither package is an application
+dependency. The original attachment is unchanged.

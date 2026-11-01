@@ -6,6 +6,10 @@ test("run a real offline action and inspect immutable evidence after editing the
   const errors: string[] = [];
   page.on("pageerror", (error) => errors.push(error.message));
   await host.open(page);
+  await expect(page.locator(".workspace-brand img")).toBeVisible();
+  await expect.poll(() => page.locator(".workspace-brand img").evaluate(
+    (image: HTMLImageElement) => image.complete && image.naturalWidth > 0,
+  )).toBe(true);
   await expect(
     page.getByRole("button", { name: /Action Add a test band/ }),
   ).toBeVisible();

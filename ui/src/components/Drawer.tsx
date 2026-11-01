@@ -22,6 +22,11 @@ export function Drawer({
   const dialog = useRef<HTMLDialogElement>(null);
   const heading = useRef<HTMLHeadingElement>(null);
   const returnTo = useRef<HTMLElement | null>(null);
+  const startedOutside = useRef(false);
+  const outside = (node: HTMLDialogElement, x: number, y: number) => {
+    const bounds = node.getBoundingClientRect();
+    return x < bounds.left || x > bounds.right || y < bounds.top || y > bounds.bottom;
+  };
   const id = useId();
   useEffect(() => {
     const node = dialog.current;
@@ -51,6 +56,17 @@ export function Drawer({
       className={styles.drawer}
       aria-labelledby={`${id}-title`}
       aria-describedby={description ? `${id}-description` : undefined}
+      onPointerDown={(event) => {
+        startedOutside.current = event.target === event.currentTarget &&
+          outside(event.currentTarget, event.clientX, event.clientY);
+      }}
+      onPointerCancel={() => { startedOutside.current = false; }}
+      onClick={(event) => {
+        const dismiss = startedOutside.current && event.target === event.currentTarget &&
+          outside(event.currentTarget, event.clientX, event.clientY);
+        startedOutside.current = false;
+        if (dismiss) onClose();
+      }}
       onCancel={(event) => {
         event.preventDefault();
         onClose();
@@ -63,7 +79,11 @@ export function Drawer({
           </h2>
           {description && <p id={`${id}-description`}>{description}</p>}
         </div>
-        <Button onClick={onClose}>Close</Button>
+        <Button className={styles.close} onClick={onClose} aria-label="Close" title="Close">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" aria-hidden="true" focusable="false">
+            <path d="m6 6 12 12M18 6 6 18" />
+          </svg>
+        </Button>
       </header>
       <div className={styles.content}>{children}</div>
       {footer && <footer className={styles.footer}>{footer}</footer>}

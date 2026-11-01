@@ -39,6 +39,8 @@ a { color: inherit; }
   border-bottom: 1px solid var(--color-line);
 }
 .workspace-header strong { font-size: 1.125rem; letter-spacing: -0.025em; }
+.workspace-brand { display: inline-flex; align-items: center; gap: var(--space-3); }
+.workspace-brand img { display: block; flex: none; object-fit: contain; }
 .workspace-header span { color: var(--color-muted); font-size: 0.8125rem; }
 .workspace-main { max-width: 82rem; margin: auto; padding: var(--space-12) var(--space-8); }
 .workspace-main h1 { font-size: 1.75rem; font-weight: 500; letter-spacing: -0.035em; }

@@ -7,19 +7,20 @@
     "ui/bun.lock": "ed6f289670cecf1f4f5acba761e2a3234e40fd0a7b053ecfbee49ac9500a19b9",
     "ui/index.html": "19516a49667e60032840181509e35593e257282f7393c8443e44c27bc955dbcb",
     "ui/package.json": "155700f2c60e2fec0c4ff8878bf68e7c07df406a2c39e86e3d9c26422845ee07",
-    "ui/src/App.tsx": "88ca3629ed7f1d91986fc088e1644b2ca2646351ea5ee3cdebfc64c8bd9858fa",
+    "ui/src/App.tsx": "3be56225d601ddb182cb2967e95079c9c0c4f7efabd8442246510b40d89afb1d",
     "ui/src/api/assets.ts": "919f5f3b6591aab1a61b3fb93033dc0a403f83fb4bcc9c40eb073fe9b8ba049a",
     "ui/src/api/client.ts": "b5269abe65dc4f0ae6b7f7191b91521814a6458d823d8d263ac95d22c5e4629a",
     "ui/src/api/events.ts": "67446ff89fd64d2ebd673619be429155ce11736b48d932ce9a371ea782322e1d",
     "ui/src/api/examples.ts": "ac29ab8bd91da377bd783d7e118b1791c1599784ad0ab92874293c31b0a0bac4",
     "ui/src/api/session.ts": "0e16aa283022013405a8ebcc64c0aa824ef6f97a2932fe87fadba142ded2b326",
     "ui/src/api/workspace.ts": "781bb668202067fd9634066c60f829a2f0e17a3d27d1b8ed1aa89bafc4bcbfe9",
+    "ui/src/assets/wafflehouse-mark.svg": "1d87a75901cd8d4fa3b219b1651939bbf559866005e6bdac5859a4133b60885a",
     "ui/src/components/Button.module.css": "1ce502acb9d2561471ba7dffe4536d78bd51553a169a36a8fa230502499a9d1a",
     "ui/src/components/Button.stories.tsx": "489b0b293bbeb9f5813829a79bc9e78c5ddffa0116d71b0582985750716136fa",
     "ui/src/components/Button.tsx": "bc7584fc14721cdbeac44997718fbc76da4430695e440f95c22fdd31b4524e6a",
-    "ui/src/components/Drawer.module.css": "759c20494a73f0638b96580e463202b7cb3725b4563bb3f889b25f495f6cf690",
+    "ui/src/components/Drawer.module.css": "18238ea52e59f5242df75ca6e773c0f64825cd38639cec9863eeb257ee527957",
     "ui/src/components/Drawer.stories.tsx": "36756c255708733456411690b35218dd48305bafef3809df7b15eef082531249",
-    "ui/src/components/Drawer.tsx": "e86ab1cf3c0b72d86838e18b001395cced4b5846f6225ecdfacab58c83db5b69",
+    "ui/src/components/Drawer.tsx": "10a527140352d9492190af4b067690d9f9a9c418e52948e41179970d97704f29",
     "ui/src/components/ImageCompare.module.css": "37cf3ada3c140b5e148007d7397b5197577f7df993f681415367f5f13f6da511",
     "ui/src/components/ImageCompare.stories.tsx": "5fff512fba01a09f3775b1f51cb8c9fdf04f479a78a03fa2b785dc396fa5d0b3",
     "ui/src/components/ImageCompare.tsx": "9b459f6a659f9e32034643af887679cc3d93c727b71e9c49363c935c1d05d06f",
@@ -45,13 +46,14 @@
     "ui/src/features/workspace/Workspace.module.css": "2d99d9f6878e677f64a4dde07314f77f02d85370f0e4407ce22c27072fcee2e9",
     "ui/src/features/workspace/Workspace.tsx": "f14d62fb8770b0cd579e59072ffb8acd693bc37581cc834c0e5fe65603fca54a",
     "ui/src/main.tsx": "3458a38ae3d7a0543bf876cf4bc0de43096a4ffb986f143e6fab86b5016833d8",
-    "ui/src/tokens.css": "146326dfca584401ae6773ec95422eedf08b5fbd59fca56929038ef9ee31cb0a",
+    "ui/src/tokens.css": "29ce32561446e44a598a706567fff4178a365f7d857b6e0122cac3e5603da884",
     "ui/tsconfig.json": "cb18bc2ac7dda71c2c6b1688c5af0722292143bafb109a84a1d8464e28733ffe",
     "ui/vite.config.ts": "3aec7d6174ffca99d4d5288bea2f837d5e91335cbd7135a9682e6d18a40476b4"
   },
   "outputs": {
-    "assets/index-C2lT1fLA.css": "343e5a43edcf96aa783d17cda0b2f0fde51a0c2e775773f547e130b20c435ff2",
-    "assets/index-vUEeb1PU.js": "61305d0f44ba6830a963b537f286a1488097f059e50bc60aa528dbb5c2924cfe",
-    "index.html": "151ee624bf92d6bec1c67e3e21b638c0d57de6ba9d34ea90aa4ca4aa9f337a76"
+    "assets/index-BaBrzd1c.js": "c5fe724352e869305758eeeed4cc12e04a23465cc6b8d9e0d07e388b77eadfdc",
+    "assets/index-Ct3m83B2.css": "c3abfcc10cd8297b6059eba128755f6b702762d4202ff9b1ef069ec6d65651f2",
+    "assets/wafflehouse-mark-BJgqVB2V.svg": "1d87a75901cd8d4fa3b219b1651939bbf559866005e6bdac5859a4133b60885a",
+    "index.html": "6a72697a13f27a1691a69a4a79dee1e374d64ddc45432536bb8951e1b4202118"
   }
 }
