@@ -14,7 +14,7 @@
     "ui/src/api/examples.ts": "ac29ab8bd91da377bd783d7e118b1791c1599784ad0ab92874293c31b0a0bac4",
     "ui/src/api/session.ts": "0e16aa283022013405a8ebcc64c0aa824ef6f97a2932fe87fadba142ded2b326",
     "ui/src/api/workspace.ts": "781bb668202067fd9634066c60f829a2f0e17a3d27d1b8ed1aa89bafc4bcbfe9",
-    "ui/src/assets/wafflehouse-mark.svg": "a64c766e304dba3ead63ba73505ce3e92d80e2c9deacaf21419786cb1c73a503",
+    "ui/src/assets/wafflehouse-mark.svg": "818c9e72d9f4bac6ea4e13b399a483a155a0aa94d651907a7f98bddece8e7ee0",
     "ui/src/components/Button.module.css": "1ce502acb9d2561471ba7dffe4536d78bd51553a169a36a8fa230502499a9d1a",
     "ui/src/components/Button.stories.tsx": "489b0b293bbeb9f5813829a79bc9e78c5ddffa0116d71b0582985750716136fa",
     "ui/src/components/Button.tsx": "bc7584fc14721cdbeac44997718fbc76da4430695e440f95c22fdd31b4524e6a",
@@ -51,9 +51,9 @@
     "ui/vite.config.ts": "3aec7d6174ffca99d4d5288bea2f837d5e91335cbd7135a9682e6d18a40476b4"
   },
   "outputs": {
-    "assets/index-Bf4_2OwW.js": "9ff94ed7921f53d62bff5477bfa241bd6a57615ffdfe5289725b6887dd04b1ab",
     "assets/index-Ct3m83B2.css": "c3abfcc10cd8297b6059eba128755f6b702762d4202ff9b1ef069ec6d65651f2",
-    "assets/wafflehouse-mark-BQ7K1CUw.svg": "a64c766e304dba3ead63ba73505ce3e92d80e2c9deacaf21419786cb1c73a503",
-    "index.html": "4d1a1cf6c755faf5c626bc2bfb464891f20db1c8fcffa7801800b954110ffd70"
+    "assets/index-DBDg1xsV.js": "b0785033ff9457aec3484531f83057b555670b602ac9054a74d17bf6008ad1e4",
+    "assets/wafflehouse-mark-DNWSyKUu.svg": "818c9e72d9f4bac6ea4e13b399a483a155a0aa94d651907a7f98bddece8e7ee0",
+    "index.html": "fa8264bf389397c332eca19ec7abed44f8ed6705df5c420413ca44bccdb30736"
   }
 }

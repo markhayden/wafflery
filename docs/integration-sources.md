@@ -101,5 +101,6 @@ reference this inventory instead of rewriting historical evidence.
 (2026-10-31), replacing the earlier thin buttered-waffle mark. ImageTracerJS 1.2.6 and pngjs 7.0.0 were used
 in a disposable tooling directory, following their packaged Node examples. The two-color trace
 uses the source alpha to separate ink from transparency, crops empty margins and uses the header
-foreground color. Neither package is an application
+foreground color. At the owner's request, the current variant reverses the interior colors:
+a light outer silhouette under dark ink paths, with the exterior still transparent. Neither package is an application
 dependency. The original attachment is unchanged.
