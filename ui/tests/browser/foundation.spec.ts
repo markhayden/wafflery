@@ -5,7 +5,8 @@ for (const width of [320, 768, 1440]) {
     await page.setViewportSize({ width, height: 900 });
     await page.goto("/");
     await expect(page.getByRole("heading", { name: "Your workshop" })).toBeVisible();
-    await expect(page.getByRole("button", { name: "Connect a tool" })).toBeDisabled();
+    await expect(page.getByRole("status")).toContainText("Run wafflehouse in your terminal");
+    await expect(page.locator("input[type=file]")).toHaveCount(0);
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(width);
     await page.screenshot({ path: testInfo.outputPath("workspace.png"), fullPage: true });
   });

@@ -209,17 +209,31 @@ async fn terminal_evidence_is_verified_and_save_failure_does_not_change_tool_out
 async fn cancellation_without_a_run_reference_stays_unconfirmed_and_reserved() {
     let (dir, c, request) = setup("slow").await;
     c.submit(request.clone()).await.unwrap();
-    for _ in 0..100 {
-        if c.attempts.get(&request.id).await.unwrap().wire.is_some() {
-            break;
+    // This case tests cancellation after allocation. Wire persistence alone precedes allocation.
+    tokio::time::timeout(std::time::Duration::from_secs(3), async {
+        while !dir.path().join("runs/calls.ndjson").exists() {
+            tokio::time::sleep(std::time::Duration::from_millis(10)).await;
         }
-        tokio::time::sleep(std::time::Duration::from_millis(10)).await;
-    }
+    })
+    .await
+    .unwrap();
     let first = c.cancel(&request.id).await.unwrap();
     let second = c.cancel(&request.id).await.unwrap();
     assert_eq!(first.execution, "unconfirmed");
     assert_eq!(second.execution, "unconfirmed");
-    tokio::time::sleep(std::time::Duration::from_millis(150)).await;
+    let result = tokio::time::timeout(std::time::Duration::from_secs(3), async {
+        loop {
+            if let Ok(bytes) = std::fs::read(dir.path().join("runs/run-0001/run.json"))
+                && let Ok(result) = serde_json::from_slice::<serde_json::Value>(&bytes)
+                && result["status"] == "cancelled"
+            {
+                break result;
+            }
+            tokio::time::sleep(std::time::Duration::from_millis(10)).await;
+        }
+    })
+    .await
+    .unwrap();
     let saved = c.attempts.get(&request.id).await.unwrap();
     assert_eq!(saved.execution, "unconfirmed", "{:?}", saved.notices);
     assert!(saved.result.is_none());
@@ -228,9 +242,6 @@ async fn cancellation_without_a_run_reference_stays_unconfirmed_and_reserved() {
     assert!(c.submit(another).await.is_err());
     assert!(!c.try_quit().await);
     assert!(c.cleanup(Default::default(), String::new()).await.is_err());
-    let result: serde_json::Value =
-        serde_json::from_slice(&std::fs::read(dir.path().join("runs/run-0001/run.json")).unwrap())
-            .unwrap();
     assert_eq!(result["status"], "cancelled");
     assert!(c.close().await);
     assert_eq!(
