@@ -93,3 +93,27 @@ The coordinator explicitly approved merging with the temporary path dependency. 
 `e503a238ad6cc833834891c2c2cece7152b08bfc` alongside Wafflery without persisting credentials.
 After publication, switch the dependency to crates.io `=0.3.0`, refresh Cargo.lock and remove
 those temporary checkout/move steps. This later change does not block V03 onward.
+
+## V03: readiness and refresh slices
+
+Implement the approved V03 behavior in three named slices so changes stay reviewable:
+
+- V03a, `test: script readiness changes and optional setup`: add an independent readiness
+  scenario and held variant, schema-valid requirement states, and a missing optional filler
+  that refuses only calls asking for it. Wire tests prove the no-run refusal releases the ID.
+  Sites: testkit/main.rs, testkit/readiness.rs, tests/fake_wire.rs and testkit/README.md.
+- V03b, `feat: refresh setup and preserve not-ready refusals`: add authenticated description
+  refresh without an execution permit. Preserve a validated -32602 not_ready response as a
+  terminal rejected attempt with no fabricated result/run; release local materialized inputs
+  and the execution reservation. A prior run association or malformed refusal stays uncertain.
+  Sites: coordinator.rs, coordinator/readiness.rs, host/run_api.rs, tests/tool_readiness.rs,
+  ENGINEERING.md. V08 retains the broader duplicate/error/cancellation classification.
+- V03c, `feat: explain action readiness in tool setup`: show all requirement kinds and distinct
+  states/setup prose, refresh description/session while preserving the draft, and keep free
+  needs_setup calls available so their arguments remain authoritative. Sites: ToolSetup and its
+  stories, Workspace, api/workspace, browser/tool-setup tests. Reuse existing drawer/styles.
+
+Each slice gets failing regression coverage, targeted checks and review before its commit.
+The full matrix under the shared lock gates V03's local merge. No setup prose is executed and
+no credential values are read or saved by this task. Roll back V03c, V03b, then V03a; no database
+migration. Paid quote invalidation and broader refusal retry behavior remain V11/V13 and V08.
