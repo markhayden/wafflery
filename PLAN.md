@@ -388,15 +388,19 @@ M5/M6 are independently gated feature groups; one does not automatically block t
 **Status: not approved for implementation.** This section specifies the next M4 setup and M6
 paid/report slices; it does not mark those milestones complete or replace M5's operations work.
 The coordinator owns the contract and sibling changes. Source reviewed: table-manners branch
-`v0.3`, commit `61001ddde1c4a4a72a446e3a9666f182d4e69f86`: CONTRACT.md 3.1, 3.2,
+`v0.3`, commit `e503a238ad6cc833834891c2c2cece7152b08bfc` (coordinator rulings applied after
+two review rounds against `61001dd`): CONTRACT.md 3.1, 3.2,
 4.4–4.6, 5 and image profiles; schemas/core/estimate.json and referenced schemas; MAPPING's
 v0.3 table. Rascal M12 and Squint M9 supply the real peers. No sibling files are edited.
 
 ### Scope and host decisions
 
 - Readiness and setup come from `describe`, including unconfigured tools. `present` or `unknown`
-  credentials are not described as verified, but can belong to a `ready` action. The host never
-  validates a key with a speculative provider request or executes setup prose.
+  credentials are not described as verified, but can belong to a `ready` action. Description
+  readiness describes the action as configured, not every parameter variation. A call omitting
+  an optional filler can still run; only requirements the call needs can refuse it. Paid calls use
+  estimate readiness, while free calls can receive a structured no-run `not_ready` refusal.
+  The host never validates a key speculatively or executes setup prose.
 - Estimates are control requests, never attempts. The host prices the exact prepared arguments,
   including images and `max_spend_usd`, then sends the tool's opaque binding in
   `_meta["table-manners/estimate"]`. It does not implement the tool's digest recipe.
@@ -407,7 +411,8 @@ v0.3 table. Rascal M12 and Squint M9 supply the real peers. No sibling files are
   An allowed estimate is not a reservation or a guarantee that the session still has budget.
 - Configuration is selected only through `serve --config <path>` or the tool's default lookup.
   No config-file editor/parser or key store. Only minimal process environment and credential
-  variable names from declared requirements reach the child. Changed config/credentials require
+  and non-secret `env` variable names from declared requirements reach the child. Changed
+  config/credentials require
   an explicit restart, a visibly new session and fresh estimates. Old unresolved spend remains.
 - Both scalar and `many: true` image slots use the existing owned image library. Optional empty
   slots are omitted; populated list slots send nonempty arrays in the user's chosen order.
@@ -432,10 +437,13 @@ Depends: task-list approval. Commit: `test: define the v0.3 independent peer`.
 **V02 — Cut over contract validation deliberately.** Pin published `table-manners = "=0.3.0"`,
 update validators/session parsers and fake default together; remove `needs_env` and reject live
 v0.2 declarations. Recognize reserved `estimate` without putting it in the Actions picker.
-Keep the offline dispatch guard intact. Update integration inventory and runtime docs.
+Reject a paid description if the MCP tool list lacks reserved `estimate`. Keep the offline
+dispatch guard intact. Update integration inventory and runtime docs.
 Verify unconfigured discovery, invalid paid schemas, old-version refusal, old saved evidence
 display and current offline calls. This coordinated version cutover may exceed five authored
-files; enumerate them before coding and review schema/parser/fake changes together.
+files; the known sites are tools/mod.rs, tools/session.rs, UI api/tool-session.ts and workspace.ts,
+actions/model.ts, ToolSetup and its stories, testkit fixtures/main/scenarios and their tests.
+Enumerate the final set before coding and review schema/parser/fake changes together.
 Depends: V01 and publication of v0.3.0. Commit: `feat: adopt the v0.3 contract`.
 Before publication, fake-first work may use an isolated archive of the reviewed contract commit;
 never merge a dependency on a mutable sibling path or an unavailable Git revision. Any changed
@@ -443,51 +451,100 @@ contract text gets coordinator review before this pin moves.
 
 **V03 — Display readiness and actionable setup.** Replace environment-name-only setup with
 per-action requirements and distinct missing/present/valid/invalid/unknown states. Reuse the setup
-drawer, keep secrets out, and disable unavailable/needs-setup actions without treating an
-unvalidated present key as invalid. Refresh description/session through control requests while
-work runs. Preserve selection/draft on refresh and invalidate stale declarations.
+drawer, keep secrets out, and distinguish unavailable from configurable actions without treating
+an unvalidated present key as invalid. Do not blanket-disable `needs_setup`: it describes the
+configured action; changed arguments may omit the missing optional dependency. Show call-specific
+estimate readiness when available and handle free-call `not_ready` without inventing parameter
+rules. Refresh description/session through control requests while
+work runs. Preserve selection/draft on refresh. Deliberately retain conservative invalidation:
+a readiness change changes the description revision and invalidates prepared calls/quotes, but
+not editable inputs. Paid dispatch requires the call-specific estimate to be ready; the tool
+remains authoritative for which requirements a particular free call needs.
 Files: action model, ToolSetup, its story, API types, browser coverage (about five).
 Verify empty config, usable free action beside blocked paid action, present credential, rejected
-credential and successful refresh in Chromium/WebKit. Depends: V02.
+credential and successful refresh in Chromium/WebKit. Verify `present` to `valid` retains draft
+inputs and changes the revision; paid quote-invalidation coverage joins V11/V13 once estimates
+exist. Verify an unconfigured optional filler can be
+omitted without blocking the free call, and needed missing requirements yield `not_ready`. Depends: V02.
 Commit: `feat: explain action readiness in tool setup`.
 
-**V04 — Choose session configuration and constrain child environment.** Extend explicit tool
-registration with an optional config path; pass `--config` as argv, never read that file. Discover
-credential names using a no-provider description under the minimal environment before starting
-the configured serving session. Do not broaden the environment to solve bootstrap discovery;
-report incomplete declarations to the coordinator. Copy values only from the host's inherited
-environment for declared credential requirements; persist names/paths, never values. Document
-that changes outside a running host's environment require relaunching that host.
-Files: registration, client spawn helper, registration tests, spawn tests, ENGINEERING.md.
-Verify paths with spaces, default lookup, missing key, unrelated secret exclusion and no values
-in descriptors, logs or exports. Depends: V02. Commit: `feat: configure isolated tool sessions`.
+**V04a — Define the minimal child environment.** Document an explicit host allowlist in
+ENGINEERING.md: HOME and optional XDG_CONFIG_HOME/XDG_DATA_HOME/XDG_CACHE_HOME for tool default
+lookup; TMPDIR, LANG/LC_ALL, and a fixed system PATH (`/usr/bin:/bin:/usr/sbin:/sbin`). Never
+inherit the whole environment. Forward both `credential` and non-secret `env` requirements when
+their names are environment
+identifiers (`[A-Za-z_][A-Za-z0-9_]*`); never override this base or forward WAFFLERY_*, DYLD_* or
+LD_*. Other/excluded names remain valid displayable requirements (including unknown credentials
+held elsewhere), not invalid descriptions; they simply are not forwarded. Copy permitted values
+only from the host's inherited environment; persist names, never values, including env values.
+Document that external environment changes require relaunching the host, not just the tool.
+Files: environment helper, spawn wiring, environment tests, ENGINEERING.md.
+Verify default config lookup under HOME/XDG, missing key, loader-variable refusal, unrelated
+secret exclusion, non-secret env forwarding, non-identifier unknown credentials and no values in
+logs/exports. Depends: V02.
+Commit: `feat: define isolated child environments`.
 
-**V05 — Restart sessions deliberately.** Add an idle-only tool restart control and setup action.
-Explain that restart begins a new spend ledger; reject restart with active or uncertain execution,
-using existing cancellation/shutdown flows first. Terminal recorded `unresolved_usd` stays in
-history but does not permanently prohibit a deliberate restart. Stop the owned child, then discover/start its
-replacement; never keep two serving processes for one registration. Show new session identity,
-invalidate declarations/estimates and retain prior unresolved history. No automatic restart on
-credential, cap or budget refusal. A failed restart leaves an explicit disconnected state.
-Files: session lifecycle, host API, setup UI, lifecycle tests, browser tests (about five).
-Verify refusal during work, child stop failure, fresh UUID after restart, retained old spend and
-no duplicate child. Depends: V03/V04. Commit: `feat: restart tool sessions explicitly`.
+**V04b — Select configuration and discover credentials.** Add an optional config path to explicit
+registration; reject a conflicting existing `--config` argument and pass path as separate argv.
+The path is chosen at registration; changing an existing registration remains a stopped-host
+operation and needs an explicit replace/update path, not silent append-only registration reuse.
+Never read the config. Probe via `serve [--config <path>]` under V04a's minimal environment,
+call MCP `describe`, close that no-provider probe, then start the serving session once with the
+credential/env variables it declared. Do not invent CLI `describe --config`. The probe's ledger is
+not a user session. If the final description adds undeclared credential/env names, show incomplete
+setup; no bootstrap loop or automatic restart. Values stay outside descriptors and run evidence.
+Files: registration, probe helper/client wiring, registration tests, probe tests, README.
+Verify paths with spaces, default lookup, replace refusal while host runs, probe cleanup/failure,
+config-dependent requirement names and no paid work in either startup. Depends: V04a.
+Commit: `feat: configure and probe tool registrations`.
 
-**V06 — Bind list-valued image inputs.** Generalize materialization, schema validation and cleanup
+**V05a — Replace idle tool sessions atomically.** Give the coordinator a swappable owned-client
+slot; submit, cancel, reap, close, preserving-tools, session and snapshot use one consistent
+client generation. Reject replacement during active or uncertain execution; use the existing
+cancel/stop flow first. Confirmed child exit permits a new session without pretending that old
+unknown results/spend were settled. Terminal recorded unresolved spend never permanently blocks
+restart. Stop the owned child before starting its replacement; no duplicate serving process.
+Repeat V04b's probe with the selected config on every deliberate restart, since edited config
+contents can change requirement names. Failed replacement leaves an explicit disconnected state;
+stale client references cannot dispatch.
+Files: coordinator/session lifecycle, host API, lifecycle tests, race tests, ENGINEERING.md.
+Verify submit-versus-restart races, stuck child, initialization failure and retained old evidence.
+Depends: V04b. Commit: `feat: replace idle tool sessions atomically`.
+
+**V05b — Present deliberate session restart.** Add setup restart confirmation that explains the
+fresh ledger, shows the new UUID and invalidates descriptions. Publish the new session boundary
+that V09–V12 use to invalidate preparations/estimates when those exist. No automatic
+restart for credential, cap or budget errors. Retain the old session's unresolved history.
+Files: ToolSetup, API client, story, browser tests, README.
+Verify confirmation/cancel, active-work refusal, disconnected state and new session identity.
+Depends: V03/V05a. Commit: `feat: present deliberate session restart`.
+
+**V06a — Bind list-valued image inputs.** Generalize materialization, schema validation and cleanup
 to ordered arrays for `many: true`, preserving scalar behavior otherwise. Every item carries its
 own immutable bytes, fingerprint and coordinate reference. Enforce existing per-file limits and
-bounded aggregate request limits before copying; cleanup touches only owned files.
+bounded aggregate request limits before copying; cleanup handles all array paths and only owned files.
 Files: attempt binding, materialized cleanup, binding tests, fixture scenario, ENGINEERING.md.
 Verify array order, duplicate file identities, scalar/list mismatch, optional omission, empty-list
 refusal, fingerprint mismatch and cleanup after partial failure. Depends: V02.
 Commit: `feat: bind ordered image lists`.
+
+**V06b — Verify list-image result evidence.** Replace evidence.rs's first-item-only input match
+with per-slot checks of role, identity and order. Completed results must account for the complete
+submitted list. Non-completed results can legitimately have empty/partial input evidence: match
+reported entries as an ordered subsequence, reject additions/changed identities or roles, and
+record missing evidence as a notice without changing the tool's outcome. Handle repeated identical
+images by position/count rather than deduplication; do not infer the position of indistinguishable
+partial entries. Required images/locations containers still follow the result schema.
+Files: evidence.rs, evidence tests, fake result fixtures, testkit README.
+Verify two different references, duplicates, wrong roles/order/count and empty/partial failed,
+invalid or cancelled results. Depends: V06a. Commit: `fix: associate every list image with result evidence`.
 
 **V07 — Edit and restore image lists.** Let ImageInput add/remove/reorder items according to slot
 cardinality. Save/open examples and attempt drafts retain order, roles and coordinates; no
 tool-specific `references` logic. Keep input scrolling and the Run footer stable.
 Files: ImageInput, ActionForm/model wiring, story, unit tests, browser tests (about five).
 Verify several references, removal/reorder, optional empty slots and saved-example round trip.
-Depends: V06. Commit: `feat: edit list image slots`.
+Depends: V06a/V06b. Commit: `feat: edit list image slots`.
 
 **Checkpoint V-A:** V01–V07, full matrix and review. Offline actions, setup and list inputs work
 against the independent peer; paid dispatch still refuses. Record exact contract/peer revisions
@@ -496,122 +553,204 @@ automatic discovery, production installation or the full three first-install jou
 
 ### M6a — Estimates and bounded paid execution
 
-**V08 — Preserve no-run refusals and explicit retry identity.** Distinguish a definitive JSON-RPC
-no-run error from transport uncertainty. Record that the failed request's claim is released;
-an explicit corrected retry may reuse that correlation id while creating a separate immutable
-attempt record linked to the earlier refusal. Never release the earlier owner's claim when a
-duplicate-id refusal arrives. Reconcile its earlier run reference to the original attempt; null
-does not mean permission to resend. Cancellation before allocation keeps the id claimed, so a
-new attempt gets a new id. No automatic replay after any refusal or disconnect.
-Files: association/coordinator, attempt persistence, refusal tests, recovery tests (about five).
-Verify failed roots/params then corrected same-id call, concurrent duplicate, null duplicate,
-queued cancellation and uncertain disconnect. Depends: V02. Commit: `fix: track released run claims`.
+**V08 — Preserve no-run refusals without replay.** Every new attempt gets a fresh correlation
+id; keep attempt id, submission id and client_run_id aligned. A definitive pre-allocation JSON-RPC
+error records a terminal no-run refusal with zero spend; an explicit corrected retry creates a
+new attempt, optionally linked by `retry_of` on Attempt, not a new field on the strict Submission.
+The contract permits released-id reuse, but this host deliberately does not need identity
+splitting to use it. Test release/reuse in the independent wire peer separately. A corrected paid
+retry needs a new preparation and estimate; never carry authorization from the failed attempt.
+Never release the original owner's claim on `client_run_id_reused`: reconcile a non-null run
+against that original attempt, and treat null as no permission to resend. A JSON-RPC error after
+a known run reference is out of contract: reconcile it; do not label it no-run or released.
+Validate `not_ready` as -32602 with run null and missing/invalid requirements; it releases the
+claim and creates no tool run. Display setup guidance, not an in-run credential error.
+SDK timeout/disconnect is uncertainty, not a definitive refusal. Cancellation before allocation
+keeps the claim; a new attempt still uses a new id. Never automatically replay.
+Files: association/coordinator, attempt observations, refusal tests, fake scenarios, recovery tests.
+Verify corrected fresh-id retry, wire-level released-id reuse, duplicate null/non-null reference,
+known-run JSON-RPC error, not_ready claim release, queued cancellation and uncertain disconnect. Depends: V02.
+Commit: `fix: distinguish no-run refusals from uncertainty`.
 
 **V09 — Prepare immutable calls without creating attempts.** Extract a bounded prepared-call
 resource holding exact arguments and owned materialized inputs before estimation. Bind it to
 tool/session/declaration and authenticated workspace. Invalidating a draft releases only its
 unclaimed temporary inputs; expiration, abandoned drafts and host startup clean these safely.
+The preparation id becomes the attempt id: paths remain under `execution/<id>` and never move
+or change between estimate and dispatch. Bound retained preparations by count and total bytes.
 Dispatch transfers ownership to an attempt without rereading mutable source files. Estimates
 and abandoned preparations create no attempt/history/example records.
 Files: preparation module, materialization, coordinator seam, preparation tests, ENGINEERING.md.
 Verify changed source bytes, concurrent drafts, expiration, ownership transfer and cleanup races.
-Depends: V06/V08. Commit: `refactor: prepare exact calls before dispatch`.
+Depends: V06a/V06b/V08. Commit: `refactor: prepare exact calls before dispatch`.
 
-**V10 — Request and validate bound estimates.** Call reserved `estimate` with `{action, arguments}`
-from V09, outside the execution permit. Validate structuredContent with estimate.json and verify
+**V10a — Exempt estimate controls from the run transport gate.** Exempt exactly reserved
+`describe` and `estimate` from RecordedTransport's run permit lookup/consumption. All action
+calls still require their persisted permit. Neither control writes attempt evidence or touches
+run-progress association. Replace ENGINEERING.md's old busy-estimate policy: controls remain
+responsive outside the execution reservation; v0.3 estimates never create runs.
+Files: dispatch_transport.rs, transport tests, fake control scenarios, ENGINEERING.md.
+Verify an estimate while a run permit is staged but not written leaves that permit intact and
+both calls succeed; arbitrary tool names cannot bypass the gate. Depends: V02.
+Commit: `fix: keep estimate controls outside the dispatch gate`.
+
+**V10b — Request and validate bound estimates.** Call reserved `estimate` with `{action, arguments}`
+from V09, outside the execution permit. Use a separate 30-second estimate deadline for image
+digests rather than the ordinary five-second control timeout. Expiry of that deadline gives no
+quote and no automatic retry. Bound concurrent estimate requests and serialize their ledger
+observations with session reads so late responses cannot overwrite newer observations. Validate
+structuredContent with estimate.json and verify
 tool/action/session attribution (including nested session identity/tool), allowed/refused
-consistency and effective config/model. Require a finite positive effective cap no greater than
-the prepared user cap; null is invalid for this capped request. An allowed estimate must be
+consistency and effective config/model. MCP estimates must have a non-null matching session;
+CLI estimates with null session/session_id never authorize serving calls. Config identity includes
+built-in defaults. Accept readiness-refused unpriceable estimates with worst_case_usd null (and
+config_identity null when config is missing); display unknown cost, never zero. The positive-cap
+and numeric worst-case checks below are authorization requirements, not grounds to discard valid
+readiness refusals. Require a finite positive effective cap equal to
+the submitted user cap within tolerance; null or silent clamping is invalid for this request. An
+allowed estimate must be
 ready, with worst case within its cap and any finite remaining session budget. Validate session
-arithmetic and reject expiry in the past or beyond the contract's 24-hour bound. Treat the binding
+arithmetic and continuity through the same validator as session reads. Check the 24-hour expiry
+upper bound from host receipt time (the estimate has no issue timestamp), and reject expired quotes.
+Treat the binding
 as opaque; keep it server-side with the prepared call. Use 1e-6 USD comparison tolerance.
 Reject mismatched/expired observations, update the displayed
 ledger without adding an attempt, and bound pending requests and retained preparations.
 Files: estimate service, control API, API routing, estimate tests, fake estimate scenarios.
+Schema-rejected estimate arguments produce plain -32602. Other wrong requests produce -32602
+with reason invalid_arguments, run null and error {code usage|input, retryable false, reason};
+validate that shape. Missing prerequisites instead return an estimate refused for readiness.
+All error/non-estimate responses leave no quote and no attempt. The tool excludes return_images
+and image_blocks from its binding; keep the binding opaque and test those delivery flags without
+reimplementing its recipe or relaxing the host's exact prepared-wire comparison.
 Verify responsive estimates during held runs, malformed/wrong-session replies, refused readiness/
 cap/budget, expiration and zero history/provider side effects. Include schema-valid contradictory
-fixtures: null/oversized cap, allowed but not ready, worst case above cap/remaining budget, nested
-session/tool mismatch and expiry over 24 hours. Depends: V09.
+fixtures: null/lower/oversized cap, allowed but not ready, worst case above cap/remaining budget, nested
+session/tool mismatch, CLI null sessions, unpriceable readiness, defaults-based config identity,
+invalid_arguments vs plain invalid params, control timeout and expiry over 24 hours. Depends: V09/V10a.
 Commit: `feat: request bound cost estimates`.
 
 **V11 — Present the cap and exact estimate.** Add one positive cap control backed by the declared
 `max_spend_usd` field, avoiding a duplicate generic form field. Show worst case, effective model,
 cap, remaining session budget and unresolved spend; distinguish uncapped null from zero. Require
 an explicit cap before paid Run. Draft edits (including cap, ordered images or parameters),
-declaration/session change and expiry invalidate the estimate. Re-estimating never executes.
+declaration change, a new session id and expiry invalidate the estimate. Ledger amount changes
+alone do not invalidate it; the tool still checks current budget when called. Re-estimating never executes.
 Files: cost UI, its story, form wiring, API client, browser tests (about five).
 Verify zero/negative/nonfinite caps, stale replies after edits, above-config refusal without
-clamping, needs-setup and an allowed estimate that later loses budget. Depends: V03/V10.
+clamping, unknown rather than zero unpriceable cost, needs-setup and an allowed estimate that
+later loses budget while its readiness/declaration stays unchanged. Depends: V03/V10b.
 Commit: `feat: review cost and cap before paid runs`.
 
 **V12 — Enforce the paid guard on the server.** Replace the offline-only refusal only after
 V08–V11 pass. Direct API requests must supply a live owned preparation with matching declaration,
-session, positive cap and semantically validated allowed unexpired estimate from V10. Atomically consume it once and dispatch
+session, positive cap and semantically validated allowed unexpired estimate from V10b. Atomically
+consume it once and dispatch
 exactly the priced arguments with `_meta["table-manners/estimate"]` beside correlation/progress
-metadata. Neither a client-supplied amount nor an invented binding authorizes a call. Preserve
+metadata. Bind the estimate token in the transport permit too: the write boundary rejects absent
+or substituted paid bindings. Neither a client-supplied amount nor an invented binding authorizes a
+call. Preserve
 the recorded binding, cap and effective estimate in selected-attempt evidence/export; no secrets.
 Files: dispatch guard, transport, evidence, guard tests, recorded-call tests (about five).
-Verify bypass attempts, duplicate submission, changed files, session restart, expired quote and
+Verify bypass attempts, duplicate submission, changed files, session restart, expired quote, paid
+retry requiring new preparation/estimate and
 exact wire args/meta. Fake paid actions simulate spend without network/provider calls.
-Depends: V08/V10/V11. Commit: `feat: enforce bound paid dispatch`.
+Depends: V05a/V05b/V08/V09/V10a/V10b/V11. Commit: `feat: enforce bound paid dispatch`.
 
 **V13 — Explain paid failures and retained spend.** Map `stale_estimate` to review/re-estimate,
-`credential` to setup, `cap` to explicit cap review and `budget` to the session ledger. A larger
+`credential` (provider 401/403 during a run only) to setup, `cap` to explicit cap review and
+`budget` to the session ledger. A larger
 than configured cap remains invalid/usage. Never auto-retry or restart; a new estimate requires
 a new explicit Run. Refresh readiness after credential outcomes. Keep cancelled/failed actual
 and unresolved spend visible and distinguish no-run refusals from allocated run errors.
 Files: result/error presentation, setup refresh, stories, error tests, browser tests (about five).
-Verify fake auth rejection costs zero; unresolved provider response costs worst case; two allowed
-estimates can race with one later budget refusal; stale estimates spend zero.
+Verify pre-run missing/invalid requirements return not_ready with no tool run; in-run fake
+auth rejection costs zero; unresolved provider response costs worst case; two allowed
+estimates with unchanged credential state can execute sequentially with the second later refused
+for budget; separately test present-to-valid invalidates the second quote without dispatch; stale
+estimates spend zero.
 Depends: V12. Commit: `feat: explain paid execution failures`.
 
 **Checkpoint V-B:** Full matrix, review and fake paid journey from cap/estimate through run,
-cancel, history and evidence export. Include two concurrent requests competing for a session
-budget, responsiveness of controls, and restart invalidation. No real credentials in mandatory
+cancel, history and evidence export. Keep one active execution per tool: a second submission is
+busy, while two earlier estimates
+can outlive a sequential budget change when readiness stays unchanged. Test readiness-driven
+invalidation separately. Verify controls remain responsive, and restart invalidation. No real
+credentials in mandatory
 tests and no claim of provider verification until V18. Record this checkpoint separately.
 
 ### M6b — Tool report viewers and documents
 
 **V14 — Own render command execution.** Resolve declared render argv from the selected saved
-run, substitute `{run.dir}` and `{frame_ancestor}` literally, and spawn without a shell. Require
+run, substitute `{run.dir}` and `{frame_ancestor}` only as whole argv elements, and spawn without a
+shell. Require command[0] to equal description tool.name; replace it with the exact registered
+serve executable. Reject absolute names, other programs and lookup through PATH. A render must
+not modify run.dir; verify the fake obeys this without implying an OS sandbox. Require
 an existing authorized local run directory; null/missing directories give an unavailable view,
 not a guessed path. Reject malformed declarations, bound diagnostics/output and retain child
 handles. Report processes receive minimal environment, not provider credentials or browser tokens.
 Files: render module, host render API, routing, fake render executable, render boundary tests.
 Verify spaces, unknown placeholders, missing/copied directories, shell metacharacters and
-attempt selection independent of the edited draft. Depends: V02.
+attempt selection independent of the edited draft. Depends: V02/V04a.
 Commit: `feat: launch declared run renderers`.
 
 **V15 — Manage server readiness and lifetime.** Pass the host's exact origin through the declared
 `--frame-ancestor` argv placeholder. Accept exactly one stdout URL line with http, literal
 127.0.0.1 and a valid port; reject credentials, redirects outside that origin and extra stdout.
-Honor `ready_timeout_s` up to 60 seconds. Keep stdin open while viewing; close it on viewer close,
-replacement or host shutdown, then use SIGTERM for an unresponsive owned viewer. Retain existing
+Honor `ready_timeout_s` up to 60 seconds. Keep at most one viewer per run. Use an in-memory
+five-minute idle timeout refreshed by visible
+inspection activity; abandoned/disconnected tabs eventually release the child, without a durable
+lease system. Keep stdin open while viewing; close it on viewer close,
+replacement or host shutdown, then use SIGTERM for an unresponsive owned viewer. Own a separate
+viewer process group and signal only
+that group; test descendant cleanup. Clean EOF/SIGTERM must exit zero. A stuck viewer retains
+its run slot as stopping/needs-force and cannot be reopened until confirmed exit. Retain existing
 explicit-force policy if it still will not exit. Failure never alters the run or spend.
 Files: server renderer, lifecycle integration, fake server scenarios, lifecycle tests, ENGINEERING.md.
 Verify delayed readiness, early/nonzero exit, malformed/multiple lines, timeout, stdin close,
-SIGTERM and exact framing origin. Depends: V14.
+zero exit on EOF/SIGTERM, stuck slot, owned process group, duplicate opens, idle/disconnected-tab
+cleanup and exact framing origin. Depends: V14.
 Commit: `feat: manage local report server lifetime`.
 
-**V16 — Isolate document outputs.** For document renders, accept only exit zero plus one absolute
-existing output path. Apply an explicit host timeout and byte limit; require an authorized file
-boundary and reject symlink escape. Serve inspected output through a separate report origin and
-sandbox, never the authenticated application origin or file:// navigation. Do not recursively
-copy arbitrary neighboring files. Preserve a clear unavailable state for missing dependencies;
-this is viewing, not the still-gated C2 portable export.
+**V16 — Isolate document outputs.** A declared document renderer writes one self-contained
+file outside run.dir, with images/styles inline, then prints only its absolute path and exits
+zero. Read exactly that returned regular file through a narrowly scoped per-render output grant;
+its location is tool-chosen, not restricted to run.dir or the image output roots. Apply a bounded
+read and explicit timeout; reject symlinks, non-regular files, in-run outputs and path/open races.
+Serve an immutable copy on a separate report origin, never the authenticated app or file://.
+Do not serve adjacent files, recursively copy folders or delete the tool's source output. A file
+needing external assets is nonconforming; display a report error while preserving the run.
+This is viewing, not the still-gated C2 portable export.
 Files: document renderer, isolated content server, fake document scenarios, boundary tests, docs.
-Verify missing/nonzero outputs, external paths, active HTML isolation, size limit and copied run
-directory. Depends: V14. Commit: `feat: isolate rendered documents`.
+Verify outside-run output, in-run rejection, missing/nonzero output, non-regular/symlink refusal,
+active HTML isolation, byte limit, no neighboring-file reads and a copied run directory.
+Depends: V14. Commit: `feat: isolate rendered documents`.
 
-**V17 — Embed reports in the shared run drawer.** Offer tool-declared views on a saved run;
-display readiness/loading/error and open the chosen viewer in an isolated frame. Restrict frame
-navigation/origin and do not transmit API bearer credentials or bootstrap fragments to it.
-Close/replacement stops the viewer, while the underlying completed result remains intact. Keep
-raw evidence and existing comparison usable when reports cannot start.
-Files: report drawer, API client, story, browser tests, renderer integration (about five).
-Verify actual CSP framing in Chromium/WebKit, cross-origin parent/API isolation, external-link
-behavior, close/reopen/replacement and startup failure. Depends: V15/V16.
-Commit: `feat: inspect tool reports in the run drawer`.
+**V17a — Add exact-origin report framing.** Replace the app's `frame-src 'none'` only with
+permission to frame a host-owned report wrapper. That wrapper contains no tool HTML and sets a
+per-response CSP permitting only the selected report's exact origin. Both ancestors use the
+host origin, matching the server's exact frame-ancestor contract. Tool/document content stays on
+a separate origin, never on the authenticated app origin. The trusted wrapper iframe is not
+sandboxed, preserving its host origin for the ancestor check. Only its inner report iframe uses
+sandbox="allow-scripts allow-same-origin"; no top-navigation, forms, popups or download flags.
+The report must be cross-origin from the wrapper; never allow these flags for same-origin tool HTML.
+Do not grant a loopback-port wildcard to arbitrary report destinations. Use a short-lived, single-use,
+scoped viewer grant in the wrapper URL, not the API bearer or bootstrap secret; bind it to
+the selected saved run and do not log it. Set Referrer-Policy: no-referrer on the wrapper. Define
+route-specific frame headers instead of inheriting
+X-Frame-Options DENY everywhere. Reject unapproved redirects/navigation.
+Files: API headers/routing, wrapper handler, frame boundary tests, ENGINEERING.md.
+Verify real nested-frame CSP in Chromium/WebKit; malicious report scripts cannot reach parent
+state, authenticate API requests or navigate the top-level app. Depends: V15/V16.
+Commit: `feat: isolate report frames by exact origin`.
+
+**V17b — Embed reports in the shared run drawer.** Offer tool-declared views on a saved run;
+show readiness/loading/error and open V17a's wrapper. Close/replacement releases the viewer;
+visible activity refreshes its idle timeout. Keep raw evidence/comparison usable on start failure.
+Files: report drawer, API client, story, browser tests, README.
+External navigation/popups are blocked; this slice offers no viewer-controlled external launch.
+Verify frame load, blocked external-link behavior, close/reopen/replacement, background expiry and
+startup failure. Dependencies: V17a. Commit: `feat: inspect tool reports in the run drawer`.
 
 **Checkpoint V-C:** Full matrix and review with real fake-peer report processes, not static UI
 fixtures. Confirm shutdown ownership and no run-status mutation on report failure. Native Safari
@@ -625,17 +764,21 @@ paid probe uses the same cap/estimate flow with an explicit small cap; preserve 
 secrets from evidence. Existing paid-run authorization applies, but no unbounded provider test
 or key collection is part of CI. Unsupported scenarios stay explicit outstanding checks.
 Files: opt-in Rascal/Squint probes, integration inventory, acceptance/checkpoint docs (about five).
+Verify default lookup and dependencies under the fixed PATH; if a real tool needs an excluded
+helper path, report the concrete need to the coordinator rather than broaden inheritance silently.
 Verify exact wire/evidence with each real peer, then full matrix for any changed host code.
 Depends: V-A/V-B/V-C plus published tools. Commit: `test: verify real v0.3 integrations`.
 
 ### Approval, sequencing and rollback checkpoints
 
-This plan is the only v0.3 deliverable authorized now. Commit it as
-`docs: plan the v0.3 client milestones`, review and merge locally, then stop for Mark's task-list
-approval. No v0.3 code, dependency bump or paid dispatch in this planning change.
+This plan is the only v0.3 deliverable authorized now. The initial proposal is commit 0033af8.
+Commit these two-round review revisions as `docs: revise the v0.3 plan after review`, merge
+locally and stop for Mark's task-list approval. No v0.3 code, dependency bump or paid dispatch in
+this planning change.
 
-After approval, use short-lived branches for V-A, V-B and V-C; V08 and V14 can follow V02
-independently, while paid dispatch must wait for its complete guard. Each numbered task uses
+After approval, use short-lived branches for V-A, V-B and V-C; V08 can follow V02 and V14
+can follow V02/V04a independently, while paid dispatch must wait for its complete guard. Each
+numbered task uses
 its listed commit, starts with failing behavioral tests, includes matching docs and passing
 targeted checks. File lists are budgets, not excuses to omit wiring/tests: split an oversized
 task into named sub-tasks before implementing it. Each checkpoint gets a final
@@ -652,14 +795,34 @@ this session. First hosted CI is independent evidence, not implied by a local pa
 - **Before V-C:** stable rollback is V-B without embedded reports. Close owned report children
   before reverting; preserve runs and tool-owned report files. V-C can land before V-B if its
   dependencies pass; rollback then returns to V-A instead.
-- Use disposable data for all development checks. If attempt linkage/evidence needs a database
+- Use disposable data for all development checks. Put optional new linkage/estimate evidence on
+  Attempt, not strict Submission; prove older
+  evidence stays readable and document binary downgrade limits. If storage needs a database
   migration, name and test it in that task, back up real data before adoption and refuse unsafe
   downgrade. Do not restore an old ledger as a purported continuation of a new tool session.
 
-No host-blocking contract gap was found at `61001dd`; the positive-cap declaration resolves the
-earlier request. Publication and real-peer delivery are integration gates. Contract ambiguity
-found while implementing goes to the coordinator; no sibling edits. Automatic discovery/install,
-native operation bindings, portable C2 bundles and batch evaluations remain separate work.
+### Coordinator decisions incorporated after review
+
+All three questions are settled in table-manners `e503a23` and integrated above:
+
+- **Q-R:** render command[0] is exactly tool.name; execute the registered serve binary. No absolute
+  command[0], other program or alternate PATH installation. Placeholder substitution is whole-argv.
+- **Q-E:** estimates never create runs. Input-schema rejection is plain -32602; other invalid
+  arguments use the structured invalid_arguments refusal with run null and nonretryable usage/input
+  error. Not-ready calls return an estimate refused for readiness, with null cost if unpriceable.
+- **Q-D:** one self-contained document file outside run.dir; only its returned file is read. No
+  adjacent assets or run-directory mutation. Server renderers exit zero on stdin EOF/SIGTERM.
+
+The updated baseline also defines not_ready before allocation, kind env, configured-action versus
+call-specific readiness, defaults in config identity, null CLI sessions and delivery-only binding
+exclusions. These have explicit tasks/tests above. No unresolved coordinator question currently
+blocks the host task list. Publication and real-peer delivery remain integration gates.
+
+The minimal environment and one-shot MCP probe are host choices within 4.6. Any new contract
+question goes to the coordinator; never edit siblings. Automatic discovery/install, native
+operations, portable C2 bundles and batch evaluations remain separate work. Review disposition
+is in [the plan review](docs/reviews/2026-11-01-v03-plan.md).
+
 
 ### Coordinated rename — 2026-11-01
 

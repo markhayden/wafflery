@@ -217,16 +217,14 @@ may run concurrently. Reserve execution atomically at the host so two tabs canno
 the same Run button. Repeat HTTP submissions with the same attempt token return that attempt;
 they never submit a second MCP call. This does not promise exactly-once provider execution.
 
-For paid work, revalidate the bound estimate/cap under that reservation. Stale estimates return
-to the form for refresh rather than executing at a changed price. Tools enforce their own caps.
-Estimates are control requests, not user attempts or history rows; store their response as the
-authorization context of the execution they precede. On a busy tool, mark draft estimates
-unavailable until idle rather than queueing requests behind the active run. Under a host execution
-reservation, perform any needed estimate call before the execution call, sequentially; never
-occupy the tool's serial execution slot with two concurrent requests. Current Squint does create
-estimate run resources and serializes estimates; that is established source behavior, not an open
-question. The generic C1/C4 agreement still needs to cover both tools without importing control
-records as user history.
+Planned v0.3 behavior (PLAN V09–V13; not implemented): prepare exact arguments and materialized
+inputs, then estimate outside the host execution reservation. Estimates remain responsive while
+an action runs; they neither consume a run-dispatch permit nor create attempts. The exact allowed
+quote, positive cap and binding are checked again under the host's execution reservation before
+dispatch. Tool-side caps and budgets remain authoritative; a quote is not a reservation.
+Keep one active execution per tool and reject a second submission as busy. Controls do not wait
+for that slot. The former Squint behavior that created estimate runs describes v0.2 integration
+history only: v0.3 prohibits it. Until the approved paid slice lands, dispatch stays offline-only.
 Changing config or restarting a tool invalidates estimates and ends its old budget session.
 Show new session boundaries explicitly; never restart automatically to replenish an allowance.
 Recheck may refresh discovery without restarting a live session. If applying configuration needs
