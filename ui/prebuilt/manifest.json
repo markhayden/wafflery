@@ -7,14 +7,14 @@
     "ui/bun.lock": "ed6f289670cecf1f4f5acba761e2a3234e40fd0a7b053ecfbee49ac9500a19b9",
     "ui/index.html": "19516a49667e60032840181509e35593e257282f7393c8443e44c27bc955dbcb",
     "ui/package.json": "155700f2c60e2fec0c4ff8878bf68e7c07df406a2c39e86e3d9c26422845ee07",
-    "ui/src/App.tsx": "3be56225d601ddb182cb2967e95079c9c0c4f7efabd8442246510b40d89afb1d",
+    "ui/src/App.tsx": "9ae98593022889b27cc3491cda609e940c396bb8f595d38bf3930cc7f1a36266",
     "ui/src/api/assets.ts": "919f5f3b6591aab1a61b3fb93033dc0a403f83fb4bcc9c40eb073fe9b8ba049a",
     "ui/src/api/client.ts": "b5269abe65dc4f0ae6b7f7191b91521814a6458d823d8d263ac95d22c5e4629a",
     "ui/src/api/events.ts": "67446ff89fd64d2ebd673619be429155ce11736b48d932ce9a371ea782322e1d",
     "ui/src/api/examples.ts": "ac29ab8bd91da377bd783d7e118b1791c1599784ad0ab92874293c31b0a0bac4",
     "ui/src/api/session.ts": "0e16aa283022013405a8ebcc64c0aa824ef6f97a2932fe87fadba142ded2b326",
     "ui/src/api/workspace.ts": "781bb668202067fd9634066c60f829a2f0e17a3d27d1b8ed1aa89bafc4bcbfe9",
-    "ui/src/assets/wafflehouse-mark.svg": "1d87a75901cd8d4fa3b219b1651939bbf559866005e6bdac5859a4133b60885a",
+    "ui/src/assets/wafflehouse-mark.svg": "fdda74389804429868e3882f50adf9d20e5bfe5abbdfb2723d06ffe36030faae",
     "ui/src/components/Button.module.css": "1ce502acb9d2561471ba7dffe4536d78bd51553a169a36a8fa230502499a9d1a",
     "ui/src/components/Button.stories.tsx": "489b0b293bbeb9f5813829a79bc9e78c5ddffa0116d71b0582985750716136fa",
     "ui/src/components/Button.tsx": "bc7584fc14721cdbeac44997718fbc76da4430695e440f95c22fdd31b4524e6a",
@@ -51,9 +51,9 @@
     "ui/vite.config.ts": "3aec7d6174ffca99d4d5288bea2f837d5e91335cbd7135a9682e6d18a40476b4"
   },
   "outputs": {
-    "assets/index-BaBrzd1c.js": "c5fe724352e869305758eeeed4cc12e04a23465cc6b8d9e0d07e388b77eadfdc",
+    "assets/index-BHdUbw32.js": "3561110cc16a5d0780f82fefc0d5bd91a59dcd710219fabf6e6622881beef544",
     "assets/index-Ct3m83B2.css": "c3abfcc10cd8297b6059eba128755f6b702762d4202ff9b1ef069ec6d65651f2",
-    "assets/wafflehouse-mark-BJgqVB2V.svg": "1d87a75901cd8d4fa3b219b1651939bbf559866005e6bdac5859a4133b60885a",
-    "index.html": "6a72697a13f27a1691a69a4a79dee1e374d64ddc45432536bb8951e1b4202118"
+    "assets/wafflehouse-mark-BECjc7K9.svg": "fdda74389804429868e3882f50adf9d20e5bfe5abbdfb2723d06ffe36030faae",
+    "index.html": "e9d20bd4acee7db3d280079ba59f2a5b63710883d017e7b721edbc021ada67ba"
   }
 }

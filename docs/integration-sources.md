@@ -97,8 +97,9 @@ reference this inventory instead of rewriting historical evidence.
 
 ## Temporary Wafflehouse mark
 
-`ui/src/assets/wafflehouse-mark.svg` traces the owner-supplied waffle-in-a-hammock image
-(2026-10-31). ImageTracerJS 1.2.6 and pngjs 7.0.0 were used in a disposable tooling directory,
-following their packaged Node examples. The two-color trace removes the white background,
-crops empty margins and uses the header foreground color. Neither package is an application
+`ui/src/assets/wafflehouse-mark.svg` traces the owner-supplied `Butter-Topped Waffle Icon.png`
+(2026-10-31), replacing the earlier hammock mark. ImageTracerJS 1.2.6 and pngjs 7.0.0 were used
+in a disposable tooling directory, following their packaged Node examples. The two-color trace
+uses the source alpha to separate ink from transparency, crops empty margins and uses the header
+foreground color. Neither package is an application
 dependency. The original attachment is unchanged.

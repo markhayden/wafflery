@@ -74,7 +74,7 @@ export function App() {
   return (
     <>
       <header className="workspace-header">
-        <strong className="workspace-brand"><img src={mark} alt="" width="40" height="24" />wafflehouse</strong>
+        <strong className="workspace-brand"><img src={mark} alt="" width="32" height="32" />wafflehouse</strong>
         <span>Local workspace</span>
         {api && <Shutdown api={api} />}
       </header>
