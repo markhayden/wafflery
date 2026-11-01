@@ -4,12 +4,12 @@
 in for Rascal's repair operations or Squint's judgments. Its wire implementation does not use
 rmcp or Wafflehouse's coordinator/client. It may use the published contract's data/schema crate.
 
-The initial fixtures target published `table-manners =0.1.0`. `fixtures.rs` builds deterministic
+The fixtures target published `table-manners =0.2.0`. `fixtures.rs` builds deterministic
 description/result documents. The owned PNG is `ui/tests/fixtures/sample.png`, a generated RGB
 gradient; its byte fingerprint is computed, not copied from another tool's output. The fixture
 input identity is a documented placeholder until the wire peer computes actual request identity.
 The completed schema fixture deliberately has no outputs; wire tests will verify actual image
-outputs. Future-version declarations are negative scenarios, never claims of v0.2 conformance.
+outputs. Unsupported-version declarations are negative scenarios, including the former 0.1.0 version.
 
 Cancellation follows CONTRACT.md sections 2.1 and 4.2: status cancelled, null error, spend to date,
 and no MCP result for a cancelled request. The shape was cross-checked against
@@ -65,7 +65,7 @@ WAFFLEHOUSE_RASCAL_BIN=/absolute/path/to/rascal bun run --cwd ui test:browser
 The optional Chromium/WebKit journey uses explicit registration and the same generic UI as any
 tool. It checks a real seam mask, saved inputs, recorded call, image evidence download, independent
 example loading, and history/output preservation across a host restart. Without the environment
-variable those two cases are reported skipped. Choose a stable contract 0.1.0 executable; rebuilding
+variable those two cases are reported skipped. Choose a stable contract 0.2.0 executable; rebuilding
 a selected binary against a newer draft during the suite will correctly make it unavailable.
 
 `ui/tests/fixtures/panorama.png` is an owned, procedurally generated 2048×1024 RGBA gradient:
@@ -79,8 +79,8 @@ alignment. With no filler this verifies mask preparation, not a repaired image o
 
 ## Optional Squint and two-tool integration
 
-Use an explicitly selected, stable contract 0.1.0 Squint binary built with `--features testkit`
-and the fixes from `a0a2dde` (Squint #2). The coordinator probe owns config/script/files, clears
+Use an explicitly selected, stable contract 0.2.0 Squint binary built with `--features testkit`
+at `3e6223a` or a later compatible commit. The coordinator probe owns config/script/files, clears
 its child environment, and supplies no credentials:
 
 ```sh
@@ -96,7 +96,18 @@ With both `WAFFLEHOUSE_RASCAL_BIN` and `WAFFLEHOUSE_SQUINT_BIN` set to explicit 
 example reload without execution, switch to Rascal and run a seam, restart, then restore Squint
 history without mixing results. Without both variables those cases are skipped.
 
-The separate ignored `real_squint_estimate` probe still fails at `a0a2dde`: execution completes,
-but the advertised journal is unreadable. See [the follow-up](../docs/handoffs/squint-estimate-journal.md).
-Its complete-evidence assertion stays strict. [Original discovery blockers](../docs/handoffs/squint-discovery-blockers.md)
+The separate ignored `real_squint_estimate` probe now passes on `3e6223a`: it preserves an
+empty readable journal, resolving [the follow-up](../docs/handoffs/squint-estimate-journal.md).
+Both probes require an explicitly selected testkit binary. [Original discovery blockers](../docs/handoffs/squint-discovery-blockers.md)
 are resolved. `scripts/dev-pipeline.ts` starts the same isolated offline setup through Squint's H1 launcher.
+
+## v0.2 association and cancellation scenarios
+
+The peer publishes a fresh session UUID per process and echoes client correlation IDs in progress,
+run resources and results. The host captures the SDK-assigned progress token at the wire boundary.
+`slow` exercises cancellation with progress association; `no-progress` and `paged` exercise
+runs-list recovery. `unassociated` deliberately withholds evidence. `duplicate-pages`,
+`conflict-once` and `endless-pages` verify that contradictions or incomplete searches keep the
+outcome unconfirmed and the reservation held. These negative peers deliberately violate the
+contract and are not conformance examples. `session-reset` proves a new ledger cannot silently
+authorize dispatch. The same production may_spend guard still rejects paid actions.

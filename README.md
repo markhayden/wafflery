@@ -54,7 +54,7 @@ the opt-in real Rascal offline smoke. Automatic discovery and installation remai
 
 ### Try real Rascal
 
-With a stable contract 0.1.0 Rascal binary already built or installed, select its absolute path:
+With a stable contract 0.2.0 Rascal binary already built or installed, select its absolute path:
 
 ```sh
 bun run scripts/dev-rascal.ts /absolute/path/to/rascal
@@ -80,12 +80,18 @@ For an isolated **two-tool offline test** workspace:
 bun run scripts/dev-pipeline.ts /absolute/path/to/rascal /absolute/path/to/testkit/squint
 ```
 
-Use stable contract 0.1.0 executables; Squint needs the `testkit` feature and the fixes from
-`a0a2dde`. The helper registers both tools and opens through `squint playground`. Select
+Use stable contract 0.2.0 executables; Squint needs the `testkit` feature and the fixes from
+`3e6223a` (or later compatible commits). The helper registers both tools and opens through `squint playground`. Select
 **Source fidelity** and provide candidate/source images. Squint returns a **scripted fixture
 verdict, not a model judgment**; Rascal runs without a filler. No credentials are supplied.
-The helper prints a reopen command. Estimates currently preserve incomplete journal evidence;
-see [the follow-up](docs/handoffs/squint-estimate-journal.md). No existing library is modified.
+The helper prints a reopen command. The estimate journal follow-up is resolved and the probe now
+preserves complete evidence. No existing library is modified.
+
+The host executes exactly table-manners 0.2.0. Earlier saved history remains readable.
+**Inspect run → Session** shows the server ledger before/after a run and any structured run
+association. This is a server-session ledger, not a provider account balance. Cancellation
+can recover a terminal result from its associated resource; missing or contradictory evidence
+remains unconfirmed. Paid dispatch remains disabled pending provider readiness and per-call caps.
 
 ### Registration format
 

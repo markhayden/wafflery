@@ -19,7 +19,7 @@ framework, ORM, database service, global frontend state library, or plugin SDK i
 | Axum | 0.8.9 | [Official reference](https://docs.rs/axum/latest/axum/); HTTP routing |
 | rusqlite | 0.41.1, bundled SQLite | [Official project](https://github.com/rusqlite/rusqlite#optional-features); no system SQLite dependency |
 | rmcp | Exactly 3.8.0 | [SDK transports](https://docs.rs/rmcp/latest/rmcp/transport/index.html); client + async read/write transport |
-| table-manners | Published crate exactly 0.1.0 initially | crates.io dependency, including dev-dependency for fixtures; current source/proposals tracked in the [inventory](../integration-sources.md#table-manners) |
+| table-manners | Published crate exactly 0.2.0 | crates.io dependency, including dev-dependency for fixtures; current source/proposals tracked in the [inventory](../integration-sources.md#table-manners) |
 | Bun | 1.4.3 | Installed; package installation, scripts, pure TypeScript tests |
 | Node | Record resolved executable in M0 | Agent shell: 22.13.1 via Volta; owner review: 24.18.0. Both observations are retained; use one tested developer version for repeatable builds, not a production runtime |
 | React / React DOM | 19.3.1, matched versions | [Registry release](https://registry.npmjs.org/react/latest); installed compatibility still to verify |
@@ -102,15 +102,23 @@ separate from tool outcome. File operations return structured errors, never part
 
 ## MCP and process ownership
 
-Use an explicit live-execution contract allowlist, initially only `0.1.0`; validate against the
+Use an explicit live-execution contract allowlist, currently only `0.2.0`; validate against the
 published crate's embedded schemas with the retriever pattern in `table-manners/tests/fixtures.rs`.
-Reject unknown versions instead of treating v0.2 proposals as accepted. The fake can report 0.2
-for a negative test now; positive 0.2 fixtures wait for its tag and an explicit adoption commit.
-Keep saved older evidence readable without promising re-execution against an unsupported schema.
+Reject every other live version, including 0.1.0; preserve older saved evidence without rewriting
+or automatically replaying it. Version 0.2 adoption is documented in [the integration plan](../plans/table-manners-v02.md).
 
-Host image bindings are ordered arrays with declared cardinality. The v0.1 adapter encodes a
-single slot as one image-in value; do not add `many` to v0.1. A future approved v0.2 adapter can
-encode lists without changing the UI/domain model. No `x-squint` special-case interpretation.
+Host image bindings are ordered arrays internally. Tagged v0.2 still encodes each scalar slot as
+one image-in value; list slots require a future approved schema. No `x-squint` special-case interpretation.
+
+Before dispatch, read and validate the tool's session ledger and persist it with the declaration.
+Send the attempt ID as table-manners/client_run_id; record the SDK's actual progressToken at the
+transport boundary. Validate the structured run reference against both identities before binding
+results. Cancellation can preserve a terminal resource, with its provenance saved separately
+from a tool-call response. Bounded paginated lookup never proves an absent run did not execute;
+contradictions and exhausted searches remain unconfirmed. No automatic retries or restarts.
+The inspector exposes before/after session observations; provider estimates/caps UI and paid
+dispatch remain separate work. A changed session ID requires explicit reconnection, not silent
+allowance replenishment.
 
 Explicitly select protocol `2025-11-25`; restrict negotiation to that MCP revision. Contract and
 MCP versions are separate. Roots are deprecated in a newer MCP revision (SEP-2577); retain the

@@ -16,12 +16,16 @@ Design for one user on macOS, one active local library, one host, and independen
 execution. Linux is deferred. No persistent job service, automatic retries, batch queue, or
 cross-tool workflow engine. Closing a browser is different from stopping the host.
 
-Rechecked 2026-10-31: table-manners HEAD `8e4d0c3`, published contract still v0.1.0; Rascal
-M8 merged at `f0e45fb`; Squint serve merged locally at `eef1f10`, M7 not tagged. See the
-[current source inventory](docs/integration-sources.md) for evidence and limits. MCP actions/resources,
-progress/cancellation, per-server budgets, and image references are the integration baseline.
-Native artifact preservation, report readiness, and generic startup configuration still need
-the [owner agreements](TOOL-REQUIREMENTS.md). Tool conformance work may continue independently.
+Rechecked 2026-11-01: published table-manners v0.2.0 (tag `3c8b55c`) is adopted with isolated
+committed Rascal `27ef3b5` and Squint `3e6223a` builds. MCP stays 2025-11-25 and H1 is unchanged.
+The host records validated session ledgers and stable client correlation IDs, checks structured
+progress/result associations, and performs bounded cancellation reconciliation. It does not
+reset allowances, resubmit missing runs or restart tool processes automatically. See the
+[v0.2 integration plan](docs/plans/table-manners-v02.md) and [source inventory](docs/integration-sources.md).
+Native artifact preservation, report readiness, and generic provider configuration still need
+the [owner agreements](TOOL-REQUIREMENTS.md). Paid dispatch remains disabled until those guards
+are implemented; the owner's permission to spend is already recorded.
+
 
 ## Storage ownership
 
@@ -295,8 +299,9 @@ limits do not shrink the agreed first-release acceptance criteria. Add an opt-in
 contract version must pass the same validation. Squint already has a testkit scripted-provider
 path, but it must not be used to bypass a live `may_spend: true` declaration in this milestone.
 
-The current live-version policy accepts exactly 0.1.0. Prepare ordered-array image bindings now;
-adopt list-slot wire semantics only with approved v0.2 schemas and fixtures. MCP roots remain
+The current live-version policy accepts exactly 0.2.0; old saved records remain readable without
+migration or replay. The tagged v0.2 contract still uses scalar image slots: ordered arrays remain
+an internal UI representation, and list-slot wire semantics need a future approved contract. MCP roots remain
 specific to 2025-11-25; a future revision requires its own path-access decision.
 
 First-release history records Wafflehouse-started attempts. Tool run resources support reading

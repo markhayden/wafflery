@@ -1,5 +1,19 @@
 # Integration source inventory
 
+## Current integration — 2026-11-01
+
+- Published contract: table-manners `=0.2.0`, tag `3c8b55c70f03581757549f67d04b85dc393ad88d`.
+- Rascal committed source: `27ef3b5`, isolated `git archive` build; no filler or credentials.
+- Squint committed source: `3e6223a`, isolated `git archive` build with `testkit`; scripted provider.
+- Both pass the same generic host's session/association checks. Squint estimate journal fix
+  `718eec7` is included and its previously failing complete-evidence probe now passes.
+- The sibling working trees contain ongoing work and were not modified or built in place.
+- Protocol remains 2025-11-25. Tagged v0.2 introduces C4; list image slots and other proposals
+  are not part of this tag. Provider readiness, paid caps, native replay and viewer integration
+  remain separate work. The observations below are historical source evidence.
+
+## Historical audit — 2026-10-31
+
 Rechecked 2026-10-31 for the first M4 real-tool entry slice. This is source/fixture inspection,
 plus Wafflehouse's explicit real-Rascal coordinator/browser checks, not a fresh run of sibling
 test suites. Use repository identity and repository-relative paths below;
