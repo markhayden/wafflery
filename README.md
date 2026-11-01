@@ -31,6 +31,12 @@ drawer copies the saved request/setup and downloads a `.tar.gz` evidence package
 including image bytes. It does not claim a portable native replay bundle or generate unverified CLI
 flags. Editing the draft never changes a saved run.
 
+**Tool setup** opens the shared drawer with the selected action's declared credential requirements
+and live session spending: limit, remaining allowance, reported spend and active reservations.
+Refresh reads the running tool without executing an action or resetting its budget. Credential
+names do not prove a key is configured or valid; provider connection and paid execution await the
+shared interfaces described in the [C1 handoff](docs/handoffs/C1-paid-setup.md).
+
 **Clean up library** previews selected runs/examples and reclaimable image bytes. Shared examples
 retain their images; deleting a baseline run clears its pin. Cleanup requires idle tools, rechecks
 references, and never deletes originals or opaque tool workspaces. SQLite metadata/backups and

@@ -1,5 +1,8 @@
 # Tool setup and live session spending
 
+Completed 2026-11-01. See the [verification checkpoint](../reviews/2026-11-01-tool-session-setup.md)
+and [remaining C1 owner handoff](../handoffs/C1-paid-setup.md).
+
 Implements the currently supported part of SPEC Q9 / AC08. The owner has authorized continuing
 integration and paid testing; the table-manners contract must not be changed by this work.
 
