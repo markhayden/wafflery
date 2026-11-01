@@ -207,7 +207,7 @@ async fn terminal_evidence_is_verified_and_save_failure_does_not_change_tool_out
 }
 #[tokio::test]
 async fn cancellation_without_a_run_reference_stays_unconfirmed_and_reserved() {
-    let (dir, c, request) = setup("slow").await;
+    let (dir, c, request) = setup("unassociated").await;
     c.submit(request.clone()).await.unwrap();
     // This case tests cancellation after allocation. Wire persistence alone precedes allocation.
     tokio::time::timeout(std::time::Duration::from_secs(3), async {
@@ -321,8 +321,12 @@ async fn a_cancelled_child_that_exits_later_does_not_hold_the_reservation() {
     );
     assert!(c.try_quit().await);
     let saved = c.attempts.get("attempt-1").await.unwrap();
-    assert_eq!(saved.execution, "interrupted");
-    assert!(saved.result.is_none());
+    if saved.execution == "cancelled" {
+        assert_eq!(saved.result.as_ref().unwrap()["status"], "cancelled");
+    } else {
+        assert_eq!(saved.execution, "interrupted");
+        assert!(saved.result.is_none());
+    }
     assert!(c.close().await);
     c.assets.database.shutdown().await.unwrap();
 }
@@ -407,5 +411,148 @@ async fn shutdown_waits_for_terminal_resource_preservation_before_closing_the_pe
         attempt.notices
     );
     assert!(!c.assets.root().join("execution/attempt-1").exists());
+    c.assets.database.shutdown().await.unwrap();
+}
+
+#[tokio::test]
+async fn cancelled_runs_are_recovered_from_progress_or_the_runs_list() {
+    for scenario in ["slow", "no-progress", "paged"] {
+        let (dir, c, request) = setup(scenario).await;
+        c.submit(request.clone()).await.unwrap();
+        tokio::time::timeout(std::time::Duration::from_secs(3), async {
+            while !dir.path().join("runs/calls.ndjson").exists() {
+                tokio::time::sleep(std::time::Duration::from_millis(10)).await;
+            }
+        })
+        .await
+        .unwrap();
+        c.cancel(&request.id).await.unwrap();
+        let saved = tokio::time::timeout(std::time::Duration::from_secs(8), async {
+            loop {
+                let saved = c.attempts.get(&request.id).await.unwrap();
+                if saved.preservation["contract"] == "complete" {
+                    break saved;
+                }
+                tokio::time::sleep(std::time::Duration::from_millis(20)).await;
+            }
+        })
+        .await;
+        let saved = match saved {
+            Ok(saved) => saved,
+            Err(error) => panic!(
+                "{scenario}: {error}; saved={:?}",
+                c.attempts.get(&request.id).await.unwrap()
+            ),
+        };
+        assert_eq!(saved.execution, "cancelled");
+        assert!(
+            saved.raw_response.is_none(),
+            "resource recovery is not a tool-call response"
+        );
+        assert_eq!(
+            saved.observations["reconciled_from"],
+            saved.result.as_ref().unwrap()["run"]["resource"]
+        );
+        assert!(saved.journal.is_some());
+        assert_eq!(
+            saved.observations["session_after"]["id"],
+            saved.declaration["tool_session"]["id"]
+        );
+        assert_eq!(
+            saved.wire.as_ref().unwrap()["params"]["_meta"]["table-manners/client_run_id"],
+            request.id
+        );
+        let mut next = request;
+        next.id = "next".into();
+        // Persistence finishes before the reservation is released.
+        tokio::time::timeout(std::time::Duration::from_secs(1), async {
+            while c.snapshot().await.unwrap()["tools"][0]["busy"] == true {
+                tokio::time::sleep(std::time::Duration::from_millis(10)).await;
+            }
+        })
+        .await
+        .unwrap();
+        c.submit(next).await.unwrap();
+        assert!(c.close().await);
+        c.assets.database.shutdown().await.unwrap();
+    }
+}
+
+#[tokio::test]
+async fn mismatched_correlation_and_session_never_attach_a_result() {
+    for scenario in ["wrong-correlation", "wrong-session"] {
+        let (_dir, c, request) = setup(scenario).await;
+        c.submit(request.clone()).await.unwrap();
+        let saved = tokio::time::timeout(std::time::Duration::from_secs(3), async {
+            loop {
+                let saved = c.attempts.get(&request.id).await.unwrap();
+                if saved.preservation["contract"] != "pending" {
+                    break saved;
+                }
+                tokio::time::sleep(std::time::Duration::from_millis(10)).await;
+            }
+        })
+        .await
+        .unwrap();
+        assert!(saved.result.is_none());
+        assert!(!saved.notices.is_empty());
+        assert_eq!(c.snapshot().await.unwrap()["tools"][0]["busy"], true);
+        assert!(c.close().await);
+        c.assets.database.shutdown().await.unwrap();
+    }
+}
+
+#[tokio::test]
+async fn cancellation_conflicts_or_incomplete_pagination_never_release_the_reservation() {
+    for scenario in ["duplicate-pages", "conflict-once", "endless-pages"] {
+        let (dir, c, request) = setup(scenario).await;
+        c.submit(request.clone()).await.unwrap();
+        tokio::time::timeout(std::time::Duration::from_secs(3), async {
+            while !dir.path().join("runs/calls.ndjson").exists() {
+                tokio::time::sleep(std::time::Duration::from_millis(10)).await;
+            }
+        })
+        .await
+        .unwrap();
+        c.cancel(&request.id).await.unwrap();
+        let expected_notice = match scenario {
+            "duplicate-pages" => "Multiple runs claim",
+            "conflict-once" => "Runs list belongs to a different tool",
+            _ => "pagination exceeded",
+        };
+        let saved = tokio::time::timeout(std::time::Duration::from_secs(6), async {
+            loop {
+                let saved = c.attempts.get(&request.id).await.unwrap();
+                if saved
+                    .notices
+                    .iter()
+                    .any(|notice| notice.contains(expected_notice))
+                {
+                    break saved;
+                }
+                tokio::time::sleep(std::time::Duration::from_millis(20)).await;
+            }
+        })
+        .await
+        .unwrap();
+        assert_eq!(
+            saved.execution, "unconfirmed",
+            "{scenario}: {:?}",
+            saved.notices
+        );
+        assert!(saved.result.is_none());
+        assert_eq!(c.snapshot().await.unwrap()["tools"][0]["busy"], true);
+        assert!(c.close().await);
+        c.assets.database.shutdown().await.unwrap();
+    }
+}
+
+#[tokio::test]
+async fn a_reset_session_cannot_silently_dispatch_with_a_fresh_ledger() {
+    let (dir, c, request) = setup("session-reset").await;
+    let error = c.submit(request).await.unwrap_err().to_string();
+    assert!(error.contains("session changed"), "{error}");
+    assert!(!dir.path().join("runs/calls.ndjson").exists());
+    assert!(c.close().await);
     c.assets.database.shutdown().await.unwrap();
 }

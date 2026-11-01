@@ -30,6 +30,7 @@ struct Handler {
     roots: Vec<Root>,
     generation: Arc<AtomicU64>,
     progress: watch::Sender<Option<Value>>,
+    association: Arc<std::sync::Mutex<super::association::ProgressAssociation>>,
 }
 impl ClientHandler for Handler {
     fn get_info(&self) -> ClientConfig {
@@ -60,6 +61,10 @@ impl ClientHandler for Handler {
             if let Some(message) = value["message"].as_str() {
                 value["message"] = json!(message.chars().take(2048).collect::<String>());
             }
+            self.association
+                .lock()
+                .unwrap_or_else(|e| e.into_inner())
+                .observe(&value);
             self.progress.send_replace(Some(value));
         }
     }
@@ -70,11 +75,13 @@ pub struct Declaration {
     pub revision: String,
     pub schemas: BTreeMap<String, Value>,
     pub generation: u64,
+    pub tool_session: Value,
 }
 /// Keeps ownership even when initialization fails; close never force-kills a child.
 pub struct ToolClient {
     pub descriptor: Descriptor,
     pub session: String,
+    pub(super) observed_session: Mutex<Option<Value>>,
     pub(crate) gate: Gate,
     child: Mutex<Child>,
     pipes: std::sync::Mutex<Option<(ChildStdout, ChildStdin)>>,
@@ -82,6 +89,7 @@ pub struct ToolClient {
     peer: Option<Peer<RoleClient>>,
     generation: Arc<AtomicU64>,
     progress: watch::Sender<Option<Value>>,
+    association: Arc<std::sync::Mutex<super::association::ProgressAssociation>>,
     // 0 = accepting work, 1 = terminal response preservation, 2 = transport closing.
     lifecycle: std::sync::atomic::AtomicU8,
 }
@@ -113,11 +121,13 @@ impl ToolClient {
             session,
             gate: Gate::default(),
             child: Mutex::new(child),
+            observed_session: Mutex::new(None),
             pipes: std::sync::Mutex::new(Some((stdout, stdin))),
             service: Mutex::new(None),
             peer: None,
             generation: Arc::new(AtomicU64::new(0)),
             progress,
+            association: Default::default(),
             lifecycle: std::sync::atomic::AtomicU8::new(0),
         })
     }
@@ -142,6 +152,7 @@ impl ToolClient {
             roots,
             generation: self.generation.clone(),
             progress: self.progress.clone(),
+            association: self.association.clone(),
         };
         let transport =
             AsyncRwTransport::new_client(stdout, stdin).with_max_line_length(32 * 1024 * 1024);
@@ -150,6 +161,7 @@ impl ToolClient {
             serve_client(
                 handler,
                 RecordedTransport {
+                    association: self.association.clone(),
                     inner: transport,
                     gate: self.gate.clone(),
                     generation: self.generation.clone(),
@@ -185,6 +197,21 @@ impl ToolClient {
     }
     pub fn progress(&self) -> watch::Receiver<Option<Value>> {
         self.progress.subscribe()
+    }
+    pub(super) fn start_association(&self, request: &str) {
+        *self.association.lock().unwrap_or_else(|e| e.into_inner()) =
+            super::association::ProgressAssociation {
+                request: request.into(),
+                ..Default::default()
+            };
+        self.progress.send_replace(None);
+    }
+    pub(super) fn run_reference(&self) -> Result<Option<Value>> {
+        let association = self.association.lock().unwrap_or_else(|e| e.into_inner());
+        if let Some(error) = &association.error {
+            return Err(Error::Invalid(error.clone()));
+        }
+        Ok(association.reference.clone())
     }
     async fn control(&self, method: &str, params: Value) -> Result<Value> {
         let request: ClientRequest =
@@ -268,11 +295,13 @@ impl ToolClient {
             .iter()
             .map(|b| format!("{b:02x}"))
             .collect();
+        let tool_session = self.observe_session(&document["tool"]).await?;
         Ok(Declaration {
             document,
             revision,
             schemas,
             generation,
+            tool_session,
         })
     }
     pub async fn read_resource(&self, uri: &str) -> Result<Value> {

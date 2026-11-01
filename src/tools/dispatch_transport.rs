@@ -27,6 +27,7 @@ pub(crate) type Gate = Arc<Mutex<Option<Permit>>>;
 pub(crate) struct RecordedTransport<T> {
     pub inner: T,
     pub gate: Gate,
+    pub association: Arc<Mutex<super::association::ProgressAssociation>>,
     pub generation: Arc<AtomicU64>,
 }
 impl<T: Transport<RoleClient, Error = io::Error>> Transport<RoleClient> for RecordedTransport<T> {
@@ -45,6 +46,7 @@ impl<T: Transport<RoleClient, Error = io::Error>> Transport<RoleClient> for Reco
             _ => None,
         };
         let generation = self.generation.clone();
+        let association = self.association.clone();
         let write = self.inner.send(item);
         async move {
             let wire = wire?;
@@ -54,12 +56,16 @@ impl<T: Transport<RoleClient, Error = io::Error>> Transport<RoleClient> for Reco
                     .ok_or_else(|| io::Error::other("No persisted dispatch authorization"))?;
                 if wire["params"]["name"] != permit.action
                     || wire["params"]["arguments"] != permit.arguments
+                    || wire["params"]["_meta"]["table-manners/client_run_id"] != permit.id
                     || generation.load(Ordering::SeqCst) != permit.generation
                 {
                     return Err(io::Error::other(
                         "Dispatch authorization is stale or does not match the request",
                     ));
                 }
+                // rmcp replaces progressToken when enqueuing; bind the actual wire token.
+                association.lock().unwrap_or_else(|e| e.into_inner()).token =
+                    wire["params"]["_meta"].get("progressToken").cloned();
                 permit
                     .store
                     .record_wire(&permit.id, wire)
@@ -129,10 +135,11 @@ mod tests {
         let gate = Gate::default();
         let mut transport = RecordedTransport {
             inner: wire,
+            association: Default::default(),
             gate: gate.clone(),
             generation: Arc::new(AtomicU64::new(0)),
         };
-        let message = json!({"jsonrpc":"2.0","id":7,"method":"tools/call","params":{"name":"op","arguments":{},"_meta":{"progressToken":9}}});
+        let message = json!({"jsonrpc":"2.0","id":7,"method":"tools/call","params":{"name":"op","arguments":{},"_meta":{"progressToken":9,"table-manners/client_run_id":"id"}}});
         assert!(
             transport
                 .send(serde_json::from_value(message.clone()).unwrap())

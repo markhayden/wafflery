@@ -86,3 +86,49 @@ async fn cancelling_a_prepared_attempt_atomically_prevents_its_transport_record(
     assert!(store.record_wire("early", json!({"id":4})).await.is_err());
     assets.database.shutdown().await.unwrap();
 }
+
+#[tokio::test]
+async fn pre_v02_history_without_session_observations_remains_readable() {
+    let root = tempfile::tempdir().unwrap();
+    let assets = AssetStore::open(&root.path().join("Library")).unwrap();
+    let store = AttemptStore::new(assets.database.clone());
+    let submission = serde_json::from_value(
+        json!({"id":"old","tool":"fixture","action":"op","revision":"old","params":{},"images":{}}),
+    )
+    .unwrap();
+    let saved = store
+        .create(
+            submission,
+            json!({}),
+            json!({"document":{"contract":"0.1.0"}}),
+            json!({}),
+        )
+        .await
+        .unwrap();
+    let mut old = serde_json::to_value(saved).unwrap();
+    old.as_object_mut().unwrap().remove("observations");
+    old["execution"] = json!("completed");
+    old["preservation"]["contract"] = json!("complete");
+    old["result"] = json!({"contract":"0.1.0","status":"completed","run":{"id":"old","resource":"fixture://run/old/run.json","dir":null}});
+    let expected = old["result"].clone();
+    assets
+        .database
+        .call(move |db| {
+            db.execute(
+                "UPDATE attempts SET record=?1 WHERE id='old'",
+                [old.to_string()],
+            )?;
+            Ok(())
+        })
+        .await
+        .unwrap();
+    assets.database.shutdown().await.unwrap();
+    let assets = AssetStore::open(&root.path().join("Library")).unwrap();
+    let store = AttemptStore::new(assets.database.clone());
+    store.recover().await.unwrap();
+    let saved = store.get("old").await.unwrap();
+    assert_eq!(saved.result.unwrap(), expected);
+    assert_eq!(saved.execution, "completed");
+    assert!(saved.observations.is_null());
+    assets.database.shutdown().await.unwrap();
+}

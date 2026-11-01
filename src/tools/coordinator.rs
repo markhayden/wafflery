@@ -306,7 +306,8 @@ impl Coordinator {
     }
     async fn execute(&self, client: Arc<ToolClient>, request: Submission, arguments: Value) {
         let result = async {
-            let message = serde_json::from_value(json!({"method":"tools/call","params":{"name":request.action,"arguments":arguments}}))?;
+            let message = serde_json::from_value(json!({"method":"tools/call","params":{"name":request.action,"arguments":arguments,"_meta":{"table-manners/client_run_id":request.id}}}))?;
+            client.start_association(&request.id);
             let mut progress = client.progress();
             let call = client.peer()?.send_request(message);
             tokio::pin!(call);
@@ -314,8 +315,8 @@ impl Coordinator {
                 tokio::select! {
                     response = &mut call => { let response=response?;client.begin_preservation();break response; },
                     changed = progress.changed() => {
-                        if changed.is_ok() { self.events.changed(); }
-                    }
+                        if changed.is_ok() { self.record_reference(&client, &request.id).await?; self.events.changed(); }
+                    },
                 }
             };
             let raw = serde_json::to_value(response)?;
@@ -331,15 +332,32 @@ impl Coordinator {
             }
             Ok::<_, Error>(result)
         }.await;
+        let result = match result {
+            Err(Error::Mcp(rmcp::ServiceError::Cancelled { .. })) => {
+                self.recover_cancelled(&client, &request.id).await
+            }
+            other => other,
+        };
         match result {
             Ok(result) => {
                 let saved = async {
+                    self.record_reference(&client, &request.id).await?;
                     let attempt = self.attempts.get(&request.id).await?;
                     super::evidence::check_association(&attempt, &result)?;
                     let attempt = self.attempts.bind_result(&request.id, result).await?;
                     self.events.changed();
-                    let (outputs, journal, notices) =
+                    let (outputs, journal, mut notices) =
                         super::evidence::capture(&self.assets, &client, &attempt).await;
+                    let session_after = match client
+                        .observe_session(&attempt.declaration["document"]["tool"])
+                        .await
+                    {
+                        Ok(session) => Some(session),
+                        Err(error) => {
+                            notices.push(format!("Final session observation unavailable: {error}"));
+                            None
+                        }
+                    };
                     self.attempts
                         .update(&request.id, move |attempt| {
                             attempt.preservation["contract"] = json!(if notices.is_empty() {
@@ -347,6 +365,9 @@ impl Coordinator {
                             } else {
                                 "incomplete"
                             });
+                            if let Some(session) = session_after {
+                                attempt.observations["session_after"] = session;
+                            }
                             attempt.outputs = outputs;
                             attempt.journal = journal;
                             attempt.notices.extend(notices);
@@ -380,18 +401,16 @@ impl Coordinator {
             }
             Err(error) => {
                 client.end_preservation();
-                let locally_cancelled =
-                    matches!(error, Error::Mcp(rmcp::ServiceError::Cancelled { .. }));
                 let message = error.to_string();
                 let _ = self
                     .attempts
                     .update(&request.id, move |attempt| {
-                        if attempt.execution == "rejected"
-                            || (locally_cancelled && attempt.execution == "unconfirmed")
-                        {
+                        if attempt.execution == "rejected" {
                             return Ok(());
                         }
-                        attempt.execution = "interrupted".into();
+                        if attempt.execution != "unconfirmed" {
+                            attempt.execution = "interrupted".into();
+                        }
                         attempt.preservation["contract"] = json!("incomplete");
                         attempt.notices.push(message);
                         Ok(())
@@ -424,6 +443,59 @@ impl Coordinator {
             self.active.lock().await.remove(&request.id);
         }
         self.events.changed();
+    }
+    async fn recover_cancelled(&self, client: &ToolClient, id: &str) -> Result<Value> {
+        let recovery = async {
+            let mut last_error = None;
+            for _ in 0..20 {
+                self.record_reference(client, id).await?;
+                let attempt = self.attempts.get(id).await?;
+                match super::association::reconcile(client, &attempt).await {
+                    Ok(Some(result)) => {
+                        client.begin_preservation();
+                        let uri = result["run"]["resource"].clone();
+                        self.attempts
+                            .update(id, move |attempt| {
+                                attempt.observations["reconciled_from"] = uri;
+                                Ok(())
+                            })
+                            .await?;
+                        return Ok(result);
+                    }
+                    Ok(None) => {}
+                    Err(Error::Mcp(rmcp::ServiceError::McpError(ref error)))
+                        if error.code.0 == -32002 =>
+                    {
+                        last_error = Some(Error::Invalid(
+                            "Associated run resource is not available yet".into(),
+                        ));
+                    }
+                    Err(error) => return Err(error),
+                }
+                tokio::time::sleep(std::time::Duration::from_millis(200)).await;
+            }
+            Err(last_error.unwrap_or_else(|| {
+                Error::Invalid(
+                    "Cancellation outcome remains unconfirmed after bounded resource lookup".into(),
+                )
+            }))
+        };
+        tokio::time::timeout(std::time::Duration::from_secs(5), recovery).await?
+    }
+    async fn record_reference(&self, client: &ToolClient, id: &str) -> Result<()> {
+        if let Some(reference) = client.run_reference()? {
+            let attempt = self.attempts.get(id).await?;
+            super::association::check_reference(&attempt, &reference)?;
+            if attempt.observations.get("run_reference") != Some(&reference) {
+                self.attempts
+                    .update(id, move |attempt| {
+                        attempt.observations["run_reference"] = reference;
+                        Ok(())
+                    })
+                    .await?;
+            }
+        }
+        Ok(())
     }
     pub async fn cancel(self: &Arc<Self>, id: &str) -> Result<Attempt> {
         let mut active = self.active.lock().await;

@@ -33,6 +33,7 @@ pub fn check_association(attempt: &Attempt, result: &Value) -> Result<()> {
             "Result run identity conflicts with its resource address".into(),
         ));
     }
+    super::association::check_reference(attempt, &result["run"])?;
     for input in result["images"]["in"].as_array().into_iter().flatten() {
         let slot = input["slot"]
             .as_str()
@@ -51,7 +52,11 @@ fn same_frame(a: &Value, b: &Value) -> bool {
         .iter()
         .all(|key| !a[key].is_null() && a[key] == b[key])
 }
-fn resource_content(response: &Value, uri: &str, max: usize) -> Result<(Value, Vec<u8>)> {
+pub(super) fn resource_content(
+    response: &Value,
+    uri: &str,
+    max: usize,
+) -> Result<(Value, Vec<u8>)> {
     let contents = response["contents"]
         .as_array()
         .ok_or_else(|| Error::Invalid("Missing resource contents".into()))?;

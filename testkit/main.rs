@@ -11,12 +11,43 @@ use std::{
     },
 };
 
-#[derive(Default)]
 pub struct PeerState {
+    pub session: Value,
+    pub claimed: std::collections::HashSet<String>,
     pub roots: Vec<PathBuf>,
     pub descriptions: usize,
+    pub resource_reads: usize,
     pub runs: Vec<Value>,
     pub active: Vec<(Value, Arc<AtomicBool>)>,
+}
+
+impl Default for PeerState {
+    fn default() -> Self {
+        let mut bytes = [0u8; 16];
+        getrandom::fill(&mut bytes).unwrap();
+        bytes[6] = (bytes[6] & 15) | 64;
+        bytes[8] = (bytes[8] & 63) | 128;
+        let hex: String = bytes.iter().map(|b| format!("{b:02x}")).collect();
+        let id = format!(
+            "{}-{}-{}-{}-{}",
+            &hex[..8],
+            &hex[8..12],
+            &hex[12..16],
+            &hex[16..20],
+            &hex[20..]
+        );
+        Self {
+            session: json!({"contract":"0.2.0","tool":{"name":fixtures::TOOL,"version":"0.1.0"},
+            "id":id,"started":time::OffsetDateTime::now_utc().format(&time::format_description::well_known::Rfc3339).unwrap(),
+            "budget_usd":null,"spent_usd":0,"unresolved_usd":0,"reserved_usd":0,"remaining_usd":null}),
+            claimed: Default::default(),
+            roots: vec![],
+            descriptions: 0,
+            resource_reads: 0,
+            runs: vec![],
+            active: vec![],
+        }
+    }
 }
 
 pub fn send(output: &Arc<Mutex<io::Stdout>>, message: Value) {
@@ -132,6 +163,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             "tools/call" if initialized && params["name"] == "describe" => {
                 let mut state = state.lock().unwrap();
                 state.descriptions += 1;
+                if scenario == "session-reset" && state.descriptions > 1 {
+                    state.session["id"] = json!("bb8f5520-a822-4cdc-a9eb-f1a72018e000");
+                }
                 let effective = if scenario == "becomes-paid" && state.descriptions > 1 {
                     "paid"
                 } else {
@@ -155,6 +189,32 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 ) {
                     reject(&output, id, -32602, &error);
                     continue;
+                }
+                if let Some(correlation) = params["_meta"]["table-manners/client_run_id"].as_str() {
+                    if let Err(error) = scenarios::validate(
+                        &json!({"$ref":"urn:table-manners:core:run-ref#/$defs/client_run_id"}),
+                        &json!(correlation),
+                    ) {
+                        reject(&output, id, -32602, &error);
+                        continue;
+                    }
+                    let mut state = state.lock().unwrap();
+                    if !state.claimed.insert(correlation.to_owned()) {
+                        let reference = state
+                            .runs
+                            .iter()
+                            .find(|run| run["run"]["client_run_id"] == correlation)
+                            .map(|run| {
+                                let mut reference = run["run"].clone();
+                                reference.as_object_mut().unwrap().remove("dir");
+                                reference
+                            });
+                        send(
+                            &output,
+                            json!({"jsonrpc":"2.0","id":id,"error":{"code":-32602,"message":"client_run_id reused","data":{"reason":"client_run_id_reused","run":reference}}}),
+                        );
+                        continue;
+                    }
                 }
                 let cancelled = Arc::new(AtomicBool::new(false));
                 state
@@ -182,12 +242,54 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 if scenario == "slow-resource" {
                     std::thread::sleep(std::time::Duration::from_millis(600));
                 }
-                match scenarios::resource(
-                    &state.lock().unwrap(),
-                    &root,
-                    params["uri"].as_str().unwrap_or(""),
-                ) {
-                    Some(content) => reply(&output, id, json!({"contents":[content]})),
+                if scenario == "unassociated"
+                    && params["uri"] == format!("{}://runs", fixtures::TOOL)
+                {
+                    reply(
+                        &output,
+                        id,
+                        json!({"contents":[{"uri":params["uri"],"mimeType":"application/json","text":json!({"contract":"0.2.0","tool":{"name":fixtures::TOOL,"version":"0.1.0"},"runs":[],"next_cursor":null}).to_string()}]}),
+                    );
+                    continue;
+                }
+                let uri = params["uri"].as_str().unwrap_or("");
+                let lookup = uri.split('?').next().unwrap_or(uri);
+                let content = scenarios::resource(&state.lock().unwrap(), &root, lookup);
+                match content {
+                    Some(mut content) => {
+                        content["uri"] = json!(uri);
+                        if lookup == format!("{}://runs", fixtures::TOOL) {
+                            let mut state = state.lock().unwrap();
+                            state.resource_reads += 1;
+                            let mut page: Value =
+                                serde_json::from_str(content["text"].as_str().unwrap()).unwrap();
+                            if matches!(
+                                scenario.as_str(),
+                                "paged" | "duplicate-pages" | "endless-pages"
+                            ) && !uri.contains('?')
+                            {
+                                if scenario == "paged" {
+                                    page["runs"] = json!([]);
+                                }
+                                page["next_cursor"] = json!("second");
+                            } else if scenario == "duplicate-pages" && uri.contains('?') {
+                                if let Some(run) = page["runs"].as_array_mut().unwrap().first_mut()
+                                {
+                                    run["id"] = json!("other");
+                                    run["resource"] = json!("sample-lab://run/other/run.json");
+                                }
+                            } else if scenario == "endless-pages" {
+                                page["runs"] = json!([]);
+                                page["next_cursor"] =
+                                    json!(format!("page-{}", state.resource_reads));
+                            }
+                            if scenario == "conflict-once" && state.resource_reads == 1 {
+                                page["tool"]["name"] = json!("different-tool");
+                            }
+                            content["text"] = json!(page.to_string());
+                        }
+                        reply(&output, id, json!({"contents":[content]}));
+                    }
                     None => reject(&output, id, -32002, "resource not found"),
                 }
             }

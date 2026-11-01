@@ -56,6 +56,8 @@ pub struct Attempt {
     pub result: Option<Value>,
     #[serde(default)]
     pub raw_response: Option<Value>,
+    #[serde(default)]
+    pub observations: Value,
     pub preservation: Value,
     pub outputs: Vec<Value>,
     pub journal: Option<Value>,
@@ -126,6 +128,7 @@ impl AttemptStore {
             execution: "submitted".into(),
             result: None,
             raw_response: None,
+            observations: json!({}),
             preservation: json!({"contract":"pending","native":"unsupported","report":"unsupported"}),
             outputs: vec![],
             journal: None,
@@ -210,7 +213,7 @@ impl AttemptStore {
                 attempt.notices.push("Cancelled before dispatch; no tool call was sent.".into());
             } else {
                 attempt.execution="unconfirmed".into();
-                attempt.notices.push("Cancellation requested; final outcome unconfirmed. This contract does not provide a structured run reference before the result.".into());
+                attempt.notices.push("Cancellation requested; final outcome unconfirmed. Wafflehouse will look for an associated run; missing evidence does not prove the tool stopped.".into());
             }
             attempt.preservation["contract"]=json!("incomplete");Ok(())
         }).await

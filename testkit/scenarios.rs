@@ -16,9 +16,9 @@ use std::{
 
 pub fn description(scenario: &str) -> Value {
     let mut document = fixtures::description(if scenario == "unsupported-contract" {
-        "0.2.0"
-    } else {
         "0.1.0"
+    } else {
+        "0.2.0"
     });
     if scenario == "paid" {
         document["actions"][0]["cost"]["may_spend"] = json!(true);
@@ -113,7 +113,14 @@ pub fn execute(
     let id = format!("run-{:04}", state.lock().unwrap().runs.len() + 1);
     let directory = root.join(&id);
     let resource = format!("{}://run/{id}/run.json", fixtures::TOOL);
-    run["run"] = json!({"id":id,"dir":directory,"resource":resource});
+    run["run"] = json!({"id":id,"dir":directory,"resource":resource,
+        "session_id":state.lock().unwrap().session["id"],"client_run_id":message["params"]["_meta"]["table-manners/client_run_id"]});
+    if scenario == "wrong-correlation" {
+        run["run"]["client_run_id"] = json!("someone-else");
+    }
+    if scenario == "wrong-session" {
+        run["run"]["session_id"] = json!("bb8f5520-a822-4cdc-a9eb-f1a72018e000");
+    }
     run["started"] = json!(timestamp());
     run["status"] = json!("running");
     run["images"]["in"] = json!([]);
@@ -126,13 +133,25 @@ pub fn execute(
     run["input_identity"] = json!(format!("sha256:{identity}"));
     run["body"] = json!({"illustrative":true,"parameters":params});
     state.lock().unwrap().runs.push(run.clone());
+    let mut reference = run["run"].clone();
+    reference.as_object_mut().unwrap().remove("dir");
     let mut progress = 0;
     let mut notify = |text: &str| {
         progress += 1;
-        if let Some(token) = message["params"]["_meta"].get("progressToken") {
+        if let Some(token) = message["params"]["_meta"].get("progressToken")
+            && !matches!(
+                scenario.as_str(),
+                "unassociated"
+                    | "no-progress"
+                    | "paged"
+                    | "duplicate-pages"
+                    | "conflict-once"
+                    | "endless-pages"
+            )
+        {
             send(
                 &output,
-                json!({"jsonrpc":"2.0","method":"notifications/progress","params":{"progressToken":token,"progress":progress,"message":text}}),
+                json!({"jsonrpc":"2.0","method":"notifications/progress","params":{"progressToken":token,"progress":progress,"message":text,"_meta":{"table-manners/run":reference}}}),
             );
         }
         if let Ok(mut journal) = OpenOptions::new()
@@ -153,11 +172,21 @@ pub fn execute(
             "{}",
             json!({"name":"mark_band","arguments":params})
         )?;
-        notify(&format!("{resource} started"));
+        notify("Started");
         if scenario == "exit-during-call" {
             std::process::exit(0);
         }
-        let delay = if matches!(scenario.as_str(), "slow" | "exit-after-cancel") {
+        let delay = if matches!(
+            scenario.as_str(),
+            "slow"
+                | "exit-after-cancel"
+                | "unassociated"
+                | "no-progress"
+                | "paged"
+                | "duplicate-pages"
+                | "conflict-once"
+                | "endless-pages"
+        ) {
             10_000
         } else {
             100
@@ -329,10 +358,15 @@ fn mark(
 }
 
 pub fn resource(state: &PeerState, root: &Path, uri: &str) -> Option<Value> {
-    if uri == format!("{}://runs", fixtures::TOOL) {
-        let runs: Vec<_> = state.runs.iter().rev().map(|run| json!({"id":run["run"]["id"],"action":run["action"],"status":run["status"],"started":run["started"],"resource":run["run"]["resource"]})).collect();
+    if uri == format!("{}://session", fixtures::TOOL) {
         return Some(
-            json!({"uri":uri,"mimeType":"application/json","text":json!({"contract":"0.1.0","tool":{"name":fixtures::TOOL,"version":"0.1.0"},"runs":runs}).to_string()}),
+            json!({"uri":uri,"mimeType":"application/json","text":state.session.to_string()}),
+        );
+    }
+    if uri == format!("{}://runs", fixtures::TOOL) {
+        let runs: Vec<_> = state.runs.iter().rev().map(|run| json!({"id":run["run"]["id"],"action":run["action"],"status":run["status"],"started":run["started"],"resource":run["run"]["resource"],"session_id":run["run"]["session_id"],"client_run_id":run["run"]["client_run_id"]})).collect();
+        return Some(
+            json!({"uri":uri,"mimeType":"application/json","text":json!({"contract":"0.2.0","next_cursor":null,"tool":{"name":fixtures::TOOL,"version":"0.1.0"},"runs":runs}).to_string()}),
         );
     }
     for run in &state.runs {
