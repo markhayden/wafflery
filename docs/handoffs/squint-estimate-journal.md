@@ -11,7 +11,7 @@ This follow-up has not been posted to GitHub.
 An MCP `estimate` with `use_case: "source-fidelity"`, candidate/source images, and the owned
 offline config completes successfully with zero spend and a positive forecast. Its run.json is
 readable, but reading `squint://run/<estimate-id>/journal` returns MCP `-32002` / no resource.
-Wafflehouse saves the result and correctly marks contract evidence **incomplete**.
+Wafflery saves the result and correctly marks contract evidence **incomplete**.
 
 In `crates/squint-cli/src/serve/mod.rs`, `finished()` writes the estimate result, while
 `resource(.../journal)` concatenates `run-<n>/journal.jsonl` and returns no resource when the
@@ -22,10 +22,10 @@ Please provide a readable journal for existing estimate runs (an empty journal, 
 the contract, or a minimal estimate event), while keeping unknown run IDs unavailable. Test
 through `resources/read`, including after restart. No paid provider is required.
 
-Reproduction from Wafflehouse:
+Reproduction from Wafflery:
 
 ```sh
-WAFFLEHOUSE_SQUINT_BIN=/absolute/path/to/testkit/squint \
+WAFFLERY_SQUINT_BIN=/absolute/path/to/testkit/squint \
   cargo test --locked --test squint_smoke real_squint_estimate -- --ignored --nocapture
 ```
 

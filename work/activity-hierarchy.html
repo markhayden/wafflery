@@ -134,12 +134,12 @@
 @media(max-width:560px){#wh-hierarchy .wh-stage{min-height:1600px}#wh-hierarchy .wh-panels{grid-template-columns:1fr}#wh-hierarchy [data-layout=sidebar] .wh-main-layout{grid-template-columns:1fr}#wh-hierarchy [data-layout=sidebar] .wh-sidebar{border-right:0;border-bottom:1px solid var(--wh-line)}#wh-hierarchy .wh-side-group{margin:0 0 8px}#wh-hierarchy .wh-side-group button{display:inline-flex;width:auto}#wh-hierarchy .wh-chrome{padding:12px 16px;gap:10px}#wh-hierarchy .wh-title{font-size:21px}#wh-hierarchy .wh-side-group details{display:inline-block;vertical-align:top;max-width:100%}}
 @media(pointer:coarse){#wh-hierarchy button,#wh-hierarchy summary,#wh-hierarchy select{min-height:44px}#wh-hierarchy textarea,#wh-hierarchy input,#wh-hierarchy select{font-size:16px}}
 </style>
-<div id="wh-hierarchy" aria-label="Wafflehouse focused picker mockup">
+<div id="wh-hierarchy" aria-label="Wafflery focused picker mockup">
  <div class="wh-variants">
   <section data-variant="Focused picker" class="wh-stage" aria-label="Focused picker design"><div class="wh-app" data-layout="picker"></div></section>
  </div>
  <template id="wh-shell-template">
-  <header class="wh-chrome"><div class="wh-brand"><i data-lucide="aperture" aria-hidden="true"></i> wafflehouse</div><span class="wh-divider"></span><select class="wh-tool-select" aria-label="Tool"><option value="rascal">Rascal</option><option value="squint">Squint</option></select><span class="wh-local">Local workspace</span></header>
+  <header class="wh-chrome"><div class="wh-brand"><i data-lucide="aperture" aria-hidden="true"></i> wafflery</div><span class="wh-divider"></span><select class="wh-tool-select" aria-label="Tool"><option value="rascal">Rascal</option><option value="squint">Squint</option></select><span class="wh-local">Local workspace</span></header>
   <div class="wh-main-layout"><aside class="wh-sidebar" aria-label="Activities"></aside><div class="wh-content">
    <h2 class="wh-tool-heading">Rascal</h2><p class="wh-tool-purpose">Find, mask, repair, and inspect your images.</p>
    <nav class="wh-tabs" aria-label="Tool workspace"><button data-tab="playground" aria-pressed="true">Playground</button><button data-tab="operations" aria-pressed="false">Operations</button><button data-tab="usage" aria-pressed="false">Usage</button><button data-tab="runs" aria-pressed="false">Runs</button></nav>
@@ -259,7 +259,7 @@
 </style>
 
 <script>
-window.createWafflehouseWipe = ({ left, right, leftLabel, rightLabel }) => {
+window.createWaffleryWipe = ({ left, right, leftLabel, rightLabel }) => {
   const root = document.createElement('div'); root.className = 'wh-wipe';
   const before = document.createElement('div'); before.className = 'wh-wipe-layer'; before.append(left);
   const after = document.createElement('div'); after.className = 'wh-wipe-layer wh-wipe-after'; after.append(right);
@@ -295,7 +295,7 @@ window.createWafflehouseWipe = ({ left, right, leftLabel, rightLabel }) => {
 </style>
 
 <script>
-window.createWafflehouseDrawer = ({ app }) => {
+window.createWaffleryDrawer = ({ app }) => {
   const dialog = document.createElement('dialog'); dialog.className = 'wh-drawer';
   dialog.setAttribute('aria-labelledby', 'wh-drawer-title'); dialog.setAttribute('aria-describedby', 'wh-drawer-context');
   const header = document.createElement('header'); header.className = 'wh-drawer-header';
@@ -372,7 +372,7 @@ window.createWafflehouseDrawer = ({ app }) => {
 </template>
 
 <script>
-window.createWafflehouseComparison = ({ app, selectedRun, context }) => {
+window.createWaffleryComparison = ({ app, selectedRun, context }) => {
   const fragment = document.getElementById('wh-comparison-template').content.cloneNode(true);
   const row = fragment.querySelector('.wh-baseline-row'), panel = fragment.querySelector('.wh-comparison');
   app.querySelector('.wh-result-actions').after(row);
@@ -428,7 +428,7 @@ window.createWafflehouseComparison = ({ app, selectedRun, context }) => {
     q('[data-compare-mode=wipe]').disabled = !canWipe;
     q('.wh-comparison-pair').hidden = mode === 'wipe'; q('.wh-comparison-wipe').hidden = mode !== 'wipe'; q('.wh-comparison-wipe-note').hidden = mode !== 'wipe';
     if (mode === 'wipe') {
-      q('.wh-comparison-wipe').replaceChildren(window.createWafflehouseWipe({ left: left.cloneNode(true), right: right.cloneNode(true), leftLabel: 'Baseline · ' + baseline.id, rightLabel: 'Attempt · ' + run.id }));
+      q('.wh-comparison-wipe').replaceChildren(window.createWaffleryWipe({ left: left.cloneNode(true), right: right.cloneNode(true), leftLabel: 'Baseline · ' + baseline.id, rightLabel: 'Attempt · ' + run.id }));
       q('.wh-comparison-wipe-note').textContent = 'Illustrative outputs · Baseline spend $' + baseline.spend.usd.toFixed(2) + ' / attempt $' + run.spend.usd.toFixed(2) + ' · estimated, simulated';
     }
     panel.querySelectorAll('[data-compare-mode]').forEach(button => button.setAttribute('aria-pressed', String(button.dataset.compareMode === mode)));
@@ -476,7 +476,7 @@ window.createWafflehouseComparison = ({ app, selectedRun, context }) => {
 </template>
 
 <script>
-window.createWafflehouseExamples = ({ app, drawer, selectedRun, tool, applyExample }) => {
+window.createWaffleryExamples = ({ app, drawer, selectedRun, tool, applyExample }) => {
   const fragment = document.getElementById('wh-examples-template').content.cloneNode(true);
   const gallery = fragment.querySelector('.wh-examples'), form = fragment.querySelector('.wh-save-example');
   app.querySelector('.wh-playground').prepend(gallery);
@@ -532,7 +532,7 @@ window.createWafflehouseExamples = ({ app, drawer, selectedRun, tool, applyExamp
 
 <script>
 // Local prototype only. No installation, tool process, or provider calls occur here.
-window.createWafflehouseJourney = ({ app, m, q, set, render, preview, current, chooseOperation }) => {
+window.createWaffleryJourney = ({ app, m, q, set, render, preview, current, chooseOperation }) => {
   const fragment = document.getElementById('wh-journey-template').content.cloneNode(true);
   const take = name => fragment.querySelector(name);
   const onboarding = take('.wh-onboarding');
@@ -541,7 +541,7 @@ window.createWafflehouseJourney = ({ app, m, q, set, render, preview, current, c
   q('.wh-panels > section:nth-child(2) .wh-panel-body').prepend(take('.wh-progress'), take('.wh-run-banner'));
   q('.wh-selection').after(take('.wh-findings'));
   q('.wh-inspector').after(take('.wh-pipeline'));
-  const drawer = window.createWafflehouseDrawer({ app });
+  const drawer = window.createWaffleryDrawer({ app });
   q('.wh-inspector').hidden = true;
   const manage = button('Tools & setup', () => { stage = 'setup'; refresh(); });
   manage.className = 'wh-manage'; q('.wh-chrome').append(manage);
@@ -556,8 +556,8 @@ window.createWafflehouseJourney = ({ app, m, q, set, render, preview, current, c
   let configured = { rascal: true, squint: true }, setupOpen = '', selected = null, pending = null;
   let timer = null, runs = [], exportTab = 'command', sequence = 0, lastContext = '', estimateTimer = null, estimateKey = '';
   const locked = new Map();
-  const comparison = window.createWafflehouseComparison({ app, selectedRun: () => selected, context: () => lastContext });
-  const examples = window.createWafflehouseExamples({ app, drawer, selectedRun: () => selected, tool: () => m.tool, applyExample: example => {
+  const comparison = window.createWaffleryComparison({ app, selectedRun: () => selected, context: () => lastContext });
+  const examples = window.createWaffleryExamples({ app, drawer, selectedRun: () => selected, tool: () => m.tool, applyExample: example => {
     loadRun(example, true);
     set('.wh-status', 'Loaded example: ' + example.name + '. Review its inputs and settings, then Run to create a new attempt.');
   } });
@@ -596,7 +596,7 @@ window.createWafflehouseJourney = ({ app, m, q, set, render, preview, current, c
       card.append(actions);
       if (setupOpen === tool) {
         const instructions = element('div', '', 'wh-setup-instructions');
-        instructions.append(element('p', !installed[tool] ? 'Install the supported ' + title(tool) + ' release, make its executable available on PATH, then recheck. Exact distribution links will be supplied by the tool.' : tool === 'rascal' ? 'Configure a segmenter for prompt-based masks and a filler for painting. Wafflehouse reads readiness from Rascal; it does not store your keys.' : 'Choose a judge in Squint’s configuration and set its provider’s required environment variables. Wafflehouse shows missing variable names, never their values.'));
+        instructions.append(element('p', !installed[tool] ? 'Install the supported ' + title(tool) + ' release, make its executable available on PATH, then recheck. Exact distribution links will be supplied by the tool.' : tool === 'rascal' ? 'Configure a segmenter for prompt-based masks and a filler for painting. Wafflery reads readiness from Rascal; it does not store your keys.' : 'Choose a judge in Squint’s configuration and set its provider’s required environment variables. Wafflery shows missing variable names, never their values.'));
         instructions.append(button(!installed[tool] ? 'Recheck installation · simulate found' : 'Recheck configuration · simulate ready', () => { if (!installed[tool]) installed[tool] = true; else configured[tool] = true; setupOpen = ''; refresh(); })); card.append(instructions);
       }
       list.append(card);
@@ -634,7 +634,7 @@ window.createWafflehouseJourney = ({ app, m, q, set, render, preview, current, c
     comparison.reset();
     examples.reset();
     clearTimeout(timer); unlock(); pending = null; selected = null; runs = []; sequence = 0; lastContext = ''; clearTimeout(estimateTimer); estimateKey = ''; budgetCents = { rascal: 480, squint: 480 };
-    stage = route === 'wafflehouse' ? 'setup' : 'workspace';
+    stage = route === 'wafflery' ? 'setup' : 'workspace';
     installed = { rascal: route === 'rascal' || route === 'ready', squint: route === 'squint' || route === 'ready' };
     configured = { rascal: route === 'ready', squint: route === 'ready' }; setupOpen = '';
     m.tool = route === 'squint' ? 'squint' : 'rascal'; m.task = m.tool === 'rascal' ? 'Create a mask' : 'Check an edit'; m.mode = m.workspace = 'playground'; q('.wh-tool-select').value = m.tool;
@@ -1010,7 +1010,7 @@ window.createWafflehouseJourney = ({ app, m, q, set, render, preview, current, c
       if (view === 'wipe' && !placeholder) {
         const source = document.createElement('div'); source.className = 'wh-canvas'; source.append(q('.wh-photo').cloneNode(true));
         const result = q('.wh-canvas').cloneNode(true); result.hidden = false; result.dataset.view = 'overlay';
-        q('.wh-wipe-preview').replaceChildren(window.createWafflehouseWipe({ left: source, right: result, leftLabel: 'Source', rightLabel: line ? 'Location overlay' : mask || feather ? 'Mask overlay' : 'Result' }));
+        q('.wh-wipe-preview').replaceChildren(window.createWaffleryWipe({ left: source, right: result, leftLabel: 'Source', rightLabel: line ? 'Location overlay' : mask || feather ? 'Mask overlay' : 'Result' }));
       }
       const data = line ? { preview: 'illustrative', type: 'Location', kind: 'line', column: m.column / 100, width_px: m.width, image: 'living-room.jpg' } : feather ? { preview: 'illustrative', type: 'Mask', sigma_px: m.sigma, support: m.support, input: 'saved-armchair-mask' } : { preview: 'illustrative', action: current(), output: opMode() && supported() ? info()[2].split('→')[1].trim() : 'No live tool result' };
       set('.wh-json:not(.wh-command)', JSON.stringify(data, null, 2));
@@ -1095,8 +1095,8 @@ window.createWafflehouseJourney = ({ app, m, q, set, render, preview, current, c
     app.querySelectorAll('[data-attempt]').forEach(b => b.addEventListener('click', () => { m.tool = 'rascal'; q('.wh-tool-select').value = 'rascal'; chooseTask('Create a mask'); q('.wh-advanced-inner input').value = b.dataset.attempt; set('.wh-status', 'Opened sample attempt with grow ' + b.dataset.attempt + ' px.'); }));
     m.restore = saved => { if (!saved || !taskNames[saved.tool]) return; m.tool = saved.tool; m.task = taskNames[m.tool].includes(saved.task) ? saved.task : taskNames[m.tool][0]; m.operation = operations.some(op => op[0] === saved.operation) ? saved.operation : 'Line'; m.mode = ['playground', 'operations', 'usage', 'runs'].includes(saved.mode) ? saved.mode : 'playground'; m.workspace = m.mode === 'operations' ? 'operations' : 'playground'; q('.wh-tool-select').value = m.tool; render(); };
     render();
-    journey = window.createWafflehouseJourney({ app, m, q, set, render, preview, current, chooseOperation });
-    journey.reset('wafflehouse');
+    journey = window.createWaffleryJourney({ app, m, q, set, render, preview, current, chooseOperation });
+    journey.reset('wafflery');
   }
   function restore(state) { const saved = state?.modelContent?.layouts; if (Array.isArray(saved)) models.forEach(m => m.restore(saved.find(s => s.layout === m.layout))); }
   restore(window.openai?.widgetState);

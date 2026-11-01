@@ -1,6 +1,6 @@
 # Foundation plan review: disposition
 
-Date: 2026-10-31. Response to the owner's supplied Claude review of M0–M3.
+Date: 2026-10-31. Response to the owner's supplied external review of M0–M3.
 The [source inventory](../integration-sources.md) records inspected revisions and limits.
 This is planning work; no application implementation or sibling test run is claimed.
 

@@ -1,4 +1,4 @@
-window.createWafflehouseComparison = ({ app, selectedRun, context }) => {
+window.createWaffleryComparison = ({ app, selectedRun, context }) => {
   const fragment = document.getElementById('wh-comparison-template').content.cloneNode(true);
   const row = fragment.querySelector('.wh-baseline-row'), panel = fragment.querySelector('.wh-comparison');
   app.querySelector('.wh-result-actions').after(row);
@@ -54,7 +54,7 @@ window.createWafflehouseComparison = ({ app, selectedRun, context }) => {
     q('[data-compare-mode=wipe]').disabled = !canWipe;
     q('.wh-comparison-pair').hidden = mode === 'wipe'; q('.wh-comparison-wipe').hidden = mode !== 'wipe'; q('.wh-comparison-wipe-note').hidden = mode !== 'wipe';
     if (mode === 'wipe') {
-      q('.wh-comparison-wipe').replaceChildren(window.createWafflehouseWipe({ left: left.cloneNode(true), right: right.cloneNode(true), leftLabel: 'Baseline · ' + baseline.id, rightLabel: 'Attempt · ' + run.id }));
+      q('.wh-comparison-wipe').replaceChildren(window.createWaffleryWipe({ left: left.cloneNode(true), right: right.cloneNode(true), leftLabel: 'Baseline · ' + baseline.id, rightLabel: 'Attempt · ' + run.id }));
       q('.wh-comparison-wipe-note').textContent = 'Illustrative outputs · Baseline spend $' + baseline.spend.usd.toFixed(2) + ' / attempt $' + run.spend.usd.toFixed(2) + ' · estimated, simulated';
     }
     panel.querySelectorAll('[data-compare-mode]').forEach(button => button.setAttribute('aria-pressed', String(button.dataset.compareMode === mode)));

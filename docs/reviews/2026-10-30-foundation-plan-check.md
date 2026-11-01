@@ -4,7 +4,7 @@ Historical snapshot. Current source facts and plan corrections are recorded in t
 [2026-10-31 disposition](2026-10-31-plan-review-disposition.md).
 
 Date: 2026-10-30. Author review of [PLAN.md](../../PLAN.md) and
-[foundation runtime](../design/foundation-runtime.md), not a second Claude review.
+[foundation runtime](../design/foundation-runtime.md), not a second external review.
 
 ## Findings addressed while planning
 

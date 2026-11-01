@@ -5,7 +5,7 @@ Date: 2026-10-30
 
 ## Context
 
-Wafflehouse needs a refined, interactive local workspace, with reusable forms, image/artifact
+Wafflery needs a refined, interactive local workspace, with reusable forms, image/artifact
 inspection, history, and debugging. The selected Focused picker design already requires task
 and operation selection to share one component. Installation should remain one local host,
 and building the Rust host must not require a JavaScript toolchain.
@@ -13,7 +13,7 @@ and building the Rust host must not require a JavaScript toolchain.
 ## Decision
 
 Use React and TypeScript with Vite for the browser UI, served by the Rust host. Build a small
-Wafflehouse component library using selected shadcn components as a starting point and their
+Wafflery component library using selected shadcn components as a starting point and their
 underlying interaction primitives. Own the product styling and compose specialized image and
 artifact components as needed. Use Storybook with React/Vite from the first UI implementation.
 

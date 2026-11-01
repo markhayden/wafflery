@@ -1,36 +1,37 @@
-# H1: shared Wafflehouse launcher proposal
+# H1: shared Wafflery launcher proposal
 
-Status: concrete proposal for Rascal/Squint owner agreement, 2026-10-31. The host-side launcher,
+Status: original proposal 2026-10-31; canonical rename approved by the owner 2026-11-01.
+The coordinator owns shared-contract decisions and sibling launcher updates. The host-side launcher,
 attachment and browser authentication are implemented and verified in the
 [M1 checkpoint](../reviews/2026-10-31-m1-checkpoint.md); distribution is not published.
-Wafflehouse owns this interface now; foundation task F05a verifies it, while real
+Wafflery owns attachment and its private host handshake; foundation task F05a verifies them, while real
 installation remains gated on an actual release artifact. [Source inventory](../integration-sources.md).
 
 ## Canonical public surface
 
-- Program name: **`wafflehouse`**. No generic `playground` alias or compatibility shim is proposed.
-- Invocation from a tool: executable argv `--tool`, `<tool-id>`; e.g. `wafflehouse --tool rascal`
-  or `wafflehouse --tool squint`. Tool selection is a hint to the shared UI, not an executable
+- Program name: **`wafflery`**. No generic `playground` alias or compatibility shim is proposed.
+- Invocation from a tool: executable argv `--tool`, `<tool-id>`; e.g. `wafflery --tool rascal`
+  or `wafflery --tool squint`. Tool selection is a hint to the shared UI, not an executable
   name to run. Unknown IDs show the host's unavailable/setup state; they do not trigger installation.
-- Wafflehouse also accepts host-owned `WAFFLEHOUSE_DATA_DIR` as an absolute library parent.
+- Wafflery also accepts host-owned `WAFFLERY_DATA_DIR` as an absolute library parent.
   This lets development entry points share an isolated library without changing tool argv.
-  Explicit Wafflehouse `--data-dir` wins; otherwise the personal default applies. Tools should
+  Explicit Wafflery `--data-dir` wins; otherwise the personal default applies. Tools should
   simply inherit the caller's environment, not interpret or append this option.
-- Direct invocation: `wafflehouse`. Public `--help` and `--version` are supported. Duplicate or
+- Direct invocation: `wafflery`. Public `--help` and `--version` are supported. Duplicate or
   malformed selector flags are usage errors. Tools do not append private host-mode flags.
 - The tool process waits for this short launcher command and propagates its exit code. The
   launcher exits after host readiness/browser handoff; it does not stay attached to the host.
 
 ## Finding and installing the program
 
-Lookup order: explicit absolute **`WAFFLEHOUSE_BIN`**, then PATH `wafflehouse`, then
-`~/.local/bin/wafflehouse`. An invalid explicit override fails with an actionable message;
+Lookup order: explicit absolute **`WAFFLERY_BIN`**, then PATH `wafflery`, then
+`~/.local/bin/wafflery`. An invalid explicit override fails with an actionable message;
 do not fall through to an unrelated executable (exit 69, naming the invalid variable). Check
 it is an executable regular file after following symlinks; Homebrew-style symlinks are valid.
-This binary location is separate from `~/Library/Application Support/Wafflehouse`, which stores
+This binary location is separate from `~/Library/Application Support/Wafflery`, which stores
 library/settings/tool workspaces. Installation must not rewrite shell profiles or require sudo.
 
-When absent in an interactive terminal, explain that Wafflehouse is a separate shared local
+When absent in an interactive terminal, explain that Wafflery is a separate shared local
 program and offer installation. Interactive means stdin and stderr are both terminals; the
 prompt goes to stderr, defaults to No, and EOF means No. No leaves the system unchanged and
 returns 0. Yes invokes only
@@ -69,7 +70,7 @@ Tool callers do not parse stdout/stderr to discover the running host.
 
 ## Private attachment and process lifetime
 
-All attachment logic belongs to the Wafflehouse executable: resolve selected library, check the
+All attachment logic belongs to the Wafflery executable: resolve selected library, check the
 same-user control socket/protocol identity, acquire its lifetime lock if no host exists, start a
 detached host, await readiness, mint a one-time browser bootstrap and open the browser. Only
 after readiness may the launcher report success. Two concurrent launches converge on one host.
@@ -78,31 +79,30 @@ Tools must not read `host.json`, own locks, contact the control socket, create b
 or embed browser authentication. The private handshake can change without coordinated tool
 releases. It reports host protocol/version, selected library identity and ready loopback origin;
 an incompatible live host requires an explicit idle restart, never a second writer or implicit
-shutdown of active runs. Wafflehouse implements/validates this in F05a/F05b and F06a/F06b.
+shutdown of active runs. Wafflery implements/validates this in F05a/F05b and F06a/F06b.
+Private requests and replies require `product: "wafflery"`; a host missing that identity is
+incompatible even when its package version matches. This is internal IPC, not additional tool argv.
 
 Closing the tool's terminal after launcher return or closing a browser tab does not stop the
-host. Quit Wafflehouse owns graceful child shutdown. There is no auto-start login service.
+host. Quit Wafflery owns graceful child shutdown. There is no auto-start login service.
 
 ## Separate startup-registration follow-up
 
 H1's launcher surface does not solve tool MCP registration. The host still needs an explicit
 executable/argv/config/workspace descriptor to start each server. Foundation smoke descriptors
-can now be imported explicitly with `wafflehouse --register <descriptors.json>` while the host
+can now be imported explicitly with `wafflery --register <descriptors.json>` while the host
 is stopped. This setup operation does not launch tools or install software. Automatic discovery
 still requires a shared startup declaration. Specify that interface separately with tool owners; do
 not hold up agreement on the binary name and `--tool` launcher surface waiting for it.
 
 ## Required owner changes and verification
 
-- Rascal: replace `PLAYGROUND`/`playground` lookup with the canonical names above; change the
-  missing-host path to the agreed interactive offer. Update its existing task-8.7 tests. This is
-  a new corrective change after merged M8, not reopening the historical checkpoint.
-- Squint: implement its H1-blocked task 7.9 against the same lookup/argv/exit semantics.
+- Rascal and Squint: the coordinator updates both launchers to the canonical renamed
+  executable and override above, preserving the agreed lookup/argv/exit semantics.
 - Both: fake executable captures exact argv, paths with spaces work without a shell, invalid
   overrides fail, no/yes/noninteractive/installer failure are tested, and child exit codes propagate.
-- Wafflehouse: concurrent launch, stale discovery, compatible/incompatible attachment, browser
+- Wafflery: concurrent launch, stale discovery, compatible/incompatible attachment, browser
   opening and terminal detachment are process tests. No public download is needed for these.
 
-Owner response needed: accept or amend names/lookup/exit semantics, then provide fixture/test
-evidence. Production installer availability is an explicit later subgate, not a reason to leave
-the agreed launcher ABI unspecified.
+The owner has accepted the canonical rename. Matching sibling builds still need fixture/test
+evidence. Production installer availability remains an explicit later subgate.

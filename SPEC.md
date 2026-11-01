@@ -1,4 +1,4 @@
-# Wafflehouse specification
+# Wafflery specification
 
 Status: product acceptance consolidated, engineering specification still in progress. Started
 2026-10-30 through the kickoff workflow. The reviewed interface and decisions Q1–Q19 now have
@@ -28,10 +28,10 @@ inspection explains what happened without making the user assemble every interna
   intermediate steps are available to inspect. Manual drawing is optional refinement.
 - A known panorama wrap seam can be repaired automatically without a prompt. Prompt-based
   finding and free-form repair intent have different requirements and must not be conflated.
-- Squint owns its judging loop, rules, evidence tools, findings, and verdict. Wafflehouse
+- Squint owns its judging loop, rules, evidence tools, findings, and verdict. Wafflery
   exposes the supported inputs and settings and presents its results.
 - Usage documentation should be available beside the playground for CLI and MCP integration.
-- The tools own their behavior and detailed report pages. Wafflehouse uses the shared
+- The tools own their behavior and detailed report pages. Wafflery uses the shared
   contract; missing capabilities become explicit requests to the owning tool or contract.
 - Prefer clear current interfaces over compatibility layers or CLI execution fallbacks.
 - First usable release covers individual runs, debugging, local history, and reusable examples.
@@ -48,12 +48,12 @@ inspection explains what happened without making the user assemble every interna
 - The playground must build confidence and provide a path into the user's code. A run-specific
   Use in your pipeline pane should expose the tested invocation, configuration, prerequisites,
   and input/artifact dependencies. General Usage documentation alone does not meet this need.
-- For runs started through Wafflehouse, preserve owned input snapshots before execution and
+- For runs started through Wafflery, preserve owned input snapshots before execution and
   reuse identical stored files across runs. History and exports use those snapshots rather than
   depending on the original paths. This is an accepted requirement, not implemented in the mock.
 - Browser tabs do not own run lifetime. Closing a tab leaves the local host and active runs
   running; reopening reconnects to their current state. Stop run cancels an individual run.
-  Quit Wafflehouse shuts down the host and requires confirmation when work is active.
+  Quit Wafflery shuts down the host and requires confirmation when work is active.
 
 ## Reviewed interface direction
 
@@ -115,7 +115,7 @@ and the boundary between working mock interactions and future tool integration.
   Cleanup preserves assets referenced by any remaining run or saved example, and never deletes
   the user's original input files.
 - **Q8, confirmed:** Runs continue when the browser tab closes. Reopening reconnects without
-  submitting another run. Stop run and Quit Wafflehouse are separate controls; quitting while
+  submitting another run. Stop run and Quit Wafflery are separate controls; quitting while
   work is active requires confirmation. Process launch/detachment and crash recovery still
   require an implementation design.
 - **Q9, confirmed:** Show paid-run estimates and remaining tool session budget beside Run.
@@ -145,8 +145,8 @@ and the boundary between working mock interactions and future tool integration.
   or an edited result when the artifacts do not support that interpretation.
 
 - **Q14, confirmed:** One personal local library shared across projects and all three entry
-  paths. Default to Wafflehouse's application-data folder; do not require a project to begin.
-  History and saved examples are shared whether launched through Rascal, Squint, or Wafflehouse.
+  paths. Default to Wafflery's application-data folder; do not require a project to begin.
+  History and saved examples are shared whether launched through Rascal, Squint, or Wafflery.
   Settings expose the location and disk usage, with an option to choose another storage location.
   Exact platform paths and safe relocation behavior remain engineering design work.
 - **Q15, confirmed:** Preserve tool-declared outputs and debugging artifacts alongside inputs
@@ -164,7 +164,7 @@ and the boundary between working mock interactions and future tool integration.
   outcome/spend where applicable. Preserve already saved evidence. Do not automatically retry,
   resume computation, or build durable job recovery in the first release. Explicit retry creates
   a new attempt. Normal browser reconnection to a live host remains required by Q8.
-- **Q18, confirmed:** Use SQLite embedded in Wafflehouse's host for local metadata. Open the
+- **Q18, confirmed:** Use SQLite embedded in Wafflery's host for local metadata. Open the
   database on host startup and close it on shutdown; no separate database service is required.
   Data persists on disk while the host is stopped. Closing a browser tab does not stop the host
   or database. Schema, dependency selection, and detailed storage mechanics remain engineering work.
@@ -198,7 +198,7 @@ host/tool/viewer lifetime, minimal interruption handling, and file-access bounda
 choice (Q18) and proposed asset-store/single-host mechanics. Detailed engineering proposals
 remain under review and are not implemented. C2/C3/H1 still need agreed tool interfaces.
 
-An owner-run Claude CLI review found association, preservation, relocation, and interface
+An owner-run external CLI review found association, preservation, relocation, and interface
 ambiguities. The [review disposition](docs/reviews/2026-10-30-spec-review-disposition.md) records
 the corrections and qualified recommendations. The subsequent [plan review disposition](docs/reviews/2026-10-31-plan-review-disposition.md) updates source facts, task ordering, and the early H1/C4 proposals. Neither review closes an unaccepted contract gate.
 
@@ -225,9 +225,8 @@ dependencies, validation, and a detailed commit strategy. Each checkpoint should
 coherent working state, its checks, and how to roll it back. Implementation follows plan approval.
 
 At kickoff the folder contained the brief, interface map, tool requests, and an earlier interface
-study. It remains outside Git and has no `.claude/knowledge`; a README now documents the review
-mock and specification package. Include repository initialization in the plan and check for new
-knowledge instructions throughout the work. Keep README and design documentation aligned with
+study. The project is now versioned in Git; README documents the review mock and specification
+package. Check for repository instructions throughout the work. Keep README and design documentation aligned with
 implemented behavior.
 
 ## Supporting documents

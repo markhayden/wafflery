@@ -5,7 +5,7 @@
  - `invalid` and `error` as results with `isError`, JSON-RPC errors only before a run exists.
  - A cancelled request gets no response: rmcp drops it; the run's `run.json` says `cancelled`.
 +
-+## From Wafflehouse's client review (2026-10-31): run association and budget sessions (C4)
++## From Wafflery's client review (2026-10-31): run association and budget sessions (C4)
 +
 +Proposed for v0.2 review, not binding v0.1 fields. Keep MCP revision 2025-11-25. Both current
 +servers identify a run only in human progress-message text, with different formats; the host
@@ -55,8 +55,8 @@
 +
 +### Separate host-owned coordination (H1)
 +
-+Wafflehouse has also drafted the launcher ABI now, not at its later integration milestone:
-+canonical `wafflehouse`, `WAFFLEHOUSE_BIN` override, PATH then `~/.local/bin/wafflehouse`, and
-+`--tool <id>`. Tools locate/install/invoke only; Wafflehouse owns locks, attach/readiness,
++Wafflery has also drafted the launcher ABI now, not at its later integration milestone:
++canonical `wafflery`, `WAFFLERY_BIN` override, PATH then `~/.local/bin/wafflery`, and
++`--tool <id>`. Tools locate/install/invoke only; Wafflery owns locks, attach/readiness,
 +browser bootstrap and opening. Review that owner packet independently of the core schemas;
 +production installer publication remains a separate release subgate.

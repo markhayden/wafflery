@@ -13,12 +13,12 @@ idempotent; conflicting IDs, malformed input and a running host are refused with
 existing configuration. Registration executes nothing. The host reserves one of the client's
 32 allowed roots for its own materialized inputs, leaving at most 31 user roots.
 
-`WAFFLEHOUSE_DATA_DIR` allows an isolated shared library through an unchanged H1 launcher:
-`rascal playground` invokes exactly `wafflehouse --tool rascal`. The host owns attachment and
+`WAFFLERY_DATA_DIR` allows an isolated shared library through an unchanged H1 launcher:
+`rascal playground` invokes exactly `wafflery --tool rascal`. The host owns attachment and
 opening the browser. An unavailable selected tool stays unavailable with setup guidance; it
 never silently selects another tool. Choosing a connected tool recovers the form.
 
-`scripts/dev-rascal.ts` builds Wafflehouse, registers an explicitly selected Rascal binary in a
+`scripts/dev-rascal.ts` builds Wafflery, registers an explicitly selected Rascal binary in a
 fresh owned workspace, and exercises the actual launcher. The generic UI runs an offline seam,
 preserves evidence and journal, saves an independent example, exports image evidence, and reopens
 history after restart. No Rascal-specific logic was added to production forms or result handling.
@@ -49,7 +49,7 @@ host correctly uses side-by-side viewing and disables wipe. This verifies mask p
 not AI repair quality. The fixture and reproduction are documented in the test kit.
 
 The initial selected local Rascal binary reported version 0.1.0 and contract 0.1.0. During
-verification the other session rebuilt that path against the 0.2 draft; Wafflehouse correctly
+verification the other session rebuilt that path against the 0.2 draft; Wafflery correctly
 refused it. Final tests use a separate offline build of `git archive 9c52138` in owned temporary
 storage. The original sibling working tree and its build products were not changed. The source
 inventory distinguishes checkout revisions from executable provenance.

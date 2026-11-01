@@ -27,7 +27,7 @@ check without knowing the judging loop or parsing Squint-private namespaces.
 1. **Resolved:** the five use-case names align across description, tools/list, calls and results.
    Retain that conformance and its tests; no new naming adapter is requested.
 2. Define bootstrap behavior without a config. `DescribeArgs` currently requires `--config`;
-   Wafflehouse must distinguish installed-but-unconfigured from unavailable and explain how to
+   Wafflery must distinguish installed-but-unconfigured from unavailable and explain how to
    configure it. Choose a supported discovery/config-selection interface with C1.
 3. Declare required/optional candidate/source/reference slots, brief and rule requirements, and
    the actual supported selectable defaults/overrides. The host must not read `x-squint` or
@@ -35,7 +35,7 @@ check without knowing the judging loop or parsing Squint-private namespaces.
    for supported inputs or a documented typed editor, not guessed fields.
 4. Existing estimate/cap/session behavior is implemented. Coordinate the remaining shared
    C1/C4 request/result mapping and session identity semantics using the [C4 v0.2 proposal](C4-v0.2-proposal.md).
-   Wafflehouse keeps estimate runs out of user history by tracking its own control requests. Missing credentials, invalid authentication, and insufficient budget
+   Wafflery keeps estimate runs out of user history by tracking its own control requests. Missing credentials, invalid authentication, and insufficient budget
    are separate outcomes; key presence is not a provider health check or account-balance API.
 5. Keep findings, evidence, locations, and verdict in the tool report plus shared result fields.
    A completed `fail`/`unsure` judgment is not a failed execution. Do not advertise internal
@@ -64,14 +64,14 @@ estimate fixtures, offline independent-client evidence, and remaining exceptions
 
 ## Launcher coordination
 
-The `fcde474` source includes the H1 launcher: `WAFFLEHOUSE_BIN`, PATH, then `~/.local/bin`,
+The `fcde474` source includes the H1 launcher: `WAFFLERY_BIN`, PATH, then `~/.local/bin`,
 invoking exactly `--tool squint`. Retain the [agreed launcher semantics](H1-launcher-proposal.md):
-exit behavior and host-owned attachment. Wafflehouse exercised the actual `a0a2dde` launcher
+exit behavior and host-owned attachment. Wafflery exercised the actual `a0a2dde` launcher
 using `scripts/dev-pipeline.ts`; it opened a separate two-tool offline workspace and its host
 answered the control status check. Browser journeys separately verify both tools' run/history flow.
 Production installer publication and MCP configuration/registration remain separate subgates.
-The first browser screen is Squint's workspace/setup state after Wafflehouse is installed and
-running. No UI is embedded in Squint and no host-install screen appears inside Wafflehouse.
+The first browser screen is Squint's workspace/setup state after Wafflery is installed and
+running. No UI is embedded in Squint and no host-install screen appears inside Wafflery.
 Use fake executable/installer tests for yes, no, failure, and already-running-host cases. AC01/02.
 
 ## Verification and response
@@ -79,7 +79,7 @@ Use fake executable/installer tests for yes, no, failure, and already-running-ho
 Use Squint's scripted providers, independent MCP client and server tests already present, contract validation,
 and existing repository checks. No live paid verification is required for these handoffs.
 Return the implemented revision, fixtures and callable examples, test evidence, and any
-unsupported choices to the Wafflehouse spec before integration is treated as complete.
+unsupported choices to the Wafflery spec before integration is treated as complete.
 
 ## Sources checked
 

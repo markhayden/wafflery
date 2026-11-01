@@ -1,13 +1,12 @@
-# Claude specification review: disposition
+# Specification review: disposition
 
 Historical snapshot. Current source facts and plan corrections are recorded in the
 [2026-10-31 disposition](2026-10-31-plan-review-disposition.md).
 
-Date: 2026-10-30. [Original review](2026-10-30-claude-spec-review.md).
-The owner ran the prepared CLI review externally because the agent sandbox could not access
-their existing Claude login. The prompt contained ten numbered document snapshots, including
+Date: 2026-10-30. [Original review](2026-10-30-external-spec-review.md).
+The owner supplied an external review of ten numbered document snapshots, including
 table-manners CONTRACT.md. No application tests, schema inspection, or live tool verification
-were performed by Claude. Its model/version is unknown.
+were performed during that review.
 
 The author checked findings against the current specification and table-manners v0.1.0
 `d5a2d8e`. Changes below are specification corrections, not evidence of working software.
@@ -19,7 +18,7 @@ The author checked findings against the current specification and table-manners 
 | 3. Relocation blocked by native workspace paths | Accepted as a design risk; the claim that every real Rascal run necessarily blocks relocation was not proven. Move proposed stable tool storage outside the relocatable owned library. Disclose separate usage and that tool bytes stay put. Opaque references into relocated paths still require validation. |
 | 4. Generated client program required | Clarified. Prior wording was conditional, not proof a code generator was required. AC17 now explicitly requires captured MCP call/setup data; optional generated programs need verified dependencies/replay. Supported CLI/bundle replay remains a first-release requirement. |
 | 5. Estimates on a busy serial tool | Accepted. No host history rows for control estimates; no queued estimates while busy; sequential estimate/execute under one host reservation. Separate discovery refresh from explicit configuration/session restart. C1/C4 asks tool-side resource/serialization semantics. |
-| 6. Launcher ownership ambiguous | Accepted clarification. Tool launchers only locate/install/invoke Wafflehouse. The Wafflehouse binary alone owns locks, auth, attachment, and browser opening. |
+| 6. Launcher ownership ambiguous | Accepted clarification. Tool launchers only locate/install/invoke Wafflery. The Wafflery binary alone owns locks, auth, attachment, and browser opening. |
 | 7. Same-origin asset execution | Accepted. Verified raster allowlist, explicit types/nosniff, attachments for unsupported active content, escaped structured views, restrictive UI CSP, separate report origin, and malicious-file fixtures. Detailed HTTP security design remains open. |
 | 8. Unplanned prior-history import | Accepted scope clarification. First-release history tracks host-started attempts. Importing unrelated CLI/agent history is deferred; run resources still support known attempts. |
 

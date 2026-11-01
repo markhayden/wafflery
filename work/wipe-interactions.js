@@ -1,4 +1,4 @@
-window.createWafflehouseWipe = ({ left, right, leftLabel, rightLabel }) => {
+window.createWaffleryWipe = ({ left, right, leftLabel, rightLabel }) => {
   const root = document.createElement('div'); root.className = 'wh-wipe';
   const before = document.createElement('div'); before.className = 'wh-wipe-layer'; before.append(left);
   const after = document.createElement('div'); after.className = 'wh-wipe-layer wh-wipe-after'; after.append(right);

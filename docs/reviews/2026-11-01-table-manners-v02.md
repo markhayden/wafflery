@@ -40,7 +40,7 @@ cannot release the reservation. There is no automatic retry, replay, import or c
 
 ## Independent review
 
-Reviewer `/root/m2_review` requested two corrections: scan all bounded history pages before
+Reviewer (independent) requested two corrections: scan all bounded history pages before
 accepting a list-derived match, and keep contradictions terminal instead of retrying them away.
 Both were fixed. The reviewer then caught an early-return window in the negative tests; they now
 wait for a recovery-specific failure notice before asserting the unconfirmed reservation.

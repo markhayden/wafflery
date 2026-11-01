@@ -1,4 +1,4 @@
-# Wafflehouse interface direction
+# Wafflery interface direction
 
 Working interface map, 2026-10-30. This develops [BRIEF.md](BRIEF.md) before a build spec.
 The initial experience lets someone explore Rascal or Squint independently: choose an
@@ -7,7 +7,7 @@ activity, supply inputs, run it, inspect the result, and repeat with a change.
 ## Established scope
 
 - One local application, usable with either tool installed or both.
-- `wafflehouse` opens the workshop. Each tool's `playground` command finds it, offers an
+- `wafflery` opens the workshop. Each tool's `playground` command finds it, offers an
   install when absent, and launches it with that tool as context. The launchers contain no UI.
 - Focus on the individual Rascal and Squint workspaces first. Pixel comes later.
 - Cross-tool workflows and handoffs follow the individual experiences.
@@ -35,7 +35,7 @@ or filler. Prompt-based finding needs its configured pack; painting needs a fill
 needs its judge configuration and credentials, plus any enabled tool dependencies.
 
 Opening through `rascal playground` or `squint playground` may focus that tool directly,
-while keeping the same navigation. Reusing a running Wafflehouse instance is proposed startup
+while keeping the same navigation. Reusing a running Wafflery instance is proposed startup
 behavior. The install mechanism and instance discovery still need specification.
 
 ### Tool workspace
@@ -112,7 +112,7 @@ the existing recipes and operations, not a fixed UI schema; most belong under ad
 
 The main form should ask what the person wants to achieve. Internally, a finding prompt and
 a painting prompt serve different purposes. If both are needed, Rascal must define and expose
-their interpretation; Wafflehouse must not silently send the same text to both. The current
+their interpretation; Wafflery must not silently send the same text to both. The current
 recipe runner distinguishes finder-bound prompt text from filler text. A general free-form
 instruction parser is not assumed to exist.
 
@@ -214,7 +214,7 @@ explicit state instead of silently substituting the current file.
 1. **High-level actions.** Rascal's current server exposes registered operations, pack tools,
    and workspace helpers. Recipes, `heal`, and lab orchestration are not automatically part
    of that interface. Rascal should expose the selected activities as conforming actions;
-   Wafflehouse should not reconstruct Rascal recipes.
+   Wafflery should not reconstruct Rascal recipes.
 2. **Squint action naming.** Its plan describes one action per use case, while its server
    description also names a single `check` tool. Align the emitted description and MCP tools
    so the host can invoke exactly what it discovers.
@@ -243,7 +243,7 @@ the initial handoff proposals by owner and records their acceptance criteria.
 
 ## Evaluations and later scope
 
-Single-tool evaluation remains an intended use of Wafflehouse. Rascal already has corpus and
+Single-tool evaluation remains an intended use of Wafflery. Rascal already has corpus and
 matrix runs, blind pair judging, and decoded outcomes. Squint has evaluation matrices, arms,
 datasets, estimates, and gates. Those execution and review surfaces need their own contract
 mapping; they are not yet justified as working buttons in the first interface.

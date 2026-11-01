@@ -1,11 +1,11 @@
 # C1: unblock generic provider setup and paid execution
 
 Local owner handoff, 2026-11-01. This requests shared interfaces; it does not amend table-manners,
-approve v0.3 proposals, or authorize a Wafflehouse-only adapter. Nothing has been posted publicly.
+approve v0.3 proposals, or authorize a Wafflery-only adapter. Nothing has been posted publicly.
 
 ## Implemented on the host
 
-Wafflehouse accepts published v0.2, records session/correlation identity, checks remaining-budget
+Wafflery accepts published v0.2, records session/correlation identity, checks remaining-budget
 arithmetic, preserves unresolved spend, and recovers associated cancelled runs without replay.
 Its setup drawer reads the live session resource and displays action cost.needs_env names.
 These names do not prove that credentials are present, valid, or sufficient for an action.
@@ -21,7 +21,7 @@ The user has authorized paid testing; lack of permission is not the blocker.
 2. **Configuration lifetime.** Specify how a host selects an existing tool-owned configuration
    and which changes require a new serving session. No host interpretation of private config
    fields, inherited arbitrary environment, or silent restart to refresh an allowance. Secrets
-   stay with the tool/OS; do not add key storage to Wafflehouse.
+   stay with the tool/OS; do not add key storage to Wafflery.
 3. **Estimate dispatch and binding.** Declare the estimate operation for each paid action and
    the exact mapping from its arguments, images and configuration. Return a machine-checkable
    binding to those inputs plus tool version, effective model/configuration and session ID.
@@ -49,7 +49,7 @@ The user has authorized paid testing; lack of permission is not the blocker.
   unresolved spend retained in its original run history.
 
 Please return a tagged shared schema/fixtures or a reviewed proposal with ownership and delivery
-order. Wafflehouse can implement against the agreed shapes using its independent peer while
+order. Wafflery can implement against the agreed shapes using its independent peer while
 Rascal and Squint adopt them. An API key alone cannot fill these missing interfaces.
 
 ## Source boundary

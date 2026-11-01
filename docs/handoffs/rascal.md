@@ -1,7 +1,7 @@
 # Rascal handoff: tasks, operations, and reproducible runs
 
 Status: ready for owner review. Keep implementation in Rascal; shared additions go through
-table-manners. Wafflehouse remains a generic client. No sibling files changed.
+table-manners. Wafflery remains a generic client. No sibling files changed.
 
 ## Current evidence
 
@@ -12,12 +12,12 @@ This inspection did not rerun Rascal's checks; the milestone's recorded evidence
 Recipe actions (`seam`, `remove`, `remove_prompt`, `repair`, `repair_area`, `protect`, `mask_rect`)
 and native op tools exist. Without config, the description advertises no paid filler and empty
 credential requirements. `mask_rect`, optionally `seam` without filler, supplies an opt-in real
-offline M2 smoke through explicit test registration after Wafflehouse's no-paid guard is tested.
+offline M2 smoke through explicit test registration after Wafflery's no-paid guard is tested.
 
 ## R1 — Make complete-task intent discoverable
 
 **Request:** finish/verify the existing recipe-action path and close its presentation/readiness
-gaps. Wafflehouse must offer complete outcomes with configured defaults, not construct recipes.
+gaps. Wafflery must offer complete outcomes with configured defaults, not construct recipes.
 
 - Wrap-seam repair takes a panorama and filler; its recipe already cuts the wrap edge into a
   working canvas and defines the center line. It does not detect arbitrary seams.
@@ -88,7 +88,7 @@ until supported; it need not block R1/R3. AC06.
   may finish under its timeout. The UI must retain accurate spend and completed output.
 - H1: implemented `playground` currently finds `PLAYGROUND`/`playground` and offers no install.
   Review the [canonical launcher proposal](H1-launcher-proposal.md), then land a corrective change
-  after M8. Wafflehouse proposes `WAFFLEHOUSE_BIN`/`wafflehouse` and `~/.local/bin/wafflehouse`.
+  after M8. Wafflery proposes `WAFFLERY_BIN`/`wafflery` and `~/.local/bin/wafflery`.
 - C4: respond to the [v0.2 proposal](C4-v0.2-proposal.md) with structured run association and
   observable session boundaries; human progress-message formats will not be parsed by the host.
 

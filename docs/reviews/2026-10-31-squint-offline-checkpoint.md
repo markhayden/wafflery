@@ -31,7 +31,7 @@ previous isolated `9c52138` build. Sibling working files/build products were not
 - Browser screenshot inspected after history restoration; data fits the result pane.
 - `cargo clippy --locked --all-targets --all-features -- -D warnings`, formatting, diff check,
   release build and UI manifest verification passed. Two clean UI builds are byte-identical.
-- Independent `/root/m2_review` approved, no blocking findings; reviewer did not rerun tests.
+- Independent (independent) approved, no blocking findings; reviewer did not rerun tests.
   The later test-only history-dismissal correction and verification results were sent to reviewer.
 
 ## Remaining boundaries

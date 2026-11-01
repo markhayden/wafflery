@@ -1,4 +1,4 @@
-# Shared interface handoff: Wafflehouse integration
+# Shared interface handoff: Wafflery integration
 
 Status: ready for owner review; proposed additions, not an approved wire design. No sibling
 repository has been edited. Implement in the appropriate versioned contract/host interface;
@@ -6,7 +6,7 @@ do not add undeclared fields to v0.1 objects.
 
 ## Request and evidence
 
-Wafflehouse is a generic local client with schema-driven task/operation forms, run inspection,
+Wafflery is a generic local client with schema-driven task/operation forms, run inspection,
 history, and reproducible exports. It must not decode Rascal/Squint private formats or recreate
 their orchestration. [Acceptance criteria](../../ACCEPTANCE.md) define the product tests.
 
@@ -14,7 +14,7 @@ Rechecked 2026-10-31: HEAD `8e4d0c3`, published v0.1.0 remains the binding schem
 proposed in PROPOSALS.md. Both tools now have conformance implementations and fixtures. See the
 [current source inventory](../integration-sources.md) rather than the earlier snapshots.
 
-Wafflehouse now supplies concrete [H1](H1-launcher-proposal.md) and [C4 v0.2](C4-v0.2-proposal.md)
+Wafflery now supplies concrete [H1](H1-launcher-proposal.md) and [C4 v0.2](C4-v0.2-proposal.md)
 proposals, plus a [PROPOSALS.md patch](table-manners-v0.2-proposals.patch). These need owner review,
 not guessed host adapters. Rascal M8 is merged; Squint's server is locally merged, not m7-tagged.
 
@@ -56,7 +56,7 @@ artifact references with type/frame/identity; and an explicit way to export/impo
 the dependencies needed to repeat an independent operation. Decide what belongs in a shared
 description, result, resource, or export action. Don't require one speculative universal SDK.
 
-**Confirmed preservation scope (Q15):** Wafflehouse retains declared outputs and debugging
+**Confirmed preservation scope (Q15):** Wafflery retains declared outputs and debugging
 artifacts, including intermediate masks, geometry, findings, and report dependencies. Define
 how the host obtains durable assets without relying on disposable tool files or guessed layouts.
 Exclude caches/model downloads and declare unsupported preservation explicitly.
@@ -103,7 +103,7 @@ are contract requirements. Daily/monthly durable spending ledgers are out of v0.
 stay open all day. Define behavior across provider/config changes, explicit restart, child death,
 and outstanding paid requests. Do not restart a server to silently replenish spending allowance.
 Distinguish reconnection to a live session from an interrupted process; no blind resubmission of
-an uncertain paid call. Wafflehouse's first release uses minimal crash handling (Q17): restore
+an uncertain paid call. Wafflery's first release uses minimal crash handling (Q17): restore
 saved history/evidence, flag interrupted attempts with unknown outcome/spend where needed, and
 require explicit retry as a new attempt. Durable job recovery or exhaustive crash reconciliation
 is not requested.
@@ -118,7 +118,7 @@ Test pre-run JSON-RPC rejection separately from transport uncertainty and actual
 
 **Deliver:** lifecycle semantics and fixtures covering session exhaustion, cancellation in flight,
 disconnect/reconnect, and server restart. A daily budget or universal provider-balance API is not
-requested. Wafflehouse owns tab/host lifecycle; tools remain the spending enforcement authority.
+requested. Wafflery owns tab/host lifecycle; tools remain the spending enforcement authority.
 
 **Accept:** multiple browser clients cannot authorize work against stale shared remaining budget;
 closing a tab does not cancel; cancellation stays pending until the terminal resource is known;
@@ -126,12 +126,12 @@ reported spend/partial outputs survive. Restart boundaries are explicit. AC08–
 
 ## H1 — Shared launcher/bootstrap agreement (host-owned)
 
-This is a coordination task between Wafflehouse and both tools; it need not become a new core
+This is a coordination task between Wafflery and both tools; it need not become a new core
 contract schema. Agree executable discovery, the `--tool` context, installation source/confirmation,
 compatible host reuse, loopback browser opening, and failures. The browser starts after the host
 has been installed and launched. There is no host-installation screen inside the host.
-Keep tool launchers thin: locate/install the Wafflehouse binary and invoke it with the agreed
-tool-selection argv. Only Wafflehouse owns locks, attachment, session authentication, bootstrap
+Keep tool launchers thin: locate/install the Wafflery binary and invoke it with the agreed
+tool-selection argv. Only Wafflery owns locks, attachment, session authentication, bootstrap
 secrets, and browser opening. Those details must not be independently implemented in each tool.
 
 Rascal task 8.7 is implemented with `PLAYGROUND`/`playground` lookup and guidance + exit 69,
@@ -153,7 +153,7 @@ spend implementations now exist. Then review C1 with R3's typed-operation exampl
 actual R3 milestone; C2 depends on that binding. C3 can proceed independently. Installer release
 availability is later than the launcher ABI and does not prevent fake executable tests. The fake host/client workflow
 can proceed before either real tool finishes conformance. Return agreed schema/fixture locations,
-version, owner, remaining exceptions, and verification evidence to Wafflehouse.
+version, owner, remaining exceptions, and verification evidence to Wafflery.
 
 ## Sources checked
 

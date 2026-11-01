@@ -1,4 +1,4 @@
-# Wafflehouse engineering draft
+# Wafflery engineering draft
 
 Status: embedded SQLite choice accepted (Q18); detailed storage and process design proposed,
 2026-10-30. Not an approved build plan or an
@@ -29,15 +29,15 @@ are implemented; the owner's permission to spend is already recorded.
 
 ## Storage ownership
 
-Default library: `~/Library/Application Support/Wafflehouse/Library`.
-The parent Wafflehouse directory contains settings and private host discovery/lock files so
+Default library: `~/Library/Application Support/Wafflery/Library`.
+The parent Wafflery directory contains settings and private host discovery/lock files so
 changing library location cannot accidentally create two active hosts. Only local storage is
 supported initially; network/shared live libraries are outside scope.
 
 Proposed layout, not an existing filesystem:
 
 ```text
-Wafflehouse/
+Wafflery/
   settings.json                 selected library path, non-secret preferences
   host.lock                     held for the lifetime of the host
   host.json                     private discovery record; not proof a host is alive
@@ -170,7 +170,7 @@ an explicit run deletion; the UI explains that the pin will clear. Examples reta
 
 Never recursively delete unknown tool workspace files. Cleanup of native tool stores needs a
 declared ownership/deletion interface. Show opaque tool storage separately in disk usage;
-reclaimable bytes must not include space Wafflehouse cannot safely release.
+reclaimable bytes must not include space Wafflery cannot safely release.
 
 Relocation is an idle maintenance operation: no active runs, imports, viewers, or downloads.
 Close tool processes and the database cleanly, copy into an empty destination, verify owned files,
@@ -184,11 +184,11 @@ The library UUID and content digests remain stable. Final relocation tests depen
 
 ## Host and tool processes
 
-Tool `playground` subcommands only locate/install and invoke the Wafflehouse executable with
+Tool `playground` subcommands only locate/install and invoke the Wafflery executable with
 the agreed tool-selection context. They do not read locks, authenticate a host endpoint, mint
-browser secrets, or open the final browser URL. The Wafflehouse binary owns all those details.
+browser secrets, or open the final browser URL. The Wafflery binary owns all those details.
 
-The Wafflehouse launcher resolves the configured library and tries to attach to the existing host. The
+The Wafflery launcher resolves the configured library and tries to attach to the existing host. The
 host owns an OS lock for its entire lifetime; a stale discovery record alone cannot authorize
 attachment or killing a PID. Authenticate the live endpoint and check host protocol/library
 identity. Simultaneous launches must converge on one host. An incompatible live host is an
@@ -304,7 +304,7 @@ migration or replay. The tagged v0.2 contract still uses scalar image slots: ord
 an internal UI representation, and list-slot wire semantics need a future approved contract. MCP roots remain
 specific to 2025-11-25; a future revision requires its own path-access decision.
 
-First-release history records Wafflehouse-started attempts. Tool run resources support reading
+First-release history records Wafflery-started attempts. Tool run resources support reading
 those attempts, not heuristic adoption of unrelated runs. Automatic import of prior CLI/agent
 history is deferred; a later explicit import must label unavailable dependencies honestly.
 
@@ -331,7 +331,7 @@ neither may execute with host-session authority.
 - Agree the now-drafted H1 launcher proposal with the tool owners; registration/installer subgates
   remain separate. C2/C3 preservation/report examples and R3 need actual delivery milestones.
 - Review the [C4 v0.2 proposal](docs/handoffs/C4-v0.2-proposal.md) before the contract tag;
-  Wafflehouse owns advancing this request, not passively waiting on it.
+  Wafflery owns advancing this request, not passively waiting on it.
 - Verify the selected foundation dependencies/tooling in M0; browser API, limits, event/session
   interfaces and commands are specified in the linked runtime design. Final report isolation
   remains dependent on C3.

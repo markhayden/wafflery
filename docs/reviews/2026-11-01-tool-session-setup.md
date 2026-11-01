@@ -35,7 +35,7 @@ remains refused pending C1. No dependencies, database schema or shared contracts
 
 ## Review and external dependency
 
-Independent reviewer `/root/m2_review` identified the lost-tool fallthrough, then approved the fix
+Independent reviewer (independent) identified the lost-tool fallthrough, then approved the fix
 and regression with no remaining findings. Review was read-only; tests were run by the implementer.
 
 [C1-paid-setup.md](../handoffs/C1-paid-setup.md) specifies readiness/configuration, estimate binding,

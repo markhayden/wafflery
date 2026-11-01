@@ -11,7 +11,7 @@ Status: host diagnostics complete; real Squint integration blocked at schema dis
   `MCP tool 'source_fidelity' input schema: Invalid schema: Pointer '/$defs/Kind' does not exist`.
   Estimate execution and evidence assertions remain unreached. The separate CLI estimate works;
   its envelope is not actual spend. No provider was called.
-- Independent reviewer `/root/m2_review`: approved, no blocking findings, contingent on the
+- Independent reviewer (independent): approved, no blocking findings, contingent on the
   required suite (now passed). Reviewer did not independently rerun tests.
 - No UI, H1 lifecycle, dependency pin, paid-call guard or sibling working files changed. No new
   browser/Safari claim: the prior Rascal UI and owner's saved library remain in place.
@@ -21,4 +21,4 @@ binary reviewable. They do not certify a successful check or model judgment. The
 browser entry, estimate presentation and scripted-check execution remain pending in
 [the slice plan](../plans/m4-squint-entry.md). Pass the
 [focused handoff](../handoffs/squint-discovery-blockers.md) to Squint's owner; no message was sent
-to that window by Wafflehouse.
+to that window by Wafflery.

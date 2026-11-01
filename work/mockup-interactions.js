@@ -176,7 +176,7 @@
       if (view === 'wipe' && !placeholder) {
         const source = document.createElement('div'); source.className = 'wh-canvas'; source.append(q('.wh-photo').cloneNode(true));
         const result = q('.wh-canvas').cloneNode(true); result.hidden = false; result.dataset.view = 'overlay';
-        q('.wh-wipe-preview').replaceChildren(window.createWafflehouseWipe({ left: source, right: result, leftLabel: 'Source', rightLabel: line ? 'Location overlay' : mask || feather ? 'Mask overlay' : 'Result' }));
+        q('.wh-wipe-preview').replaceChildren(window.createWaffleryWipe({ left: source, right: result, leftLabel: 'Source', rightLabel: line ? 'Location overlay' : mask || feather ? 'Mask overlay' : 'Result' }));
       }
       const data = line ? { preview: 'illustrative', type: 'Location', kind: 'line', column: m.column / 100, width_px: m.width, image: 'living-room.jpg' } : feather ? { preview: 'illustrative', type: 'Mask', sigma_px: m.sigma, support: m.support, input: 'saved-armchair-mask' } : { preview: 'illustrative', action: current(), output: opMode() && supported() ? info()[2].split('→')[1].trim() : 'No live tool result' };
       set('.wh-json:not(.wh-command)', JSON.stringify(data, null, 2));
@@ -261,8 +261,8 @@
     app.querySelectorAll('[data-attempt]').forEach(b => b.addEventListener('click', () => { m.tool = 'rascal'; q('.wh-tool-select').value = 'rascal'; chooseTask('Create a mask'); q('.wh-advanced-inner input').value = b.dataset.attempt; set('.wh-status', 'Opened sample attempt with grow ' + b.dataset.attempt + ' px.'); }));
     m.restore = saved => { if (!saved || !taskNames[saved.tool]) return; m.tool = saved.tool; m.task = taskNames[m.tool].includes(saved.task) ? saved.task : taskNames[m.tool][0]; m.operation = operations.some(op => op[0] === saved.operation) ? saved.operation : 'Line'; m.mode = ['playground', 'operations', 'usage', 'runs'].includes(saved.mode) ? saved.mode : 'playground'; m.workspace = m.mode === 'operations' ? 'operations' : 'playground'; q('.wh-tool-select').value = m.tool; render(); };
     render();
-    journey = window.createWafflehouseJourney({ app, m, q, set, render, preview, current, chooseOperation });
-    journey.reset('wafflehouse');
+    journey = window.createWaffleryJourney({ app, m, q, set, render, preview, current, chooseOperation });
+    journey.reset('wafflery');
   }
   function restore(state) { const saved = state?.modelContent?.layouts; if (Array.isArray(saved)) models.forEach(m => m.restore(saved.find(s => s.layout === m.layout))); }
   restore(window.openai?.widgetState);

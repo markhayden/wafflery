@@ -8,7 +8,7 @@ buildable work; it does not replace later tool-contract gates.
 
 ## Selected stack
 
-One Cargo application package, `wafflehouse`, with a library for testable host modules and a
+One Cargo application package, `wafflery`, with a library for testable host modules and a
 small executable entry point. One React UI package under `ui/`. No additional application
 framework, ORM, database service, global frontend state library, or plugin SDK initially.
 
@@ -128,13 +128,13 @@ contract. Test the initialization bytes with an independently implemented peer.
 
 Own `tokio::process::Child` and give its stdout/stdin to rmcp's async read/write transport.
 Do not use its convenience child wrapper's default shutdown policy: inspected 3.8.0
-`transport/child_process.rs` force-kills after three seconds. Wafflehouse first requests cancel,
+`transport/child_process.rs` force-kills after three seconds. Wafflery first requests cancel,
 awaits a known terminal state where available, then closes stdio and waits. Only explicit force
 quit escalates an unresponsive live child. Use process handles, not arbitrary remembered PIDs.
 The independent fake must exit on stdio EOF; real parent-death semantics remain an integration
 check, not a claim that kill-on-drop survives SIGKILL.
 
-Default `wafflehouse` launches or attaches and opens the browser. The same binary's internal
+Default `wafflery` launches or attaches and opens the browser. The same binary's internal
 host mode starts a new session before the async runtime, with stdio detached from the terminal.
 Acquire the OS lock before publishing readiness. Parent and child use a private same-user control
 socket in a mode-0700 runtime directory; socket mode 0600. Choose a short runtime path within the
@@ -142,8 +142,8 @@ user temporary directory to fit Unix socket limits, recording it privately in ho
 Test races and stale sockets; reject unexpected ownership/symlinks. No launchd/login service.
 
 The control socket handles readiness, compatible-host lookup, and new browser bootstrap URLs.
-Only the Wafflehouse binary understands this private protocol. Real tools eventually invoke
-`wafflehouse --tool <id>` under H1; that interface must be agreed before their launcher changes.
+Only the Wafflery binary understands this private protocol. Real tools eventually invoke
+`wafflery --tool <id>` under H1; that interface must be agreed before their launcher changes.
 F05 verifies the [H1 proposal](../handoffs/H1-launcher-proposal.md), drafted before implementation.
 The fake and opt-in real Rascal smoke use explicit executable/argv/root descriptors. No automatic
 PATH discovery or installation of real tools occurs in the foundation. Under the tool reservation,
@@ -260,15 +260,15 @@ development/UI regeneration.
 | `cargo fmt --all -- --check` | Rust format check |
 | `cargo clippy --locked --all-targets --all-features -- -D warnings` | Rust lint check |
 | `cargo test --locked --all-targets` | Unit/integration tests with isolated temporary libraries |
-| `cargo run --locked --bin wafflehouse -- --foreground --no-open` | Development host with embedded UI |
-| `cargo build --locked --release --bin wafflehouse` | Installed-style binary; never invokes Node/Bun |
+| `cargo run --locked --bin wafflery -- --foreground --no-open` | Development host with embedded UI |
+| `cargo build --locked --release --bin wafflery` | Installed-style binary; never invokes Node/Bun |
 | `bun run scripts/dev-fake.ts` | Build/start independent fake + isolated host + browser-ready development URL |
 
 UI build writes `ui/prebuilt/`; Rust embeds it using a build-time file enumeration that never
 runs a JS command. Commit prebuilt files and their source/lock digest manifest intentionally
 to satisfy source-only Rust builds. `build.rs` verifies the manifest's input hashes; missing prebuilt files always fail. Stale inputs
 warn in debug builds (identify the embedded snapshot) and fail in release or when
-`WAFFLEHOUSE_VERIFY_UI=1` is set. It never regenerates. UI development uses Vite while cargo tests
+`WAFFLERY_VERIFY_UI=1` is set. It never regenerates. UI development uses Vite while cargo tests
 can continue; freshness is mandatory at checkpoint/release CI. F04a must prove byte-identical
 output from two clean builds before digest equality is a gate. CI rebuilds and compares using
 pinned versions, no timestamps/absolute paths in the manifest. Storybook is

@@ -1,6 +1,6 @@
 # M4: real tool entry
 
-Status: G01–G04 explicit-entry slice complete, 2026-10-31. See the
+Status: G01–G04 explicit-entry slice complete and merged on main, 2026-10-31. See the
 [checkpoint](../reviews/2026-10-31-m4-entry-checkpoint.md). Automatic discovery and provider setup
 retain their interface gates.
 The owner also permits paid runs. That permission does not make the current client implement
@@ -13,7 +13,7 @@ tools now pass; provider readiness, estimates/caps UI, discovery and paid dispat
 ## Original entry evidence and decisions
 
 - Rascal M9 is merged; reviewed launcher source passes exactly `--tool rascal`, uses
-  `WAFFLEHOUSE_BIN` and leaves host attachment/browser ownership to Wafflehouse. Current local
+  `WAFFLERY_BIN` and leaves host attachment/browser ownership to Wafflery. Current local
   binary describes contract 0.1.0. No-config `seam` can emit a mask without credentials/filler.
 - Table-manners at `b260527` contains a 0.2.0 draft but only a v0.1.0 tag. Keep the supported
   version set unchanged until the tagged contract and tools are adopted together.
@@ -24,7 +24,7 @@ tools now pass; provider readiness, estimates/caps UI, discovery and paid dispat
 - Registration is setup only, not a command-line alternative for running experiments. It never
   executes a tool or installs a binary. Require a stopped host and its lifetime lock; never
   rewrite live sessions. New records cannot silently overwrite an existing tool ID.
-- Add host-owned `WAFFLEHOUSE_DATA_DIR` for consistent isolated entry from either launcher.
+- Add host-owned `WAFFLERY_DATA_DIR` for consistent isolated entry from either launcher.
   Explicit `--data-dir` wins. Tools continue to pass exactly their existing two arguments.
 - The Rascal development helper is explicitly tool-specific test/setup material; production
   host/form/result code stays generic. Use an owned fresh tool workspace, no config/filler and
@@ -44,9 +44,9 @@ tools now pass; provider readiness, estimates/caps UI, discovery and paid dispat
 
 ## G02 — Expose registration and shared workspace selection
 
-- Accept: `wafflehouse --register <descriptors.json> [--data-dir <path>]` registers then exits;
+- Accept: `wafflery --register <descriptors.json> [--data-dir <path>]` registers then exits;
   incompatible launch flags are usage errors. No browser/server starts during registration.
-- Accept: normal startup resolves explicit data-dir, then `WAFFLEHOUSE_DATA_DIR`, then the
+- Accept: normal startup resolves explicit data-dir, then `WAFFLERY_DATA_DIR`, then the
   personal default. Blank environment overrides fail clearly; existing H1 argv is unchanged.
 - Verify: subprocess CLI tests exercise registration, malformed combinations, data-dir precedence,
   and the tool-selector path. Existing concurrent launcher/lifecycle tests remain green.
@@ -58,7 +58,7 @@ G02 follow-up: preserve an unknown launcher tool selection and show registration
 rather than silently falling back to another tool. Verify Run is disabled and choosing an
 available tool recovers the form (workspace component plus its existing browser tests).
 
-- Accept: an explicit-path helper builds only Wafflehouse, registers Rascal in a fresh owned
+- Accept: an explicit-path helper builds only Wafflery, registers Rascal in a fresh owned
   workspace via G02, and enters through the actual `rascal playground` launcher. Print a safe
   reopen command with the same data directory. A no-open option uses direct host startup.
 - Accept: optional browser coverage uses the real installed executable and generic UI to choose
@@ -85,7 +85,7 @@ available tool recovers the form (workspace component plus its existing browser 
   configuration, typed choices and input-bound estimates without private-field heuristics.
   The current generic catalogue may expose actions whose dependencies are not configured.
 - Location input and Operations: required location actions remain unavailable in this slice;
-  R3 is now scheduled in Rascal M10. Wafflehouse must review its profile before implementing it.
+  R3 is now scheduled in Rascal M10. Wafflery must review its profile before implementing it.
 - Paid runs: adopt tagged C4 with the tools, display estimates and session allowance, validate the
   chosen cap at dispatch, preserve actual/uncertain spend through failure and cancellation. Start
   live verification with a deliberately small explicit cap. No provider balance inferred from keys.

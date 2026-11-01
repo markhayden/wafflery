@@ -1,4 +1,4 @@
-# Wafflehouse foundation implementation plan
+# Wafflery foundation implementation plan
 
 Status: M0–M3 approved by the owner on 2026-10-31; implementation started.
 Current implementation evidence: [M0 checkpoint](docs/reviews/2026-10-31-m0-checkpoint.md) and
@@ -6,8 +6,12 @@ Current implementation evidence: [M0 checkpoint](docs/reviews/2026-10-31-m0-chec
 [M2 checkpoint](docs/reviews/2026-10-31-m2-checkpoint.md), and
 [M3 checkpoint](docs/reviews/2026-10-31-m3-checkpoint.md). M0–M3 are complete: automated and
 packaged-source checks pass, and the owner explicitly confirmed the native Safari checklist.
-M4's explicit real-Rascal entry slice is implemented; automatic discovery and provider setup
-remain follow-on work. See its [checkpoint](docs/reviews/2026-10-31-m4-entry-checkpoint.md).
+M4's explicit real-Rascal entry slice is merged on main, including registration and the real
+launcher/browser journey. See its [checkpoint](docs/reviews/2026-10-31-m4-entry-checkpoint.md).
+The Squint offline entry and published v0.2 integration are also merged, as is the shared
+Tool setup drawer with live session spending. M4 remains incomplete: automatic installed-tool
+discovery, production installer/registration, unconfigured tool readiness and provider setup,
+and the complete first-install journeys from all three entry points still need delivery.
 The [current review disposition](docs/reviews/2026-10-31-plan-review-disposition.md) records
 changes and validation limits; it is not implementation verification.
 The owner agreed to proceed with foundation planning independently of later tool interfaces.
@@ -16,7 +20,7 @@ slices are in [M4: real tool entry](docs/plans/m4-real-tool-entry.md). Paid runs
 once estimates/caps/session handling are implemented; the current dispatch guard remains offline-only.
 Publishing and production installation are not authorized by this continuation.
 
-Current integration update (2026-11-01): adopt the published v0.2.0 contract and both tools together.
+Current integration update (2026-11-01): published v0.2.0 and both tools are adopted on main.
 See [the v0.2 integration plan](docs/plans/table-manners-v02.md) and [verified checkpoint](docs/reviews/2026-11-01-table-manners-v02.md). The initial v0.1 fixture/version
 requirements below describe the completed foundation checkpoint, not the current live allowlist.
 
@@ -35,11 +39,12 @@ Design inputs: [SPEC](SPEC.md), [acceptance](ACCEPTANCE.md), [storage/process de
 
 ## Dependency policy and coordination already brought forward
 
-M0–M3 do not wait for all C1–C4/H1 features. Wafflehouse owns the proposals that unblock the
-other tools: [H1 launcher](docs/handoffs/H1-launcher-proposal.md) and
-[C4 v0.2 semantics](docs/handoffs/C4-v0.2-proposal.md) are drafted now, with a ready-to-apply
+M0–M3 did not wait for all C1–C4/H1 features. Foundation planning brought forward the
+[H1 launcher](docs/handoffs/H1-launcher-proposal.md) and
+[C4 v0.2 semantics](docs/handoffs/C4-v0.2-proposal.md), with a historical
 [table-manners proposal patch](docs/handoffs/table-manners-v0.2-proposals.patch).
-Owner/schema agreement is pending; do not treat the drafts as accepted wire interfaces.
+Published v0.2 now supplies C4; the coordinator owns subsequent shared-contract decisions.
+Historical drafts alone are not accepted wire interfaces.
 F05 verifies H1's host semantics; M4 integrates the actual tool launchers/installer.
 
 Use published `table-manners = "=0.1.0"` initially, with an exact live execution allowlist
@@ -119,7 +124,7 @@ join these tracks rather than forcing a dependency that does not exist.
 
 ### F04b — Embed UI with a usable development loop
 
-- **Accept:** Cargo embeds existing assets without Node/Bun. Missing assets always fail. Stale assets warn in debug but fail in release or WAFFLEHOUSE_VERIFY_UI=1; CI always checks freshness.
+- **Accept:** Cargo embeds existing assets without Node/Bun. Missing assets always fail. Stale assets warn in debug but fail in release or WAFFLERY_VERIFY_UI=1; CI always checks freshness.
 - **Files:** `build.rs`, `src/host/assets.rs`, module wiring, Cargo config, manifest/build tests.
 - **Verify:** Rust build with JS absent from PATH; debug-stale warning, release-stale failure, strict-debug failure; fresh release build.
 - **Depends:** F04a/F01b. **Commit:** `embed UI with a usable development loop` with the appropriate conventional prefix.
@@ -135,12 +140,12 @@ join these tracks rather than forcing a dependency that does not exist.
 - **Verify:** `cargo test --locked --test host_lifecycle`; simultaneous ownership and stale readiness cases. Proposal approval remains distinct from tests.
 - **Depends:** F04b. **Commit:** `serve one foreground host and verify H1 boundaries` with the appropriate conventional prefix.
 
-### F05b — Detach and attach the Wafflehouse launcher
+### F05b — Detach and attach the Wafflery launcher
 
 - **Accept:** Default launcher starts/attaches, waits for readiness then opens the browser. Two launches converge; terminal/tab close leaves host alive; idle Quit stops it.
 - **Files:** `src/host/launch.rs`, control/main wiring, lifecycle tests, README.
 - **Verify:** MacOS concurrent launch, terminal exit, invalid override, incompatible host and explicit idle quit; no real installer.
-- **Depends:** F05a. **Commit:** `detach and attach the Wafflehouse launcher` with the appropriate conventional prefix.
+- **Depends:** F05a. **Commit:** `detach and attach the Wafflery launcher` with the appropriate conventional prefix.
 
 ### F06a — Authenticate private browser APIs
 
@@ -370,6 +375,21 @@ These preserve the acceptance criteria above; no dispatch is exposed before F11a
 | M7 — Distribution and full acceptance | Library relocation, packaged macOS support matrix, signed/checksummed install path, release verification | Tool relocation dependencies, release source/signing decision, all applicable AC01–AC22 |
 
 M5/M6 are independently gated feature groups; one does not automatically block the other.
+
+### Coordinated rename — 2026-11-01
+
+The owner approved the canonical name `wafflery`, `WAFFLERY_*` variables, and a new default
+data parent `~/Library/Application Support/Wafflery`. No old-name aliases, environment fallbacks,
+or automatic library migration. The coordinator owns sibling launcher and shared-contract edits.
+The repository directory remains in place until the coordinator moves it after completion.
+
+Branch `rename-wafflery` starts at `3836cd6`. Commit the mechanical runtime/UI/test rename with
+regenerated assets together so the binary, imports and browser protocol stay consistent; this
+explicit mechanical rename exceeds the ordinary authored-file budget. Then commit docs/mocks,
+current M4 status and the full verification record separately. Run the complete matrix below,
+review, and fast-forward main locally. No remote additions, pushes, tags or sibling edits.
+Results and the v0.3 readout are in the [rename checkpoint](docs/reviews/2026-11-01-rename-wafflery.md).
+
 Batch evaluations remain after this individual-run release; Pixel/chains/Linux stay deferred.
 Installer/download ownership remains H1. Do not use an unsigned fictional release URL in tests
 or publish a release as a side effect of completing the foundation.
@@ -387,7 +407,7 @@ bun run --cwd ui test:unit
 bun run --cwd ui build:storybook
 bun run --cwd ui test:browser
 bun run scripts/check-ui.ts
-cargo build --locked --release --bin wafflehouse
+cargo build --locked --release --bin wafflery
 ```
 
 The command matrix above is implemented. The foundation runtime document records its design.

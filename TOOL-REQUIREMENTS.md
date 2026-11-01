@@ -58,7 +58,7 @@ same thing as exporting a reproducible invocation bundle.
 
 ## Host-owned work
 
-Wafflehouse owns the local host, process discovery/reuse, browser API/session boundaries,
+Wafflery owns the local host, process discovery/reuse, browser API/session boundaries,
 managed input snapshots/deduplication, run/example/baseline records, explicit cleanup, the shared
 React/Storybook UI, drawer/image comparison, copying recorded calls, and assembling downloads.
 Tools own execution, providers/secrets, configuration semantics, authoritative spend limits,
@@ -86,10 +86,10 @@ Urgent deliverables are ready: [H1 launcher proposal](docs/handoffs/H1-launcher-
 H1 is owned here and must be agreed now; C4 should be reviewed before v0.2 is tagged.
 
 1. Give the shared owner C1 and the concrete R3 operation/artifact examples together. Request a
-   versioned proposal and paired fixtures, not ad hoc Wafflehouse-only fields.
+   versioned proposal and paired fixtures, not ad hoc Wafflery-only fields.
 2. Rascal M8 is merged; request a scheduled R3 delivery milestone and remaining R1 metadata.
    Squint's naming issue is resolved; remaining S1 bootstrap/metadata and M7 closure stay explicit.
-3. Resolve C3 against both real viewers. Develop the fake tool/viewer in Wafflehouse first.
+3. Resolve C3 against both real viewers. Develop the fake tool/viewer in Wafflery first.
 4. Resolve C2 against a saved native Mask and a Squint check; verify portable replay offline.
 5. Agree C4 and H1 with both tool owners and the host before paid integration/release packaging.
 

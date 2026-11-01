@@ -33,12 +33,12 @@ installer downloads or provider credentials were used.
   hosts, bootstrap/reload, import/deduplication, process restart/reselection, keyboard reordering,
   narrow layouts and visible upload failures. Storybook builds in the same check.
 - Two clean Vite builds are byte-identical. Prebuilt assets match their source/output digests.
-- Native macOS launcher smoke: `wafflehouse --tool rascal` opened Chrome, visibly showed
+- Native macOS launcher smoke: `wafflery --tool rascal` opened Chrome, visibly showed
   Connected locally, and removed the bootstrap from its URL. The test tab/host/library were
   cleaned up afterward. WebKit tests do not substitute for the native Safari check in M3.
 - `bun audit --cwd ui`: no vulnerabilities in 259 packages. `cargo-audit` 0.22.2 scanned
   106 locked Rust dependencies against 1,395 current RustSec advisories and exited 0 with no
-  findings. Audit tooling was installed under `/tmp/wafflehouse-review-tools`, not added to the
+  findings. Audit tooling was installed under `/tmp/wafflery-review-tools`, not added to the
   application or global Cargo bin directory.
 
 ## Review corrections and limits

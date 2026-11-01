@@ -1,8 +1,8 @@
 # Independent offline peer
 
-`sample-lab` is Wafflehouse's owned test tool. It is explicitly illustrative; it does not stand
+`sample-lab` is Wafflery's owned test tool. It is explicitly illustrative; it does not stand
 in for Rascal's repair operations or Squint's judgments. Its wire implementation does not use
-rmcp or Wafflehouse's coordinator/client. It may use the published contract's data/schema crate.
+rmcp or Wafflery's coordinator/client. It may use the published contract's data/schema crate.
 
 The fixtures target published `table-manners =0.2.0`. `fixtures.rs` builds deterministic
 description/result documents. The owned PNG is `ui/tests/fixtures/sample.png`, a generated RGB
@@ -37,7 +37,7 @@ test descriptor will opt into this executable. No real tool is discovered or ins
 Select a local binary explicitly (never discovered or installed automatically):
 
 ```sh
-WAFFLEHOUSE_RASCAL_BIN=/absolute/path/to/rascal cargo test --locked --test rascal_smoke -- --ignored --nocapture
+WAFFLERY_RASCAL_BIN=/absolute/path/to/rascal cargo test --locked --test rascal_smoke -- --ignored --nocapture
 ```
 
 This uses the same host coordinator, fresh no-paid check, exact contract-version allowlist,
@@ -59,7 +59,7 @@ failures remain failures; do not loosen the version, spend or fingerprint guards
 ## Optional real Rascal browser journey
 
 ```sh
-WAFFLEHOUSE_RASCAL_BIN=/absolute/path/to/rascal bun run --cwd ui test:browser
+WAFFLERY_RASCAL_BIN=/absolute/path/to/rascal bun run --cwd ui test:browser
 ```
 
 The optional Chromium/WebKit journey uses explicit registration and the same generic UI as any
@@ -84,14 +84,14 @@ at `3e6223a` or a later compatible commit. The coordinator probe owns config/scr
 its child environment, and supplies no credentials:
 
 ```sh
-WAFFLEHOUSE_SQUINT_BIN=/absolute/path/to/testkit/squint cargo test --locked --test squint_smoke real_squint_scripted -- --ignored --nocapture
+WAFFLERY_SQUINT_BIN=/absolute/path/to/testkit/squint cargo test --locked --test squint_smoke real_squint_scripted -- --ignored --nocapture
 ```
 
 This verifies discovery, truthful free metadata, a source-fidelity scripted result, zero spend,
 recorded call, complete evidence and unchanged original images. The verdict is fixture data,
 not a model judgment. Other use cases and reference-list bindings are not certified by this test.
 
-With both `WAFFLEHOUSE_RASCAL_BIN` and `WAFFLEHOUSE_SQUINT_BIN` set to explicit stable binaries,
+With both `WAFFLERY_RASCAL_BIN` and `WAFFLERY_SQUINT_BIN` set to explicit stable binaries,
 `bun run --cwd ui test:browser` includes the two-tool journey: Squint check, inspect/export,
 example reload without execution, switch to Rascal and run a seam, restart, then restore Squint
 history without mixing results. Without both variables those cases are skipped.

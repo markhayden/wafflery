@@ -6,7 +6,7 @@ Date: 2026-10-30
 
 ## Context
 
-Rascal-first, Squint-first, and Wafflehouse-first must share history and examples. Saved work
+Rascal-first, Squint-first, and Wafflery-first must share history and examples. Saved work
 must survive changes to original files. Browser tabs do not own execution. These are exploratory
 runs; durable job scheduling and automatic crash recovery would add unnecessary complexity.
 
@@ -17,8 +17,8 @@ shutdown, with no separate database service. This acceptance does not approve th
 plan or settle the tool-facing interfaces below.
 
 Use one local library, defaulting on macOS to
-`~/Library/Application Support/Wafflehouse/Library`. Keep a small settings file in the parent
-Wafflehouse directory identifying the selected library. Only one library is active at a time.
+`~/Library/Application Support/Wafflery/Library`. Keep a small settings file in the parent
+Wafflery directory identifying the selected library. Only one library is active at a time.
 Use SQLite for run/example metadata and ownership references; store large immutable assets as
 separate files addressed by their SHA-256 byte digest. No database service is installed.
 
@@ -29,7 +29,7 @@ different tools may run concurrently. All tabs share these limits and the same t
 
 Tool-native workspaces are separate from immutable asset storage. Tools must declare their
 startup and artifact-preservation interfaces; the host never guesses their internal files.
-Keep these workspaces outside the relocatable library at a stable location in the Wafflehouse
+Keep these workspaces outside the relocatable library at a stable location in the Wafflery
 application-data directory. A library move covers owned history/assets; tool workspace storage
 and its separate disk usage remain visible. Moving native workspaces needs tool support.
 Completed evidence remains accessible from host-owned storage. Native replay and reports retain

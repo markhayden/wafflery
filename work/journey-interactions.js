@@ -1,5 +1,5 @@
 // Local prototype only. No installation, tool process, or provider calls occur here.
-window.createWafflehouseJourney = ({ app, m, q, set, render, preview, current, chooseOperation }) => {
+window.createWaffleryJourney = ({ app, m, q, set, render, preview, current, chooseOperation }) => {
   const fragment = document.getElementById('wh-journey-template').content.cloneNode(true);
   const take = name => fragment.querySelector(name);
   const onboarding = take('.wh-onboarding');
@@ -8,7 +8,7 @@ window.createWafflehouseJourney = ({ app, m, q, set, render, preview, current, c
   q('.wh-panels > section:nth-child(2) .wh-panel-body').prepend(take('.wh-progress'), take('.wh-run-banner'));
   q('.wh-selection').after(take('.wh-findings'));
   q('.wh-inspector').after(take('.wh-pipeline'));
-  const drawer = window.createWafflehouseDrawer({ app });
+  const drawer = window.createWaffleryDrawer({ app });
   q('.wh-inspector').hidden = true;
   const manage = button('Tools & setup', () => { stage = 'setup'; refresh(); });
   manage.className = 'wh-manage'; q('.wh-chrome').append(manage);
@@ -23,8 +23,8 @@ window.createWafflehouseJourney = ({ app, m, q, set, render, preview, current, c
   let configured = { rascal: true, squint: true }, setupOpen = '', selected = null, pending = null;
   let timer = null, runs = [], exportTab = 'command', sequence = 0, lastContext = '', estimateTimer = null, estimateKey = '';
   const locked = new Map();
-  const comparison = window.createWafflehouseComparison({ app, selectedRun: () => selected, context: () => lastContext });
-  const examples = window.createWafflehouseExamples({ app, drawer, selectedRun: () => selected, tool: () => m.tool, applyExample: example => {
+  const comparison = window.createWaffleryComparison({ app, selectedRun: () => selected, context: () => lastContext });
+  const examples = window.createWaffleryExamples({ app, drawer, selectedRun: () => selected, tool: () => m.tool, applyExample: example => {
     loadRun(example, true);
     set('.wh-status', 'Loaded example: ' + example.name + '. Review its inputs and settings, then Run to create a new attempt.');
   } });
@@ -63,7 +63,7 @@ window.createWafflehouseJourney = ({ app, m, q, set, render, preview, current, c
       card.append(actions);
       if (setupOpen === tool) {
         const instructions = element('div', '', 'wh-setup-instructions');
-        instructions.append(element('p', !installed[tool] ? 'Install the supported ' + title(tool) + ' release, make its executable available on PATH, then recheck. Exact distribution links will be supplied by the tool.' : tool === 'rascal' ? 'Configure a segmenter for prompt-based masks and a filler for painting. Wafflehouse reads readiness from Rascal; it does not store your keys.' : 'Choose a judge in Squint’s configuration and set its provider’s required environment variables. Wafflehouse shows missing variable names, never their values.'));
+        instructions.append(element('p', !installed[tool] ? 'Install the supported ' + title(tool) + ' release, make its executable available on PATH, then recheck. Exact distribution links will be supplied by the tool.' : tool === 'rascal' ? 'Configure a segmenter for prompt-based masks and a filler for painting. Wafflery reads readiness from Rascal; it does not store your keys.' : 'Choose a judge in Squint’s configuration and set its provider’s required environment variables. Wafflery shows missing variable names, never their values.'));
         instructions.append(button(!installed[tool] ? 'Recheck installation · simulate found' : 'Recheck configuration · simulate ready', () => { if (!installed[tool]) installed[tool] = true; else configured[tool] = true; setupOpen = ''; refresh(); })); card.append(instructions);
       }
       list.append(card);
@@ -101,7 +101,7 @@ window.createWafflehouseJourney = ({ app, m, q, set, render, preview, current, c
     comparison.reset();
     examples.reset();
     clearTimeout(timer); unlock(); pending = null; selected = null; runs = []; sequence = 0; lastContext = ''; clearTimeout(estimateTimer); estimateKey = ''; budgetCents = { rascal: 480, squint: 480 };
-    stage = route === 'wafflehouse' ? 'setup' : 'workspace';
+    stage = route === 'wafflery' ? 'setup' : 'workspace';
     installed = { rascal: route === 'rascal' || route === 'ready', squint: route === 'squint' || route === 'ready' };
     configured = { rascal: route === 'ready', squint: route === 'ready' }; setupOpen = '';
     m.tool = route === 'squint' ? 'squint' : 'rascal'; m.task = m.tool === 'rascal' ? 'Create a mask' : 'Check an edit'; m.mode = m.workspace = 'playground'; q('.wh-tool-select').value = m.tool;

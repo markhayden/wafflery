@@ -1,4 +1,6 @@
-# Wafflehouse
+# Wafflery
+
+Formerly Wafflehouse.
 
 A local browser workspace for trying visual pipeline tools, inspecting their behavior, and
 taking a tested configuration into your own code. The first release focuses on Rascal and
@@ -50,7 +52,7 @@ cancelled call without a structured run identity remains unconfirmed until its p
 it is never automatically retried.
 
 The development script uses a temporary directory, which macOS may eventually remove. Ordinary
-launches use `~/Library/Application Support/Wafflehouse/Library` for durable personal storage.
+launches use `~/Library/Application Support/Wafflery/Library` for durable personal storage.
 To run that host use `cargo run --`; to isolate it use `--data-dir <path>`. `--foreground --no-open`
 keeps it attached to the terminal, and Ctrl-C requests orderly shutdown. Registered tool descriptors
 are currently explicit development configuration; see [the test kit](testkit/README.md), including
@@ -62,12 +64,16 @@ the opt-in real Rascal offline smoke. Automatic discovery and installation remai
 
 With a stable contract 0.2.0 Rascal binary already built or installed, select its absolute path:
 
+The tool's `playground` launcher must also implement the renamed H1 interface (`wafflery` and
+`WAFFLERY_BIN`). Older contract-compatible binaries still work for direct MCP tests, but must not
+be used with these launcher helpers. The same requirement applies to the Squint helper below.
+
 ```sh
 bun run scripts/dev-rascal.ts /absolute/path/to/rascal
 ```
 
 This creates an isolated library and Rascal workspace, registers the executable explicitly,
-then opens Wafflehouse through the actual `rascal playground` launcher. It supplies no provider
+then opens Wafflery through the actual `rascal playground` launcher. It supplies no provider
 configuration or credentials. Choose **Heal a seam**, upload an image, and set both **image
 coordinates** and **projection** to equirectangular to exercise the wrap-edge mask. The owned
 `ui/tests/fixtures/panorama.png` provides a suitable test image. Without a
@@ -110,13 +116,13 @@ and starts the tool with an empty environment. Provider setup comes in a later i
 While the host is stopped:
 
 ```sh
-target/debug/wafflehouse --register /absolute/path/to/tools.json
+target/debug/wafflery --register /absolute/path/to/tools.json
 ```
 
 Registration validates and atomically appends records without executing them. Repeating an
 identical record is harmless; conflicting IDs are refused. It cannot change a live host's
 configuration. `--data-dir <path>` selects a separate library parent. Alternatively,
-`WAFFLEHOUSE_DATA_DIR=/absolute/path` selects that same parent for both `wafflehouse` and
+`WAFFLERY_DATA_DIR=/absolute/path` selects that same parent for both `wafflery` and
 `rascal playground`; an explicit `--data-dir` takes precedence. The environment selection does
 not alter the tool's launcher arguments. Automatic discovery and installation are still pending.
 
@@ -137,7 +143,7 @@ bun run scripts/check-ui.ts
 cargo fmt --all -- --check
 cargo test --locked --all-targets
 cargo clippy --locked --all-targets --all-features -- -D warnings
-cargo build --locked --release --bin wafflehouse
+cargo build --locked --release --bin wafflery
 ```
 
 Vite opens at `http://127.0.0.1:5173`; Storybook at `http://127.0.0.1:6006`.
@@ -165,7 +171,7 @@ Open [work/mockups.html](work/mockups.html) directly in a browser. On macOS:
 open work/mockups.html
 ```
 
-Use **Start from** to review Wafflehouse-first, Rascal-first, Squint-first, or a ready workspace.
+Use **Start from** to review Wafflery-first, Rascal-first, Squint-first, or a ready workspace.
 Try a local Line operation, change its parameters, pin a baseline, compare attempts, save an
 example, and open Use in your pipeline. Tool-first views begin after terminal installation and
 host startup. Changing the starting point resets demo history and saved examples.
@@ -192,7 +198,7 @@ alone do not establish those properties.
 - [Foundation runtime](docs/design/foundation-runtime.md): selected stack, boundaries and planned
   developer commands. The host and image-library commands above are implemented.
 - [ENGINEERING.md](ENGINEERING.md): proposed storage, process ownership, lifecycle, and boundaries.
-- [Spec review disposition](docs/reviews/2026-10-30-spec-review-disposition.md): Claude's findings,
+- [Spec review disposition](docs/reviews/2026-10-30-spec-review-disposition.md): review findings,
   corrections, and remaining integration limits.
 - [ACCEPTANCE.md](ACCEPTANCE.md): testable first-release outcomes and planning gates.
 - [USER-JOURNEYS.md](USER-JOURNEYS.md): installation, experimentation, preservation, and handoff.

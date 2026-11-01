@@ -1,4 +1,4 @@
-window.createWafflehouseDrawer = ({ app }) => {
+window.createWaffleryDrawer = ({ app }) => {
   const dialog = document.createElement('dialog'); dialog.className = 'wh-drawer';
   dialog.setAttribute('aria-labelledby', 'wh-drawer-title'); dialog.setAttribute('aria-describedby', 'wh-drawer-context');
   const header = document.createElement('header'); header.className = 'wh-drawer-header';

@@ -7,17 +7,17 @@ covers Rascal and Squint independently; Pixel, cross-tool chains, and batch eval
 ## Outcome
 
 A user should leave with confidence in a tested configuration and a concrete way to use it
-outside Wafflehouse. Inspection and reproducible pipeline handoff are first-class outcomes.
+outside Wafflery. Inspection and reproducible pipeline handoff are first-class outcomes.
 Reproducible means preserving the invocation, inputs, settings, and relevant versions; it
 does not promise identical outputs from a nondeterministic provider.
 
 ## Reviewable mock
 
 The [local mockup](work/mockups.html) now connects these journeys. Its Start from selector
-offers Wafflehouse first, Rascal first, Squint first, and a ready workspace. Changing that
+offers Wafflery first, Rascal first, Squint first, and a ready workspace. Changing that
 selector resets the simulated installations, configuration, and in-memory run history.
 
-The browser walkthrough begins after Wafflehouse has started. Tool-first paths open directly
+The browser walkthrough begins after Wafflery has started. Tool-first paths open directly
 in the requested tool; any missing-host installation offer happens in the terminal before the
 browser opens. The walkthrough includes an empty host and per-tool setup,
 independent Line/Feather runs, inline provider estimates, progress/cancellation, immutable run
@@ -32,7 +32,7 @@ verification remains unavailable in this authoring environment.
 ## Common destination
 
 All three entry points open the same local host and browser interface. Release binaries include
-the built UI, so using Wafflehouse requires neither Node nor a frontend build. Tool executables,
+the built UI, so using Wafflery requires neither Node nor a frontend build. Tool executables,
 models, provider access, and other action dependencies remain separate installations.
 
 The host discovers supported installed tools, reports compatibility, and evaluates readiness
@@ -46,7 +46,7 @@ User story: I have Rascal and want to understand what its operations do, then us
 configuration in my own pipeline.
 
 1. Install Rascal using its supported release distribution, or use an existing installation.
-2. Run the proposed `rascal playground` launcher. If Wafflehouse is absent, receive a clear
+2. Run the proposed `rascal playground` launcher. If Wafflery is absent, receive a clear
    terminal installation offer. After confirmation, the launcher installs/starts the shared
    host and opens the browser directly in Rascal. No host-install screen exists inside the host.
 3. Land in Rascal's workspace, with task readiness visible. Existing configuration is reused.
@@ -60,7 +60,7 @@ configuration in my own pipeline.
    Select a compatible saved artifact to test a subsequent operation independently when the
    tool exposes that binding.
 7. Open Use in your pipeline on the chosen run. Copy a supported invocation or export a
-   reproducible bundle with its required input artifacts. Integrate it without Wafflehouse
+   reproducible bundle with its required input artifacts. Integrate it without Wafflery
    being a runtime dependency.
 8. Squint is discoverable as an optional way to inspect image quality. Installing it adds
    another independent workspace; automatic handoff is deferred.
@@ -77,7 +77,7 @@ can call from an image pipeline.
    The same terminal installation offer applies if the host is missing. After installation
    and startup, the browser opens directly in Squint.
 2. Land in Squint. See its configuration/readiness, including the selected judge and missing
-   environment-variable names. Wafflehouse does not store provider keys.
+   environment-variable names. Wafflery does not store provider keys.
 3. Choose a supported check. Supply the candidate image, references where relevant, and the
    brief/rules the check requires. Optional dependencies affect only checks that need them.
 4. Review the tool's estimate and remaining session budget beside Run. Clicking Run authorizes
@@ -95,12 +95,12 @@ can call from an image pipeline.
 Acceptance: no Rascal installation required; missing judge configuration has an actionable
 setup state; no surprise paid runs; findings and invocation information remain accessible.
 
-## Wafflehouse first
+## Wafflery first
 
 User story: I want to explore these tools visually before choosing which ones belong in my
 pipeline.
 
-1. Install the Wafflehouse release binary and start `wafflehouse`.
+1. Install the Wafflery release binary and start `wafflery`.
 2. If compatible tools are already installed, show them and their readiness. If none are
    found, show a useful start screen explaining Rascal and Squint, with setup instructions.
    Avoid an empty form and avoid making the user install the entire pipeline.
@@ -114,7 +114,7 @@ pipeline.
 6. Add the other tool later from the same discovery/setup surface. Existing runs remain intact.
 
 Acceptance: no-tools-installed is a designed state; installing one tool is sufficient; newly
-installed tools can be detected without reinstalling Wafflehouse; setup shows concrete remedies.
+installed tools can be detected without reinstalling Wafflery; setup shows concrete remedies.
 
 ## Returning user
 
@@ -124,7 +124,7 @@ existing host where compatible and focus the requested tool.
 The owner confirmed that closing a browser tab leaves the local host and active runs running.
 Reopening reconnects to current run state without resubmitting work. The interface should make
 that behavior clear while a run is active. Stop run requests cancellation of one run; Quit
-Wafflehouse shuts down the local host and requires confirmation if work remains active.
+Wafflery shuts down the local host and requires confirmation if work remains active.
 Rejecting that confirmation leaves the host and runs alone. A confirmed quit must use graceful
 cancellation and preserve terminal state and spend where the tools support it.
 
@@ -138,7 +138,7 @@ technical design work; tab closure must not accidentally trigger shutdown.
 Runs reopen with their original configuration and results. A rerun creates a new run.
 Unavailable tools, incompatible versions, and missing managed assets are explicit states.
 One personal local library holds history and examples across projects and all three entry
-paths. It defaults to Wafflehouse's application-data folder, without requiring a project.
+paths. It defaults to Wafflery's application-data folder, without requiring a project.
 Settings show its location and disk usage and allow choosing another storage location.
 The proposed relocation moves the owned history/image library on this machine. Tool-native
 workspace storage stays at a separate stable location, displayed with its own disk usage;
@@ -147,7 +147,7 @@ Exact platform paths, relocation behavior, and output/report preservation mechan
 
 ### Accepted input preservation
 
-For runs started through Wafflehouse, preserve owned copies of required input files before
+For runs started through Wafflery, preserve owned copies of required input files before
 execution. Execute against those snapshots so history and exports refer to the bytes actually
 used. Moving, editing, or deleting the user's original file must not affect the saved input.
 Keep the original path as provenance, not as the only way to retrieve the file.

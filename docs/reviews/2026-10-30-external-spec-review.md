@@ -1,11 +1,11 @@
-Review supplied by the owner after running the prepared Claude CLI prompt outside the agent sandbox.
+Review supplied by the owner after running the prepared external CLI prompt outside the agent sandbox.
 Received 2026-10-30. This is the unedited reviewer output; file/line references describe the
 pre-review snapshot and may now be stale. No model/version was reported. Findings are advisory,
 not verified implementation failures. See [disposition](2026-10-30-spec-review-disposition.md).
 
 ---
 
-# Wafflehouse pre-implementation spec review
+# Wafflery pre-implementation spec review
 
 ## 1. Verdict
 
@@ -75,12 +75,12 @@ Those need C1, R3, C2 or C3. AC22 (`ACCEPTANCE.md:286-287`) lists reports and ex
   - Tool workspaces (`tools/<installation-id>/`) live inside `Library/`.
   - No tool declares relocation support in v0.1, and unsupported tool-native path dependencies block relocation.
   - So after the first real Rascal run, every relocation attempt is blocked. The confirmed "choose another storage location" setting exists but never works.
-- **Smallest fix:** Move tool workspaces outside the relocatable library, e.g. to `Wafflehouse/tools/`. Relocation then moves only the SQLite database and host-owned assets. Runs whose native artifacts depend on a tool workspace keep their existing workspace-dependent label.
+- **Smallest fix:** Move tool workspaces outside the relocatable library, e.g. to `Wafflery/tools/`. Relocation then moves only the SQLite database and host-owned assets. Runs whose native artifacts depend on a tool workspace keep their existing workspace-dependent label.
   - Trade-off: bulky tool data stays on the original volume. Show it separately in the disk-usage view, as `ENGINEERING.md:123` already intends.
 
 **4. Medium-High: Export promises generated client programs.** (NEW accidental promise)
 - **Citations:** `ACCEPTANCE.md:230-231`, `ACCEPTANCE.md:241-242`; `USER-JOURNEYS.md:255-256`, `USER-JOURNEYS.md:263-265`.
-- **What breaks:** AC17 requires "a full client example" covering startup, initialization, roots and dependencies. That pushes Wafflehouse toward generating MCP client code in some language. `USER-JOURNEYS.md:264` forbids exactly that without a verified execution path. Implementers will either build a code generator or fail AC17.
+- **What breaks:** AC17 requires "a full client example" covering startup, initialization, roots and dependencies. That pushes Wafflery toward generating MCP client code in some language. `USER-JOURNEYS.md:264` forbids exactly that without a verified execution path. Implementers will either build a code generator or fail AC17.
 - **Smallest fix:** Make the first-release export a data bundle:
   - a manifest
   - the inputs
@@ -108,7 +108,7 @@ Those need C1, R3, C2 or C3. AC22 (`ACCEPTANCE.md:286-287`) lists reports and ex
 **6. Medium: Tool launchers must not reimplement host attachment.** (NEW clarification for H1)
 - **Citations:** `ENGINEERING.md:135-148`; `docs/handoffs/table-manners.md:112-125`; `CONTRACT.md:260-261`.
 - **What breaks:** "The launcher" attaches using the lock, authenticates the endpoint, and mints the bootstrap secret. If that means `rascal playground` and `squint playground`, each tool reimplements host-private protocol and auth logic, and any change needs coordinated releases across three repositories.
-- **Smallest fix:** In H1, limit the tool's `playground` subcommand to three steps: locate the Wafflehouse binary, offer installation, and run it (exec) with a fixed argv such as `--tool <name>`. All lock handling, attachment, secret creation and browser opening then lives only in the Wafflehouse binary.
+- **Smallest fix:** In H1, limit the tool's `playground` subcommand to three steps: locate the Wafflery binary, offer installation, and run it (exec) with a fixed argv such as `--tool <name>`. All lock handling, attachment, secret creation and browser opening then lives only in the Wafflery binary.
 
 **7. Medium: Untrusted bytes are served from the authenticated origin.** (NEW local-security gap)
 - **Citations:** `ENGINEERING.md:146-150`, `ENGINEERING.md:202-203`; `ACCEPTANCE.md:288-289`.
@@ -123,8 +123,8 @@ Those need C1, R3, C2 or C3. AC22 (`ACCEPTANCE.md:286-287`) lists reports and ex
 
 **8. Low: Accidental scope for importing tool history.** (NEW)
 - **Citations:** `ACCEPTANCE.md:154-155`; `USER-JOURNEYS.md:160-161`; `CONTRACT.md:201-202`.
-- **What breaks:** AC11 implies Wafflehouse imports runs it did not start. Nothing designs that feature. Because H1 gives tools isolated managed workspaces, such runs would not even be visible to the host.
-- **Smallest fix:** Explicitly defer importing runs started outside Wafflehouse, and drop or mark that AC11 bullet.
+- **What breaks:** AC11 implies Wafflery imports runs it did not start. Nothing designs that feature. Because H1 gives tools isolated managed workspaces, such runs would not even be visible to the host.
+- **Smallest fix:** Explicitly defer importing runs started outside Wafflery, and drop or mark that AC11 bullet.
 
 ## 3. Simplify or defer (accepted requirements preserved)
 

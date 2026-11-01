@@ -1,4 +1,4 @@
-window.createWafflehouseExamples = ({ app, drawer, selectedRun, tool, applyExample }) => {
+window.createWaffleryExamples = ({ app, drawer, selectedRun, tool, applyExample }) => {
   const fragment = document.getElementById('wh-examples-template').content.cloneNode(true);
   const gallery = fragment.querySelector('.wh-examples'), form = fragment.querySelector('.wh-save-example');
   app.querySelector('.wh-playground').prepend(gallery);

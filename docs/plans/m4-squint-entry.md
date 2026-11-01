@@ -42,7 +42,7 @@ is explicitly selected. Do not represent a catalog estimate as a live provider b
 ## G06 — Browser and two-tool development entry
 
 Reuse explicit registration and the generic form. Extend test setup for Squint and for Rascal
-plus Squint in one workspace. A helper accepts explicit paths, builds only Wafflehouse, prepares
+plus Squint in one workspace. A helper accepts explicit paths, builds only Wafflery, prepares
 owned tool directories and enters via the actual Squint H1 launcher. It prints the existing
 library's reopen command and the limitations. No installation, keys or live providers.
 

@@ -1,4 +1,4 @@
-# wafflehouse: a brief for the shared playground
+# wafflery: a brief for the shared playground
 
 A starting point for whoever builds the playground, written 2026-10-30. It replaces the earlier
 `../playground-recommendation.md`, which predates the contract: everything a tool exposes is now
@@ -7,7 +7,8 @@ on crates.io). This brief says what the playground is, what it reads from the co
 gaps the contract leaves for it, and an order to build in. Treat it as the input to a spec, not
 the spec.
 
-`wafflehouse` is a working name, free on crates.io and on GitHub at the time of writing.
+The owner selected `wafflery` as the canonical name on 2026-11-01. The public repository is
+`markhayden/wafflery`; package publication remains a separate distribution decision.
 
 ## The idea
 
@@ -19,7 +20,7 @@ tool's own result page, and sends an output of one run into the next tool with o
 also keeps a history so any run can be repeated or forked with one change.
 
 It is a peer of the tools, not part of any of them. Each tool has a thin `playground`
-subcommand that finds wafflehouse, offers to install it, and starts it. One release of the
+subcommand that finds wafflery, offers to install it, and starts it. One release of the
 playground serves every tool.
 
 ## What the contract already gives it
@@ -48,7 +49,7 @@ tool costs what the first did.
 
 ## The shape
 
-A local program in its own repository, `wafflehouse`, with three parts:
+A local program in its own repository, `wafflery`, with three parts:
 
 1. **A host** (Rust, one binary, the tools' build mechanics: `just check`, cargo-dist). It finds
    installed tools, starts each one's `serve` as a child process and holds an MCP client session
@@ -60,7 +61,7 @@ A local program in its own repository, `wafflehouse`, with three parts:
    chaining. Shipped embedded in the binary, with no separate build toolchain required to build
    the host.
 3. **The `playground` subcommand in every tool** (squint task 7.9, rascal's conformance
-   milestone). It finds `wafflehouse` (`PATH`, then the data directory), offers the install
+   milestone). It finds `wafflery` (`PATH`, then the data directory), offers the install
    command when absent and never runs an installer without a yes, starts it with
    `--tool <name>`, and opens the browser. No UI in the tool.
 
@@ -136,7 +137,7 @@ starting against v0.1.0. The playground can start now without waiting for either
    notice, `estimate`, progress and the stop button are proved.
 5. **"Send to"** between the two: rascal's result into squint's candidate slot; squint's finding
    into rascal's location slot.
-6. **The `playground` subcommand** in both tools, and an install path (`cargo install wafflehouse`
+6. **The `playground` subcommand** in both tools, and an install path (`cargo install wafflery`
    and the release archives).
 7. **Later**: the evaluate half (rascal's judging pages, squint's evaluation results) as a mode of
    the playground; hosting.

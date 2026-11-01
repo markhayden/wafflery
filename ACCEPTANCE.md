@@ -1,4 +1,4 @@
-# Wafflehouse first-release acceptance criteria
+# Wafflery first-release acceptance criteria
 
 Status: consolidated product acceptance draft, 2026-10-30. Derived from decisions Q1–Q19 in
 [SPEC.md](SPEC.md) and the reviewed [mock](work/mockups.html). This is the checklist for the
@@ -28,7 +28,7 @@ are defined in [TOOL-REQUIREMENTS.md](TOOL-REQUIREMENTS.md).
   tool selected. The sibling tool is not required.
 - If the host is absent, installation is offered in the terminal. A no leaves it uninstalled;
   a yes follows the agreed install path, then launches. Failure does not open a broken page.
-- Wafflehouse serves no installation screen before it exists. When started directly with no
+- Wafflery serves no installation screen before it exists. When started directly with no
   tools, its first browser screen explains the available tools and their setup paths.
 - Running an installed release requires neither Node nor a frontend development server.
 
@@ -38,7 +38,7 @@ Verify with isolated executable search paths and a fake installer/launcher. See 
 
 - Distinguish not installed, incompatible, installed but not configured, and ready.
 - After installation or configuration changes, recheck discovers the new state without
-  reinstalling Wafflehouse or losing history. Optional missing tools remain discoverable.
+  reinstalling Wafflery or losing history. Optional missing tools remain discoverable.
 - Discovery recheck does not silently restart an active tool. Applying configuration that needs
   restart explicitly shows the session/budget boundary and waits for idle or an explicit stop.
 - Unknown/incompatible declarations fail visibly; do not silently use a CLI fallback or infer
@@ -64,7 +64,7 @@ Verify schema-driven fixtures, keyboard picker behavior, and catalogue searches.
   mask-only tasks remain available with their own prerequisites.
 - Required provider/model configuration and missing credential-variable names have actionable
   setup states. A present key alone does not establish authenticated provider readiness.
-- Tool configuration owns secrets and provider defaults. Wafflehouse neither stores keys nor
+- Tool configuration owns secrets and provider defaults. Wafflery neither stores keys nor
   includes them in history, examples, copied code, logs shown to users, or downloads.
 
 Verify absent, partial, configured, and provider-authentication-failure fixtures. See C1/R1/S1.
@@ -133,7 +133,7 @@ Verify slow, failed, cancelled, cache-hit, and disconnected fake runs. See C4/R1
 ### AC10 — Tabs do not own execution
 
 - Closing a tab leaves the local host and runs active. Reopening reconnects without duplication.
-- Stop run and Quit Wafflehouse are distinct. Quit with active work requires confirmation;
+- Stop run and Quit Wafflery are distinct. Quit with active work requires confirmation;
   declining it leaves execution unchanged. Confirmed quit coordinates cancellation and shutdown.
 - Interrupted host/tool processes are reported honestly; browser reconnection is not a promise
   of resuming computation across a crash or computer restart.
@@ -158,7 +158,7 @@ Pre-run protocol rejection is distinct from a tool run failure and transport unc
   the sole means of retrieval. Store the invocation and available effective configuration.
 - Moving, changing, or deleting an original input leaves a managed run's saved inputs intact.
   Reopening and rerunning uses those preserved inputs and creates a new attempt.
-- First-release history covers Wafflehouse-started attempts; importing prior CLI/agent runs is
+- First-release history covers Wafflery-started attempts; importing prior CLI/agent runs is
   deferred. Native typed artifacts need supported preservation; missing assets are explicit.
 - Retain tool-declared outputs and debugging artifacts, including intermediate masks, geometry,
   findings, and report dependencies. Exclude disposable caches and model downloads. Unsupported
@@ -251,8 +251,8 @@ Plain MCP capture already follows v0.1; CLI/effective configuration need C2.
 
 - By default include supported invocation/setup, configuration, manifest, required images, and
   supported typed artifacts. Show included files and size; offer reference-only mode explicitly.
-- A portable example uses resolved bundle-relative inputs and works outside Wafflehouse with
-  the declared tools/providers available. It does not require Wafflehouse at runtime.
+- A portable example uses resolved bundle-relative inputs and works outside Wafflery with
+  the declared tools/providers available. It does not require Wafflery at runtime.
 - If an artifact cannot be exported/imported or reconstructed, state the local workspace
   dependency. Do not label a manifest-only download as a portable runnable bundle.
 - Verify fingerprints and omit credentials, unrelated files, tool binaries, and model installs.
@@ -321,10 +321,10 @@ all implementation planning. Each milestone still needs its scoped plan reviewed
 
 | Gate | Remaining design work | Recommended direction / owner |
 |---|---|---|
-| G1 | Output and report durability, workspace ownership | Q15 settles preservation scope. Specify ownership and capture; decide complete report snapshot versus reconstruction. Wafflehouse + tools/C2/C3. |
-| G2 | Session budgets, process lifecycle, concurrency | Q17 limits crash handling to persisted history and interrupted status. Tool-owned caps; serial per tool initially; no hidden restart to refresh budget. Wafflehouse + C4. |
+| G1 | Output and report durability, workspace ownership | Q15 settles preservation scope. Specify ownership and capture; decide complete report snapshot versus reconstruction. Wafflery + tools/C2/C3. |
+| G2 | Session budgets, process lifecycle, concurrency | Q17 limits crash handling to persisted history and interrupted status. Tool-owned caps; serial per tool initially; no hidden restart to refresh budget. Wafflery + C4. |
 | G3 | Discovery/install/host reuse | Known executable registry + explicit overrides; terminal install, attach to compatible host. Agree launcher ABI and supported platforms. H1. |
-| G4 | Storage/roots/cleanup | Managed immutable asset store plus explicit imported roots; no implicit whole-home access. Specify layout, atomicity, ownership, and deletion UX. Wafflehouse. |
+| G4 | Storage/roots/cleanup | Managed immutable asset store plus explicit imported roots; no implicit whole-home access. Specify layout, atomicity, ownership, and deletion UX. Wafflery. |
 | G5 | Complete action coverage | Use live advertised capabilities; publish per-action readiness and supported task/operation mapping. C1/R1/R3/S1. R2 remains optional. |
 | G6 | Engineering specification | Foundation choices and commands are specified in the runtime design; M0 verifies locks/tooling. Release platforms, installer and dependent integration plans close at their own milestones. |
 
