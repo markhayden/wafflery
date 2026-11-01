@@ -385,7 +385,7 @@ M5/M6 are independently gated feature groups; one does not automatically block t
 
 ## v0.3 client — proposed task list
 
-**Status: not approved for implementation.** This section specifies the next M4 setup and M6
+**Status: approved for implementation, 2026-11-01.** This section specifies the next M4 setup and M6
 paid/report slices; it does not mark those milestones complete or replace M5's operations work.
 The coordinator owns the contract and sibling changes. Source reviewed: table-manners branch
 `v0.3`, commit `e503a238ad6cc833834891c2c2cece7152b08bfc` (coordinator rulings applied after
@@ -432,7 +432,11 @@ exercise these as independent wire/fixture tests; the live host still refuses v0
 Validate against the exact reviewed schema snapshot, not host-generated structures.
 Files: testkit fixtures/scenarios, wire tests, fixture tests, testkit README (about five).
 Verify invalid readiness, omitted positive-cap declaration and malformed estimate are rejected.
-Depends: task-list approval. Commit: `test: define the v0.3 independent peer`.
+Depends: task-list approval (received). Commit: `test: define the v0.3 independent peer`.
+V01 keeps the live v0.2 host unchanged and tests against an archived copy of the reviewed v0.3
+schemas. Split its work into V01a (owned fixtures/schema validation) and V01b (independent wire
+controls) so each commit stays reviewable. The schema archive is generated input, with source
+revision and license recorded; V02 removes it when the published dependency supplies those schemas.
 
 **V02 — Cut over contract validation deliberately.** Pin published `table-manners = "=0.3.0"`,
 update validators/session parsers and fake default together; remove `needs_env` and reject live
@@ -444,10 +448,12 @@ display and current offline calls. This coordinated version cutover may exceed f
 files; the known sites are tools/mod.rs, tools/session.rs, UI api/tool-session.ts and workspace.ts,
 actions/model.ts, ToolSetup and its stories, testkit fixtures/main/scenarios and their tests.
 Enumerate the final set before coding and review schema/parser/fake changes together.
-Depends: V01 and publication of v0.3.0. Commit: `feat: adopt the v0.3 contract`.
-Before publication, fake-first work may use an isolated archive of the reviewed contract commit;
-never merge a dependency on a mutable sibling path or an unavailable Git revision. Any changed
-contract text gets coordinator review before this pin moves.
+Depends: V01. Commit: `feat: adopt the v0.3 contract`.
+The coordinator authorized `table-manners = { path = "../table-manners", version = "=0.3.0" }`
+for V02 development against the sibling v0.3 branch. Record its exact revision. V02's final step
+switches to crates.io `=0.3.0` once published, before its hosted-CI checkpoint; the hosted workflow
+checks out only this repository. Any changed contract text gets coordinator review before the
+pin moves. Do not edit the sibling repository.
 
 **V03 — Display readiness and actionable setup.** Replace environment-name-only setup with
 per-action requirements and distinct missing/present/valid/invalid/unknown states. Reuse the setup
