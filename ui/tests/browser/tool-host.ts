@@ -18,9 +18,14 @@ export type Host = {
   stop: () => Promise<void>;
   start: () => Promise<void>;
 };
-export const test = base.extend<{ host: Host; hostScenario: string }>({
+export const test = base.extend<{
+  host: Host;
+  hostScenario: string;
+  hostKind: "sample" | "rascal";
+}>({
   hostScenario: ["normal", { option: true }],
-  host: async ({ hostScenario }, use) => {
+  hostKind: ["sample", { option: true }],
+  host: async ({ hostScenario, hostKind }, use) => {
     const build = spawnSync(
       "cargo",
       ["build", "--locked", "--example", "sample-lab", "--bin", "wafflehouse"],
@@ -32,18 +37,46 @@ export const test = base.extend<{ host: Host; hostScenario: string }>({
       toolRoot = join(temporary, "tool");
     await mkdir(root, { mode: 0o700 });
     await mkdir(toolRoot, { mode: 0o700 });
+    const selectedBinary = process.env.WAFFLEHOUSE_RASCAL_BIN;
+    if (
+      hostKind === "rascal" &&
+      (!selectedBinary || !selectedBinary.startsWith("/"))
+    ) {
+      throw new Error(
+        "Real Rascal checks require an explicitly selected absolute WAFFLEHOUSE_RASCAL_BIN",
+      );
+    }
+    const source = join(temporary, "registration.json");
     await writeFile(
-      join(root, "tools.json"),
+      source,
       JSON.stringify([
         {
-          id: "sample",
-          executable: resolve("../target/debug/examples/sample-lab"),
-          args: [toolRoot, hostScenario],
+          id: hostKind,
+          executable:
+            hostKind === "rascal"
+              ? selectedBinary
+              : resolve("../target/debug/examples/sample-lab"),
+          args:
+            hostKind === "rascal"
+              ? [
+                  "serve",
+                  "--workspace",
+                  join(toolRoot, "workspace"),
+                  "--runs",
+                  join(toolRoot, "runs"),
+                ]
+              : [toolRoot, hostScenario],
           cwd: toolRoot,
           roots: [toolRoot],
         },
       ]),
     );
+    const registered = spawnSync(
+      resolve("../target/debug/wafflehouse"),
+      ["--register", source, "--data-dir", root],
+      { encoding: "utf8" },
+    );
+    if (registered.status !== 0) throw new Error(registered.stderr);
     let child: ChildProcess;
     let origin = "";
     async function control(operation: string): Promise<{ bootstrap: string }> {
@@ -161,7 +194,7 @@ export const test = base.extend<{ host: Host; hostScenario: string }>({
       },
       async open(page) {
         const { bootstrap } = await control("bootstrap");
-        await page.goto(`${origin}/?tool=sample#bootstrap=${bootstrap}`);
+        await page.goto(`${origin}/?tool=${hostKind}#bootstrap=${bootstrap}`);
       },
     };
     try {

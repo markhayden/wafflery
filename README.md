@@ -52,6 +52,48 @@ the opt-in real Rascal offline smoke. Automatic discovery and installation remai
 
 ## Develop and verify
 
+### Try real Rascal
+
+With Rascal already built or installed, select its absolute executable path:
+
+```sh
+bun run scripts/dev-rascal.ts /absolute/path/to/rascal
+```
+
+This creates an isolated library and Rascal workspace, registers the executable explicitly,
+then opens Wafflehouse through the actual `rascal playground` launcher. It supplies no provider
+configuration or credentials. Choose **Heal a seam**, upload an image, and set both **image
+coordinates** and **projection** to equirectangular to exercise the wrap-edge mask. Without a
+filler this produces mask evidence, not an AI repair. Required location actions remain unavailable
+until location binding is implemented; prompt-based actions may require unconfigured dependencies.
+
+The script prints the exact command to reopen the same library. Add `--no-open` to start through
+the direct host entry without opening a browser. Neither mode installs software. This is a
+temporary development library; the normal launcher uses the durable personal library.
+
+### Register an installed tool explicitly
+
+The host accepts a JSON array of descriptors with `id`, absolute `executable`, `args` (an array,
+never a shell command), absolute `cwd`, and absolute directory `roots`. See the real-tool helper
+for a concrete Rascal descriptor. These records select programs that will execute when the host
+starts; only register executables you intend to run. The host supplies its own input staging root
+and starts the tool with an empty environment. Provider setup comes in a later integration slice.
+
+While the host is stopped:
+
+```sh
+target/debug/wafflehouse --register /absolute/path/to/tools.json
+```
+
+Registration validates and atomically appends records without executing them. Repeating an
+identical record is harmless; conflicting IDs are refused. It cannot change a live host's
+configuration. `--data-dir <path>` selects a separate library parent. Alternatively,
+`WAFFLEHOUSE_DATA_DIR=/absolute/path` selects that same parent for both `wafflehouse` and
+`rascal playground`; an explicit `--data-dir` takes precedence. The environment selection does
+not alter the tool's launcher arguments. Automatic discovery and installation are still pending.
+
+### Development checks
+
 The frontend is React + Vite; the local host is Rust with bundled SQLite. Shared controls have
 Storybook stories. JavaScript tooling is needed to develop the UI, not to run a built binary.
 
