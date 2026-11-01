@@ -116,3 +116,17 @@ runs-list recovery. `unassociated` deliberately withholds evidence. `duplicate-p
 outcome unconfirmed and the reservation held. These negative peers deliberately violate the
 contract and are not conformance examples. `session-reset` proves a new ledger cannot silently
 authorize dispatch. The same production may_spend guard still rejects paid actions.
+
+## v0.3 preparation (V01)
+
+`v03_fixtures.rs` owns descriptions for `sample-lab` and `test-lens`, a ready offline action beside
+an independently configured paid action, and session/estimate/refusal examples. These fixtures
+perform no provider calls and do not change the live host's v0.2 or no-paid dispatch guards.
+The preparation tests validate independently of host-generated types.
+
+`contract-v03/schemas.json` preserves the eleven schema files, byte digests and source paths from
+[table-manners e503a23](https://github.com/markhayden/table-manners/tree/e503a238ad6cc833834891c2c2cece7152b08bfc).
+It is generated input, not a fork of the contract. Its accompanying Apache-2.0 license is copied
+from that revision. The archive lets CI validate the approved draft without a sibling checkout;
+V02 removes it when the exact published crate provides the schemas. Fixed timestamps/UUIDs in
+fixture examples are test data; serving processes must provide fresh sessions and live expiry.
