@@ -3,6 +3,8 @@ import { workspaceClient, type Attempt } from "../../api/workspace";
 import { Button } from "../../components/Button";
 import { ImageCompare } from "../../components/ImageCompare";
 import type { Asset } from "../../api/assets";
+import { object } from "../actions/model";
+import styles from "./Workspace.module.css";
 
 export function SavedComparison({
   attempt,
@@ -46,6 +48,10 @@ export function SavedComparison({
   const source = Object.values(attempt.inputs).flat()[0];
   const left = comparing ? baseline.outputs[0] : source;
   const right = attempt.outputs[0];
+  const result = object(attempt.result);
+  const declaredImages = object(result?.images)?.out;
+  const dataOnly =
+    result && (!Array.isArray(declaredImages) || declaredImages.length === 0);
   const settings = (run: Attempt) => ({
     parameters: run.request.params,
     images: run.request.images,
@@ -53,22 +59,32 @@ export function SavedComparison({
   });
   return (
     <section aria-label="Saved result comparison">
-      <ImageCompare
-        left={
-          left
-            ? { ...left, label: comparing ? "Baseline" : "Source" }
-            : undefined
-        }
-        right={
-          right
-            ? {
-                ...right,
-                label: right.role.charAt(0).toUpperCase() + right.role.slice(1),
-              }
-            : undefined
-        }
-        load={load}
-      />
+      {dataOnly ? (
+        <div>
+          <p>This run returned data without an output image.</p>
+          <pre className={styles.resultData} aria-label="Result data">
+            {JSON.stringify(result.body ?? {}, null, 2)}
+          </pre>
+        </div>
+      ) : (
+        <ImageCompare
+          left={
+            left
+              ? { ...left, label: comparing ? "Baseline" : "Source" }
+              : undefined
+          }
+          right={
+            right
+              ? {
+                  ...right,
+                  label:
+                    right.role.charAt(0).toUpperCase() + right.role.slice(1),
+                }
+              : undefined
+          }
+          load={load}
+        />
+      )}
       <div className="comparison-actions">
         {attempt.execution === "completed" && baseline?.id !== attempt.id && (
           <Button onClick={() => void pin(attempt.id)}>Pin as baseline</Button>

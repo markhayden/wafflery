@@ -254,3 +254,13 @@
   width: auto;
   margin-top: 0.2rem;
 }
+.resultData {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font:
+    0.8125rem/1.6 ui-monospace,
+    monospace;
+  padding: 1rem;
+  border-radius: var(--radius-control);
+  background: var(--color-background);
+}

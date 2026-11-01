@@ -24,6 +24,9 @@ pub fn description(scenario: &str) -> Value {
         document["actions"][0]["cost"]["may_spend"] = json!(true);
         document["actions"][0]["cost"]["basis"] = json!("estimated");
     }
+    if scenario == "data-only" {
+        document["actions"][0]["outputs"]["images"] = json!([]);
+    }
     if scenario == "bad-schema" {
         document["actions"][0]["params_schema"]["type"] = json!("bogus");
     }
@@ -171,6 +174,12 @@ pub fn execute(
         let roots = state.lock().unwrap().roots.clone();
         let (input_reference, output_reference, output_bytes) = mark(params, &roots)?;
         run["images"]["in"] = json!([{"slot":"source","role":"source","image":input_reference}]);
+        if scenario == "data-only" {
+            run["images"]["out"] = json!([]);
+            run["body"] =
+                json!({"summary":"Illustrative data-only result", "measurements":[1,2,3]});
+            return Ok(());
+        }
         let path = directory.join("candidate.png");
         fs::write(&path, &output_bytes)?;
         let mut image = json!({"role":"candidate","image":output_reference});
