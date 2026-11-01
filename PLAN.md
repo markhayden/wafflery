@@ -28,6 +28,8 @@ Publishing and production installation are not authorized by this continuation.
 Current integration update (2026-11-01): published v0.2.0 and both tools are adopted on main.
 See [the v0.2 integration plan](docs/plans/table-manners-v02.md) and [verified checkpoint](docs/reviews/2026-11-01-table-manners-v02.md). The initial v0.1 fixture/version
 requirements below describe the completed foundation checkpoint, not the current live allowlist.
+The [v0.3 client task list](#v03-client--proposed-task-list) below is planning only, awaiting
+Mark's approval. The live client still requires v0.2 and refuses paid dispatch.
 
 ## Outcome
 
@@ -381,12 +383,291 @@ These preserve the acceptance criteria above; no dispatch is exposed before F11a
 
 M5/M6 are independently gated feature groups; one does not automatically block the other.
 
+## v0.3 client — proposed task list
+
+**Status: not approved for implementation.** This section specifies the next M4 setup and M6
+paid/report slices; it does not mark those milestones complete or replace M5's operations work.
+The coordinator owns the contract and sibling changes. Source reviewed: table-manners branch
+`v0.3`, commit `61001ddde1c4a4a72a446e3a9666f182d4e69f86`: CONTRACT.md 3.1, 3.2,
+4.4–4.6, 5 and image profiles; schemas/core/estimate.json and referenced schemas; MAPPING's
+v0.3 table. Rascal M12 and Squint M9 supply the real peers. No sibling files are edited.
+
+### Scope and host decisions
+
+- Readiness and setup come from `describe`, including unconfigured tools. `present` or `unknown`
+  credentials are not described as verified, but can belong to a `ready` action. The host never
+  validates a key with a speculative provider request or executes setup prose.
+- Estimates are control requests, never attempts. The host prices the exact prepared arguments,
+  including images and `max_spend_usd`, then sends the tool's opaque binding in
+  `_meta["table-manners/estimate"]`. It does not implement the tool's digest recipe.
+- Wafflery requires a fresh allowed estimate and a positive user-selected per-call cap before
+  paid dispatch, even though binding and lowering the configured cap are optional in the contract.
+  Every paid schema must declare `max_spend_usd` as number with `exclusiveMinimum: 0`.
+  Zero means do not run; a larger-than-configured cap is invalid, never silently clamped.
+  An allowed estimate is not a reservation or a guarantee that the session still has budget.
+- Configuration is selected only through `serve --config <path>` or the tool's default lookup.
+  No config-file editor/parser or key store. Only minimal process environment and credential
+  variable names from declared requirements reach the child. Changed config/credentials require
+  an explicit restart, a visibly new session and fresh estimates. Old unresolved spend remains.
+- Both scalar and `many: true` image slots use the existing owned image library. Optional empty
+  slots are omitted; populated list slots send nonempty arrays in the user's chosen order.
+- Reports are tool-owned viewers/documents launched from declared argv without a shell. Only
+  runs with a usable local directory offer them. Viewer failure never changes a completed run.
+  The host owns viewer lifetime and isolates report content from its authenticated application.
+- Keep MCP 2025-11-25. Adopt exactly contract `0.3.0`, removing live v0.2 acceptance and
+  `cost.needs_env` handling at cutover. Saved older evidence remains readable; replay requires
+  a currently supported description. No dual-version dispatch or private-tool fallbacks.
+
+### M4a — v0.3 setup, sessions and image inputs
+
+**V01 — Establish independent v0.3 peer fixtures.** Add schema-valid descriptions for ready,
+needs-setup and unavailable actions; session/estimate/refusal fixtures and differently named fake
+tools. Script the reserved estimate control with deterministic, zero-provider behavior. Initially
+exercise these as independent wire/fixture tests; the live host still refuses v0.3 and paid calls.
+Validate against the exact reviewed schema snapshot, not host-generated structures.
+Files: testkit fixtures/scenarios, wire tests, fixture tests, testkit README (about five).
+Verify invalid readiness, omitted positive-cap declaration and malformed estimate are rejected.
+Depends: task-list approval. Commit: `test: define the v0.3 independent peer`.
+
+**V02 — Cut over contract validation deliberately.** Pin published `table-manners = "=0.3.0"`,
+update validators/session parsers and fake default together; remove `needs_env` and reject live
+v0.2 declarations. Recognize reserved `estimate` without putting it in the Actions picker.
+Keep the offline dispatch guard intact. Update integration inventory and runtime docs.
+Verify unconfigured discovery, invalid paid schemas, old-version refusal, old saved evidence
+display and current offline calls. This coordinated version cutover may exceed five authored
+files; enumerate them before coding and review schema/parser/fake changes together.
+Depends: V01 and publication of v0.3.0. Commit: `feat: adopt the v0.3 contract`.
+Before publication, fake-first work may use an isolated archive of the reviewed contract commit;
+never merge a dependency on a mutable sibling path or an unavailable Git revision. Any changed
+contract text gets coordinator review before this pin moves.
+
+**V03 — Display readiness and actionable setup.** Replace environment-name-only setup with
+per-action requirements and distinct missing/present/valid/invalid/unknown states. Reuse the setup
+drawer, keep secrets out, and disable unavailable/needs-setup actions without treating an
+unvalidated present key as invalid. Refresh description/session through control requests while
+work runs. Preserve selection/draft on refresh and invalidate stale declarations.
+Files: action model, ToolSetup, its story, API types, browser coverage (about five).
+Verify empty config, usable free action beside blocked paid action, present credential, rejected
+credential and successful refresh in Chromium/WebKit. Depends: V02.
+Commit: `feat: explain action readiness in tool setup`.
+
+**V04 — Choose session configuration and constrain child environment.** Extend explicit tool
+registration with an optional config path; pass `--config` as argv, never read that file. Discover
+credential names using a no-provider description under the minimal environment before starting
+the configured serving session. Do not broaden the environment to solve bootstrap discovery;
+report incomplete declarations to the coordinator. Copy values only from the host's inherited
+environment for declared credential requirements; persist names/paths, never values. Document
+that changes outside a running host's environment require relaunching that host.
+Files: registration, client spawn helper, registration tests, spawn tests, ENGINEERING.md.
+Verify paths with spaces, default lookup, missing key, unrelated secret exclusion and no values
+in descriptors, logs or exports. Depends: V02. Commit: `feat: configure isolated tool sessions`.
+
+**V05 — Restart sessions deliberately.** Add an idle-only tool restart control and setup action.
+Explain that restart begins a new spend ledger; reject restart with active or uncertain execution,
+using existing cancellation/shutdown flows first. Terminal recorded `unresolved_usd` stays in
+history but does not permanently prohibit a deliberate restart. Stop the owned child, then discover/start its
+replacement; never keep two serving processes for one registration. Show new session identity,
+invalidate declarations/estimates and retain prior unresolved history. No automatic restart on
+credential, cap or budget refusal. A failed restart leaves an explicit disconnected state.
+Files: session lifecycle, host API, setup UI, lifecycle tests, browser tests (about five).
+Verify refusal during work, child stop failure, fresh UUID after restart, retained old spend and
+no duplicate child. Depends: V03/V04. Commit: `feat: restart tool sessions explicitly`.
+
+**V06 — Bind list-valued image inputs.** Generalize materialization, schema validation and cleanup
+to ordered arrays for `many: true`, preserving scalar behavior otherwise. Every item carries its
+own immutable bytes, fingerprint and coordinate reference. Enforce existing per-file limits and
+bounded aggregate request limits before copying; cleanup touches only owned files.
+Files: attempt binding, materialized cleanup, binding tests, fixture scenario, ENGINEERING.md.
+Verify array order, duplicate file identities, scalar/list mismatch, optional omission, empty-list
+refusal, fingerprint mismatch and cleanup after partial failure. Depends: V02.
+Commit: `feat: bind ordered image lists`.
+
+**V07 — Edit and restore image lists.** Let ImageInput add/remove/reorder items according to slot
+cardinality. Save/open examples and attempt drafts retain order, roles and coordinates; no
+tool-specific `references` logic. Keep input scrolling and the Run footer stable.
+Files: ImageInput, ActionForm/model wiring, story, unit tests, browser tests (about five).
+Verify several references, removal/reorder, optional empty slots and saved-example round trip.
+Depends: V06. Commit: `feat: edit list image slots`.
+
+**Checkpoint V-A:** V01–V07, full matrix and review. Offline actions, setup and list inputs work
+against the independent peer; paid dispatch still refuses. Record exact contract/peer revisions
+and verification in a checkpoint document. This supplies M4's readiness/session portion, not
+automatic discovery, production installation or the full three first-install journeys.
+
+### M6a — Estimates and bounded paid execution
+
+**V08 — Preserve no-run refusals and explicit retry identity.** Distinguish a definitive JSON-RPC
+no-run error from transport uncertainty. Record that the failed request's claim is released;
+an explicit corrected retry may reuse that correlation id while creating a separate immutable
+attempt record linked to the earlier refusal. Never release the earlier owner's claim when a
+duplicate-id refusal arrives. Reconcile its earlier run reference to the original attempt; null
+does not mean permission to resend. Cancellation before allocation keeps the id claimed, so a
+new attempt gets a new id. No automatic replay after any refusal or disconnect.
+Files: association/coordinator, attempt persistence, refusal tests, recovery tests (about five).
+Verify failed roots/params then corrected same-id call, concurrent duplicate, null duplicate,
+queued cancellation and uncertain disconnect. Depends: V02. Commit: `fix: track released run claims`.
+
+**V09 — Prepare immutable calls without creating attempts.** Extract a bounded prepared-call
+resource holding exact arguments and owned materialized inputs before estimation. Bind it to
+tool/session/declaration and authenticated workspace. Invalidating a draft releases only its
+unclaimed temporary inputs; expiration, abandoned drafts and host startup clean these safely.
+Dispatch transfers ownership to an attempt without rereading mutable source files. Estimates
+and abandoned preparations create no attempt/history/example records.
+Files: preparation module, materialization, coordinator seam, preparation tests, ENGINEERING.md.
+Verify changed source bytes, concurrent drafts, expiration, ownership transfer and cleanup races.
+Depends: V06/V08. Commit: `refactor: prepare exact calls before dispatch`.
+
+**V10 — Request and validate bound estimates.** Call reserved `estimate` with `{action, arguments}`
+from V09, outside the execution permit. Validate structuredContent with estimate.json and verify
+tool/action/session attribution (including nested session identity/tool), allowed/refused
+consistency and effective config/model. Require a finite positive effective cap no greater than
+the prepared user cap; null is invalid for this capped request. An allowed estimate must be
+ready, with worst case within its cap and any finite remaining session budget. Validate session
+arithmetic and reject expiry in the past or beyond the contract's 24-hour bound. Treat the binding
+as opaque; keep it server-side with the prepared call. Use 1e-6 USD comparison tolerance.
+Reject mismatched/expired observations, update the displayed
+ledger without adding an attempt, and bound pending requests and retained preparations.
+Files: estimate service, control API, API routing, estimate tests, fake estimate scenarios.
+Verify responsive estimates during held runs, malformed/wrong-session replies, refused readiness/
+cap/budget, expiration and zero history/provider side effects. Include schema-valid contradictory
+fixtures: null/oversized cap, allowed but not ready, worst case above cap/remaining budget, nested
+session/tool mismatch and expiry over 24 hours. Depends: V09.
+Commit: `feat: request bound cost estimates`.
+
+**V11 — Present the cap and exact estimate.** Add one positive cap control backed by the declared
+`max_spend_usd` field, avoiding a duplicate generic form field. Show worst case, effective model,
+cap, remaining session budget and unresolved spend; distinguish uncapped null from zero. Require
+an explicit cap before paid Run. Draft edits (including cap, ordered images or parameters),
+declaration/session change and expiry invalidate the estimate. Re-estimating never executes.
+Files: cost UI, its story, form wiring, API client, browser tests (about five).
+Verify zero/negative/nonfinite caps, stale replies after edits, above-config refusal without
+clamping, needs-setup and an allowed estimate that later loses budget. Depends: V03/V10.
+Commit: `feat: review cost and cap before paid runs`.
+
+**V12 — Enforce the paid guard on the server.** Replace the offline-only refusal only after
+V08–V11 pass. Direct API requests must supply a live owned preparation with matching declaration,
+session, positive cap and semantically validated allowed unexpired estimate from V10. Atomically consume it once and dispatch
+exactly the priced arguments with `_meta["table-manners/estimate"]` beside correlation/progress
+metadata. Neither a client-supplied amount nor an invented binding authorizes a call. Preserve
+the recorded binding, cap and effective estimate in selected-attempt evidence/export; no secrets.
+Files: dispatch guard, transport, evidence, guard tests, recorded-call tests (about five).
+Verify bypass attempts, duplicate submission, changed files, session restart, expired quote and
+exact wire args/meta. Fake paid actions simulate spend without network/provider calls.
+Depends: V08/V10/V11. Commit: `feat: enforce bound paid dispatch`.
+
+**V13 — Explain paid failures and retained spend.** Map `stale_estimate` to review/re-estimate,
+`credential` to setup, `cap` to explicit cap review and `budget` to the session ledger. A larger
+than configured cap remains invalid/usage. Never auto-retry or restart; a new estimate requires
+a new explicit Run. Refresh readiness after credential outcomes. Keep cancelled/failed actual
+and unresolved spend visible and distinguish no-run refusals from allocated run errors.
+Files: result/error presentation, setup refresh, stories, error tests, browser tests (about five).
+Verify fake auth rejection costs zero; unresolved provider response costs worst case; two allowed
+estimates can race with one later budget refusal; stale estimates spend zero.
+Depends: V12. Commit: `feat: explain paid execution failures`.
+
+**Checkpoint V-B:** Full matrix, review and fake paid journey from cap/estimate through run,
+cancel, history and evidence export. Include two concurrent requests competing for a session
+budget, responsiveness of controls, and restart invalidation. No real credentials in mandatory
+tests and no claim of provider verification until V18. Record this checkpoint separately.
+
+### M6b — Tool report viewers and documents
+
+**V14 — Own render command execution.** Resolve declared render argv from the selected saved
+run, substitute `{run.dir}` and `{frame_ancestor}` literally, and spawn without a shell. Require
+an existing authorized local run directory; null/missing directories give an unavailable view,
+not a guessed path. Reject malformed declarations, bound diagnostics/output and retain child
+handles. Report processes receive minimal environment, not provider credentials or browser tokens.
+Files: render module, host render API, routing, fake render executable, render boundary tests.
+Verify spaces, unknown placeholders, missing/copied directories, shell metacharacters and
+attempt selection independent of the edited draft. Depends: V02.
+Commit: `feat: launch declared run renderers`.
+
+**V15 — Manage server readiness and lifetime.** Pass the host's exact origin through the declared
+`--frame-ancestor` argv placeholder. Accept exactly one stdout URL line with http, literal
+127.0.0.1 and a valid port; reject credentials, redirects outside that origin and extra stdout.
+Honor `ready_timeout_s` up to 60 seconds. Keep stdin open while viewing; close it on viewer close,
+replacement or host shutdown, then use SIGTERM for an unresponsive owned viewer. Retain existing
+explicit-force policy if it still will not exit. Failure never alters the run or spend.
+Files: server renderer, lifecycle integration, fake server scenarios, lifecycle tests, ENGINEERING.md.
+Verify delayed readiness, early/nonzero exit, malformed/multiple lines, timeout, stdin close,
+SIGTERM and exact framing origin. Depends: V14.
+Commit: `feat: manage local report server lifetime`.
+
+**V16 — Isolate document outputs.** For document renders, accept only exit zero plus one absolute
+existing output path. Apply an explicit host timeout and byte limit; require an authorized file
+boundary and reject symlink escape. Serve inspected output through a separate report origin and
+sandbox, never the authenticated application origin or file:// navigation. Do not recursively
+copy arbitrary neighboring files. Preserve a clear unavailable state for missing dependencies;
+this is viewing, not the still-gated C2 portable export.
+Files: document renderer, isolated content server, fake document scenarios, boundary tests, docs.
+Verify missing/nonzero outputs, external paths, active HTML isolation, size limit and copied run
+directory. Depends: V14. Commit: `feat: isolate rendered documents`.
+
+**V17 — Embed reports in the shared run drawer.** Offer tool-declared views on a saved run;
+display readiness/loading/error and open the chosen viewer in an isolated frame. Restrict frame
+navigation/origin and do not transmit API bearer credentials or bootstrap fragments to it.
+Close/replacement stops the viewer, while the underlying completed result remains intact. Keep
+raw evidence and existing comparison usable when reports cannot start.
+Files: report drawer, API client, story, browser tests, renderer integration (about five).
+Verify actual CSP framing in Chromium/WebKit, cross-origin parent/API isolation, external-link
+behavior, close/reopen/replacement and startup failure. Depends: V15/V16.
+Commit: `feat: inspect tool reports in the run drawer`.
+
+**Checkpoint V-C:** Full matrix and review with real fake-peer report processes, not static UI
+fixtures. Confirm shutdown ownership and no run-status mutation on report failure. Native Safari
+gets a focused report/frame/restart walkthrough; report it separately if pending. Record evidence.
+
+**V18 — Verify the real v0.3 peers.** After Rascal M12 and Squint M9 arrive, use isolated builds
+of coordinator-approved revisions and disposable library roots. Verify unconfigured readiness,
+config selection/restart, free Rascal execution, Squint list references, bound estimates and both
+tools' declared report kinds. Use each tool's scripted provider where supported first. A real
+paid probe uses the same cap/estimate flow with an explicit small cap; preserve costs and redact
+secrets from evidence. Existing paid-run authorization applies, but no unbounded provider test
+or key collection is part of CI. Unsupported scenarios stay explicit outstanding checks.
+Files: opt-in Rascal/Squint probes, integration inventory, acceptance/checkpoint docs (about five).
+Verify exact wire/evidence with each real peer, then full matrix for any changed host code.
+Depends: V-A/V-B/V-C plus published tools. Commit: `test: verify real v0.3 integrations`.
+
+### Approval, sequencing and rollback checkpoints
+
+This plan is the only v0.3 deliverable authorized now. Commit it as
+`docs: plan the v0.3 client milestones`, review and merge locally, then stop for Mark's task-list
+approval. No v0.3 code, dependency bump or paid dispatch in this planning change.
+
+After approval, use short-lived branches for V-A, V-B and V-C; V08 and V14 can follow V02
+independently, while paid dispatch must wait for its complete guard. Each numbered task uses
+its listed commit, starts with failing behavioral tests, includes matching docs and passing
+targeted checks. File lists are budgets, not excuses to omit wiring/tests: split an oversized
+task into named sub-tasks before implementing it. Each checkpoint gets a final
+`docs: record v0.3 <setup|paid|reports> verification` commit with exact checks/limits. Merge a
+coherent checkpoint only after the full matrix above and review; the coordinator pushes, never
+this session. First hosted CI is independent evidence, not implied by a local pass.
+
+- **Before V-A:** stable rollback is the current v0.2/offline host. Revert version-cutover
+  dependents together, never combine old validation with new wire fields. Later v0.3 tools will
+  correctly be refused by that older host; do not add a fallback adapter.
+- **Before V-B:** stable rollback is V-A with paid dispatch refused. Disable/stop new paid work
+  first, let active work settle or explicitly cancel, and retain recorded/unresolved spend.
+  Revert paid dependents newest first. Never delete attempts to make accounting appear clean.
+- **Before V-C:** stable rollback is V-B without embedded reports. Close owned report children
+  before reverting; preserve runs and tool-owned report files. V-C can land before V-B if its
+  dependencies pass; rollback then returns to V-A instead.
+- Use disposable data for all development checks. If attempt linkage/evidence needs a database
+  migration, name and test it in that task, back up real data before adoption and refuse unsafe
+  downgrade. Do not restore an old ledger as a purported continuation of a new tool session.
+
+No host-blocking contract gap was found at `61001dd`; the positive-cap declaration resolves the
+earlier request. Publication and real-peer delivery are integration gates. Contract ambiguity
+found while implementing goes to the coordinator; no sibling edits. Automatic discovery/install,
+native operation bindings, portable C2 bundles and batch evaluations remain separate work.
+
 ### Coordinated rename — 2026-11-01
 
 The owner approved the canonical name `wafflery`, `WAFFLERY_*` variables, and a new default
 data parent `~/Library/Application Support/Wafflery`. No old-name aliases, environment fallbacks,
 or automatic library migration. The coordinator owns sibling launcher and shared-contract edits.
-The repository directory remains in place until the coordinator moves it after completion.
+The coordinator subsequently moved the checkout to `wafflery` and published it; the procedure
+below records the completed rename, not a pending directory move.
 
 Branch `rename-wafflery` starts at `3836cd6`. Commit the mechanical runtime/UI/test rename with
 regenerated assets together so the binary, imports and browser protocol stay consistent; this
@@ -435,7 +716,7 @@ checkpoint to save time. No backward-compatibility shims are added for unrelease
 | Risk | Response |
 |---|---|
 | Environment selection / browser execution | Record actual Node path/version; cached Chromium/WebKit must match the chosen Playwright and launch. Report sandbox limitations, do not bypass them |
-| Contract moves to v0.2 / roots deprecated after current MCP revision | Exact supported contract set, tagged-schema upgrade commit, array-capable host bindings; no MCP revision bump until replacement path-access rules are agreed |
+| Contract version changes / roots deprecated after current MCP revision | Exact supported contract set and explicit schema upgrade commit; v0.3 tasks above cover list bindings; no MCP revision bump until replacement path-access rules are agreed |
 | Shared SDK conceals protocol assumptions | Independent fake wire peer; explicit protocol selection and manual child ownership |
 | UI fixtures accidentally become tool-specific logic | Keep fixtures in Storybook/testkit; test differently named tools; validate contract objects |
 | Saved evidence is mistaken for full reproducibility | Separate preservation categories and label exports accurately; C2/C3 gates remain |
@@ -444,5 +725,6 @@ checkpoint to save time. No backward-compatibility shims are added for unrelease
 
 M0–M3 do not require another product decision. R3 now has a supplier milestone (Rascal M10);
 its shared profile still needs agreement because independent Operations is core to the full release.
-C2/C3 need named owner delivery checkpoints too; R2 remains optional. Do not imply an Actions-only
+C3's v0.3 delivery is tracked by V14–V18 against Rascal M12/Squint M9; C2 portable replay still
+needs a separate integration checkpoint. R2 remains optional. Do not imply an Actions-only
 development build satisfies those release requirements. Product choices remain Q1–Q19.
