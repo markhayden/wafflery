@@ -62,3 +62,25 @@ pipeline in WebKit). The owner authorized diagnosis and a fix on `fix-hosted-bro
 
 Rollback the diagnostic upload independently. Revert the behavioral fix only with its tests;
 retain the failure record. No library migration, contract change, sibling edit or release work.
+
+### Hosted evidence and explicit completion handshake
+
+Run 41357299928 reproduced the events failure in both engines; pipeline passed. Both saved
+attempts remained running with preservation pending. The traces show ongoing successful state
+and attempt reads, with progress advancing to 18 in Chromium and 16 in WebKit at failure. The
+peer emits its first progress at start and then every ten 50 ms sleeps; completing its nominal
+10-second delay requires 21 progress messages. On the runner those sleep batches took roughly
+0.8–1.3 seconds, so the browser's unchanged 15-second completion assertion expired while the
+peer was still intentionally waiting. This is test orchestration, not evidence of lost tab state.
+
+1. Change the events test to an explicit held-peer scenario. Wait for running/progress in the
+   receiving tab, close the launching tab, then write a release signal in the disposable peer
+   workspace. First demonstrate failure without peer support.
+2. Add that independent-peer scenario with cancellation still responsive and no automatic timed
+   release. Document the test-only signal. Keep all test deadlines and retries unchanged.
+3. Repeat events/pipeline 20 times per engine, run the full matrix and review. Commit the testkit,
+   regression and checkpoint together, then merge locally for the coordinator to push.
+
+The earlier pipeline failure did not recur and has no saved diagnostics from the first run; do
+not claim this evidence identifies its cause. Retain failure capture for the next hosted run.
+Rollback the handshake commit with its test; no application or library behavior changes.
