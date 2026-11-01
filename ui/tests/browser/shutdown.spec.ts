@@ -6,6 +6,12 @@ test.describe("active shutdown", () => {
     host,
   }) => {
     await host.open(page);
+    const quit = page.getByRole("button", { name: "Quit", exact: true });
+    await expect(quit).toHaveAttribute("title", "Quit");
+    await expect(quit).toHaveText("");
+    const target = await quit.boundingBox();
+    expect(target!.width).toBeGreaterThanOrEqual(44);
+    expect(target!.height).toBeGreaterThanOrEqual(44);
     await page
       .locator("input[type=file]")
       .setInputFiles("tests/fixtures/sample.png");
@@ -15,7 +21,7 @@ test.describe("active shutdown", () => {
       page.getByRole("button", { name: "Cancel run" }),
     ).toBeVisible();
     await page
-      .getByRole("button", { name: "Quit workspace", exact: true })
+      .getByRole("button", { name: "Quit", exact: true })
       .click();
     const drawer = page.getByRole("dialog", {
       name: "Quit workspace",
@@ -27,7 +33,7 @@ test.describe("active shutdown", () => {
       page.getByRole("button", { name: "Cancel run" }),
     ).toBeVisible();
     await page
-      .getByRole("button", { name: "Quit workspace", exact: true })
+      .getByRole("button", { name: "Quit", exact: true })
       .click();
     await drawer.getByRole("button", { name: "Confirm quit" }).click();
     await expect(
@@ -43,7 +49,7 @@ test.describe("force shutdown", () => {
   }) => {
     await host.open(page);
     await page
-      .getByRole("button", { name: "Quit workspace", exact: true })
+      .getByRole("button", { name: "Quit", exact: true })
       .click();
     const drawer = page.getByRole("dialog", {
       name: "Quit workspace",

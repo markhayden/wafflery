@@ -75,6 +75,11 @@ Opening an example restores input settings into a new draft. Result explicitly c
 example loaded, explains that Run creates a new result, and links to history for previous results.
 Do not show an old result as if it came from the unexecuted draft.
 
+Keep Quit secondary: a power icon in the header, with the tooltip and accessible name “Quit”.
+It opens the existing confirmation drawer; clicking the icon alone never stops the host.
+The owner considered terminal-owned hosting and chose to keep H1's detached lifecycle unchanged.
+Flag conflicts with agreed interfaces before proposing changes to them.
+
 For compatible images, offer a draggable comparison divider with a native keyboard-operable
 control. Label the actual sides (Source/Result, Source/Mask overlay, or Baseline/Attempt).
 Preserve aspect ratio and use the declared image frames; do not stretch mismatched images into

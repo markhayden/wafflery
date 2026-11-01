@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import type { LocalApi } from "../api/client";
 import { Button } from "./Button";
 import { Drawer } from "./Drawer";
+import styles from "./Shutdown.module.css";
 type Status = {
   phase: "running" | "stopping" | "waiting" | "stopped";
   active_attempts: number;
@@ -74,12 +75,17 @@ export function Shutdown({ api }: { api: LocalApi }) {
   return (
     <>
       <Button
+        className={styles.trigger}
+        aria-label="Quit"
+        title="Quit"
         onClick={(event) => {
           setOpener(event.currentTarget);
           setNotice("");
         }}
       >
-        Quit workspace
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" aria-hidden="true" focusable="false">
+          <path d="M12 3v9M6.35 5.35a8 8 0 1 0 11.3 0" />
+        </svg>
       </Button>
       <Drawer
         open={opener !== null}

@@ -38,7 +38,7 @@ unconfirmed execution copies are additional storage, outside the image-byte prev
 disposable inputs are removed after preservation or confirmed process exit. Crash leftovers whose
 owner cannot be proven stopped are retained. There is no automatic expiration.
 
-Closing a tab leaves the host running. **Quit workspace** asks before cancelling active work,
+Closing a tab leaves the host running. The **Quit** power icon opens a confirmation before cancelling active work,
 waits for evidence and owned tools, and offers a separate force action if they do not stop. A
 cancelled call without a structured run identity remains unconfirmed until its process stops;
 it is never automatically retried.

@@ -48,7 +48,7 @@ execFileSync(
   { cwd: root, stdio: "inherit" },
 );
 console.log(
-  "Closing a tab leaves the host running. Use Quit workspace to stop it.",
+  "Closing a tab leaves the host running. Use the Quit power icon and confirm to stop it.",
 );
 console.log(
   `To reopen this same library, pass --data-dir ${JSON.stringify(data)} --tool sample to target/debug/wafflehouse.`,

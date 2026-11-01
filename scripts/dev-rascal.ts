@@ -85,5 +85,5 @@ console.log(
   `WAFFLEHOUSE_BIN=${quote(host)} WAFFLEHOUSE_DATA_DIR=${quote(data)} ${quote(executable)} playground`,
 );
 console.log(
-  "Closing a tab leaves the host running. Use Quit workspace to stop it. This temporary library may eventually be removed by macOS.",
+  "Closing a tab leaves the host running. Use the Quit power icon and confirm to stop it. This temporary library may eventually be removed by macOS.",
 );
