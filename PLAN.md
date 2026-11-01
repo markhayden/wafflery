@@ -10,8 +10,11 @@ smoke remains blocked by Computer Use app access, so the milestone has not merge
 The [current review disposition](docs/reviews/2026-10-31-plan-review-disposition.md) records
 changes and validation limits; it is not implementation verification.
 The owner agreed to proceed with foundation planning independently of later tool interfaces.
-Approval of this plan authorizes M0–M3 only; M4–M7 are integration milestones requiring their
-listed agreements and a task-level plan before execution. No live paid calls or publishing. An opt-in real Rascal offline smoke test is included; it uses the same no-paid dispatch guard as the fake.
+The owner authorized continuing into real-tool integration on 2026-10-31; the concrete next
+slices are in [M4: real tool entry](docs/plans/m4-real-tool-entry.md). Paid runs are also authorized
+once estimates/caps/session handling are implemented; the current dispatch guard remains offline-only.
+Publishing and production installation are not authorized by this continuation. M3's native Safari
+check remains pending; M4 is stacked on its verified implementation without claiming that gate passed.
 
 ## Outcome
 
