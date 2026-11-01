@@ -97,10 +97,9 @@ reference this inventory instead of rewriting historical evidence.
 
 ## Temporary Wafflehouse mark
 
-`ui/src/assets/wafflehouse-mark.svg` traces the owner-supplied `Bold Buttered Waffle Icon.png`
-(2026-10-31), replacing the earlier thin buttered-waffle mark. ImageTracerJS 1.2.6 and pngjs 7.0.0 were used
-in a disposable tooling directory, following their packaged Node examples. The two-color trace
-uses the source alpha to separate ink from transparency, crops empty margins and uses the header
-foreground color. At the owner's request, the current variant reverses the interior colors:
-a light outer silhouette under dark ink paths, with the exterior still transparent. Neither package is an application
-dependency. The original attachment is unchanged.
+`ui/src/assets/wafflehouse-mark.svg` traces the owner-supplied white isometric waffle with
+melting butter (2026-10-31, attachment `codex-clipboard-MmTNsk.png`), replacing the upright
+waffle variant. ImageTracerJS 1.2.6 and pngjs 7.0.0 were used in a disposable tooling directory,
+following their packaged Node examples. The trace retains the light shapes, removes the black
+background, crops empty margins and uses the header foreground color. Neither package is an
+application dependency. The original attachment is unchanged.
