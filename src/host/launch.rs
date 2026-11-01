@@ -15,6 +15,7 @@ pub struct Options {
     pub no_open: bool,
     pub root: PathBuf,
     pub tool: Option<String>,
+    pub registration: Option<PathBuf>,
 }
 
 impl Options {
@@ -30,6 +31,15 @@ impl Options {
                     options.internal = true
                 }
                 Some("--no-open") if !options.no_open => options.no_open = true,
+                Some("--register") if options.registration.is_none() => {
+                    options.registration = Some(
+                        arguments
+                            .next()
+                            .filter(|path| !path.is_empty())
+                            .ok_or("missing registration file")?
+                            .into(),
+                    );
+                }
                 Some("--data-dir") if options.root.as_os_str().is_empty() => {
                     options.root = arguments
                         .next()
@@ -57,9 +67,22 @@ impl Options {
                 _ => return Err("unknown, duplicate or incompatible arguments"),
             }
         }
+        if options.registration.is_some()
+            && (options.foreground || options.internal || options.no_open || options.tool.is_some())
+        {
+            return Err("--register accepts only --data-dir; it does not launch a workspace");
+        }
         if options.root.as_os_str().is_empty() {
-            options.root = PathBuf::from(std::env::var_os("HOME").ok_or("HOME is unavailable")?)
-                .join("Library/Application Support/Wafflehouse");
+            options.root = if let Some(root) = std::env::var_os("WAFFLEHOUSE_DATA_DIR") {
+                let path = PathBuf::from(root);
+                if !path.is_absolute() {
+                    return Err("WAFFLEHOUSE_DATA_DIR must be a nonempty absolute path");
+                }
+                path
+            } else {
+                PathBuf::from(std::env::var_os("HOME").ok_or("HOME is unavailable")?)
+                    .join("Library/Application Support/Wafflehouse")
+            };
         }
         if !options.root.is_absolute() {
             options.root = std::env::current_dir()

@@ -18,6 +18,27 @@ fn main() -> ExitCode {
             return ExitCode::from(64);
         }
     };
+    if let Some(source) = &options.registration {
+        return match wafflehouse::tools::registration::register(&options.root, source) {
+            Ok(added) => {
+                println!(
+                    "Registered {added} new tool(s). Launch wafflehouse to open this workspace."
+                );
+                ExitCode::SUCCESS
+            }
+            Err(error) => {
+                eprintln!("Cannot register tools: {error}.");
+                if error.kind() == std::io::ErrorKind::WouldBlock {
+                    eprintln!("Quit the host before changing its registration.");
+                }
+                ExitCode::from(if error.kind() == std::io::ErrorKind::WouldBlock {
+                    69
+                } else {
+                    74
+                })
+            }
+        };
+    }
     if options.internal
         && let Err(error) = nix::unistd::setsid()
     {
