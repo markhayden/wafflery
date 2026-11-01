@@ -39,7 +39,7 @@ async function control(operation: string): Promise<{ bootstrap: string }> {
 
 async function startHost() {
   child = spawn(
-    resolve("../target/debug/wafflehouse"),
+    resolve("../target/debug/wafflery"),
     ["--foreground", "--no-open", "--data-dir", root],
     { stdio: ["ignore", "pipe", "pipe"] },
   );
@@ -71,7 +71,7 @@ async function stopHost() {
 }
 
 test.beforeAll(async () => {
-  temporary = await mkdtemp(join(tmpdir(), "wafflehouse-browser-"));
+  temporary = await mkdtemp(join(tmpdir(), "wafflery-browser-"));
   root = join(temporary, "data");
   await startHost();
 });

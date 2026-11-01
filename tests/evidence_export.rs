@@ -1,6 +1,6 @@
 use serde_json::json;
 use std::io::Read;
-use wafflehouse::library::{
+use wafflery::library::{
     assets::AssetStore,
     attempts::{AttemptStore, Submission},
     export::archive,

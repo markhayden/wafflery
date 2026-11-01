@@ -18,7 +18,7 @@ pub enum Error {
     Sql(#[from] rusqlite::Error),
     #[error(transparent)]
     Io(#[from] std::io::Error),
-    #[error("library schema {0} requires a newer Wafflehouse")]
+    #[error("library schema {0} requires a newer Wafflery")]
     NewerSchema(i64),
     #[error("library schema revision {0} is invalid")]
     InvalidSchema(i64),

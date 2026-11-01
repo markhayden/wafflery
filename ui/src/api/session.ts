@@ -1,6 +1,6 @@
 import { LocalApi } from "./client";
 
-const storageKey = "wafflehouse.session.v1";
+const storageKey = "wafflery.session.v1";
 type Connection = { api: LocalApi; hostSession: string };
 let connecting: Promise<Connection | null> | undefined;
 
@@ -23,14 +23,14 @@ async function initialize(): Promise<Connection | null> {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ bootstrap }), credentials: "omit", mode: "same-origin", redirect: "error",
       });
-      if (!response.ok) throw new Error("This opening link expired or was already used. Run wafflehouse to open a fresh session.");
+      if (!response.ok) throw new Error("This opening link expired or was already used. Run wafflery to open a fresh session.");
       session = await response.json();
     } else {
       const saved = window.sessionStorage.getItem(storageKey);
       if (!saved) return null;
       session = JSON.parse(saved) as unknown;
     }
-    if (!isSession(session)) throw new Error("The workspace session is unavailable. Run wafflehouse to reopen it.");
+    if (!isSession(session)) throw new Error("The workspace session is unavailable. Run wafflery to reopen it.");
     const api = new LocalApi(window.location.origin, session.token);
     await api.request("/api/state");
     window.sessionStorage.setItem(storageKey, JSON.stringify(session));

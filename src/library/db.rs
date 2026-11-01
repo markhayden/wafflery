@@ -37,7 +37,7 @@ impl Database {
         let stopping = Arc::new(AtomicBool::new(false));
         let worker_stopping = stopping.clone();
         let thread = std::thread::Builder::new()
-            .name("wafflehouse-library".into())
+            .name("wafflery-library".into())
             .spawn(move || {
                 let mut connection = match open_connection(&path) {
                     Ok(connection) => {

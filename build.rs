@@ -122,13 +122,13 @@ fn main() {
     ] {
         println!("cargo:rerun-if-changed={path}");
     }
-    println!("cargo:rerun-if-env-changed=WAFFLEHOUSE_VERIFY_UI");
+    println!("cargo:rerun-if-env-changed=WAFFLERY_VERIFY_UI");
     println!("cargo:rerun-if-env-changed=CI");
     let root = env::var("CARGO_MANIFEST_DIR").expect("Cargo provides package root");
     let root = Path::new(&root);
     let verified = verify(root).unwrap_or_else(|error| panic!("Cannot embed UI: {error}"));
     let strict = env::var("PROFILE").as_deref() == Ok("release")
-        || env::var("WAFFLEHOUSE_VERIFY_UI").as_deref() == Ok("1")
+        || env::var("WAFFLERY_VERIFY_UI").as_deref() == Ok("1")
         || env::var("CI").is_ok_and(|value| !value.is_empty() && value != "false" && value != "0");
     enforce_freshness(verified.stale, strict).expect("UI freshness required for release/CI");
     if verified.stale {

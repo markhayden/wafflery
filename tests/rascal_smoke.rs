@@ -1,15 +1,15 @@
 //! Opt-in, no credentials, no config, no filler. Not part of the required foundation gate.
 use serde_json::json;
 use std::{path::PathBuf, sync::Arc};
-use wafflehouse::{
+use wafflery::{
     library::assets::AssetStore,
     tools::{coordinator::Coordinator, registration::Descriptor},
 };
 #[tokio::test]
-#[ignore = "requires WAFFLEHOUSE_RASCAL_BIN pointing to an explicitly selected local binary"]
+#[ignore = "requires WAFFLERY_RASCAL_BIN pointing to an explicitly selected local binary"]
 async fn real_rascal_offline_seam_uses_the_same_dispatch_and_evidence_guards() {
-    let Some(binary) = std::env::var_os("WAFFLEHOUSE_RASCAL_BIN").map(PathBuf::from) else {
-        eprintln!("SKIPPED: WAFFLEHOUSE_RASCAL_BIN not set");
+    let Some(binary) = std::env::var_os("WAFFLERY_RASCAL_BIN").map(PathBuf::from) else {
+        eprintln!("SKIPPED: WAFFLERY_RASCAL_BIN not set");
         return;
     };
     assert!(binary.is_absolute(), "Choose an absolute binary path");

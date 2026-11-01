@@ -4,7 +4,7 @@ use std::{
     os::unix::fs::{PermissionsExt, symlink},
     path::Path,
 };
-use wafflehouse::{host::control::Ownership, tools::registration};
+use wafflery::{host::control::Ownership, tools::registration};
 
 fn descriptor(dir: &Path, id: &str) -> Value {
     let executable = dir.join("tool with spaces");
@@ -107,7 +107,7 @@ fn invalid_input_never_creates_a_library() {
 
 #[tokio::test]
 async fn maximum_registered_roots_leave_room_for_host_inputs_at_startup() {
-    use wafflehouse::{library::assets::AssetStore, tools::coordinator::Coordinator};
+    use wafflery::{library::assets::AssetStore, tools::coordinator::Coordinator};
     assert!(
         std::process::Command::new(env!("CARGO"))
             .args(["build", "--locked", "--example", "sample-lab"])

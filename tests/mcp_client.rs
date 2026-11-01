@@ -4,8 +4,8 @@ use std::{
     process::Command,
     sync::OnceLock,
 };
-use wafflehouse::tools::{client::ToolClient, registration::Descriptor};
-use wafflehouse::{library::assets::AssetStore, tools::coordinator::Coordinator};
+use wafflery::tools::{client::ToolClient, registration::Descriptor};
+use wafflery::{library::assets::AssetStore, tools::coordinator::Coordinator};
 fn binary() -> PathBuf {
     static BINARY: OnceLock<PathBuf> = OnceLock::new();
     BINARY

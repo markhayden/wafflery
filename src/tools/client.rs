@@ -38,7 +38,7 @@ impl ClientHandler for Handler {
         capabilities.roots = Some(Default::default());
         ClientConfig::new(
             capabilities,
-            Implementation::new("wafflehouse", crate::VERSION),
+            Implementation::new("wafflery", crate::VERSION),
         )
         .with_protocol_version(ProtocolVersion::V_2025_11_25)
     }

@@ -2,8 +2,8 @@ use serde_json::json;
 use std::{fs, process::Command};
 
 fn cli() -> Command {
-    let mut command = Command::new(env!("CARGO_BIN_EXE_wafflehouse"));
-    command.env_remove("WAFFLEHOUSE_DATA_DIR");
+    let mut command = Command::new(env!("CARGO_BIN_EXE_wafflery"));
+    command.env_remove("WAFFLERY_DATA_DIR");
     command
 }
 
@@ -13,7 +13,7 @@ fn registration_is_setup_only_and_explicit_data_dir_wins() {
     let descriptor = dir.path().join("local tools.json");
     fs::write(
         &descriptor,
-        json!([{"id":"example","executable":env!("CARGO_BIN_EXE_wafflehouse"),
+        json!([{"id":"example","executable":env!("CARGO_BIN_EXE_wafflery"),
         "args":["--version"],"cwd":dir.path(),"roots":[dir.path()]}])
         .to_string(),
     )
@@ -21,7 +21,7 @@ fn registration_is_setup_only_and_explicit_data_dir_wins() {
     let environment_root = dir.path().join("environment");
     let explicit_root = dir.path().join("explicit");
     let result = cli()
-        .env("WAFFLEHOUSE_DATA_DIR", &environment_root)
+        .env("WAFFLERY_DATA_DIR", &environment_root)
         .arg("--register")
         .arg(&descriptor)
         .arg("--data-dir")
@@ -37,7 +37,7 @@ fn registration_is_setup_only_and_explicit_data_dir_wins() {
     assert!(explicit_root.join("tools.json").exists());
     assert!(!explicit_root.join("host.json").exists());
     let result = cli()
-        .env("WAFFLEHOUSE_DATA_DIR", &environment_root)
+        .env("WAFFLERY_DATA_DIR", &environment_root)
         .arg("--register")
         .arg(&descriptor)
         .output()
@@ -47,7 +47,7 @@ fn registration_is_setup_only_and_explicit_data_dir_wins() {
     assert!(!environment_root.join("host.json").exists());
     assert!(!environment_root.join("Library").exists());
     let result = cli()
-        .env("WAFFLEHOUSE_DATA_DIR", "")
+        .env("WAFFLERY_DATA_DIR", "")
         .arg("--register")
         .arg(&descriptor)
         .arg("--data-dir")
@@ -73,7 +73,7 @@ fn invalid_setup_combinations_and_bad_environment_never_launch() {
         vec!["--register", "one", "--register", "two"],
     ] {
         let result = cli()
-            .env("WAFFLEHOUSE_DATA_DIR", &root)
+            .env("WAFFLERY_DATA_DIR", &root)
             .args(arguments)
             .output()
             .unwrap();
@@ -82,11 +82,11 @@ fn invalid_setup_combinations_and_bad_environment_never_launch() {
     }
     for invalid in ["", "relative"] {
         let result = cli()
-            .env("WAFFLEHOUSE_DATA_DIR", invalid)
+            .env("WAFFLERY_DATA_DIR", invalid)
             .arg("--no-open")
             .output()
             .unwrap();
         assert_eq!(result.status.code(), Some(64));
-        assert!(String::from_utf8_lossy(&result.stderr).contains("WAFFLEHOUSE_DATA_DIR"));
+        assert!(String::from_utf8_lossy(&result.stderr).contains("WAFFLERY_DATA_DIR"));
     }
 }

@@ -73,15 +73,15 @@ impl Options {
             return Err("--register accepts only --data-dir; it does not launch a workspace");
         }
         if options.root.as_os_str().is_empty() {
-            options.root = if let Some(root) = std::env::var_os("WAFFLEHOUSE_DATA_DIR") {
+            options.root = if let Some(root) = std::env::var_os("WAFFLERY_DATA_DIR") {
                 let path = PathBuf::from(root);
                 if !path.is_absolute() {
-                    return Err("WAFFLEHOUSE_DATA_DIR must be a nonempty absolute path");
+                    return Err("WAFFLERY_DATA_DIR must be a nonempty absolute path");
                 }
                 path
             } else {
                 PathBuf::from(std::env::var_os("HOME").ok_or("HOME is unavailable")?)
-                    .join("Library/Application Support/Wafflehouse")
+                    .join("Library/Application Support/Wafflery")
             };
         }
         if !options.root.is_absolute() {

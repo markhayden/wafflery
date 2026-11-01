@@ -10,7 +10,7 @@ if (manifest.version !== 1 || !sameDigests(manifest.inputs, await inputs())) {
 if (!sameDigests(manifest.outputs, await outputs(join(root, "ui/prebuilt")))) {
   throw new Error("Prebuilt UI outputs do not match their manifest.");
 }
-const temporary = await mkdtemp(join(tmpdir(), "wafflehouse-ui-check-"));
+const temporary = await mkdtemp(join(tmpdir(), "wafflery-ui-check-"));
 try {
   for (const pass of ["first", "second"]) {
     const directory = join(temporary, pass);

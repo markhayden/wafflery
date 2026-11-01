@@ -5,7 +5,7 @@ import { join } from "node:path";
 import { files, outputs, sameDigests } from "./ui-manifest";
 
 test("detects changed bytes and added or deleted outputs", async () => {
-  const directory = await mkdtemp(join(tmpdir(), "wafflehouse-digest-"));
+  const directory = await mkdtemp(join(tmpdir(), "wafflery-digest-"));
   try {
     await writeFile(join(directory, "index.html"), "original");
     const original = await outputs(directory);
@@ -21,7 +21,7 @@ test("detects changed bytes and added or deleted outputs", async () => {
 });
 
 test("rejects symlinks instead of embedding files outside the asset tree", async () => {
-  const directory = await mkdtemp(join(tmpdir(), "wafflehouse-symlink-"));
+  const directory = await mkdtemp(join(tmpdir(), "wafflery-symlink-"));
   try {
     await symlink("/does-not-exist", join(directory, "link"));
     await expect(files(directory)).rejects.toThrow("symlinks");

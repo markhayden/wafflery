@@ -5,8 +5,8 @@ import { spawnSync } from "node:child_process";
 
 test.use({ hostKind: "rascal", viewport: { width: 1440, height: 900 } });
 test.skip(
-  !process.env.WAFFLEHOUSE_RASCAL_BIN,
-  "Opt in with an absolute WAFFLEHOUSE_RASCAL_BIN",
+  !process.env.WAFFLERY_RASCAL_BIN,
+  "Opt in with an absolute WAFFLERY_RASCAL_BIN",
 );
 test("real Rascal runs offline and preserves browser evidence across restart", async ({
   page,

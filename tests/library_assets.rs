@@ -1,4 +1,4 @@
-use wafflehouse::library::assets::AssetStore;
+use wafflery::library::assets::AssetStore;
 
 fn png(path: &std::path::Path, color: u8) {
     image::RgbImage::from_pixel(3, 2, image::Rgb([color, 120, 240]))

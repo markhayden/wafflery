@@ -5,7 +5,7 @@ use axum::{
 use serde_json::{Value, json};
 use std::{path::Path, process::Command, sync::Arc, time::Duration};
 use tower::ServiceExt;
-use wafflehouse::{
+use wafflery::{
     host::{api, auth::Auth},
     library::assets::AssetStore,
     tools::{coordinator::Coordinator, registration::Descriptor},

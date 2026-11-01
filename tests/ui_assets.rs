@@ -54,16 +54,16 @@ fn fixture(root: &Path) {
 
 #[test]
 fn embedded_index_and_assets_are_available_without_a_filesystem_lookup() {
-    let index = std::str::from_utf8(wafflehouse::host::assets::get("/").unwrap()).unwrap();
-    assert!(index.contains("<title>Wafflehouse</title>"));
-    assert!(wafflehouse::host::assets::get("/missing.js").is_none());
-    assert!(wafflehouse::host::assets::get("/../Cargo.toml").is_none());
+    let index = std::str::from_utf8(wafflery::host::assets::get("/").unwrap()).unwrap();
+    assert!(index.contains("<title>Wafflery</title>"));
+    assert!(wafflery::host::assets::get("/missing.js").is_none());
+    assert!(wafflery::host::assets::get("/../Cargo.toml").is_none());
 }
 
 #[test]
 fn stale_inputs_warn_in_debug_but_fail_strict_builds_and_missing_outputs_always_fail() {
     let root = std::env::temp_dir().join(format!(
-        "wafflehouse-build-test-{}-{}",
+        "wafflery-build-test-{}-{}",
         std::process::id(),
         COUNTER.fetch_add(1, Ordering::Relaxed)
     ));

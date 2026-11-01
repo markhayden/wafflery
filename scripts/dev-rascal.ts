@@ -22,11 +22,11 @@ execFileSync(process.execPath, ["run", "scripts/build-ui.ts"], {
   cwd: root,
   stdio: "inherit",
 });
-execFileSync("cargo", ["build", "--locked", "--bin", "wafflehouse"], {
+execFileSync("cargo", ["build", "--locked", "--bin", "wafflery"], {
   cwd: root,
   stdio: "inherit",
 });
-const temporary = await mkdtemp(join(tmpdir(), "wafflehouse-rascal-"));
+const temporary = await mkdtemp(join(tmpdir(), "wafflery-rascal-"));
 const data = join(temporary, "data"),
   tool = join(temporary, "rascal");
 await mkdir(tool, { mode: 0o700 });
@@ -54,7 +54,7 @@ await writeFile(
   ),
   { mode: 0o600 },
 );
-const host = join(root, "target/debug/wafflehouse");
+const host = join(root, "target/debug/wafflery");
 execFileSync(host, ["--register", registration, "--data-dir", data], {
   stdio: "inherit",
 });
@@ -64,8 +64,8 @@ console.log(
 );
 const environment = {
   ...process.env,
-  WAFFLEHOUSE_BIN: host,
-  WAFFLEHOUSE_DATA_DIR: data,
+  WAFFLERY_BIN: host,
+  WAFFLERY_DATA_DIR: data,
 };
 if (flags.includes("--no-open")) {
   execFileSync(host, ["--tool", "rascal", "--no-open"], {
@@ -82,7 +82,7 @@ if (flags.includes("--no-open")) {
 const quote = (value: string) => `'${value.replaceAll("'", "'\\''")}'`;
 console.log("Reopen this same library through Rascal:");
 console.log(
-  `WAFFLEHOUSE_BIN=${quote(host)} WAFFLEHOUSE_DATA_DIR=${quote(data)} ${quote(executable)} playground`,
+  `WAFFLERY_BIN=${quote(host)} WAFFLERY_DATA_DIR=${quote(data)} ${quote(executable)} playground`,
 );
 console.log(
   "Closing a tab leaves the host running. Use the Quit power icon and confirm to stop it. This temporary library may eventually be removed by macOS.",

@@ -1,4 +1,4 @@
-//! Independent, line-delimited MCP peer. Deliberately does not import rmcp or wafflehouse.
+//! Independent, line-delimited MCP peer. Deliberately does not import rmcp or wafflery.
 mod fixtures;
 mod scenarios;
 use serde_json::{Value, json};

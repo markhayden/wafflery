@@ -91,7 +91,7 @@ async fn upload(
     {
         return Err(oversized());
     }
-    if request.headers().get("x-wafflehouse-upload") != Some(&HeaderValue::from_static("1")) {
+    if request.headers().get("x-wafflery-upload") != Some(&HeaderValue::from_static("1")) {
         return Err(ApiError(
             StatusCode::BAD_REQUEST,
             "upload_header_required",

@@ -3,7 +3,7 @@ use axum::{
     http::{Request, StatusCode},
 };
 use tower::ServiceExt;
-use wafflehouse::host::{api, auth::Auth};
+use wafflery::host::{api, auth::Auth};
 
 const ORIGIN: &str = "http://127.0.0.1:45678";
 
@@ -19,8 +19,7 @@ async fn browser_boundary_requires_exact_origin_host_and_bearer() {
     let auth = Auth::new().unwrap();
     let (quit, _) = tokio::sync::watch::channel(false);
     let temp = tempfile::tempdir().unwrap();
-    let store =
-        wafflehouse::library::assets::AssetStore::open(&temp.path().join("Library")).unwrap();
+    let store = wafflery::library::assets::AssetStore::open(&temp.path().join("Library")).unwrap();
     let app = api::router(ORIGIN, auth.clone(), quit, store.clone());
     let token = auth.issue().unwrap();
     let body = serde_json::json!({"bootstrap": token}).to_string();

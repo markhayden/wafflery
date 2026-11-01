@@ -10,7 +10,7 @@ export class LocalApi {
     const headers = new Headers(init.headers);
     headers.set("Authorization", `Bearer ${this.token}`);
     const response = await fetch(url, { ...init, headers, credentials: "omit", mode: "same-origin", redirect: "error" });
-    if (response.status === 401) throw new Error("Your workspace session ended. Run wafflehouse to reopen it.");
+    if (response.status === 401) throw new Error("Your workspace session ended. Run wafflery to reopen it.");
     if (!response.ok) {
       const payload: unknown = await response.json().catch(() => null);
       if (payload && typeof payload === "object" && "error" in payload && payload.error && typeof payload.error === "object" && "message" in payload.error && typeof payload.error.message === "string") {

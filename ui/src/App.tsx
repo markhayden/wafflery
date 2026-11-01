@@ -7,7 +7,7 @@ import { connect } from "./api/session";
 import type { LocalApi } from "./api/client";
 import { assetClient, type Asset } from "./api/assets";
 import { ImageInput } from "./components/ImageInput";
-import mark from "./assets/wafflehouse-mark.svg";
+import mark from "./assets/wafflery-mark.svg";
 
 export function App() {
   const [snapshot, setSnapshot] = useState<Snapshot>();
@@ -25,7 +25,7 @@ export function App() {
           setConnection(
             session
               ? "Connected locally"
-              : "Run wafflehouse in your terminal to open this workspace.",
+              : "Run wafflery in your terminal to open this workspace.",
           );
           setApi(session?.api);
           if (session)
@@ -74,7 +74,7 @@ export function App() {
   return (
     <>
       <header className="workspace-header">
-        <strong className="workspace-brand"><img src={mark} alt="" width="32" height="32" />wafflehouse</strong>
+        <strong className="workspace-brand"><img src={mark} alt="" width="32" height="32" />wafflery</strong>
         <span>Local workspace</span>
         {api && <Shutdown api={api} />}
       </header>

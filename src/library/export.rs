@@ -79,7 +79,7 @@ pub async fn archive(
         .iter()
         .map(|(name, bytes)| json!({"path":name,"bytes":bytes.len(),"sha256":fingerprint(bytes)}))
         .collect();
-    let manifest = json!({"format":"wafflehouse-evidence","version":1,"attempt_id":attempt.id,"images_included":include_images,
+    let manifest = json!({"format":"wafflery-evidence","version":1,"attempt_id":attempt.id,"images_included":include_images,
         "tool":attempt.declaration["document"]["tool"],"contract":attempt.declaration["document"]["contract"],"mcp_protocol":"2025-11-25",
         "files":files,"assets":references,"limitations":["Evidence package, not a portable native replay bundle.","Recorded paths refer to the original host and may no longer exist.","Provider credentials and host browser sessions are not captured.","Native dependencies, reports and executable CLI export are unavailable."]});
     entries.push((

@@ -51,7 +51,7 @@ export function Pipeline({
       const url = URL.createObjectURL(await response.blob());
       const link = document.createElement("a");
       link.href = url;
-      link.download = "wafflehouse-evidence.tar.gz";
+      link.download = "wafflery-evidence.tar.gz";
       link.click();
       setTimeout(() => URL.revokeObjectURL(url), 1000);
       setNotice("Evidence archive downloaded.");

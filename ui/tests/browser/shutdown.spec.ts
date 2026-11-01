@@ -37,7 +37,7 @@ test.describe("active shutdown", () => {
       .click();
     await drawer.getByRole("button", { name: "Confirm quit" }).click();
     await expect(
-      drawer.getByText("Run wafflehouse again to reopen the workspace."),
+      drawer.getByText("Run wafflery again to reopen the workspace."),
     ).toBeVisible();
   });
 });
@@ -85,7 +85,7 @@ test.describe("force shutdown", () => {
       .getByRole("button", { name: "Force quit owned tools" })
       .click();
     await expect(
-      drawer.getByText("Run wafflehouse again to reopen the workspace."),
+      drawer.getByText("Run wafflery again to reopen the workspace."),
     ).toBeVisible();
   });
 });

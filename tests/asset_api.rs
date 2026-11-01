@@ -3,7 +3,7 @@ use axum::{
     http::{Request, StatusCode},
 };
 use tower::ServiceExt;
-use wafflehouse::{
+use wafflery::{
     host::{api, auth::Auth},
     library::assets::AssetStore,
 };
@@ -32,7 +32,7 @@ async fn upload_fetch_and_attachment_enforce_the_asset_boundary() {
     let bytes = std::fs::read(image).unwrap();
     let upload = request("/api/assets", "POST")
         .header("content-type", "application/octet-stream")
-        .header("x-wafflehouse-upload", "1")
+        .header("x-wafflery-upload", "1")
         .body(Body::from(bytes.clone()))
         .unwrap();
     let response = app.clone().oneshot(upload).await.unwrap();
@@ -76,7 +76,7 @@ async fn upload_fetch_and_attachment_enforce_the_asset_boundary() {
             .clone()
             .oneshot(
                 request("/api/assets", "POST")
-                    .header("x-wafflehouse-upload", "1")
+                    .header("x-wafflery-upload", "1")
                     .header("content-type", "image/png")
                     .body(Body::from(body))
                     .unwrap(),
@@ -86,7 +86,7 @@ async fn upload_fetch_and_attachment_enforce_the_asset_boundary() {
         assert_eq!(response.status(), expected);
     }
     let large = request("/api/assets", "POST")
-        .header("x-wafflehouse-upload", "1")
+        .header("x-wafflery-upload", "1")
         .header("content-length", 128 * 1024 * 1024 + 1)
         .body(Body::empty())
         .unwrap();
@@ -144,7 +144,7 @@ async fn upload_size_is_enforced_even_without_a_content_length_header() {
         .header("host", "127.0.0.1:45678")
         .header("origin", "http://127.0.0.1:45678")
         .header("authorization", format!("Bearer {}", session.token))
-        .header("x-wafflehouse-upload", "1")
+        .header("x-wafflery-upload", "1")
         .body(Body::from(vec![0_u8; 128 * 1024 * 1024 + 1]))
         .unwrap();
     assert_eq!(

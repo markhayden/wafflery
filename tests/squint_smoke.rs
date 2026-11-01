@@ -1,26 +1,26 @@
 //! Explicit local testkit executable only; no credentials or live provider calls.
 use serde_json::json;
 use std::{path::PathBuf, sync::Arc};
-use wafflehouse::{
+use wafflery::{
     library::assets::AssetStore,
     tools::{coordinator::Coordinator, registration::Descriptor},
 };
 
 #[tokio::test]
-#[ignore = "requires WAFFLEHOUSE_SQUINT_BIN pointing to a contract 0.2.0 testkit binary"]
+#[ignore = "requires WAFFLERY_SQUINT_BIN pointing to a contract 0.2.0 testkit binary"]
 async fn real_squint_scripted_check_preserves_zero_spend_evidence() {
     probe("source_fidelity", json!({})).await;
 }
 
 #[tokio::test]
-#[ignore = "requires WAFFLEHOUSE_SQUINT_BIN pointing to a contract 0.2.0 testkit binary"]
+#[ignore = "requires WAFFLERY_SQUINT_BIN pointing to a contract 0.2.0 testkit binary"]
 async fn real_squint_estimate_preserves_complete_evidence() {
     probe("estimate", json!({"use_case":"source-fidelity"})).await;
 }
 
 async fn probe(action: &str, params: serde_json::Value) {
-    let Some(binary) = std::env::var_os("WAFFLEHOUSE_SQUINT_BIN").map(PathBuf::from) else {
-        eprintln!("SKIPPED: WAFFLEHOUSE_SQUINT_BIN not set");
+    let Some(binary) = std::env::var_os("WAFFLERY_SQUINT_BIN").map(PathBuf::from) else {
+        eprintln!("SKIPPED: WAFFLERY_SQUINT_BIN not set");
         return;
     };
     assert!(

@@ -7,7 +7,7 @@ model = "claude-haiku-5-5"
 
 [privacy]
 cloud_calls = true
-account = "fake:wafflehouse-test"
+account = "fake:wafflery-test"
 
 [output]
 dir = "./runs"

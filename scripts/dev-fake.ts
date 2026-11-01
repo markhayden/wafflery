@@ -13,10 +13,10 @@ execFileSync(process.execPath, ["run", "scripts/build-ui.ts"], {
 });
 execFileSync(
   "cargo",
-  ["build", "--locked", "--bin", "wafflehouse", "--example", "sample-lab"],
+  ["build", "--locked", "--bin", "wafflery", "--example", "sample-lab"],
   { cwd: root, stdio: "inherit" },
 );
-const temporary = await mkdtemp(join(tmpdir(), "wafflehouse-development-"));
+const temporary = await mkdtemp(join(tmpdir(), "wafflery-development-"));
 const data = join(temporary, "data"),
   tool = join(temporary, "sample-lab");
 await mkdir(data, { mode: 0o700 });
@@ -43,7 +43,7 @@ console.log(
   "The sample tool is free, offline and illustrative. It does not repair images.",
 );
 execFileSync(
-  join(root, "target/debug/wafflehouse"),
+  join(root, "target/debug/wafflery"),
   ["--data-dir", data, "--tool", "sample", ...args],
   { cwd: root, stdio: "inherit" },
 );
@@ -51,5 +51,5 @@ console.log(
   "Closing a tab leaves the host running. Use the Quit power icon and confirm to stop it.",
 );
 console.log(
-  `To reopen this same library, pass --data-dir ${JSON.stringify(data)} --tool sample to target/debug/wafflehouse.`,
+  `To reopen this same library, pass --data-dir ${JSON.stringify(data)} --tool sample to target/debug/wafflery.`,
 );

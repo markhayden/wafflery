@@ -1,4 +1,4 @@
-use wafflehouse::events::Events;
+use wafflery::events::Events;
 #[tokio::test]
 async fn slow_subscribers_reset_and_new_sessions_cannot_reuse_event_sequences() {
     let events = Events::new().unwrap();

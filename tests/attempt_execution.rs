@@ -4,7 +4,7 @@ use std::{
     process::Command,
     sync::{Arc, OnceLock},
 };
-use wafflehouse::{
+use wafflery::{
     library::{assets::AssetStore, attempts::Submission},
     tools::{coordinator::Coordinator, registration::Descriptor},
 };
@@ -127,14 +127,14 @@ async fn direct_browser_api_cannot_bypass_no_paid_guard() {
     };
     use tower::ServiceExt;
     let (dir, c, request) = setup("paid").await;
-    let auth = wafflehouse::host::auth::Auth::new().unwrap();
+    let auth = wafflery::host::auth::Auth::new().unwrap();
     let token = auth
         .exchange(&auth.issue().unwrap())
         .unwrap()
         .unwrap()
         .token;
     let (quit, _) = tokio::sync::watch::channel(false);
-    let app = wafflehouse::host::api::router_with_tools(
+    let app = wafflery::host::api::router_with_tools(
         "http://127.0.0.1:9999",
         auth,
         quit,

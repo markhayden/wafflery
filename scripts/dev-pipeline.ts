@@ -16,14 +16,14 @@ if (
     "Usage: bun run scripts/dev-pipeline.ts /absolute/rascal /absolute/testkit/squint [--no-open]",
   );
 }
-const temporary = await mkdtemp(join(tmpdir(), "wafflehouse-pipeline-"));
+const temporary = await mkdtemp(join(tmpdir(), "wafflery-pipeline-"));
 const data = join(temporary, "data");
 const registrations = await prepareOfflinePipeline(temporary, rascal, squint);
 execFileSync(process.execPath, ["run", "scripts/build-ui.ts"], {
   cwd: root,
   stdio: "inherit",
 });
-execFileSync("cargo", ["build", "--locked", "--bin", "wafflehouse"], {
+execFileSync("cargo", ["build", "--locked", "--bin", "wafflery"], {
   cwd: root,
   stdio: "inherit",
 });
@@ -31,7 +31,7 @@ const source = join(temporary, "registration.json");
 await writeFile(source, JSON.stringify(registrations, null, 2), {
   mode: 0o600,
 });
-const host = join(root, "target/debug/wafflehouse");
+const host = join(root, "target/debug/wafflery");
 execFileSync(host, ["--register", source, "--data-dir", data], {
   stdio: "inherit",
 });
@@ -44,8 +44,8 @@ console.log(
 );
 const environment = {
   ...process.env,
-  WAFFLEHOUSE_BIN: host,
-  WAFFLEHOUSE_DATA_DIR: data,
+  WAFFLERY_BIN: host,
+  WAFFLERY_DATA_DIR: data,
 };
 if (flags.includes("--no-open")) {
   execFileSync(host, ["--tool", "squint", "--no-open"], {
@@ -63,7 +63,7 @@ if (flags.includes("--no-open")) {
 const quote = (value: string) => `'${value.replaceAll("'", "'\\''")}'`;
 console.log("Reopen this same library:");
 console.log(
-  `WAFFLEHOUSE_BIN=${quote(host)} WAFFLEHOUSE_DATA_DIR=${quote(data)} ${quote(squint)} playground`,
+  `WAFFLERY_BIN=${quote(host)} WAFFLERY_DATA_DIR=${quote(data)} ${quote(squint)} playground`,
 );
 console.log(
   "Use the Quit power icon and confirm to stop this host. Closing a tab leaves it running. macOS may eventually remove this temporary library.",

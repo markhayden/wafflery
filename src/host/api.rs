@@ -89,7 +89,7 @@ async fn boundary(State(state): State<HostState>, request: Request, next: Next) 
         failure(
             StatusCode::FORBIDDEN,
             "forbidden_origin",
-            "Open this workspace through the Wafflehouse launcher.",
+            "Open this workspace through the Wafflery launcher.",
         )
     } else if request.uri().path().starts_with("/api/")
         && request.uri().path() != "/api/session"
@@ -100,7 +100,7 @@ async fn boundary(State(state): State<HostState>, request: Request, next: Next) 
         failure(
             StatusCode::UNAUTHORIZED,
             "session_required",
-            "Run wafflehouse to open a new workspace session.",
+            "Run wafflery to open a new workspace session.",
         )
     } else {
         next.run(request).await

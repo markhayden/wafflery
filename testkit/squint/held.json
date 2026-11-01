@@ -2,7 +2,7 @@
   {
     "tool_calls": [
       {
-        "id": "wafflehouse_scripted_verdict",
+        "id": "wafflery_scripted_verdict",
         "name": "submit_verdict",
         "arguments": {
           "schema_version": 1,

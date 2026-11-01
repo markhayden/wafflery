@@ -1,5 +1,5 @@
 use serde_json::json;
-use wafflehouse::library::{
+use wafflery::library::{
     assets::AssetStore,
     attempts::{AttemptStore, Submission},
 };

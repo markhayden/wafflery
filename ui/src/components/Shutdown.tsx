@@ -131,7 +131,7 @@ export function Shutdown({ api }: { api: LocalApi }) {
             </>
           )}
           {(connectionLost || status?.phase === "stopped") && (
-            <p>Run wafflehouse again to reopen the workspace.</p>
+            <p>Run wafflery again to reopen the workspace.</p>
           )}
           {notice && <p role="status">{notice}</p>}
           {connectionLost && (

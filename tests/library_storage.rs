@@ -1,4 +1,4 @@
-use wafflehouse::library::db::Database;
+use wafflery::library::db::Database;
 
 #[tokio::test]
 async fn database_reopens_with_the_same_identity_and_required_pragmas() {
@@ -49,7 +49,7 @@ fn newer_schemas_are_rejected_without_changing_the_file() {
     let before = std::fs::read(&path).unwrap();
     assert!(matches!(
         Database::open(&path),
-        Err(wafflehouse::library::Error::NewerSchema(999))
+        Err(wafflery::library::Error::NewerSchema(999))
     ));
     assert_eq!(std::fs::read(&path).unwrap(), before);
 }
@@ -143,6 +143,6 @@ fn invalid_schema_revisions_are_reported_without_worker_panics() {
     drop(connection);
     assert!(matches!(
         Database::open(&path),
-        Err(wafflehouse::library::Error::InvalidSchema(-1))
+        Err(wafflery::library::Error::InvalidSchema(-1))
     ));
 }

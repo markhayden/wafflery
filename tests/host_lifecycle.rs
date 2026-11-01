@@ -15,7 +15,7 @@ impl Drop for Host {
 
 fn start(root: &std::path::Path) -> Host {
     Host(
-        Command::new(env!("CARGO_BIN_EXE_wafflehouse"))
+        Command::new(env!("CARGO_BIN_EXE_wafflery"))
             .args(["--foreground", "--no-open", "--data-dir"])
             .arg(root)
             .stdout(Stdio::null())
@@ -28,7 +28,7 @@ fn start(root: &std::path::Path) -> Host {
 fn ready(root: &std::path::Path) -> serde_json::Value {
     let deadline = Instant::now() + Duration::from_secs(5);
     loop {
-        if let Ok(value) = wafflehouse::host::control::request(root, "status") {
+        if let Ok(value) = wafflery::host::control::request(root, "status") {
             return value;
         }
         assert!(Instant::now() < deadline, "host never became ready");
@@ -57,8 +57,8 @@ fn foreground_serves_embedded_ui_and_preserves_a_single_owner() {
     let mut response = String::new();
     connection.read_to_string(&mut response).unwrap();
     assert!(response.contains("200 OK"));
-    assert!(response.contains("<title>Wafflehouse</title>"));
-    let result = Command::new(env!("CARGO_BIN_EXE_wafflehouse"))
+    assert!(response.contains("<title>Wafflery</title>"));
+    let result = Command::new(env!("CARGO_BIN_EXE_wafflery"))
         .args(["--foreground", "--no-open", "--data-dir"])
         .arg(&root)
         .output()
@@ -86,7 +86,7 @@ fn a_symlinked_data_root_is_refused_without_modifying_the_target() {
     let other = temp.path().join("other");
     std::fs::create_dir(&other).unwrap();
     std::os::unix::fs::symlink(&other, &root).unwrap();
-    let result = Command::new(env!("CARGO_BIN_EXE_wafflehouse"))
+    let result = Command::new(env!("CARGO_BIN_EXE_wafflery"))
         .args(["--foreground", "--no-open", "--data-dir"])
         .arg(&root)
         .output()
@@ -100,7 +100,7 @@ fn concurrent_launchers_attach_and_the_host_survives_their_exit() {
     let temp = tempfile::tempdir().unwrap();
     let root = temp.path().join("library with spaces");
     let spawn = || {
-        Command::new(env!("CARGO_BIN_EXE_wafflehouse"))
+        Command::new(env!("CARGO_BIN_EXE_wafflery"))
             .args(["--no-open", "--tool", "unknown-tool", "--data-dir"])
             .arg(&root)
             .stdout(Stdio::piped())
@@ -116,9 +116,9 @@ fn concurrent_launchers_attach_and_the_host_survives_their_exit() {
     assert!(b.status.success(), "{}", String::from_utf8_lossy(&b.stderr));
     assert_eq!(a.stdout, b.stdout);
     ready(&root);
-    wafflehouse::host::control::request(&root, "quit").unwrap();
+    wafflery::host::control::request(&root, "quit").unwrap();
     let deadline = Instant::now() + Duration::from_secs(5);
-    while wafflehouse::host::control::request(&root, "status").is_ok() {
+    while wafflery::host::control::request(&root, "status").is_ok() {
         assert!(Instant::now() < deadline, "host did not quit");
         std::thread::sleep(Duration::from_millis(20));
     }
@@ -133,7 +133,7 @@ fn malformed_launcher_arguments_never_start_a_host() {
         vec!["--no-open", "--no-open"],
         vec!["--unknown"],
     ] {
-        let output = Command::new(env!("CARGO_BIN_EXE_wafflehouse"))
+        let output = Command::new(env!("CARGO_BIN_EXE_wafflery"))
             .args(arguments)
             .output()
             .unwrap();
@@ -146,7 +146,7 @@ fn an_incompatible_live_host_is_refused_without_starting_another() {
     use std::os::unix::net::UnixListener;
     let temp = tempfile::tempdir().unwrap();
     let data = temp.path().join("data");
-    let owner = wafflehouse::host::control::Ownership::acquire(&data).unwrap();
+    let owner = wafflery::host::control::Ownership::acquire(&data).unwrap();
     let listener = UnixListener::bind(&owner.socket).unwrap();
     owner.publish().unwrap();
     let root = owner.root.clone();
@@ -157,7 +157,7 @@ fn an_incompatible_live_host_is_refused_without_starting_another() {
         let reply = serde_json::json!({"protocol": 1, "root": root, "version": "incompatible", "origin": "http://127.0.0.1:1"});
         stream.write_all(reply.to_string().as_bytes()).unwrap();
     });
-    let result = Command::new(env!("CARGO_BIN_EXE_wafflehouse"))
+    let result = Command::new(env!("CARGO_BIN_EXE_wafflery"))
         .args(["--no-open", "--data-dir"])
         .arg(&data)
         .output()
@@ -176,7 +176,7 @@ fn launchers_with_a_different_temporary_directory_attach_to_the_existing_host() 
     let state = ready(&root);
     let alternate = temp.path().join("different-temp");
     std::fs::create_dir(&alternate).unwrap();
-    let result = Command::new(env!("CARGO_BIN_EXE_wafflehouse"))
+    let result = Command::new(env!("CARGO_BIN_EXE_wafflery"))
         .args(["--no-open", "--data-dir"])
         .arg(&root)
         .env("TMPDIR", &alternate)

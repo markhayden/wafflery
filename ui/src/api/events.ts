@@ -63,7 +63,7 @@ export async function watchWorkspace(
             buffer = buffer.slice(end + 1);
             if (event.session !== session) {
               connection(
-                "This host session changed. Run wafflehouse to reopen it.",
+                "This host session changed. Run wafflery to reopen it.",
               );
               return;
             }

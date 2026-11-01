@@ -29,22 +29,22 @@ export const test = base.extend<{
   host: async ({ hostScenario, hostKind }, use) => {
     const build = spawnSync(
       "cargo",
-      ["build", "--locked", "--example", "sample-lab", "--bin", "wafflehouse"],
+      ["build", "--locked", "--example", "sample-lab", "--bin", "wafflery"],
       { cwd: resolve(".."), encoding: "utf8" },
     );
     if (build.status !== 0) throw new Error(build.stderr);
-    const temporary = await mkdtemp(join(tmpdir(), "wafflehouse-workflow-"));
+    const temporary = await mkdtemp(join(tmpdir(), "wafflery-workflow-"));
     const root = join(temporary, "data"),
       toolRoot = join(temporary, "tool");
     await mkdir(root, { mode: 0o700 });
     await mkdir(toolRoot, { mode: 0o700 });
-    const selectedBinary = process.env.WAFFLEHOUSE_RASCAL_BIN;
+    const selectedBinary = process.env.WAFFLERY_RASCAL_BIN;
     if (
       hostKind === "rascal" &&
       (!selectedBinary || !selectedBinary.startsWith("/"))
     ) {
       throw new Error(
-        "Real Rascal checks require an explicitly selected absolute WAFFLEHOUSE_RASCAL_BIN",
+        "Real Rascal checks require an explicitly selected absolute WAFFLERY_RASCAL_BIN",
       );
     }
     const source = join(temporary, "registration.json");
@@ -54,8 +54,8 @@ export const test = base.extend<{
         hostKind === "squint"
           ? await prepareOfflinePipeline(
               temporary,
-              process.env.WAFFLEHOUSE_RASCAL_BIN ?? "",
-              process.env.WAFFLEHOUSE_SQUINT_BIN ?? "",
+              process.env.WAFFLERY_RASCAL_BIN ?? "",
+              process.env.WAFFLERY_SQUINT_BIN ?? "",
             )
           : [
               {
@@ -81,7 +81,7 @@ export const test = base.extend<{
       ),
     );
     const registered = spawnSync(
-      resolve("../target/debug/wafflehouse"),
+      resolve("../target/debug/wafflery"),
       ["--register", source, "--data-dir", root],
       { encoding: "utf8" },
     );
@@ -124,7 +124,7 @@ export const test = base.extend<{
       },
       async start() {
         child = spawn(
-          resolve("../target/debug/wafflehouse"),
+          resolve("../target/debug/wafflery"),
           ["--foreground", "--no-open", "--data-dir", root],
           { stdio: ["ignore", "pipe", "pipe"] },
         );

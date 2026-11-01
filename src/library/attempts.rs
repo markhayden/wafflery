@@ -213,7 +213,7 @@ impl AttemptStore {
                 attempt.notices.push("Cancelled before dispatch; no tool call was sent.".into());
             } else {
                 attempt.execution="unconfirmed".into();
-                attempt.notices.push("Cancellation requested; final outcome unconfirmed. Wafflehouse will look for an associated run; missing evidence does not prove the tool stopped.".into());
+                attempt.notices.push("Cancellation requested; final outcome unconfirmed. Wafflery will look for an associated run; missing evidence does not prove the tool stopped.".into());
             }
             attempt.preservation["contract"]=json!("incomplete");Ok(())
         }).await

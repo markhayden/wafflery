@@ -63,7 +63,7 @@ async fn download(
             (header::CONTENT_TYPE, "application/gzip".to_owned()),
             (
                 header::CONTENT_DISPOSITION,
-                "attachment; filename=wafflehouse-evidence.tar.gz".to_owned(),
+                "attachment; filename=wafflery-evidence.tar.gz".to_owned(),
             ),
             (header::CONTENT_LENGTH, archive.size.to_string()),
             (header::CACHE_CONTROL, "no-store".to_owned()),

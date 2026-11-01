@@ -1,14 +1,14 @@
-//! Wafflehouse's local host. Foundation modules are added as their slices land.
+//! Wafflery's local host. Foundation modules are added as their slices land.
 
 pub mod host;
 pub mod library;
 
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
-pub const HELP: &str = "Wafflehouse — local visual pipeline workshop
+pub const HELP: &str = "Wafflery — local visual pipeline workshop
 
-Usage: wafflehouse [--tool <id>] [--no-open] [--data-dir <path>]
-       wafflehouse --foreground --no-open [--data-dir <path>]
-       wafflehouse --register <descriptors.json> [--data-dir <path>]
+Usage: wafflery [--tool <id>] [--no-open] [--data-dir <path>]
+       wafflery --foreground --no-open [--data-dir <path>]
+       wafflery --register <descriptors.json> [--data-dir <path>]
 
   -h, --help     Show this help
   -V, --version  Show the version
@@ -19,7 +19,7 @@ Usage: wafflehouse [--tool <id>] [--no-open] [--data-dir <path>]
       --register Register local tools while the host is stopped; do not launch them
 
 The default launcher starts or attaches to a detached local host.
-WAFFLEHOUSE_DATA_DIR selects an absolute library parent for every entry point;
+WAFFLERY_DATA_DIR selects an absolute library parent for every entry point;
 --data-dir takes precedence. Otherwise the personal macOS data directory is used.";
 
 pub mod tools;
