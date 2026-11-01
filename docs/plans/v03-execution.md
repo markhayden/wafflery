@@ -117,3 +117,16 @@ Each slice gets failing regression coverage, targeted checks and review before i
 The full matrix under the shared lock gates V03's local merge. No setup prose is executed and
 no credential values are read or saved by this task. Roll back V03c, V03b, then V03a; no database
 migration. Paid quote invalidation and broader refusal retry behavior remain V11/V13 and V08.
+
+V03b review identified concurrent refresh publication and preflight/write ordering as one shared
+boundary. Include dispatch_transport.rs in this slice: a per-tool discovery guard moves with the
+persisted dispatch permit through the actual write, then releases before provider execution.
+A transport gate regression verifies both sides of that boundary without timing sleeps; the
+held-peer API test verifies refresh remains responsive during execution. This adds one authored
+file to V03b’s approximate five-file budget and keeps the correction in its owning behavior.
+
+V03b targeted verification passed: authenticated refresh during a held run, unchanged saved
+attempt declarations, optional not_ready refusal followed by a corrected free attempt, strict
+refusal-shape unit checks, and the controlled pre-write/post-write discovery-guard regression.
+The latter failed before guard retention and passes without timing sleeps. All library tests and
+all-target clippy passed. Independent review approved the corrected concurrency boundary.

@@ -16,6 +16,7 @@ use std::{
 };
 
 pub(crate) struct Permit {
+    pub discovery: tokio::sync::OwnedMutexGuard<()>,
     pub id: String,
     pub store: AttemptStore,
     pub action: String,
@@ -51,6 +52,7 @@ impl<T: Transport<RoleClient, Error = io::Error>> Transport<RoleClient> for Reco
         async move {
             let wire = wire?;
             let mut written = None;
+            let mut discovery = None;
             if let Some(permit) = permit {
                 let permit = permit
                     .ok_or_else(|| io::Error::other("No persisted dispatch authorization"))?;
@@ -63,6 +65,7 @@ impl<T: Transport<RoleClient, Error = io::Error>> Transport<RoleClient> for Reco
                         "Dispatch authorization is stale or does not match the request",
                     ));
                 }
+                discovery = Some(permit.discovery);
                 // rmcp replaces progressToken when enqueuing; bind the actual wire token.
                 association.lock().unwrap_or_else(|e| e.into_inner()).token =
                     wire["params"]["_meta"].get("progressToken").cloned();
@@ -76,7 +79,9 @@ impl<T: Transport<RoleClient, Error = io::Error>> Transport<RoleClient> for Reco
                 }
                 written = Some(permit.written);
             }
-            write.await?;
+            let outcome = write.await;
+            drop(discovery);
+            outcome?;
             if let Some(written) = written {
                 written.send_replace(true);
             }
@@ -96,8 +101,9 @@ mod tests {
     use super::*;
     use crate::library::{assets::AssetStore, attempts::Submission};
     use serde_json::json;
+    type WritePause = (Arc<tokio::sync::Notify>, Arc<tokio::sync::Notify>);
     #[derive(Default)]
-    struct Wire(Arc<Mutex<Vec<Value>>>);
+    struct Wire(Arc<Mutex<Vec<Value>>>, Option<WritePause>);
     impl Transport<RoleClient> for Wire {
         type Error = io::Error;
         fn send(
@@ -105,7 +111,12 @@ mod tests {
             item: TxJsonRpcMessage<RoleClient>,
         ) -> impl Future<Output = io::Result<()>> + Send + 'static {
             let values = self.0.clone();
+            let pause = self.1.clone();
             async move {
+                if let Some((entered, release)) = pause {
+                    entered.notify_one();
+                    release.notified().await;
+                }
                 values
                     .lock()
                     .unwrap()
@@ -146,7 +157,9 @@ mod tests {
                 .await
                 .is_err()
         );
+        let discovery = Arc::new(tokio::sync::Mutex::new(())).lock_owned().await;
         *gate.lock().unwrap() = Some(Permit {
+            discovery,
             id: "id".into(),
             store: store.clone(),
             action: "op".into(),
@@ -164,7 +177,9 @@ mod tests {
         assert!(sent.lock().unwrap().is_empty());
         let assets = AssetStore::open(&dir.path().join("Library")).unwrap();
         let store = AttemptStore::new(assets.database.clone());
+        let discovery = Arc::new(tokio::sync::Mutex::new(())).lock_owned().await;
         *gate.lock().unwrap() = Some(Permit {
+            discovery,
             id: "id".into(),
             store: store.clone(),
             action: "op".into(),
@@ -179,5 +194,52 @@ mod tests {
         assert_eq!(store.get("id").await.unwrap().wire, Some(message.clone()));
         assert_eq!(*sent.lock().unwrap(), vec![message]);
         assets.database.shutdown().await.unwrap();
+    }
+    #[tokio::test]
+    async fn discovery_guard_covers_the_wire_write_but_not_execution() {
+        let dir = tempfile::tempdir().unwrap();
+        let assets = AssetStore::open(&dir.path().join("Library")).unwrap();
+        let store = AttemptStore::new(assets.database.clone());
+        let request: Submission = serde_json::from_value(json!({"id":"id","tool":"fixture","action":"op","revision":"r","params":{},"images":{}})).unwrap();
+        store
+            .create(request, json!({}), json!({}), json!({}))
+            .await
+            .unwrap();
+        let discovery = Arc::new(tokio::sync::Mutex::new(()));
+        let entered = Arc::new(tokio::sync::Notify::new());
+        let release = Arc::new(tokio::sync::Notify::new());
+        let gate = Gate::default();
+        let guard = discovery.clone().lock_owned().await;
+        *gate.lock().unwrap() = Some(Permit {
+            discovery: guard,
+            id: "id".into(),
+            store: store.clone(),
+            action: "op".into(),
+            arguments: json!({}),
+            generation: 0,
+            written: tokio::sync::watch::channel(false).0,
+        });
+        let mut transport = RecordedTransport {
+            inner: Wire(Default::default(), Some((entered.clone(), release.clone()))),
+            gate,
+            association: Default::default(),
+            generation: Arc::new(AtomicU64::new(0)),
+        };
+        let sending = tokio::spawn(transport.send(serde_json::from_value(json!({"jsonrpc":"2.0","id":7,"method":"tools/call","params":{"name":"op","arguments":{},"_meta":{"table-manners/client_run_id":"id"}}})).unwrap()));
+        entered.notified().await;
+        let held_during_write = discovery.try_lock().is_err();
+        release.notify_one();
+        sending.await.unwrap().unwrap();
+        let released_after_write = discovery.try_lock().is_ok();
+        assert_eq!(store.get("id").await.unwrap().execution, "running");
+        assets.database.shutdown().await.unwrap();
+        assert!(
+            held_during_write,
+            "refresh could change authorization before the write completed"
+        );
+        assert!(
+            released_after_write,
+            "refresh remained blocked during execution"
+        );
     }
 }

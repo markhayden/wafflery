@@ -16,6 +16,7 @@ pub fn router(coordinator: Arc<Coordinator>) -> Router {
         .route("/api/state", get(state))
         .route("/api/tools/{id}/description", get(description))
         .route("/api/tools/{id}/session", get(session))
+        .route("/api/tools/{id}/refresh", post(refresh))
         .route("/api/attempts", get(list).post(submit))
         .route("/api/attempts/{id}", get(attempt))
         .route("/api/attempts/{id}/cancel", post(cancel))
@@ -57,6 +58,13 @@ async fn description(
     Path(id): Path<String>,
 ) -> Result<Json<crate::tools::client::Declaration>, ApiError> {
     Ok(Json(c.description(&id).await?))
+}
+async fn refresh(
+    State(c): State<Arc<Coordinator>>,
+    Path(id): Path<String>,
+    Json(_): Json<Empty>,
+) -> Result<Json<crate::tools::client::Declaration>, ApiError> {
+    Ok(Json(c.refresh(&id).await?))
 }
 async fn submit(
     State(c): State<Arc<Coordinator>>,

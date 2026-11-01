@@ -1,3 +1,4 @@
+mod readiness;
 mod shutdown;
 use super::{
     Error, Result,
@@ -20,6 +21,7 @@ struct Entry {
     client: Option<Arc<ToolClient>>,
     state: std::sync::RwLock<DeclarationState>,
     reservation: Arc<Semaphore>,
+    discovery: Arc<Mutex<()>>,
 }
 struct DeclarationState {
     declaration: Option<Declaration>,
@@ -93,6 +95,7 @@ impl Coordinator {
                     client,
                     state: std::sync::RwLock::new(DeclarationState { declaration, error }),
                     reservation: Arc::new(Semaphore::new(1)),
+                    discovery: Arc::new(Mutex::new(())),
                 },
             );
         }
@@ -170,22 +173,9 @@ impl Coordinator {
             .client
             .clone()
             .ok_or(Error::Missing("Tool is unavailable"))?;
-        // Re-read the live declaration under the reservation. Never authorize using UI metadata.
-        let refreshed = client.describe().await;
-        {
-            let mut state = entry.state.write().unwrap_or_else(|e| e.into_inner());
-            match &refreshed {
-                Ok(current) => {
-                    state.declaration = Some(current.clone());
-                    state.error = None;
-                }
-                Err(error) => {
-                    state.declaration = None;
-                    state.error = Some(error.to_string());
-                }
-            }
-        }
-        let current = refreshed?;
+        // Serialize discovery through preflight and the actual wire write, not execution.
+        let discovery = entry.discovery.clone().lock_owned().await;
+        let current = self.refresh_under_guard(&request.tool).await?;
         if current.revision != request.revision {
             return Err(Error::Conflict(
                 "Tool description changed. Reload its inputs before running.",
@@ -291,6 +281,7 @@ impl Coordinator {
         };
         let (written, dispatched) = tokio::sync::watch::channel(false);
         *client.gate.lock().unwrap_or_else(|e| e.into_inner()) = Some(Permit {
+            discovery,
             id: request.id.clone(),
             store: self.attempts.clone(),
             action: request.action.clone(),
@@ -411,6 +402,7 @@ impl Coordinator {
             }
             Err(error) => {
                 client.end_preservation();
+                let _ = self.preserve_not_ready(&client, &request.id, &error).await;
                 let message = error.to_string();
                 let _ = self
                     .attempts

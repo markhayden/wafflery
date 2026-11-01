@@ -338,3 +338,16 @@ neither may execute with host-session authority.
 - Establish release macOS minimum/architectures and installer/bootstrap verification at M7.
 - Review the scoped foundation plan before implementation. No application scaffolding is
   implied by these documentation changes.
+
+### v0.3 readiness controls
+
+`POST /api/tools/{id}/refresh` is an authenticated same-origin control. It rereads description
+and session without taking the execution permit, updates only live discovery state, and emits a
+workspace update. A per-tool discovery mutex serializes reads through publication; submission
+holds that same owned guard through preflight and the actual transport write, then releases it
+before waiting for the tool result. A concurrent refresh cannot replace authorization between
+validation and dispatch. Saved attempt declarations stay immutable. UI drafts survive refresh.
+A valid -32602 `not_ready` response with no prior run reference is a terminal rejected attempt,
+not an interrupted provider run. Preserve its raw error and requirements without fabricating a
+run/result, then release local execution inputs and the reservation. Malformed refusals, transport
+loss and a refusal after a known run remain uncertain. Broader refusal/retry rules land in V08.
