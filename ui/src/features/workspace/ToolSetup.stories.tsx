@@ -19,3 +19,17 @@ export const Uncapped: Story = { args: { loadSession: async () => ({ ...session,
 export const Exhausted: Story = { args: { loadSession: async () => ({ ...session, spent_usd: 2, unresolved_usd: 0, reserved_usd: 0, remaining_usd: 0 }) } };
 export const Loading: Story = { args: { loadSession: () => new Promise(() => {}) } };
 export const Unavailable: Story = { args: { loadSession: async () => { throw new Error("The tool is disconnected."); } } };
+
+export const Requirements: Story = { args: { action: { ...meta.args.action, readiness: {
+  state: "needs_setup", requirements: [
+    { kind: "config", name: "settings.toml", state: "missing", setup: "Choose a configuration file outside the playground." },
+    { kind: "credential", name: "EXAMPLE_API_KEY", state: "invalid", setup: "Replace the credential outside the playground, then restart the tool." },
+    { kind: "env", name: "MODEL_DIR", state: "present" },
+    { kind: "model", name: "example-model", state: "valid" },
+    { kind: "file", name: "reference collection", state: "unknown" },
+    { kind: "dependency", name: "optional backend", state: "missing" },
+  ],
+} } } };
+export const UnavailableAction: Story = { args: { action: { ...meta.args.action, readiness: {
+  state: "unavailable", requirements: [{ kind: "dependency", name: "optional backend", state: "missing", setup: "This build does not include the backend." }],
+} } } };

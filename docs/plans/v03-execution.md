@@ -130,3 +130,20 @@ attempt declarations, optional not_ready refusal followed by a corrected free at
 refusal-shape unit checks, and the controlled pre-write/post-write discovery-guard regression.
 The latter failed before guard retention and passes without timing sleeps. All library tests and
 all-target clippy passed. Independent review approved the corrected concurrency boundary.
+
+V03c also adjusts ToolSetup.module.css to separate requirement entries, with Refresh beside the
+action heading so long setup lists do not hide it. Readiness responses never directly patch a
+declaration: event/run/cleanup snapshot reads share a serialized queue. A delayed refresh
+response was observed restoring stale readiness in Chromium and WebKit; the two-tab regression
+now verifies newer state remains after that response is released.
+
+## V03 verification
+
+Readiness refresh, strict no-run refusal handling and the UI passed independent review.
+The shared-lock matrix passed formatting, clippy, 84 Rust tests (three existing opt-in ignores),
+typecheck, 14 UI unit tests, two asset-tooling tests, Storybook, identical clean UI builds,
+and the release build. Browser coverage passed 78 Chromium/WebKit cases with four existing
+real-tool opt-in skips. The final browser/typecheck rerun corrected a test locator that matched
+both result guidance and its notification; no product change or timeout/retry adjustment was
+needed. The requirements screenshot was visually inspected. Generated assets and lockfiles
+remained stable. Paid calls remain disabled; no provider calls, sibling edits, push or tags.

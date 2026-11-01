@@ -16,6 +16,7 @@ import {
 } from "../../api/workspace";
 import {
   initialParameters,
+  object,
   encodeBindings,
   type Schema,
 } from "../actions/model";
@@ -44,7 +45,22 @@ export function Workspace({
   const [toolId, setToolId] = useState(
     preferred ?? snapshot.tools[0]?.id ?? "",
   );
-  const loadToolSession = useCallback(() => readToolSession(api, toolId), [api, toolId]);
+  const snapshotReads = useRef<Promise<void>>(Promise.resolve());
+  const updateSnapshot = useCallback((signal?: AbortSignal): Promise<void> => {
+    // All snapshot reads are serialized so older responses cannot replace newer state.
+    const next = snapshotReads.current.catch(() => {}).then(async () => {
+      if (signal?.aborted) return;
+      const value = await client.snapshot();
+      if (!signal?.aborted) setSnapshot(value);
+    });
+    snapshotReads.current = next;
+    return next;
+  }, [client]);
+  const loadToolSession = useCallback(async () => {
+    // The refresh emits an invalidation. Only ordered snapshots update the declaration.
+    await client.refresh(toolId);
+    return readToolSession(api, toolId);
+  }, [api, client, toolId]);
   const tool = snapshot.tools.find((tool) => tool.id === toolId);
   const declaration = tool?.declaration;
   const [actionId, setActionId] = useState(
@@ -82,18 +98,14 @@ export function Workspace({
       void watchWorkspace(
         api,
         initial.event_session,
-        async () => {
-          const next = await client.snapshot();
-          if (controller.signal.aborted) return;
-          setSnapshot(next);
-        },
+        () => updateSnapshot(controller.signal),
         (message) => {
           if (!controller.signal.aborted) setConnection(message);
         },
         controller.signal,
       );
     return () => controller.abort();
-  }, [api, client, initial.event_session]);
+  }, [api, updateSnapshot, initial.event_session]);
   useEffect(() => {
     let active = true;
     const id =
@@ -268,7 +280,7 @@ export function Workspace({
       const attempt = await client.submit(submitted.current.request);
       setSelectedId(attempt.id);
       setSelected(attempt);
-      setSnapshot(await client.snapshot());
+      await updateSnapshot();
       submitted.current = null;
     } catch (failure) {
       setError(
@@ -280,6 +292,7 @@ export function Workspace({
       setBusy(false);
     }
   }
+  const noRun = selected?.execution === "rejected" && object(object(selected.observations)?.refusal)?.reason === "not_ready";
   const working =
     selected &&
     (["submitted", "running", "unconfirmed", "cancelling"].includes(
@@ -439,6 +452,7 @@ export function Workspace({
               disabled={
                 !action ||
                 action.cost.may_spend ||
+                action.readiness.state === "unavailable" ||
                 !!working ||
                 !!tool?.busy ||
                 (action.images ?? []).some(
@@ -492,6 +506,7 @@ export function Workspace({
                 {working && tool?.progress?.message && (
                   <p className={styles.note}>{tool.progress.message}</p>
                 )}
+                {noRun ? <p role="status">No run created.</p> : <>
                 <SavedComparison
                   attempt={selected}
                   client={client}
@@ -502,6 +517,7 @@ export function Workspace({
                   Contract evidence: {selected.preservation.contract}. Editing
                   the inputs starts a new draft.
                 </p>
+                </>}
                 {selected.notices.map((notice, index) => (
                   <p className={styles.note} key={index}>
                     {notice}
@@ -626,7 +642,7 @@ export function Workspace({
             onDone={async () => {
               setSelectedId(null);
               setSelected(undefined);
-              setSnapshot(await client.snapshot());
+              await updateSnapshot();
               setSavedImages(await assets.list());
             }}
           />

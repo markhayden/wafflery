@@ -165,6 +165,13 @@ export function workspaceClient(api: LocalApi) {
         throw new Error("Tool declaration is unsupported.");
       return value;
     },
+    async refresh(id: string): Promise<Declaration> {
+      const value: unknown = await (await api.request(`/api/tools/${encodeURIComponent(id)}/refresh`, {
+        method: "POST", headers: { "Content-Type": "application/json" }, body: "{}",
+      })).json();
+      if (!declaration(value)) throw new Error("Tool declaration is unsupported.");
+      return value;
+    },
     async history(
       cursor?: number,
       tool?: string,

@@ -459,7 +459,7 @@ coordinator's publication follow-up, switch to crates.io `=0.3.0`, refresh Cargo
 the temporary CI checkout. Any changed contract text gets coordinator review before the pin
 moves. Do not edit the sibling repository.
 
-**V03 — Display readiness and actionable setup.** Replace environment-name-only setup with
+**V03 — Display readiness and actionable setup. Complete.** Replace environment-name-only setup with
 per-action requirements and distinct missing/present/valid/invalid/unknown states. Reuse the setup
 drawer, keep secrets out, and distinguish unavailable from configurable actions without treating
 an unvalidated present key as invalid. Do not blanket-disable `needs_setup`: it describes the

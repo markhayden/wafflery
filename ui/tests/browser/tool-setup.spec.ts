@@ -1,10 +1,13 @@
 import { test, expect } from "./tool-host";
+import { writeFile } from "node:fs/promises";
+import { join } from "node:path";
 
 test("setup shows reported allowances and never promotes a credential name to readiness", async ({ page }) => {
   await page.goto("http://127.0.0.1:6006/iframe.html?id=workspace-toolsetup--capped&viewMode=story");
   await expect(page.getByRole("region", { name: "Session spending" })).toContainText("$1.80");
   await expect(page.getByText(/final charge is unknown/)).toContainText("$0.04");
   await expect(page.getByText("EXAMPLE_API_KEY", { exact: true })).toBeVisible();
+  await expect(page.getByText("Present · not validated", { exact: true })).toBeVisible();
   await expect(page.getByText(/A present credential has not necessarily been validated/)).toBeVisible();
   await expect(page.getByText(/Paid execution needs/)).toContainText("not enabled yet");
   for (const width of [320, 768, 1024, 1440]) {
@@ -27,7 +30,7 @@ test("live setup refresh preserves drafts and clears an unavailable allowance wi
   await page.getByRole("button", { name: "Tool setup", exact: true }).click();
   const drawer = page.getByRole("dialog", { name: "Tool setup", exact: true });
   await expect(drawer.getByRole("region", { name: "Session spending" })).toContainText("Uncapped");
-  await expect(drawer).toContainText("No credential variables are declared");
+  await expect(drawer).toContainText("No setup requirements are declared");
   await drawer.getByText("Session identity", { exact: true }).click();
   const before = await drawer.locator("code").innerText();
   await drawer.getByRole("button", { name: "Refresh", exact: true }).click();
@@ -86,4 +89,96 @@ test("an unavailable tool never replaces setup with a saved-run inspector", asyn
   // Drain intercepted state reads before the host fixture shuts down.
   await page.unrouteAll({ behavior: "wait" });
   await other.close();
+});
+
+
+test("setup explains every requirement state and kind", async ({ page }, testInfo) => {
+  await page.goto("http://127.0.0.1:6006/iframe.html?id=workspace-toolsetup--requirements&viewMode=story");
+  const setup = page.getByRole("region", { name: "Provider setup" });
+  for (const text of ["Setup may be needed", "Missing", "Present · not validated", "Validated", "Invalid", "Unknown", "Configuration", "Credential", "Environment variable", "Model", "File", "Dependency"]) {
+    await expect(setup.getByText(text, { exact: true }).first()).toBeVisible();
+  }
+  await expect(setup).toContainText("Choose a configuration file outside the playground.");
+  await page.screenshot({ path: testInfo.outputPath("readiness-requirements.png"), fullPage: true });
+  await page.goto("http://127.0.0.1:6006/iframe.html?id=workspace-toolsetup--unavailable-action&viewMode=story");
+  await expect(setup.getByText("Unavailable", { exact: true })).toBeVisible();
+  await expect(setup).toContainText("This build does not include the backend.");
+});
+
+test.describe("live readiness", () => {
+  test.use({ hostScenario: "readiness" });
+  test("refresh changes readiness and revision while retaining the selected action and draft", async ({ page, host }) => {
+    await host.open(page);
+    await page.getByRole("button", { name: "Action Add a test band" }).click();
+    await page.getByRole("button", { name: /Price a scripted call Parameters/ }).click();
+    await page.getByLabel("label *", { exact: true }).fill("Keep this paid draft");
+    let attempts = 0;
+    page.on("request", request => { if (request.method() === "POST" && new URL(request.url()).pathname === "/api/attempts") attempts++; });
+    const opening = page.waitForResponse(response => new URL(response.url()).pathname === "/api/tools/sample/refresh");
+    await page.getByRole("button", { name: "Tool setup", exact: true }).click();
+    let previous = (await (await opening).json()).revision;
+    const drawer = page.getByRole("dialog", { name: "Tool setup", exact: true });
+    await expect(drawer.getByText("Present · not validated", { exact: true })).toBeVisible();
+    for (const [state, label] of [["valid", "Validated"], ["invalid", "Invalid"], ["missing", "Missing"], ["unknown", "Unknown"]] as const) {
+      await writeFile(join(host.root, "..", "tool", "credential-state"), state);
+      const response = page.waitForResponse(response => new URL(response.url()).pathname === "/api/tools/sample/refresh");
+      await drawer.getByRole("button", { name: "Refresh", exact: true }).click();
+      const current = (await (await response).json()).revision;
+      expect(current).not.toBe(previous); previous = current;
+      await expect(drawer.getByText(label, { exact: true })).toBeVisible();
+      await expect(page.getByLabel("label *", { exact: true })).toHaveValue("Keep this paid draft");
+    }
+    await page.keyboard.press("Escape");
+    await expect(page.getByRole("button", { name: "Action Price a scripted call" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Run", exact: true })).toBeDisabled();
+    expect(attempts).toBe(0);
+  });
+  test("a delayed setup response cannot restore stale readiness after another tab refreshes", async ({ page, context, host }) => {
+    await host.open(page);
+    await page.getByRole("button", { name: "Action Add a test band" }).click();
+    await page.getByRole("button", { name: /Price a scripted call Parameters/ }).click();
+    await page.getByRole("button", { name: "Tool setup", exact: true }).click();
+    const drawer = page.getByRole("dialog", { name: "Tool setup", exact: true });
+    await expect(drawer.getByText("Present · not validated", { exact: true })).toBeVisible();
+    await expect(drawer.getByRole("button", { name: "Refresh", exact: true })).toBeEnabled();
+    let release: () => void = () => {};
+    let held: () => void = () => {};
+    const gate = new Promise<void>(resolve => { release = resolve; });
+    const captured = new Promise<void>(resolve => { held = resolve; });
+    await page.route("**/api/tools/sample/refresh", async route => {
+      const response = await route.fetch(); held(); await gate; await route.fulfill({ response });
+    });
+    const other = await context.newPage();
+    try {
+      await drawer.getByRole("button", { name: "Refresh", exact: true }).click();
+      await captured;
+      await writeFile(join(host.root, "..", "tool", "credential-state"), "valid");
+      await host.open(other);
+      await other.getByRole("button", { name: "Action Add a test band" }).click();
+      await other.getByRole("button", { name: /Price a scripted call Parameters/ }).click();
+      await other.getByRole("button", { name: "Tool setup", exact: true }).click();
+      await expect(other.getByRole("dialog").getByText("Validated", { exact: true })).toBeVisible();
+      await expect(drawer.getByText("Validated", { exact: true })).toBeVisible();
+      release();
+      await expect(drawer.getByRole("button", { name: "Refresh", exact: true })).toBeEnabled();
+      await expect(drawer.getByText("Validated", { exact: true })).toBeVisible();
+      await expect(drawer.getByText("Present · not validated", { exact: true })).not.toBeVisible();
+    } finally {
+      release(); await page.unrouteAll({ behavior: "wait" }); await other.close();
+    }
+  });
+  test("optional setup refuses only the requested filler and a corrected free run completes", async ({ page, host }) => {
+    await host.open(page);
+    await page.locator("input[type=file]").setInputFiles("tests/fixtures/sample.png");
+    await page.getByLabel("Label *", { exact: true }).fill("Optional setup experiment");
+    await page.getByLabel("Use optional filler", { exact: true }).selectOption("true");
+    await page.getByRole("button", { name: "Run", exact: true }).click();
+    await expect(page.getByText("No run created.", { exact: true })).toBeVisible();
+    await expect(page.getByRole("region", { name: "Result content" }).getByText(/Setup needed: optional filler/)).toBeVisible();
+    await page.getByLabel("Use optional filler", { exact: true }).selectOption("false");
+    await expect(page.getByRole("button", { name: "Run", exact: true })).toBeEnabled();
+    await page.getByRole("button", { name: "Run", exact: true }).click();
+    await expect(page.getByText("Contract evidence: complete.", { exact: false }).first()).toBeVisible();
+    await expect(page.getByRole("slider", { name: "Before and after divider" })).toBeVisible();
+  });
 });

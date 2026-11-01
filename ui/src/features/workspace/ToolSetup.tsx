@@ -1,9 +1,18 @@
 import { useEffect, useState } from "react";
 import { Button } from "../../components/Button";
-import type { Action } from "../actions/model";
+import type { Action, Readiness, Requirement } from "../actions/model";
 import { usd, type ToolSession } from "../../api/tool-session";
 import styles from "./ToolSetup.module.css";
 
+const readinessLabel: Record<Readiness["state"], string> = {
+  ready: "Ready", needs_setup: "Setup may be needed", unavailable: "Unavailable",
+};
+const requirementState: Record<Requirement["state"], string> = {
+  missing: "Missing", present: "Present · not validated", valid: "Validated", invalid: "Invalid", unknown: "Unknown",
+};
+const requirementKind: Record<Requirement["kind"], string> = {
+  config: "Configuration", credential: "Credential", env: "Environment variable", model: "Model", file: "File", dependency: "Dependency",
+};
 type Props = {
   tool: { name: string; version: string };
   action: Action;
@@ -27,27 +36,35 @@ export function ToolSetup({ tool, action, loadSession }: Props) {
     }).finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
   }, [loadSession, tool.name, tool.version, revision]);
-  const credentials = action.readiness.requirements.filter(item => item.kind === "credential");
   return <div className={styles.setup}>
-    <section aria-label="Provider setup">
-      <h3>{action.title}</h3>
-      <p>{action.cost.may_spend
-        ? "Paid execution needs provider setup, a current estimate and an enforced run limit. It is not enabled yet."
-        : "This action is declared free by the tool."}</p>
-      <h4>Credential requirements</h4>
-      {credentials.length > 0 ? <>
-        <ul>{credentials.map((item) => <li key={item.name}><code>{item.name}</code> · {item.state}</li>)}</ul>
-        <p>These states are reported by the tool. A present credential has not necessarily been validated. Connecting credentials is not available here yet.</p>
-      </> : <p>No credential variables are declared for this action. This does not verify its other setup requirements.</p>}
-    </section>
-    <section aria-label="Session spending" aria-busy={loading}>
+    <section aria-label="Provider setup" aria-busy={loading}>
       <div className={styles.heading}>
-        <h3>Session spending</h3>
+        <h3>{action.title}</h3>
         <Button busy={loading} onClick={() => {
           setSession(undefined); setError(undefined); setLoading(true); setRevision(value => value + 1);
         }}>Refresh</Button>
       </div>
-      {loading && <p role="status">Reading the tool’s session…</p>}
+      <p>{action.cost.may_spend
+        ? "Paid execution needs provider setup, a current estimate and an enforced run limit. It is not enabled yet."
+        : "This action is declared free by the tool."}</p>
+      <p><strong>{readinessLabel[action.readiness.state]}</strong></p>
+      {action.readiness.state === "unavailable"
+        ? <p>This action is unavailable in the tool’s current environment. Check the requirements below.</p>
+        : <p>Requirements describe the current configuration. Optional inputs can change what a call needs.</p>}
+      <h4>Setup requirements</h4>
+      {action.readiness.requirements.length > 0 ? <>
+        <ul>{action.readiness.requirements.map((item, index) => <li key={`${item.kind}:${item.name}:${index}`}>
+          <p><code>{item.name}</code> · <span>{requirementState[item.state]}</span></p>
+          <p>{requirementKind[item.kind]}</p>
+          {item.setup && <p>{item.setup}</p>}
+        </li>)}</ul>
+        <p>These states are reported by the tool. A present credential has not necessarily been validated. Configure credentials outside the playground.</p>
+      </> : <p>No setup requirements are declared for this action.</p>}
+
+    </section>
+    <section aria-label="Session spending" aria-busy={loading}>
+      <h3>Session spending</h3>
+      {loading && <p role="status">Refreshing tool setup…</p>}
       {error && <><p role="alert">{error}</p><p>Current allowance unavailable. Refresh does not restart the tool or reset its budget.</p></>}
       {session && <>
         <dl className={styles.amounts}>
