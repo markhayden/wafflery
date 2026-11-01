@@ -48,17 +48,17 @@
     "ui/src/features/workspace/ToolSetup.module.css": "8fc1adc2becb84aa531a78a8c5efc0160827b4e51d78112729c3a9fd5f74adef",
     "ui/src/features/workspace/ToolSetup.stories.tsx": "aae8a2796f955c29573818771d99388af159f32de7cb460da0835edd6a17fc3b",
     "ui/src/features/workspace/ToolSetup.tsx": "eb4b1e5d59582d3482cae35de720f10e19a0e2ba7fe24adaf551217bb329508b",
-    "ui/src/features/workspace/Workspace.module.css": "bcd0fa6100ee5ca966508dff99172e6ffb6faea23bb80f4ff41aa290463fa8b2",
-    "ui/src/features/workspace/Workspace.tsx": "ab859cc7889dd3bc5822890963546a8435bcbc349640fa3ac7ef06d7f264069e",
+    "ui/src/features/workspace/Workspace.module.css": "361e7bcd908349eeab575c460663b28de162ce1f1d7527d805d27ef6f3fd74a3",
+    "ui/src/features/workspace/Workspace.tsx": "000d672a5f11f985a69a2bb966f8b62b6b597a1eb8c32dfabd909e738d6b3568",
     "ui/src/main.tsx": "3458a38ae3d7a0543bf876cf4bc0de43096a4ffb986f143e6fab86b5016833d8",
     "ui/src/tokens.css": "c3b0eee13fac143223d12e52a63497a6dab95065469028a0c3e49e4532b603ef",
     "ui/tsconfig.json": "cb18bc2ac7dda71c2c6b1688c5af0722292143bafb109a84a1d8464e28733ffe",
     "ui/vite.config.ts": "3aec7d6174ffca99d4d5288bea2f837d5e91335cbd7135a9682e6d18a40476b4"
   },
   "outputs": {
-    "assets/index-BScJ1dIf.css": "29011b325dfc6c9b8c8623f80d1a61af960d317143b39c05a08dc50f5d013e96",
-    "assets/index-Z0QOdhrK.js": "761cc1c941e05d2a427f5b0e0c4e555b8770846fab03eda937d5c8892a0fd1c0",
+    "assets/index-BN6jT82m.css": "a121d61bec19b31f1b2d3b409469ee31c182cc41b99e996a715b57bdf7331038",
+    "assets/index-ChutNgkx.js": "fd9939044a49e7026381da8887a31d1b18c1fee4ac3d7b857a3ee8ef15494b49",
     "assets/wafflehouse-mark-CML0EpfM.svg": "51bc8a040e26b897a948238598b8cabdf69bf4687c2b1a70613b542de1c99f1f",
-    "index.html": "f7d651a6249130bb40ec7dfc93dd54492fa417713e329130d8cdfa3e70cbd20e"
+    "index.html": "ac18dbc259bb90c24871e26d9ce9f0f3f46a9840bc2175dfd5ff8034be5a8f30"
   }
 }

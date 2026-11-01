@@ -1,9 +1,11 @@
+import { ToolSetup } from "./ToolSetup";
+import { readToolSession } from "../../api/tool-session";
 import { Cleanup } from "./Cleanup";
 import { Pipeline } from "./Pipeline";
 import { exampleClient, type Example } from "../../api/examples";
 import { Examples } from "./Examples";
 import { watchWorkspace } from "../../api/events";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { LocalApi } from "../../api/client";
 import { assetClient, type Asset } from "../../api/assets";
 import {
@@ -42,6 +44,7 @@ export function Workspace({
   const [toolId, setToolId] = useState(
     preferred ?? snapshot.tools[0]?.id ?? "",
   );
+  const loadToolSession = useCallback(() => readToolSession(api, toolId), [api, toolId]);
   const tool = snapshot.tools.find((tool) => tool.id === toolId);
   const declaration = tool?.declaration;
   const [actionId, setActionId] = useState(
@@ -64,7 +67,7 @@ export function Workspace({
     [error, setError] = useState<string>();
   const [drawer, setDrawer] = useState<{
     opener: HTMLElement;
-    view: "inspect" | "history" | "examples" | "pipeline" | "cleanup";
+    view: "inspect" | "history" | "examples" | "pipeline" | "cleanup" | "setup";
   } | null>(null);
   const submitted = useRef<{ body: string; request: Submission } | null>(null);
   useEffect(() => {
@@ -336,7 +339,10 @@ export function Workspace({
         />
       </div>
       {declaration && (
-        <p className={styles.note}>{declaration.document.tool.purpose}</p>
+        <div className={styles.toolContext}>
+          <p className={styles.note}>{declaration.document.tool.purpose}</p>
+          <Button disabled={!action} onClick={event => setDrawer({ opener: event.currentTarget, view: "setup" })}>Tool setup</Button>
+        </div>
       )}
       {!tool && toolId && (
         <p role="status">
@@ -424,7 +430,7 @@ export function Workspace({
           <div className={styles.run}>
             <p>
               {action?.cost.may_spend
-                ? "Paid actions are unavailable in this foundation."
+                ? "Paid execution needs provider setup and a run limit."
                 : "Free action · Inputs are saved locally"}
             </p>
             <Button
@@ -567,7 +573,9 @@ export function Workspace({
         opener={drawer?.opener ?? null}
         onClose={() => setDrawer(null)}
         title={
-          drawer?.view === "history"
+          drawer?.view === "setup"
+            ? "Tool setup"
+            : drawer?.view === "history"
             ? "History"
             : drawer?.view === "examples"
               ? "Examples"
@@ -578,7 +586,9 @@ export function Workspace({
                   : "Run details"
         }
         description={
-          drawer?.view === "history"
+          drawer?.view === "setup"
+            ? `${declaration?.document.tool.name ?? toolId} · Requirements and session spending`
+            : drawer?.view === "history"
             ? "Saved local attempts. Opening a run never executes it."
             : drawer?.view === "examples"
               ? "Reusable inputs, saved locally."
@@ -589,7 +599,18 @@ export function Workspace({
                   : ""
         }
       >
-        {drawer?.view === "history" ? (
+        {drawer?.view === "setup" ? (
+          declaration && action ? (
+            <ToolSetup
+              key={`${toolId}:${actionId}`}
+              tool={declaration.document.tool}
+              action={action}
+              loadSession={loadToolSession}
+            />
+          ) : (
+            <p role="status">Setup is unavailable because this tool or action is no longer available.</p>
+          )
+        ) : drawer?.view === "history" ? (
           <History client={client} onOpen={openAttempt} />
         ) : drawer?.view === "examples" ? (
           <Examples
