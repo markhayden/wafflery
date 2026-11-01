@@ -70,11 +70,16 @@ already exists. `provider_for` selects the ScriptedProvider before credential re
 request is needed. Production calls without that test feature still require their configured
 provider setup; `replay: None` alone does not establish the testkit path is unavailable.
 
-The Squint-entry probe built an isolated `git archive fcde474` with `--offline --locked
---features testkit`. Its CLI offline estimate succeeds, but MCP discovery fails compiling the
+The initial Squint-entry probe built an isolated `git archive fcde474` with `--offline --locked
+--features testkit`. Its CLI offline estimate succeeded, but MCP discovery failed compiling the
 embedded `#/$defs/Kind` reference. Scripted checks also still advertise `may_spend: true`.
 The host retains its schema and spend guards. See [the focused handoff](handoffs/squint-discovery-blockers.md)
-for exact evidence and the blocked optional test. No Squint UI run has passed yet.
+for the historical evidence. [Squint #2](https://github.com/markhayden/squint/issues/2) was then
+closed with `a0a2dde`; a fresh isolated archive build of that exact revision passes discovery,
+the scripted source-fidelity coordinator test and the two-tool Chromium/WebKit journey. No
+contract change or paid-guard bypass was required. The sibling checkout was `15f17ed` and clean
+when follow-up work began; its mutable build products were not used. Estimates still complete
+without a readable journal, leaving [their evidence incomplete](handoffs/squint-estimate-journal.md).
 
 ## Shared unresolved behavior
 

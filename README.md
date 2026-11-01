@@ -74,6 +74,21 @@ temporary development library; the normal launcher uses the durable personal lib
 
 ### Register an installed tool explicitly
 
+For an isolated **two-tool offline test** workspace:
+
+```sh
+bun run scripts/dev-pipeline.ts /absolute/path/to/rascal /absolute/path/to/testkit/squint
+```
+
+Use stable contract 0.1.0 executables; Squint needs the `testkit` feature and the fixes from
+`a0a2dde`. The helper registers both tools and opens through `squint playground`. Select
+**Source fidelity** and provide candidate/source images. Squint returns a **scripted fixture
+verdict, not a model judgment**; Rascal runs without a filler. No credentials are supplied.
+The helper prints a reopen command. Estimates currently preserve incomplete journal evidence;
+see [the follow-up](docs/handoffs/squint-estimate-journal.md). No existing library is modified.
+
+### Registration format
+
 The host accepts a JSON array of descriptors with `id`, absolute `executable`, `args` (an array,
 never a shell command), absolute `cwd`, and absolute directory `roots`. See the real-tool helper
 for a concrete Rascal descriptor. These records select programs that will execute when the host

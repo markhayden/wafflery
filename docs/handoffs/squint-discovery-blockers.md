@@ -1,5 +1,11 @@
 # Squint integration probe: discovery and scripted cost metadata
 
+**Resolved:** [Squint #2](https://github.com/markhayden/squint/issues/2) closed with `a0a2dde`.
+An isolated testkit build of that revision passes discovery and the scripted source-fidelity
+coordinator/browser checks with zero spend and complete evidence. No contract change was needed.
+The historical reproduction below records the original failure. A separate
+[estimate journal follow-up](squint-estimate-journal.md) remains; it does not block scripted checks.
+
 2026-10-31. Please review and fix these in Squint; Wafflehouse has not changed sibling files.
 Evidence uses committed Squint `fcde474`, copied with `git archive` into owned temporary storage
 and built `--offline --locked --bin squint --features testkit`. The active Squint checkout has

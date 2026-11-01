@@ -6,6 +6,13 @@ draft; verification uses isolated committed-source builds, never their mutable b
 
 ## Checkpoint: discovery blocked, 2026-10-31
 
+**Superseded by the follow-up verification:** Squint #2 is closed; isolated `a0a2dde` passes
+discovery and a scripted check with zero spend and complete evidence. The two-tool browser
+journey passes in Chromium/WebKit. Estimates execute but lack a readable journal, so their
+complete-evidence gate remains open. No contract or spend guard was changed.
+See [the verification checkpoint](../reviews/2026-10-31-squint-offline-checkpoint.md) for exact
+test coverage, the actual H1 launch, and retained release gates.
+
 The isolated `fcde474` testkit build passes offline CLI estimation but fails MCP discovery:
 `#/$defs/Kind` points to definitions embedded beneath `requirements.items`, not the schema root.
 G05's optional coordinator test reproduces this failure; its execution/evidence assertions have
@@ -24,7 +31,10 @@ cleared environment and isolated output directories. The catalog model permits a
 estimate; scripted provider configuration is not evidence that the action is declared free.
 At Squint `fcde474`, all five checks still declare `may_spend: true` and must be refused.
 
-Acceptance: validate the live declaration, prove checks cannot dispatch or create tool runs,
+Updated acceptance after #2: validate truthful free declarations and run a scripted source check
+with zero spend and complete evidence; retain the existing generic paid-dispatch regression.
+The original paid declarations must no longer be assumed for the fixed scripted provider.
+For estimation,
 execute `estimate` with candidate/source fingerprints, preserve its zero-spend result and inputs,
 and verify originals are unchanged. This is an optional integration test, skipped unless a binary
 is explicitly selected. Do not represent a catalog estimate as a live provider bill.
@@ -36,8 +46,8 @@ plus Squint in one workspace. A helper accepts explicit paths, builds only Waffl
 owned tool directories and enters via the actual Squint H1 launcher. It prints the existing
 library's reopen command and the limitations. No installation, keys or live providers.
 
-Acceptance: switch tools without mixing drafts/results; see all declared Squint actions; verify
-check execution remains disabled; run the free estimate; inspect/export it, save/open an example,
+Acceptance: switch tools without mixing drafts/results; discover Squint actions; run the free
+scripted source check; inspect/export it, save/open an example,
 and recover it from history after restart. Required reference arrays retain their later contract
 gate; the tested source-fidelity estimate uses candidate and source only.
 

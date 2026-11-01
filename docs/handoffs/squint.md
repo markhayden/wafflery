@@ -7,7 +7,9 @@ These are remaining integration requests, not a replacement implementation plan.
 
 HEAD `fcde474`, with active uncommitted v0.2 work. The [source inventory](../integration-sources.md#squint)
 records exact paths and limits. A frozen committed-source testkit build exposes two immediate
-[discovery/scripted-cost blockers](squint-discovery-blockers.md); the MCP smoke is not passed.
+[discovery/scripted-cost blockers](squint-discovery-blockers.md) in that historical revision.
+Both are fixed by `a0a2dde` and independently verified by the host's scripted coordinator and
+two-tool browser checks. [Estimate journal preservation](squint-estimate-journal.md) remains open.
 Five use-case tools now match description/call/result names. Serve, resources, progress/cancellation,
 cap/session enforcement and estimates are implemented. `estimate` calls `finished()` and creates
 zero-spend run records visible in the tool's runs resource. Commit `ae6cfb8` moves the execution
@@ -64,8 +66,9 @@ estimate fixtures, offline independent-client evidence, and remaining exceptions
 
 The `fcde474` source includes the H1 launcher: `WAFFLEHOUSE_BIN`, PATH, then `~/.local/bin`,
 invoking exactly `--tool squint`. Retain the [agreed launcher semantics](H1-launcher-proposal.md):
-exit behavior and host-owned attachment. Wafflehouse has not yet exercised Squint's launcher in
-its own two-tool browser journey.
+exit behavior and host-owned attachment. Wafflehouse exercised the actual `a0a2dde` launcher
+using `scripts/dev-pipeline.ts`; it opened a separate two-tool offline workspace and its host
+answered the control status check. Browser journeys separately verify both tools' run/history flow.
 Production installer publication and MCP configuration/registration remain separate subgates.
 The first browser screen is Squint's workspace/setup state after Wafflehouse is installed and
 running. No UI is embedded in Squint and no host-install screen appears inside Wafflehouse.

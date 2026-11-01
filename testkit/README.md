@@ -77,15 +77,26 @@ miss an empty mask. The panorama uses default recipe parameters. Source and cut-
 different coordinates; the test requires side-by-side viewing and a disabled wipe, not invented
 alignment. With no filler this verifies mask preparation, not a repaired image or model quality.
 
-## Optional Squint integration gate (currently blocked)
+## Optional Squint and two-tool integration
+
+Use an explicitly selected, stable contract 0.1.0 Squint binary built with `--features testkit`
+and the fixes from `a0a2dde` (Squint #2). The coordinator probe owns config/script/files, clears
+its child environment, and supplies no credentials:
 
 ```sh
-WAFFLEHOUSE_SQUINT_BIN=/absolute/path/to/stable/testkit/squint cargo test --locked --test squint_smoke -- --ignored --nocapture
+WAFFLEHOUSE_SQUINT_BIN=/absolute/path/to/testkit/squint cargo test --locked --test squint_smoke real_squint_scripted -- --ignored --nocapture
 ```
 
-Select a contract 0.1.0 binary built with Squint's `testkit` feature. The test owns configuration,
-script and files, clears the child environment, and supplies no credentials. It is ignored by
-default. At Squint `fcde474` it fails during schema discovery; do not count it as a passed smoke.
-The intended paid-refusal and offline-estimate preservation assertions have not yet been reached.
-See [the exact blockers and reproduction](../docs/handoffs/squint-discovery-blockers.md). The
-scripted fixture is test evidence only, not a real model judgment.
+This verifies discovery, truthful free metadata, a source-fidelity scripted result, zero spend,
+recorded call, complete evidence and unchanged original images. The verdict is fixture data,
+not a model judgment. Other use cases and reference-list bindings are not certified by this test.
+
+With both `WAFFLEHOUSE_RASCAL_BIN` and `WAFFLEHOUSE_SQUINT_BIN` set to explicit stable binaries,
+`bun run --cwd ui test:browser` includes the two-tool journey: Squint check, inspect/export,
+example reload without execution, switch to Rascal and run a seam, restart, then restore Squint
+history without mixing results. Without both variables those cases are skipped.
+
+The separate ignored `real_squint_estimate` probe still fails at `a0a2dde`: execution completes,
+but the advertised journal is unreadable. See [the follow-up](../docs/handoffs/squint-estimate-journal.md).
+Its complete-evidence assertion stays strict. [Original discovery blockers](../docs/handoffs/squint-discovery-blockers.md)
+are resolved. `scripts/dev-pipeline.ts` starts the same isolated offline setup through Squint's H1 launcher.
