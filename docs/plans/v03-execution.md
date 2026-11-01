@@ -41,3 +41,27 @@ clippy, 77 Rust tests (three existing opt-in ignores), UI/script typecheck, 12 U
 two asset-tooling tests, Storybook, byte-identical clean UI builds, release build and 70 browser
 cases passed; four existing real-tool browser cases were skipped. Generated assets/lockfiles
 remained unchanged. No provider calls, sibling edits, push or tags.
+
+## V02: coordinated validation cutover
+
+Use the authorized temporary path dependency at reviewed e503a23 during development; switch to
+published `=0.3.0` before the final checkpoint. Keep MCP 2025-11-25 and the no-paid dispatch guard.
+Accept only v0.3 live descriptions/results/sessions, require estimate discovery for paid actions,
+remove cost.needs_env, and retain generic reading of older saved evidence. V03 owns the richer
+readiness UX; V07 owns list-input editing and dispatch.
+
+The approved larger-file exception covers this coordinated change. Enumerated sites:
+Cargo.toml/Cargo.lock; src/tools/{mod,client,session}.rs; testkit/{main,fixtures,scenarios,
+v03_control}.rs; tests/{mcp_client,contract_fixtures,v03_fixtures,v03_wire,attempt_storage,
+tool_session_api,rascal_smoke,squint_smoke}.rs and tests/support/v03_schema.rs; UI api/{workspace,
+tool-session}.ts, features/actions/{model,ActionForm.stories}.tsx/ts, workspace/{ToolSetup,
+ToolSetup.stories}.tsx, affected action/session unit tests and tool-setup/real-tool browser tests;
+README, ENGINEERING, integration-sources, foundation-runtime and testkit docs. Remove the generated
+V01 schema archive/license when the dependency supplies it. Commit generated UI assets with the
+UI type/copy change. Any additional affected site must be listed in the verification record.
+
+Tests first: discover unconfigured v0.3 peers with arbitrary names, require reserved estimate
+without exposing it as an action, reject live v0.2 and missing-cap/estimate declarations, preserve
+v0.1/v0.2 saved evidence, and continue current offline execution. Review the schema/parser/fake
+change together; run the full matrix under the shared lock. Roll back this coherent cutover
+commit rather than retaining dual-version dispatch. No data migration is required.
