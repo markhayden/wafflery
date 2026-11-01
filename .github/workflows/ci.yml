@@ -30,6 +30,20 @@ jobs:
         with:
           persist-credentials: false
 
+      # Temporary until table-manners 0.3.0 is published. Keep this revision exact.
+      - name: Check out the reviewed contract
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          repository: markhayden/table-manners
+          ref: e503a238ad6cc833834891c2c2cece7152b08bfc
+          path: .ci-contract
+          persist-credentials: false
+
+      - name: Place the contract beside Wafflery
+        run: |
+          test ! -e "$GITHUB_WORKSPACE/../table-manners"
+          mv "$GITHUB_WORKSPACE/.ci-contract" "$GITHUB_WORKSPACE/../table-manners"
+
       - name: Set up Node
         uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
         with:

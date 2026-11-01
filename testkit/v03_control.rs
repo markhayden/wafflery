@@ -110,13 +110,24 @@ fn estimate(document: &Value, session: &Value, request: &Value) -> Result<Value,
 
 pub fn serve(scenario: &str) -> Result<(), Box<dyn std::error::Error>> {
     let (tool, state) = match scenario {
-        "v03-ready" | "v03-budget" => ("sample-lab", "ready"),
+        "v03-ready" | "v03-budget" | "v03-legacy" | "v03-no-estimate" | "v03-no-cap" => {
+            ("sample-lab", "ready")
+        }
         "v03-lens" => ("test-lens", "ready"),
         "v03-needs-setup" => ("sample-lab", "needs_setup"),
         "v03-unavailable" => ("sample-lab", "unavailable"),
         _ => return Err("Unknown v0.3 control scenario".into()),
     };
-    let document = fixtures::description(tool, state);
+    let mut document = fixtures::description(tool, state);
+    if scenario == "v03-legacy" {
+        document["contract"] = json!("0.2.0");
+    }
+    if scenario == "v03-no-cap" {
+        document["actions"][1]["params_schema"]["properties"]
+            .as_object_mut()
+            .unwrap()
+            .remove("max_spend_usd");
+    }
     let fresh = PeerState::default().session;
     let mut session = fixtures::session(tool);
     session["id"] = fresh["id"].clone();
@@ -163,6 +174,9 @@ pub fn serve(scenario: &str) -> Result<(), Box<dyn std::error::Error>> {
                     json!({"name":"describe","inputSchema":{"type":"object","additionalProperties":false}}),
                     json!({"name":"estimate","inputSchema":{"type":"object","additionalProperties":false,"required":["action","arguments"],"properties":{"action":{"type":"string"},"arguments":{"type":"object"}}}}),
                 ];
+                if scenario == "v03-no-estimate" {
+                    tools.retain(|tool| tool["name"] != "estimate");
+                }
                 for action in document["actions"].as_array().unwrap() {
                     tools.push(json!({"name":action["name"],"inputSchema":input_schema(action)}));
                 }

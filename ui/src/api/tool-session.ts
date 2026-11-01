@@ -1,6 +1,6 @@
 import type { LocalApi } from "./client";
 export type ToolSession = {
-  contract: "0.2.0";
+  contract: "0.3.0";
   tool: { name: string; version: string };
   id: string;
   started: string;
@@ -15,7 +15,7 @@ const amount = (value: unknown): value is number =>
 const record = (value: unknown): value is Record<string, unknown> =>
   value !== null && typeof value === "object" && !Array.isArray(value);
 export function parseToolSession(value: unknown): ToolSession {
-  if (!record(value) || value.contract !== "0.2.0" || !record(value.tool) ||
+  if (!record(value) || value.contract !== "0.3.0" || !record(value.tool) ||
       typeof value.tool.name !== "string" || typeof value.tool.version !== "string" ||
       typeof value.id !== "string" || !/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/.test(value.id) ||
       typeof value.started !== "string" || !Number.isFinite(Date.parse(value.started)) ||

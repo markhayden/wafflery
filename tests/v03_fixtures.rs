@@ -1,26 +1,14 @@
 #[path = "../testkit/v03_fixtures.rs"]
 mod fixtures;
 use serde_json::{Value, json};
-use sha2::{Digest, Sha256};
 
 #[path = "support/v03_schema.rs"]
 mod schema;
-use schema::{archive, validator};
+use schema::validator;
 #[test]
-fn archived_schemas_preserve_the_reviewed_source_bytes() {
-    let snapshot = archive();
-    assert_eq!(
-        snapshot["revision"],
-        "e503a238ad6cc833834891c2c2cece7152b08bfc"
-    );
-    assert_eq!(snapshot["schemas"].as_object().unwrap().len(), 11);
-    for (id, entry) in snapshot["schemas"].as_object().unwrap() {
-        let text = entry["text"].as_str().unwrap();
-        let digest: String = Sha256::digest(text.as_bytes())
-            .iter()
-            .map(|byte| format!("{byte:02x}"))
-            .collect();
-        assert_eq!(entry["sha256"], digest);
+fn schema_dependency_is_the_approved_contract_version() {
+    assert_eq!(table_manners::CONTRACT_VERSION, "0.3.0");
+    for (id, text) in table_manners::SCHEMAS {
         assert_eq!(serde_json::from_str::<Value>(text).unwrap()["$id"], *id);
     }
 }
@@ -36,7 +24,7 @@ fn independent_v03_fixtures_cover_readiness_estimates_and_refusals() {
             assert_eq!(document["actions"][1]["readiness"]["state"], state);
             assert!(
                 wafflery::tools::validate_contract("urn:table-manners:core:description", &document)
-                    .is_err()
+                    .is_ok()
             );
         }
         let session = fixtures::session(tool);

@@ -145,3 +145,48 @@ async fn invalid_schema_names_its_tool_and_does_not_block_another_registration()
         1
     );
 }
+
+#[tokio::test]
+async fn v03_discovery_accepts_unconfigured_tools_without_exposing_reserved_controls_as_actions() {
+    for (scenario, name) in [("v03-needs-setup", "sample-lab"), ("v03-lens", "test-lens")] {
+        let dir = tempfile::tempdir().unwrap();
+        let mut client = ToolClient::spawn(descriptor(dir.path(), scenario)).unwrap();
+        client.initialize().await.unwrap();
+        let declaration = client.describe().await;
+        assert!(client.close().await.unwrap());
+        let declaration = declaration.unwrap();
+        assert_eq!(declaration.document["contract"], "0.3.0");
+        assert_eq!(declaration.document["tool"]["name"], name);
+        assert!(declaration.schemas.contains_key("estimate"));
+        assert!(
+            declaration.document["actions"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .all(|action| action["name"] != "estimate" && action["name"] != "describe")
+        );
+        assert!(!dir.path().join("runs/calls.ndjson").exists());
+    }
+}
+
+#[tokio::test]
+async fn v03_discovery_rejects_legacy_live_contract_and_paid_declarations_missing_controls_or_caps()
+{
+    for (scenario, reason) in [
+        ("v03-legacy", "exactly 0.3.0"),
+        ("v03-no-estimate", "estimate"),
+        ("v03-no-cap", "max_spend_usd"),
+    ] {
+        let dir = tempfile::tempdir().unwrap();
+        let mut client = ToolClient::spawn(descriptor(dir.path(), scenario)).unwrap();
+        client.initialize().await.unwrap();
+        let result = client.describe().await;
+        assert!(client.close().await.unwrap());
+        let error = match result {
+            Err(error) => error.to_string(),
+            Ok(_) => panic!("accepted {scenario}"),
+        };
+        assert!(error.contains(reason), "{scenario}: {error}");
+        assert!(!dir.path().join("runs/calls.ndjson").exists());
+    }
+}

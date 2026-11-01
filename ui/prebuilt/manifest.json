@@ -13,8 +13,8 @@
     "ui/src/api/events.ts": "d6c4aa2983395573b58e2f0d099d73ace7e6d551e9831a368ec6a8db94ef277c",
     "ui/src/api/examples.ts": "ac29ab8bd91da377bd783d7e118b1791c1599784ad0ab92874293c31b0a0bac4",
     "ui/src/api/session.ts": "216dfa6b5e809fcb0c1f97f1cf47850455646b1382826a2eb83c5fad475f96fb",
-    "ui/src/api/tool-session.ts": "89510705ee6123869ac8630be267a7f3c2d91991a3c85ab7a762cac1d4f3384c",
-    "ui/src/api/workspace.ts": "0f10c457dad498f5bff5249e25084646bb15fdd2f0559aa0125452af29aea9d5",
+    "ui/src/api/tool-session.ts": "c5aef0a8b3e85559e0db1b9d84c93a80e38c6fdcc7c5b5f1ce86e1eb585bf1bd",
+    "ui/src/api/workspace.ts": "12d58c9c7c31a9d886b29ee34c05f42c7611dfd73260a8135fe8b2ee81134076",
     "ui/src/assets/wafflery-mark.svg": "51bc8a040e26b897a948238598b8cabdf69bf4687c2b1a70613b542de1c99f1f",
     "ui/src/components/Button.module.css": "1ce502acb9d2561471ba7dffe4536d78bd51553a169a36a8fa230502499a9d1a",
     "ui/src/components/Button.stories.tsx": "489b0b293bbeb9f5813829a79bc9e78c5ddffa0116d71b0582985750716136fa",
@@ -35,9 +35,9 @@
     "ui/src/components/Shutdown.tsx": "0921c658b03088c98f6c8c285ffbc4efcb57d911a94cb1c8f523d9755d0278ad",
     "ui/src/components/comparison.ts": "7a0b8792401ccc079b4843ba439ec2b09f5e95d36023d4c647a3daf5c161a8c3",
     "ui/src/features/actions/ActionForm.module.css": "d2a8a7d8479e2e97a0c87dfb43fa230cbf3c43f17ace910a1f276df0acec8222",
-    "ui/src/features/actions/ActionForm.stories.tsx": "95e53c2b2dcff07cd051c916d3f875e8bc026dbcd695ddfc3b6c31a4f3c239ae",
+    "ui/src/features/actions/ActionForm.stories.tsx": "9ffe2de622a09e423c6c8dd16170a312b8eed0d41302e9679a4044257f9af138",
     "ui/src/features/actions/ActionForm.tsx": "bad8d9547fe069060395292b9c043f2e52e0d87165c926a49207be266a7cc09c",
-    "ui/src/features/actions/model.ts": "758563cb8380397e6deab9b47953d1307562bc39712c35aac329384213a85c26",
+    "ui/src/features/actions/model.ts": "cb71e5fa9e4404fbb59a7eb947d9a790040974c655d5e6856fec8ca87d804eec",
     "ui/src/features/workspace/Cleanup.tsx": "2ed0a0ac38e30af5b9f52d411bf63f505a2910072083a403aecc91be180e04c7",
     "ui/src/features/workspace/Examples.stories.tsx": "6d0e7e3e581eeb52d04ccc499ac2fdd21a63d2f238c3f7e1deac565ee4847ad3",
     "ui/src/features/workspace/Examples.tsx": "bfce4c5e80882a5a06170d3f421adf5f957d279d869710f44308fce1b6278b6d",
@@ -46,8 +46,8 @@
     "ui/src/features/workspace/Pipeline.tsx": "fd0d600ef9ec88ae147d1c65df8a3fa36cfd757048f33762f14ae909fa4603c7",
     "ui/src/features/workspace/SavedComparison.tsx": "8a02acee808c1f7df4de346272875c90a65719c132286f3b394bfeb017e007c0",
     "ui/src/features/workspace/ToolSetup.module.css": "8fc1adc2becb84aa531a78a8c5efc0160827b4e51d78112729c3a9fd5f74adef",
-    "ui/src/features/workspace/ToolSetup.stories.tsx": "aae8a2796f955c29573818771d99388af159f32de7cb460da0835edd6a17fc3b",
-    "ui/src/features/workspace/ToolSetup.tsx": "eb4b1e5d59582d3482cae35de720f10e19a0e2ba7fe24adaf551217bb329508b",
+    "ui/src/features/workspace/ToolSetup.stories.tsx": "6b2192ee9560086e94ee4df9c1bf0ab0fc09ffe4943d20c5127fa5aaa9e2ffa2",
+    "ui/src/features/workspace/ToolSetup.tsx": "aca4b54ee7be6437f582e34c067ea06ad1dc2a16be964a5b14b2089d78a61e51",
     "ui/src/features/workspace/Workspace.module.css": "361e7bcd908349eeab575c460663b28de162ce1f1d7527d805d27ef6f3fd74a3",
     "ui/src/features/workspace/Workspace.tsx": "000d672a5f11f985a69a2bb966f8b62b6b597a1eb8c32dfabd909e738d6b3568",
     "ui/src/main.tsx": "03b2482769b6e395650dff286faa5e047805a68788a2d0c019ca79ca59b5cadf",
@@ -56,9 +56,9 @@
     "ui/vite.config.ts": "3aec7d6174ffca99d4d5288bea2f837d5e91335cbd7135a9682e6d18a40476b4"
   },
   "outputs": {
+    "assets/index-979ZawWN.js": "a25cb1f2eb841e2df42253bb2a6ee4203a14ebf8db07d0481b4e4fed19b0ef6a",
     "assets/index-BN6jT82m.css": "a121d61bec19b31f1b2d3b409469ee31c182cc41b99e996a715b57bdf7331038",
-    "assets/index-BWy81vE_.js": "1c17b7af83d222aef2a39c3a80a274b6dc85ea6e4e045b6cfdef182d90025d83",
     "assets/wafflery-mark-CML0EpfM.svg": "51bc8a040e26b897a948238598b8cabdf69bf4687c2b1a70613b542de1c99f1f",
-    "index.html": "134f646035a4d74f5d5faa16eaf9239e2e79c2e21d0b19832416554661edc681"
+    "index.html": "349ad98be391bcd443ff3f4d42d6308a22b81c11f683f8e359cd9b5ce5659787"
   }
 }

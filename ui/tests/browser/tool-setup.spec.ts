@@ -5,7 +5,7 @@ test("setup shows reported allowances and never promotes a credential name to re
   await expect(page.getByRole("region", { name: "Session spending" })).toContainText("$1.80");
   await expect(page.getByText(/final charge is unknown/)).toContainText("$0.04");
   await expect(page.getByText("EXAMPLE_API_KEY", { exact: true })).toBeVisible();
-  await expect(page.getByText(/availability and validity have not been checked/)).toBeVisible();
+  await expect(page.getByText(/A present credential has not necessarily been validated/)).toBeVisible();
   await expect(page.getByText(/Paid execution needs/)).toContainText("not enabled yet");
   for (const width of [320, 768, 1024, 1440]) {
     await page.setViewportSize({ width, height: 900 });

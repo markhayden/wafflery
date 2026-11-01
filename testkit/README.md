@@ -4,7 +4,7 @@
 in for Rascal's repair operations or Squint's judgments. Its wire implementation does not use
 rmcp or Wafflery's coordinator/client. It may use the published contract's data/schema crate.
 
-The fixtures target published `table-manners =0.2.0`. `fixtures.rs` builds deterministic
+The fixtures target `table-manners =0.3.0` (authorized sibling path at e503a23 until publication). `fixtures.rs` builds deterministic
 description/result documents. The owned PNG is `ui/tests/fixtures/sample.png`, a generated RGB
 gradient; its byte fingerprint is computed, not copied from another tool's output. The fixture
 input identity is a documented placeholder until the wire peer computes actual request identity.
@@ -70,7 +70,7 @@ WAFFLERY_RASCAL_BIN=/absolute/path/to/rascal bun run --cwd ui test:browser
 The optional Chromium/WebKit journey uses explicit registration and the same generic UI as any
 tool. It checks a real seam mask, saved inputs, recorded call, image evidence download, independent
 example loading, and history/output preservation across a host restart. Without the environment
-variable those two cases are reported skipped. Choose a stable contract 0.2.0 executable; rebuilding
+variable those two cases are reported skipped. Choose a stable contract 0.3.0 executable; rebuilding
 a selected binary against a newer draft during the suite will correctly make it unavailable.
 
 `ui/tests/fixtures/panorama.png` is an owned, procedurally generated 2048×1024 RGBA gradient:
@@ -84,7 +84,7 @@ alignment. With no filler this verifies mask preparation, not a repaired image o
 
 ## Optional Squint and two-tool integration
 
-Use an explicitly selected, stable contract 0.2.0 Squint binary built with `--features testkit`
+Use an explicitly selected, stable contract 0.3.0 Squint binary built with `--features testkit`
 at `3e6223a` or a later compatible commit. The coordinator probe owns config/script/files, clears
 its child environment, and supplies no credentials:
 
@@ -121,22 +121,24 @@ authorize dispatch. The same production may_spend guard still rejects paid actio
 
 `v03_fixtures.rs` owns descriptions for `sample-lab` and `test-lens`, a ready offline action beside
 an independently configured paid action, and session/estimate/refusal examples. These fixtures
-perform no provider calls and do not change the live host's v0.2 or no-paid dispatch guards.
+perform no provider calls and do not change the host's no-paid dispatch guard.
 The preparation tests validate independently of host-generated types.
 
-`contract-v03/schemas.json` preserves the eleven schema files, byte digests and source paths from
-[table-manners e503a23](https://github.com/markhayden/table-manners/tree/e503a238ad6cc833834891c2c2cece7152b08bfc).
-It is generated input, not a fork of the contract. Its accompanying Apache-2.0 license is copied
-from that revision. The archive lets CI validate the approved draft without a sibling checkout;
-V02 removes it when the exact published crate provides the schemas. Fixed timestamps/UUIDs in
-fixture examples are test data; serving processes must provide fresh sessions and live expiry.
+V02 replaces the temporary V01 schema archive with the exact contract dependency's embedded
+schemas. Fixed timestamps/UUIDs in fixture examples are test data; serving processes provide
+fresh sessions and live expiry. The temporary path points to reviewed table-manners e503a23.
 
 The `v03-ready`, `v03-lens`, `v03-needs-setup`, `v03-unavailable` and `v03-budget` scenarios expose
 those objects over MCP 2025-11-25. They are **control-only preparation probes**, not complete
 execution peers: describe, estimate, session/runs reads and discovery work; action execution is
-explicitly unsupported until its owning task. The normal/held execution scenarios remain v0.2.
+explicitly unsupported until its owning task. The normal/held execution scenarios also use v0.3.
 `price_test` estimates are deterministic and local, with a scripted $0.12 worst case and $1
 configured cap. Delivery flags do not affect the binding. Each process gets a fresh session;
 no estimate allocates a run, claims a client run ID, reserves money or changes the ledger.
-The wire tests validate returned objects against the same archived schemas, compare the ledger
+The wire tests validate returned objects against the dependency’s embedded schemas, compare the ledger
 before and after controls/refusals, and verify the workspace remains empty.
+
+V02 discovery negatives (`v03-legacy`, `v03-no-estimate`, `v03-no-cap`) intentionally violate
+one live boundary. The older `paid`/`becomes-paid` scenarios remain dispatch-guard probes:
+they advertise the reserved estimate control but do not implement a paid execution flow.
+Only the control-only v03 scenarios currently implement estimate responses.

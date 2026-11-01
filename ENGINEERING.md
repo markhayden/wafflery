@@ -16,7 +16,7 @@ Design for one user on macOS, one active local library, one host, and independen
 execution. Linux is deferred. No persistent job service, automatic retries, batch queue, or
 cross-tool workflow engine. Closing a browser is different from stopping the host.
 
-Rechecked 2026-11-01: published table-manners v0.2.0 (tag `3c8b55c`) is adopted with isolated
+Historical integration check, 2026-11-01: published table-manners v0.2.0 (tag `3c8b55c`) was adopted with isolated
 committed Rascal `27ef3b5` and Squint `3e6223a` builds. MCP stays 2025-11-25 and H1 is unchanged.
 The host records validated session ledgers and stable client correlation IDs, checks structured
 progress/result associations, and performs bounded cancellation reconciliation. It does not
@@ -297,9 +297,11 @@ limits do not shrink the agreed first-release acceptance criteria. Add an opt-in
 contract version must pass the same validation. Squint already has a testkit scripted-provider
 path, but it must not be used to bypass a live `may_spend: true` declaration in this milestone.
 
-The current live-version policy accepts exactly 0.2.0; old saved records remain readable without
-migration or replay. The tagged v0.2 contract still uses scalar image slots: ordered arrays remain
-an internal UI representation, and list-slot wire semantics need a future approved contract. MCP roots remain
+V02 accepts exactly 0.3.0 using the authorized temporary dependency at table-manners e503a23
+until publication. Older saved records remain readable without migration or replay. Paid
+actions must declare a positive max_spend_usd and expose the reserved estimate MCP control,
+which is excluded from the Actions catalogue. Paid dispatch remains blocked. V0.3 declares
+list slots; editing and dispatch for them land in V07. MCP roots remain
 specific to 2025-11-25; a future revision requires its own path-access decision.
 
 First-release history records Wafflery-started attempts. Tool run resources support reading

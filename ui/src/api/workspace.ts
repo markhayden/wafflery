@@ -67,12 +67,20 @@ function summary(value: unknown): value is AttemptSummary {
 function record(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
+function readiness(value: unknown): boolean {
+  return record(value) && typeof value.state === "string" && ["ready", "needs_setup", "unavailable"].includes(value.state) &&
+    Array.isArray(value.requirements) && value.requirements.every((item: unknown) =>
+      record(item) && typeof item.name === "string" && item.name.length > 0 &&
+      typeof item.kind === "string" && ["config", "credential", "env", "model", "file", "dependency"].includes(item.kind) &&
+      typeof item.state === "string" && ["missing", "present", "valid", "invalid", "unknown"].includes(item.state) &&
+      (item.setup === undefined || typeof item.setup === "string"));
+}
 function declaration(value: unknown): value is Declaration {
   if (
     !record(value) ||
     typeof value.revision !== "string" ||
     !record(value.document) ||
-    value.document.contract !== "0.2.0" ||
+    value.document.contract !== "0.3.0" ||
     !record(value.document.tool) ||
     typeof value.document.tool.name !== "string" ||
     !Array.isArray(value.document.actions)
@@ -86,7 +94,8 @@ function declaration(value: unknown): value is Declaration {
       typeof action.purpose === "string" &&
       record(action.params_schema) &&
       record(action.cost) &&
-      typeof action.cost.may_spend === "boolean",
+      typeof action.cost.may_spend === "boolean" &&
+      readiness(action.readiness),
   );
 }
 function savedImage(value: unknown): value is SavedImage {

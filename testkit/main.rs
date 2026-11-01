@@ -39,7 +39,7 @@ impl Default for PeerState {
             &hex[20..]
         );
         Self {
-            session: json!({"contract":"0.2.0","tool":{"name":fixtures::TOOL,"version":"0.1.0"},
+            session: json!({"contract":"0.3.0","tool":{"name":fixtures::TOOL,"version":"0.1.0"},
             "id":id,"started":time::OffsetDateTime::now_utc().format(&time::format_description::well_known::Rfc3339).unwrap(),
             "budget_usd":null,"spent_usd":0,"unresolved_usd":0,"reserved_usd":0,"remaining_usd":null}),
             claimed: Default::default(),
@@ -150,10 +150,16 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             "tools/list" if initialized => {
                 let description = scenarios::description(&scenario);
                 if params.get("cursor").is_none() {
+                    let mut controls = vec![
+                        json!({"name":"describe","description":"Shared contract description","inputSchema":{"type":"object","additionalProperties":false}}),
+                    ];
+                    if matches!(scenario.as_str(), "paid" | "becomes-paid") {
+                        controls.push(json!({"name":"estimate","description":"Reserved paid control","inputSchema":{"type":"object"}}));
+                    }
                     reply(
                         &output,
                         id,
-                        json!({"tools":[{"name":"describe","description":"Shared contract description", "inputSchema":{"type":"object","additionalProperties":false}}], "nextCursor":"actions"}),
+                        json!({"tools":controls, "nextCursor":"actions"}),
                     );
                 } else if params["cursor"] == "actions" {
                     reply(
@@ -253,7 +259,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     reply(
                         &output,
                         id,
-                        json!({"contents":[{"uri":params["uri"],"mimeType":"application/json","text":json!({"contract":"0.2.0","tool":{"name":fixtures::TOOL,"version":"0.1.0"},"runs":[],"next_cursor":null}).to_string()}]}),
+                        json!({"contents":[{"uri":params["uri"],"mimeType":"application/json","text":json!({"contract":"0.3.0","tool":{"name":fixtures::TOOL,"version":"0.1.0"},"runs":[],"next_cursor":null}).to_string()}]}),
                     );
                     continue;
                 }

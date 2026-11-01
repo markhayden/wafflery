@@ -19,7 +19,7 @@ framework, ORM, database service, global frontend state library, or plugin SDK i
 | Axum | 0.8.9 | [Official reference](https://docs.rs/axum/latest/axum/); HTTP routing |
 | rusqlite | 0.41.1, bundled SQLite | [Official project](https://github.com/rusqlite/rusqlite#optional-features); no system SQLite dependency |
 | rmcp | Exactly 3.8.0 | [SDK transports](https://docs.rs/rmcp/latest/rmcp/transport/index.html); client + async read/write transport |
-| table-manners | Published crate exactly 0.2.0 | crates.io dependency, including dev-dependency for fixtures; current source/proposals tracked in the [inventory](../integration-sources.md#table-manners) |
+| table-manners | Exactly 0.3.0 | Authorized temporary sibling path at e503a23 until publication; current source/proposals tracked in the [inventory](../integration-sources.md#table-manners) |
 | Bun | 1.4.3 | Installed; package installation, scripts, pure TypeScript tests |
 | Node | Record resolved executable in M0 | Agent shell: 22.13.1 via Volta; owner review: 24.18.0. Both observations are retained; use one tested developer version for repeatable builds, not a production runtime |
 | React / React DOM | 19.3.1, matched versions | [Registry release](https://registry.npmjs.org/react/latest); installed compatibility still to verify |
@@ -102,13 +102,13 @@ separate from tool outcome. File operations return structured errors, never part
 
 ## MCP and process ownership
 
-Use an explicit live-execution contract allowlist, currently only `0.2.0`; validate against the
-published crate's embedded schemas with the retriever pattern in `table-manners/tests/fixtures.rs`.
-Reject every other live version, including 0.1.0; preserve older saved evidence without rewriting
-or automatically replaying it. Version 0.2 adoption is documented in [the integration plan](../plans/table-manners-v02.md).
+Use an explicit live-execution contract allowlist, currently only `0.3.0`; validate against the
+dependency's embedded schemas with the retriever pattern in `table-manners/tests/fixtures.rs`.
+Reject every other live version, including 0.1.0 and 0.2.0; preserve older saved evidence without rewriting
+or automatically replaying it. The v0.3 cutover is documented in [the execution plan](../plans/v03-execution.md).
 
-Host image bindings are ordered arrays internally. Tagged v0.2 still encodes each scalar slot as
-one image-in value; list slots require a future approved schema. No `x-squint` special-case interpretation.
+Host image bindings are ordered arrays internally. Scalar slots encode one image-in value; v0.3 list slots are declared but their editing/dispatch
+implementation waits for V07. No `x-squint` special-case interpretation.
 
 Before dispatch, read and validate the tool's session ledger and persist it with the declaration.
 Send the attempt ID as table-manners/client_run_id; record the SDK's actual progressToken at the

@@ -63,14 +63,18 @@ the opt-in real Rascal offline smoke. Automatic discovery and installation remai
 [CI](.github/workflows/ci.yml) runs the full PLAN matrix on `macos-15` for pull requests,
 pushes to main and manual dispatch. Action revisions and runtime versions are pinned; Cargo
 and Bun dependencies are cached, and matching Chromium/WebKit browsers are installed explicitly.
-CI uses the independent offline peer without provider keys or sibling checkouts. The three Rust
+CI uses the independent offline peer without provider keys. Until table-manners 0.3.0 is
+published, it checks out reviewed contract revision `e503a23` as the path dependency. Local
+builds need `../table-manners` at `e503a238ad6cc833834891c2c2cece7152b08bfc` as well. The three Rust
 and four browser real-tool probes remain explicit opt-ins. Checked-in UI assets are verified
-before any build can regenerate them. Browser traces are not uploaded automatically.
+before any build can regenerate them. Failure diagnostics include Playwright traces, screenshots and an allowlisted attempt summary.
 See the [CI checkpoint](docs/reviews/2026-11-01-ci.md) for local versus hosted verification.
 
 ### Try real Rascal
 
-With a stable contract 0.2.0 Rascal binary already built or installed, select its absolute path:
+The v0.3 client cutover is being verified against the independent peer. Real Rascal M12 and
+Squint M9 integration is gated by V18; the previous v0.2 binaries are now rejected.
+With a stable contract 0.3.0 Rascal binary already built or installed, select its absolute path:
 
 The tool's `playground` launcher must also implement the renamed H1 interface (`wafflery` and
 `WAFFLERY_BIN`). Older contract-compatible binaries still work for direct MCP tests, but must not
@@ -100,14 +104,13 @@ For an isolated **two-tool offline test** workspace:
 bun run scripts/dev-pipeline.ts /absolute/path/to/rascal /absolute/path/to/testkit/squint
 ```
 
-Use stable contract 0.2.0 executables; Squint needs the `testkit` feature and the fixes from
-`3e6223a` (or later compatible commits). The helper registers both tools and opens through `squint playground`. Select
+Use stable contract 0.3.0 executables; Squint needs the `testkit` feature and its v0.3 M9 implementation. The helper registers both tools and opens through `squint playground`. Select
 **Source fidelity** and provide candidate/source images. Squint returns a **scripted fixture
 verdict, not a model judgment**; Rascal runs without a filler. No credentials are supplied.
 The helper prints a reopen command. The estimate journal follow-up is resolved and the probe now
 preserves complete evidence. No existing library is modified.
 
-The host executes exactly table-manners 0.2.0. Earlier saved history remains readable.
+The host executes exactly table-manners 0.3.0. Earlier saved history remains readable.
 **Inspect run → Session** shows the server ledger before/after a run and any structured run
 association. This is a server-session ledger, not a provider account balance. Cancellation
 can recover a terminal result from its associated resource; missing or contradictory evidence

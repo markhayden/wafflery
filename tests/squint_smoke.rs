@@ -7,13 +7,13 @@ use wafflery::{
 };
 
 #[tokio::test]
-#[ignore = "requires WAFFLERY_SQUINT_BIN pointing to a contract 0.2.0 testkit binary"]
+#[ignore = "requires WAFFLERY_SQUINT_BIN pointing to a contract 0.3.0 testkit binary"]
 async fn real_squint_scripted_check_preserves_zero_spend_evidence() {
     probe("source_fidelity", json!({})).await;
 }
 
 #[tokio::test]
-#[ignore = "requires WAFFLERY_SQUINT_BIN pointing to a contract 0.2.0 testkit binary"]
+#[ignore = "requires WAFFLERY_SQUINT_BIN pointing to a contract 0.3.0 testkit binary"]
 async fn real_squint_estimate_preserves_complete_evidence() {
     probe("estimate", json!({"use_case":"source-fidelity"})).await;
 }
@@ -70,10 +70,10 @@ async fn probe(action: &str, params: serde_json::Value) {
             panic!("{error}; {snapshot}");
         }
     };
-    assert_eq!(description.document["contract"], "0.2.0");
+    assert_eq!(description.document["contract"], "0.3.0");
     for action in description.document["actions"].as_array().unwrap() {
         assert_eq!(action["cost"]["may_spend"], false, "{action}");
-        assert_eq!(action["cost"]["needs_env"], json!([]), "{action}");
+        assert_eq!(action["readiness"]["state"], "ready", "{action}");
     }
     let id = "squint-probe";
     let request = serde_json::from_value(json!({

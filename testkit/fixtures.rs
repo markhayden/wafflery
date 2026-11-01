@@ -20,7 +20,8 @@ pub fn description(version: &str) -> Value {
             }, "required": ["label"]},
             "images": [{"slot": "source", "role": "source", "required": true}],
             "locations": [], "outputs": {"images": ["candidate"], "locations": []},
-            "cost": {"may_spend": false, "needs_env": []},
+            "cost": {"may_spend": false},
+            "readiness": {"state":"ready","requirements":[]},
             "duration": {"typical_s": 1, "max_s": 30}, "renders": []
         }],
         "vocabulary": {"disposition": [], "confidence": [], "evidence": [], "score_kind": []},
@@ -41,7 +42,7 @@ pub fn reference(bytes: &[u8], width: u32, height: u32) -> Value {
 pub fn result(status: &str) -> Value {
     let reference = reference(SAMPLE, 160, 100);
     json!({
-        "contract": "0.2.0", "tool": {"name": TOOL, "version": "0.1.0"}, "action": "mark_band",
+        "contract": "0.3.0", "tool": {"name": TOOL, "version": "0.1.0"}, "action": "mark_band",
         "run": {"id": "fixture-001", "resource": format!("{TOOL}://run/fixture-001/run.json"), "dir": null, "session_id": null, "client_run_id": null},
         "status": status, "error": null, "started": "2026-01-01T00:00:00.000Z", "finished": "2026-01-01T00:00:00.000Z", "duration_ms": 0,
         "input_identity": format!("sha256:{}", "0".repeat(64)), "spend": {"usd": 0, "unresolved_usd": 0, "basis": "measured"}, "cache": "off",

@@ -11,7 +11,8 @@ const meta = {
       name: "fixture",
       title: "Fixture",
       purpose: "Declared fields",
-      cost: { may_spend: false, needs_env: [] },
+      cost: { may_spend: false },
+      readiness: { state: "ready", requirements: [] },
       params_schema: {
         type: "object",
         required: ["prompt"],

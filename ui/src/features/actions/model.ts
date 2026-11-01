@@ -6,7 +6,17 @@ export type Json =
   | Json[]
   | { [key: string]: Json };
 export type Schema = { [key: string]: Json };
-export type ImageSlot = { slot: string; role: string; required: boolean };
+export type ImageSlot = { slot: string; role: string; required: boolean; many?: boolean };
+export type Requirement = {
+  kind: "config" | "credential" | "env" | "model" | "file" | "dependency";
+  name: string;
+  state: "missing" | "present" | "valid" | "invalid" | "unknown";
+  setup?: string;
+};
+export type Readiness = {
+  state: "ready" | "needs_setup" | "unavailable";
+  requirements: Requirement[];
+};
 export type Action = {
   name: string;
   title: string;
@@ -14,7 +24,8 @@ export type Action = {
   params_schema: Schema;
   images?: ImageSlot[];
   locations?: { slot: string; required: boolean }[];
-  cost: { may_spend: boolean; needs_env: string[] };
+  cost: { may_spend: boolean };
+  readiness: Readiness;
 };
 export type Declaration = {
   document: {
@@ -57,7 +68,7 @@ export function encodeBindings(
   slots: ImageSlot[],
   selected: Record<string, string[]>,
 ): Record<string, string[]> {
-  if (version !== "0.2.0") throw new Error("Unsupported contract version.");
+  if (version !== "0.3.0") throw new Error("Unsupported contract version.");
   const result: Record<string, string[]> = {};
   for (const slot of slots) {
     const value = selected[slot.slot] ?? [];

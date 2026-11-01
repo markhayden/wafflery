@@ -1,4 +1,6 @@
 import { test, expect } from "./tool-host";
+import { spawnSync } from "node:child_process";
+import { join } from "node:path";
 test("an unavailable launcher selection never silently opens another tool", async ({
   page,
   host,
@@ -81,6 +83,14 @@ test("run a real offline action and inspect immutable evidence after editing the
     fullPage: true,
   });
   await host.stop();
+  // An older library record is evidence to inspect, not a live v0.2 tool declaration.
+  const legacy = spawnSync("/usr/bin/sqlite3", [join(host.root, "Library", "library.sqlite3"),
+    `UPDATE attempts SET record=json_set(json_remove(record,'$.declaration.document.actions[0].readiness'),
+      '$.declaration.document.contract','0.2.0',
+      '$.declaration.document.actions[0].cost.needs_env',json('[]'),
+      '$.result.contract','0.2.0','$.raw_response.structuredContent.contract','0.2.0');`
+  ], { encoding: "utf8" });
+  expect(legacy.status, legacy.stderr).toBe(0);
   await host.start();
   await host.open(page);
   await expect(
@@ -95,6 +105,10 @@ test("run a real offline action and inspect immutable evidence after editing the
   const history = page.getByRole("dialog", { name: "History", exact: true });
   await history.getByRole("button", { name: /sample \/ mark_band/ }).click();
   await expect(page.getByRole("slider")).toBeVisible();
+  await page.getByRole("button", { name: "Inspect run" }).click();
+  await drawer.getByRole("button", { name: "Raw result" }).click();
+  await expect(drawer.getByLabel("Saved evidence")).toContainText('"contract": "0.2.0"');
+  await drawer.getByRole("button", { name: "Close" }).click();
   expect(errors).toEqual([]);
 });
 

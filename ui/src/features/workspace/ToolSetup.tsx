@@ -27,6 +27,7 @@ export function ToolSetup({ tool, action, loadSession }: Props) {
     }).finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
   }, [loadSession, tool.name, tool.version, revision]);
+  const credentials = action.readiness.requirements.filter(item => item.kind === "credential");
   return <div className={styles.setup}>
     <section aria-label="Provider setup">
       <h3>{action.title}</h3>
@@ -34,9 +35,9 @@ export function ToolSetup({ tool, action, loadSession }: Props) {
         ? "Paid execution needs provider setup, a current estimate and an enforced run limit. It is not enabled yet."
         : "This action is declared free by the tool."}</p>
       <h4>Credential requirements</h4>
-      {action.cost.needs_env.length > 0 ? <>
-        <ul>{action.cost.needs_env.map((name) => <li key={name}><code>{name}</code></li>)}</ul>
-        <p>These are the variable names declared by the tool. Their availability and validity have not been checked. Connecting credentials is not available here yet.</p>
+      {credentials.length > 0 ? <>
+        <ul>{credentials.map((item) => <li key={item.name}><code>{item.name}</code> · {item.state}</li>)}</ul>
+        <p>These states are reported by the tool. A present credential has not necessarily been validated. Connecting credentials is not available here yet.</p>
       </> : <p>No credential variables are declared for this action. This does not verify its other setup requirements.</p>}
     </section>
     <section aria-label="Session spending" aria-busy={loading}>

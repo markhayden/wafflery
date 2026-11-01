@@ -20,9 +20,9 @@ The browser correction at 51d7935 passed hosted run
 - Each slice carries its tests and testkit docs. Validate the joined V01 checkpoint with the full
   matrix, review and then merge locally after hosted CI for the prior fix is green.
 
-V02 uses the authorized temporary sibling path while developing, then switches to the published
-exact crate before its hosted checkpoint. V01's archived schema input avoids changing the live
-validator prematurely. Remove the archive in V02 when the dependency supplies the same schemas.
+V02 uses the authorized temporary sibling path through its merge and hosted checkpoint.
+CI checks out reviewed e503a23; the coordinator requests the crates.io switch after publication.
+V01’s archived schema input avoids changing the live validator prematurely. Remove the archive in V02 when the dependency supplies the same schemas.
 
 Rollback newest dependent commits first. V01 changes only disposable peer/test coverage; no real
 library migration, provider calls or host dispatch behavior. Later rollback checkpoints remain
@@ -45,7 +45,8 @@ remained unchanged. No provider calls, sibling edits, push or tags.
 ## V02: coordinated validation cutover
 
 Use the authorized temporary path dependency at reviewed e503a23 during development; switch to
-published `=0.3.0` before the final checkpoint. Keep MCP 2025-11-25 and the no-paid dispatch guard.
+published `=0.3.0` in the coordinator’s post-publication follow-up. Keep MCP 2025-11-25 and the
+no-paid dispatch guard.
 Accept only v0.3 live descriptions/results/sessions, require estimate discovery for paid actions,
 remove cost.needs_env, and retain generic reading of older saved evidence. V03 owns the richer
 readiness UX; V07 owns list-input editing and dispatch.
@@ -56,12 +57,39 @@ v03_control}.rs; tests/{mcp_client,contract_fixtures,v03_fixtures,v03_wire,attem
 tool_session_api,rascal_smoke,squint_smoke}.rs and tests/support/v03_schema.rs; UI api/{workspace,
 tool-session}.ts, features/actions/{model,ActionForm.stories}.tsx/ts, workspace/{ToolSetup,
 ToolSetup.stories}.tsx, affected action/session unit tests and tool-setup/real-tool browser tests;
-README, ENGINEERING, integration-sources, foundation-runtime and testkit docs. Remove the generated
-V01 schema archive/license when the dependency supplies it. Commit generated UI assets with the
-UI type/copy change. Any additional affected site must be listed in the verification record.
+README, ENGINEERING, integration-sources, foundation-runtime and testkit docs. The coordinator’s
+merge-with-path ruling also requires a pinned sibling checkout in .github/workflows/ci.yml.
+Remove the generated V01 schema archive/license when the dependency supplies it. Commit generated UI assets with the
+UI type/copy change. Additional boundary coverage is in ui/tests/unit/workspace-contract.test.ts and
+ui/tests/browser/workspace.spec.ts: the latter reopens a stored v0.2 record after restart.
 
 Tests first: discover unconfigured v0.3 peers with arbitrary names, require reserved estimate
 without exposing it as an action, reject live v0.2 and missing-cap/estimate declarations, preserve
 v0.1/v0.2 saved evidence, and continue current offline execution. Review the schema/parser/fake
 change together; run the full matrix under the shared lock. Roll back this coherent cutover
 commit rather than retaining dual-version dispatch. No data migration is required.
+
+## V02 verification
+
+Live descriptions, results and sessions now require exactly v0.3. Paid declarations must expose
+reserved estimate and a strictly positive-cap parameter; the no-paid dispatch guard remains.
+The fake’s normal execution and control probes use the same exact schema dependency, replacing
+the temporary archive. Browser types use readiness requirements, not needs_env. Older saved
+v0.1/v0.2 records remain readable; Chromium and WebKit reopen and inspect v0.2 evidence after a
+host restart. No real provider calls or data migration occurred.
+
+New Rust discovery and browser boundary tests were observed failing before the cutover.
+Targeted checks passed after implementation. The full matrix under the shared heavy-check lock
+passed: formatting, clippy, 79 Rust tests (three opt-in ignores), typecheck, 14 UI unit tests,
+two asset-tooling tests, Storybook, two byte-identical clean UI builds, release build, and 70
+Chromium/WebKit cases (four real-tool opt-in skips). Generated assets and lockfiles stayed stable
+after regeneration. An initial CI-mode check stopped correctly on stale assets; the rerun built
+them first. Typecheck caught an incomplete new test fixture, corrected before the passing matrix.
+Implementation and the incremental CI/docs change passed independent review. The workflow YAML
+parses and its exact contract revision exists publicly; hosted execution is for the coordinator
+to verify after push. No sibling edits, push or tags.
+
+The coordinator explicitly approved merging with the temporary path dependency. CI checks out
+`e503a238ad6cc833834891c2c2cece7152b08bfc` alongside Wafflery without persisting credentials.
+After publication, switch the dependency to crates.io `=0.3.0`, refresh Cargo.lock and remove
+those temporary checkout/move steps. This later change does not block V03 onward.
