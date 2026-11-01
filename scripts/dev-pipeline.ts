@@ -40,7 +40,7 @@ console.log(
   "Squint uses scripted verdicts, not a model judgment. Rascal has no filler. No keys or paid providers are supplied.",
 );
 console.log(
-  "Try Squint / Source fidelity with a candidate and source image. Estimates currently have incomplete journal evidence.",
+  "Try Squint / Source fidelity with a candidate and source image. Inspect run → Session shows the saved ledger and run association.",
 );
 const environment = {
   ...process.env,

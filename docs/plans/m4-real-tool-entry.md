@@ -6,7 +6,11 @@ retain their interface gates.
 The owner also permits paid runs. That permission does not make the current client implement
 estimates, caps or a session ledger; those remain required before enabling paid dispatch.
 
-## Current evidence and decisions
+Update 2026-11-01: the [v0.2 integration slice](table-manners-v02.md) supersedes the contract
+version and estimate-journal blockers in the historical entry audit below. Both isolated real
+tools now pass; provider readiness, estimates/caps UI, discovery and paid dispatch remain open.
+
+## Original entry evidence and decisions
 
 - Rascal M9 is merged; reviewed launcher source passes exactly `--tool rascal`, uses
   `WAFFLEHOUSE_BIN` and leaves host attachment/browser ownership to Wafflehouse. Current local

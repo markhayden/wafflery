@@ -16,6 +16,10 @@ slices are in [M4: real tool entry](docs/plans/m4-real-tool-entry.md). Paid runs
 once estimates/caps/session handling are implemented; the current dispatch guard remains offline-only.
 Publishing and production installation are not authorized by this continuation.
 
+Current integration update (2026-11-01): adopt the published v0.2.0 contract and both tools together.
+See [the v0.2 integration plan](docs/plans/table-manners-v02.md) and [verified checkpoint](docs/reviews/2026-11-01-table-manners-v02.md). The initial v0.1 fixture/version
+requirements below describe the completed foundation checkpoint, not the current live allowlist.
+
 ## Outcome
 
 Deliver one locally running development build that can open a generic fake tool, accept an

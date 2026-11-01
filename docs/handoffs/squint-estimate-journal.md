@@ -1,5 +1,9 @@
 # Squint follow-up: estimate run has no readable journal
 
+Resolved 2026-11-01: Squint fix `718eec7` is included in `3e6223a`; the isolated v0.2 testkit
+probe now preserves complete estimate evidence, including an empty readable journal.
+The original report below is retained as history.
+
 Observed after verifying the fixes in [Squint #2](https://github.com/markhayden/squint/issues/2),
 against an isolated `a0a2dde` testkit build. Discovery and scripted checks now pass.
 This follow-up has not been posted to GitHub.
