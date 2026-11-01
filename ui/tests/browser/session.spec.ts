@@ -22,7 +22,7 @@ async function control(operation: string): Promise<{ bootstrap: string }> {
     socket.setTimeout(2000, () => socket.destroy(new Error("control timeout")));
     socket.on("error", reject);
     socket.on("connect", () =>
-      socket.end(JSON.stringify({ protocol: 1, root: canonical, operation })),
+      socket.end(JSON.stringify({ protocol: 1, product: "wafflery", root: canonical, operation })),
     );
     socket.on("data", (chunk) => {
       response += String(chunk);
