@@ -11,6 +11,7 @@ import {
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { createConnection } from "node:net";
+import { prepareOfflinePipeline } from "./offline-pipeline";
 export type Host = {
   root: string;
   origin: string;
@@ -21,7 +22,7 @@ export type Host = {
 export const test = base.extend<{
   host: Host;
   hostScenario: string;
-  hostKind: "sample" | "rascal";
+  hostKind: "sample" | "rascal" | "squint";
 }>({
   hostScenario: ["normal", { option: true }],
   hostKind: ["sample", { option: true }],
@@ -49,27 +50,35 @@ export const test = base.extend<{
     const source = join(temporary, "registration.json");
     await writeFile(
       source,
-      JSON.stringify([
-        {
-          id: hostKind,
-          executable:
-            hostKind === "rascal"
-              ? selectedBinary
-              : resolve("../target/debug/examples/sample-lab"),
-          args:
-            hostKind === "rascal"
-              ? [
-                  "serve",
-                  "--workspace",
-                  join(toolRoot, "workspace"),
-                  "--runs",
-                  join(toolRoot, "runs"),
-                ]
-              : [toolRoot, hostScenario],
-          cwd: toolRoot,
-          roots: [toolRoot],
-        },
-      ]),
+      JSON.stringify(
+        hostKind === "squint"
+          ? await prepareOfflinePipeline(
+              temporary,
+              process.env.WAFFLEHOUSE_RASCAL_BIN ?? "",
+              process.env.WAFFLEHOUSE_SQUINT_BIN ?? "",
+            )
+          : [
+              {
+                id: hostKind,
+                executable:
+                  hostKind === "rascal"
+                    ? selectedBinary
+                    : resolve("../target/debug/examples/sample-lab"),
+                args:
+                  hostKind === "rascal"
+                    ? [
+                        "serve",
+                        "--workspace",
+                        join(toolRoot, "workspace"),
+                        "--runs",
+                        join(toolRoot, "runs"),
+                      ]
+                    : [toolRoot, hostScenario],
+                cwd: toolRoot,
+                roots: [toolRoot],
+              },
+            ],
+      ),
     );
     const registered = spawnSync(
       resolve("../target/debug/wafflehouse"),

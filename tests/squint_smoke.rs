@@ -8,7 +8,17 @@ use wafflehouse::{
 
 #[tokio::test]
 #[ignore = "requires WAFFLEHOUSE_SQUINT_BIN pointing to a contract 0.1.0 testkit binary"]
-async fn real_squint_estimate_preserves_evidence_and_paid_checks_cannot_dispatch() {
+async fn real_squint_scripted_check_preserves_zero_spend_evidence() {
+    probe("source_fidelity", json!({})).await;
+}
+
+#[tokio::test]
+#[ignore = "upstream estimate journal missing at a0a2dde; explicit Squint testkit binary required"]
+async fn real_squint_estimate_preserves_complete_evidence() {
+    probe("estimate", json!({"use_case":"source-fidelity"})).await;
+}
+
+async fn probe(action: &str, params: serde_json::Value) {
     let Some(binary) = std::env::var_os("WAFFLEHOUSE_SQUINT_BIN").map(PathBuf::from) else {
         eprintln!("SKIPPED: WAFFLEHOUSE_SQUINT_BIN not set");
         return;
@@ -61,48 +71,45 @@ async fn real_squint_estimate_preserves_evidence_and_paid_checks_cannot_dispatch
         }
     };
     assert_eq!(description.document["contract"], "0.1.0");
-    for name in [
-        "source_fidelity",
-        "reference_consistency",
-        "reality_checks",
-        "brief_compliance",
-        "product_fidelity",
-    ] {
-        let request = serde_json::from_value(json!({"id":format!("blocked-{name}"),"tool":"squint","action":name,"revision":description.revision,"params":{},"images":{}})).unwrap();
-        let error = c.submit(request).await.unwrap_err();
-        assert!(
-            error.to_string().contains("declared free and offline"),
-            "{error}"
-        );
+    for action in description.document["actions"].as_array().unwrap() {
+        assert_eq!(action["cost"]["may_spend"], false, "{action}");
+        assert_eq!(action["cost"]["needs_env"], json!([]), "{action}");
     }
-    assert!(
-        !tool.join("runs").exists(),
-        "Refused checks must not reach Squint"
-    );
-    let request = serde_json::from_value(json!({"id":"offline-estimate","tool":"squint","action":"estimate","revision":description.revision,"params":{"use_case":"source-fidelity"},"images":{"candidate":[image.id],"source":[image.id]}})).unwrap();
+    let id = "squint-probe";
+    let request = serde_json::from_value(json!({
+        "id":id, "tool":"squint", "action":action,
+        "revision":description.revision, "params":params,
+        "images":{"candidate":[image.id],"source":[image.id]}
+    }))
+    .unwrap();
     c.submit(request).await.unwrap();
     let saved = tokio::time::timeout(std::time::Duration::from_secs(30), async {
         loop {
-            let attempt = c.attempts.get("offline-estimate").await.unwrap();
+            let attempt = c.attempts.get(id).await.unwrap();
             if attempt.preservation["contract"] != "pending" {
                 break attempt;
             }
             tokio::time::sleep(std::time::Duration::from_millis(25)).await;
         }
     })
-    .await
-    .unwrap();
+    .await;
     assert!(c.close().await);
     c.assets.database.shutdown().await.unwrap();
+    let saved = saved.unwrap();
     assert_eq!(saved.execution, "completed", "{:?}", saved.notices);
     assert_eq!(
         saved.preservation["contract"], "complete",
         "{:?}",
         saved.notices
     );
+    assert!(saved.wire.is_some());
     let result = saved.result.unwrap();
     assert_eq!(result["spend"]["usd"], 0.0);
-    assert!(result["body"]["envelope_usd"].as_f64().unwrap() > 0.0);
+    if action == "estimate" {
+        assert!(result["body"]["envelope_usd"].as_f64().unwrap() > 0.0);
+    } else {
+        assert_eq!(result["body"]["verdict"], "pass");
+    }
     assert!(saved.outputs.is_empty());
     assert_eq!(
         saved.inputs["candidate"][0]["asset"]["sha256"],
