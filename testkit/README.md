@@ -28,7 +28,12 @@ temporary directories using an independently written line-delimited client. The 
 fingerprint refusal, output digests, multiple run resources, cancellation and EOF shutdown.
 
 The example takes `<workspace> [scenario]`. `normal` and `slow` execute the offline image
-operation. `paid`, `unsupported-contract`, `wrong-protocol` and `malformed` are negative test
+operation. `held` emits running progress and waits until the test writes `<workspace>/release-run`.
+It consumes that file before completing, sends heartbeats while held, and cancellation/EOF
+still stop the wait. Browser tab
+handoff tests release it only after observing progress and closing the launching tab, so the
+scenario has no timed automatic completion or dependency on sleep scheduling. The signal belongs
+only to this disposable test peer, not the host or shared contract. `paid`, `unsupported-contract`, `wrong-protocol` and `malformed` are negative test
 scenarios, not full conformance claims; none makes a paid or remote call. Only the host's owned
 test descriptor will opt into this executable. No real tool is discovered or installed by it.
 

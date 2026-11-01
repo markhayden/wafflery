@@ -165,32 +165,36 @@ fn independent_peer_pages_tools_and_returns_verifiable_images_and_resources() {
 
 #[test]
 fn cancellation_persists_a_cancelled_run_without_an_mcp_call_result() {
-    let temp = tempfile::tempdir().unwrap();
-    let source = temp.path().join("source.png");
-    std::fs::write(&source, include_bytes!("../ui/tests/fixtures/sample.png")).unwrap();
-    let mut peer = Peer::start(temp.path(), "slow");
-    peer.initialize();
-    peer.send(json!({"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"mark_band","arguments":{"source":{"path":source},"label":"cancel test"},"_meta":{"progressToken":3}}}));
-    let first = peer.messages.recv_timeout(Duration::from_secs(3)).unwrap();
-    assert_eq!(first["method"], "notifications/progress");
-    peer.send(json!({"jsonrpc":"2.0","method":"notifications/cancelled","params":{"requestId":3}}));
-    let deadline = std::time::Instant::now() + Duration::from_secs(3);
-    loop {
-        let response = peer.call(4, "resources/read", json!({"uri":"sample-lab://runs"}));
-        let runs: Value =
-            serde_json::from_str(response["result"]["contents"][0]["text"].as_str().unwrap())
-                .unwrap();
-        if runs["runs"][0]["status"] == "cancelled" {
-            break;
+    for scenario in ["slow", "held"] {
+        let temp = tempfile::tempdir().unwrap();
+        let source = temp.path().join("source.png");
+        std::fs::write(&source, include_bytes!("../ui/tests/fixtures/sample.png")).unwrap();
+        let mut peer = Peer::start(temp.path(), scenario);
+        peer.initialize();
+        peer.send(json!({"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"mark_band","arguments":{"source":{"path":source},"label":"cancel test"},"_meta":{"progressToken":3}}}));
+        let first = peer.messages.recv_timeout(Duration::from_secs(3)).unwrap();
+        assert_eq!(first["method"], "notifications/progress");
+        peer.send(
+            json!({"jsonrpc":"2.0","method":"notifications/cancelled","params":{"requestId":3}}),
+        );
+        let deadline = std::time::Instant::now() + Duration::from_secs(3);
+        loop {
+            let response = peer.call(4, "resources/read", json!({"uri":"sample-lab://runs"}));
+            let runs: Value =
+                serde_json::from_str(response["result"]["contents"][0]["text"].as_str().unwrap())
+                    .unwrap();
+            if runs["runs"][0]["status"] == "cancelled" {
+                break;
+            }
+            assert!(std::time::Instant::now() < deadline);
+            std::thread::sleep(Duration::from_millis(10));
         }
-        assert!(std::time::Instant::now() < deadline);
-        std::thread::sleep(Duration::from_millis(10));
+        assert!(
+            peer.messages
+                .recv_timeout(Duration::from_millis(100))
+                .is_err()
+        );
     }
-    assert!(
-        peer.messages
-            .recv_timeout(Duration::from_millis(100))
-            .is_err()
-    );
 }
 
 #[test]

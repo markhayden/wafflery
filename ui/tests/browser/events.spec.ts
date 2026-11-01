@@ -1,7 +1,7 @@
 import { test, expect } from "./tool-host";
-import { readFile } from "node:fs/promises";
+import { readFile, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
-test.use({ hostScenario: "slow" });
+test.use({ hostScenario: "held" });
 test("another tab follows a run after a stream reconnect and the launching tab closes", async ({
   page,
   context,
@@ -32,6 +32,8 @@ test("another tab follows a run after a stream reconnect and the launching tab c
     other.getByText("Waiting in the offline test tool", { exact: true }),
   ).toBeVisible();
   await page.close();
+  // Complete only after the launching tab is gone; scheduler timing cannot release it early.
+  await writeFile(resolve(host.root, "../tool/release-run"), "");
   await expect(
     other.getByText("Contract evidence: complete.", { exact: false }).first(),
   ).toBeVisible({ timeout: 15000 });

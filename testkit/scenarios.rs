@@ -176,28 +176,49 @@ pub fn execute(
         if scenario == "exit-during-call" {
             std::process::exit(0);
         }
-        let delay = if matches!(
-            scenario.as_str(),
-            "slow"
-                | "exit-after-cancel"
-                | "unassociated"
-                | "no-progress"
-                | "paged"
-                | "duplicate-pages"
-                | "conflict-once"
-                | "endless-pages"
-        ) {
-            10_000
-        } else {
-            100
-        };
-        for tick in 0..(delay / 50) {
-            if cancelled.load(Ordering::Acquire) {
-                return Ok(());
+        if scenario == "held" {
+            notify("Waiting in the offline test tool");
+            let mut heartbeat = Instant::now();
+            loop {
+                if cancelled.load(Ordering::Acquire) {
+                    return Ok(());
+                }
+                if heartbeat.elapsed() >= Duration::from_millis(500) {
+                    notify("Waiting in the offline test tool");
+                    heartbeat = Instant::now();
+                }
+                match fs::remove_file(root.join("release-run")) {
+                    Ok(()) => break,
+                    Err(error) if error.kind() == io::ErrorKind::NotFound => {
+                        std::thread::sleep(Duration::from_millis(50));
+                    }
+                    Err(error) => return Err(error.into()),
+                }
             }
-            std::thread::sleep(Duration::from_millis(50));
-            if tick % 10 == 9 {
-                notify("Waiting in the offline test tool");
+        } else {
+            let delay = if matches!(
+                scenario.as_str(),
+                "slow"
+                    | "exit-after-cancel"
+                    | "unassociated"
+                    | "no-progress"
+                    | "paged"
+                    | "duplicate-pages"
+                    | "conflict-once"
+                    | "endless-pages"
+            ) {
+                10_000
+            } else {
+                100
+            };
+            for tick in 0..(delay / 50) {
+                if cancelled.load(Ordering::Acquire) {
+                    return Ok(());
+                }
+                std::thread::sleep(Duration::from_millis(50));
+                if tick % 10 == 9 {
+                    notify("Waiting in the offline test tool");
+                }
             }
         }
         let roots = state.lock().unwrap().roots.clone();
