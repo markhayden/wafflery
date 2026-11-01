@@ -27,6 +27,7 @@ export function Workspace({api,initial}:{api:LocalApi;initial:Snapshot}) {
  const tool=snapshot.tools.find(tool=>tool.id===toolId);const declaration=tool?.declaration;
  const [actionId,setActionId]=useState(declaration?.document.actions[0]?.name??"");
  const action=declaration?.document.actions.find(a=>a.name===actionId);
+ const [draftRevision,setDraftRevision]=useState(0);
  const [params,setParams]=useState<Schema>(()=>initialParameters(action?.params_schema??{}));
  const [projections,setProjections]=useState<Record<string,"flat"|"equirectangular">>({});
  const [images,setImages]=useState<Record<string,Asset[]>>({});const [savedImages,setSavedImages]=useState<Asset[]>([]);
@@ -52,11 +53,12 @@ export function Workspace({api,initial}:{api:LocalApi;initial:Snapshot}) {
  function openAttempt(id:string){
   void client.attempt(id).then(attempt=>{
    const action=snapshot.tools.find(t=>t.id===attempt.request.tool)?.declaration?.document.actions.find(a=>a.name===attempt.request.action);
-   setToolId(attempt.request.tool);setActionId(attempt.request.action);setParams(initialParameters(action?.params_schema??{}));setImages({});setProjections({});
+   setDraftRevision(value=>value+1);setToolId(attempt.request.tool);setActionId(attempt.request.action);setParams(initialParameters(action?.params_schema??{}));setImages({});setProjections({});
    setSelectedId(id);setSelected(attempt);setDrawer(null);
   }).catch(failure=>setError(String(failure)));
  }
  function openExample(example:Example){
+  setDraftRevision(value=>value+1);
   const current=snapshot.tools.find(tool=>tool.id===example.request.tool)?.declaration;
   if(!current?.document.actions.some(action=>action.name===example.request.action))throw new Error("This example needs a tool action that is not currently available.");
   setToolId(example.request.tool);setActionId(example.request.action);setParams(structuredClone(example.request.params));
@@ -64,8 +66,8 @@ export function Workspace({api,initial}:{api:LocalApi;initial:Snapshot}) {
   setProjections(Object.fromEntries(Object.entries(example.request.frames??{}).map(([slot,values])=>[slot,values[0]?.projection??"flat"])));
   setSelectedId(null);setSelected(undefined);setDraftExample(example);setError(undefined);submitted.current=null;setDrawer(null);
  }
- function chooseTool(id:string){setDraftExample(undefined);setToolId(id);const action=snapshot.tools.find(t=>t.id===id)?.declaration?.document.actions[0];setActionId(action?.name??"");setParams(initialParameters(action?.params_schema??{}));setImages({});setProjections({});setSelectedId(undefined);setSelected(undefined);setError(undefined);submitted.current=null;}
- function chooseAction(id:string){setDraftExample(undefined);setActionId(id);setParams(initialParameters(declaration?.document.actions.find(a=>a.name===id)?.params_schema??{}));setImages({});setProjections({});setSelectedId(undefined);setSelected(undefined);setError(undefined);submitted.current=null;}
+ function chooseTool(id:string){setDraftRevision(value=>value+1);setDraftExample(undefined);setToolId(id);const action=snapshot.tools.find(t=>t.id===id)?.declaration?.document.actions[0];setActionId(action?.name??"");setParams(initialParameters(action?.params_schema??{}));setImages({});setProjections({});setSelectedId(undefined);setSelected(undefined);setError(undefined);submitted.current=null;}
+ function chooseAction(id:string){setDraftRevision(value=>value+1);setDraftExample(undefined);setActionId(id);setParams(initialParameters(declaration?.document.actions.find(a=>a.name===id)?.params_schema??{}));setImages({});setProjections({});setSelectedId(undefined);setSelected(undefined);setError(undefined);submitted.current=null;}
  async function run(){
   if(!action||!declaration||busy)return;setError(undefined);setBusy(true);
   try{
@@ -85,7 +87,7 @@ export function Workspace({api,initial}:{api:LocalApi;initial:Snapshot}) {
   {tool?.error&&<p role="alert">{tool.error}</p>}
   <div className={styles.columns}>
    <form className={styles.panel} onSubmit={event=>{event.preventDefault();void run();}}><h2>Input</h2>{draftExample&&<p className={styles.note}>From example: {draftExample.name}{draftExample.notes?` · ${draftExample.notes}`:""}</p>}
-    {action?<ActionForm key={`${toolId}/${actionId}`} action={action} params={params} onChange={setParams} projections={projections} onProjection={(slot,value)=>setProjections(values=>({...values,[slot]:value}))} images={images} onImages={(slot,value)=>setImages(values=>({...values,[slot]:value}))} upload={async file=>{const asset=await assets.upload(file);setSavedImages(await assets.list());return asset;}} preview={assets.preview}/>:<p>No supported action is available.</p>}
+    {action?<ActionForm key={`${toolId}/${actionId}/${draftRevision}/${declaration?.revision}`} action={action} params={params} onChange={setParams} projections={projections} onProjection={(slot,value)=>setProjections(values=>({...values,[slot]:value}))} images={images} onImages={(slot,value)=>setImages(values=>({...values,[slot]:value}))} upload={async file=>{const asset=await assets.upload(file);setSavedImages(await assets.list());return asset;}} preview={assets.preview}/>:<p>No supported action is available.</p>}
     {action?.images?.length&&savedImages.length>0?<details><summary>Saved images ({savedImages.length})</summary><div className={styles.saved}>{action.images.map(slot=><div key={slot.slot}><p>Use for {slot.slot}</p>{savedImages.slice(0,12).map((asset,index)=><Button key={asset.id} onClick={()=>setImages(values=>({...values,[slot.slot]:[asset]}))}>Image {index+1} · {asset.width} × {asset.height}</Button>)}</div>)}</div></details>:null}
     {error&&<p role="alert">{error}</p>}<div className={styles.run}><p>{action?.cost.may_spend?"Paid actions are unavailable in this foundation.":"Free action · Inputs are saved locally"}</p><Button type="submit" busy={busy} disabled={!action||action.cost.may_spend||!!working||!!tool?.busy||(action.images??[]).some(slot=>slot.required&&!images[slot.slot]?.length)||(action.locations??[]).some(slot=>slot.required)}>Run</Button></div>
    </form>
@@ -95,6 +97,6 @@ export function Workspace({api,initial}:{api:LocalApi;initial:Snapshot}) {
    </section>
   </div>
   {recent.length>0&&<section className={styles.recent} aria-label="Recent attempts"><h2>Recent attempts</h2>{recent.slice(0,6).map(attempt=><Button key={attempt.id} onClick={()=>openAttempt(attempt.id)}>{attempt.action} · {attempt.execution} · {attempt.id.slice(0,8)}</Button>)}</section>}
-  <Drawer open={drawer!==null} opener={drawer?.opener??null} onClose={()=>setDrawer(null)} title={drawer?.view==="history"?"History":drawer?.view==="examples"?"Examples":drawer?.view==="pipeline"?"Use in your pipeline":drawer?.view==="cleanup"?"Clean up library":"Run details"} description={drawer?.view==="history"?"Saved local attempts. Opening a run never executes it.":drawer?.view==="examples"?"Reusable inputs, saved locally.":drawer?.view==="cleanup"?"Preview changes before deleting saved records.":selected?`${selected.request.tool} / ${selected.request.action} · ${selected.id}`:""}>{drawer?.view==="history"?<History client={client} onOpen={openAttempt}/>:drawer?.view==="examples"?<Examples client={examples} selectedId={selected?.id} onOpen={openExample}/>:drawer?.view==="pipeline"&&selected?<Pipeline attempt={selected} api={api}/>:drawer?.view==="cleanup"?<Cleanup api={api} runs={recent} onDone={async()=>{setSelectedId(null);setSelected(undefined);setSnapshot(await client.snapshot());setSavedImages(await assets.list());}}/>:selected&&<Inspector key={selected.id} attempt={selected}/>}</Drawer>
+  <Drawer open={drawer!==null} opener={drawer?.opener??null} onClose={()=>setDrawer(null)} title={drawer?.view==="history"?"History":drawer?.view==="examples"?"Examples":drawer?.view==="pipeline"?"Use in your pipeline":drawer?.view==="cleanup"?"Clean up library":"Run details"} description={drawer?.view==="history"?"Saved local attempts. Opening a run never executes it.":drawer?.view==="examples"?"Reusable inputs, saved locally.":drawer?.view==="cleanup"?"Preview changes before deleting saved records.":selected?`${selected.request.tool} / ${selected.request.action} · ${selected.id}`:""}>{drawer?.view==="history"?<History client={client} onOpen={openAttempt}/>:drawer?.view==="examples"?<Examples client={examples} selectedId={selected?.id} onOpen={openExample}/>:drawer?.view==="pipeline"&&selected?<Pipeline attempt={selected} api={api}/>:drawer?.view==="cleanup"?<Cleanup api={api} onDone={async()=>{setSelectedId(null);setSelected(undefined);setSnapshot(await client.snapshot());setSavedImages(await assets.list());}}/>:selected&&<Inspector key={selected.id} attempt={selected}/>}</Drawer>
  </div>;
 }

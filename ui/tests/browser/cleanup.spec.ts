@@ -13,9 +13,18 @@ test("deleting a source run clears its baseline and preserves a saved example",a
   await examples.getByRole("button",{name:"Save example",exact:true}).click();
   await expect(examples.getByRole("button",{name:"Open Survives cleanup"})).toBeVisible();
   await examples.getByRole("button",{name:"Close",exact:true}).click();
+  await page.route("**/api/attempts?limit=20*",async route=>{
+    const url=new URL(route.request().url());
+    if(url.searchParams.has("cursor")){await route.continue();return;}
+    const response=await route.fetch();const value=await response.json();
+    if(!value.items.length){await route.fulfill({response});return;}
+    await route.fulfill({json:{items:[{...value.items[0],id:"newer-placeholder",sequence:value.items[0].sequence+1}],cursor:value.items[0].sequence+1}});
+  });
   await page.getByRole("button",{name:"Clean up library",exact:true}).click();
   const cleanup=page.getByRole("dialog",{name:"Clean up library",exact:true});
-  await cleanup.getByLabel(/Delete run/).check();
+  await cleanup.getByRole("button",{name:"Load older runs"}).click();
+  await expect(cleanup.getByLabel(/Delete run/)).toHaveCount(2);
+  await cleanup.getByLabel(/Delete run/).last().check();
   await cleanup.getByRole("button",{name:"Preview cleanup"}).click();
   await expect(cleanup.getByLabel("Cleanup preview")).toContainText("1 baseline pins will clear");
   await cleanup.getByRole("button",{name:"Confirm cleanup"}).click();

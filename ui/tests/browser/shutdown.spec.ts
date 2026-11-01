@@ -22,6 +22,10 @@ test.describe("force shutdown",()=>{
     await expect(drawer.getByRole("button",{name:"Force quit owned tools"})).toHaveCount(0);
     await drawer.getByRole("button",{name:"Confirm quit"}).click();
     await expect(drawer.getByRole("button",{name:"Force quit owned tools"})).toBeVisible({timeout:10000});
+    let dropped=false;
+    await page.route("**/api/host/shutdown",async route=>{if(!dropped){dropped=true;await route.fulfill({status:503,contentType:"application/json",body:JSON.stringify({error:{message:"Temporary test interruption"}})});}else await route.continue();});
+    await expect(drawer.getByRole("button",{name:"Retry connection"})).toBeVisible();
+    await expect(drawer.getByRole("button",{name:"Force quit owned tools"})).toBeVisible();
     await drawer.getByRole("button",{name:"Force quit owned tools"}).click();
     await expect(drawer.getByText("Run wafflehouse again to reopen the workspace.")).toBeVisible();
   });

@@ -82,6 +82,8 @@ pub struct ToolClient {
     peer: Option<Peer<RoleClient>>,
     generation: Arc<AtomicU64>,
     progress: watch::Sender<Option<Value>>,
+    // 0 = accepting work, 1 = terminal response preservation, 2 = transport closing.
+    lifecycle: std::sync::atomic::AtomicU8,
 }
 impl ToolClient {
     pub fn spawn(descriptor: Descriptor) -> Result<Self> {
@@ -116,6 +118,7 @@ impl ToolClient {
             peer: None,
             generation: Arc::new(AtomicU64::new(0)),
             progress,
+            lifecycle: std::sync::atomic::AtomicU8::new(0),
         })
     }
     pub async fn initialize(&mut self) -> Result<()> {
@@ -296,6 +299,7 @@ impl ToolClient {
     }
     /// Only the still-owned child handle can authorize an explicit force stop.
     pub async fn force_stop(&self) -> Result<bool> {
+        self.lifecycle.store(2, Ordering::Release);
         let mut child = self.child.lock().await;
         if child.try_wait()?.is_some() {
             return Ok(true);
@@ -311,6 +315,14 @@ impl ToolClient {
     }
     /// Returns false when EOF did not stop the process. The owner retains the handle for explicit force quit.
     pub async fn close(&self) -> Result<bool> {
+        // Linearize graceful close against receipt of a terminal response, before any DB await.
+        if self
+            .lifecycle
+            .compare_exchange(0, 2, Ordering::AcqRel, Ordering::Acquire)
+            == Err(1)
+        {
+            return Ok(false);
+        }
         self.pipes.lock().unwrap_or_else(|e| e.into_inner()).take();
         if let Some(service) = self.service.lock().await.as_mut() {
             let _ = service.close_with_timeout(Duration::from_secs(2)).await;
@@ -322,6 +334,19 @@ impl ToolClient {
             }
             Err(_) => Ok(false),
         }
+    }
+    pub(super) fn begin_preservation(&self) {
+        let _ = self
+            .lifecycle
+            .compare_exchange(0, 1, Ordering::AcqRel, Ordering::Acquire);
+    }
+    pub(super) fn end_preservation(&self) {
+        let _ = self
+            .lifecycle
+            .compare_exchange(1, 0, Ordering::AcqRel, Ordering::Acquire);
+    }
+    pub(super) fn is_preserving(&self) -> bool {
+        self.lifecycle.load(Ordering::Acquire) == 1
     }
 }
 pub fn structured_result(response: &Value) -> Result<Value> {

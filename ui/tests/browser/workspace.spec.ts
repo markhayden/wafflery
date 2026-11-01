@@ -28,3 +28,15 @@ test("run a real offline action and inspect immutable evidence after editing the
  await expect(page.getByRole("slider")).toBeVisible();
  expect(errors).toEqual([]);
 });
+
+test("tool discovery does not expose a temporary image form that loses uploads",async({page,host})=>{
+ let requests=0;let release:()=>void=()=>{};const ready=new Promise<void>(resolve=>{release=resolve;});
+ await page.route("**/api/state",async route=>{requests++;if(requests===2)await ready;await route.continue();});
+ try{
+  await host.open(page);await expect(page.getByRole("status").filter({hasText:"Connected locally"})).toBeVisible();
+  await expect(page.getByText("Loading workspace…")).toBeVisible();
+  await expect(page.locator("input[type=file]")).toHaveCount(0);
+ }finally{release();}
+ await expect(page.getByRole("button",{name:/Action Add a test band/})).toBeVisible();
+ await expect(page.locator("input[type=file]")).toHaveCount(1);
+});

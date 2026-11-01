@@ -312,7 +312,7 @@ impl Coordinator {
             tokio::pin!(call);
             let response = loop {
                 tokio::select! {
-                    response = &mut call => break response?,
+                    response = &mut call => { let response=response?;client.begin_preservation();break response; },
                     changed = progress.changed() => {
                         if changed.is_ok() { self.events.changed(); }
                     }
@@ -356,6 +356,7 @@ impl Coordinator {
                     Ok::<_, Error>(())
                 }
                 .await;
+                client.end_preservation();
                 match saved {
                     Ok(()) => {
                         self.discard_materialized(&request.id).await;
@@ -378,6 +379,7 @@ impl Coordinator {
                 }
             }
             Err(error) => {
+                client.end_preservation();
                 let locally_cancelled =
                     matches!(error, Error::Mcp(rmcp::ServiceError::Cancelled { .. }));
                 let message = error.to_string();
@@ -566,6 +568,15 @@ impl Coordinator {
     async fn preserving_tools(&self) -> std::collections::BTreeSet<String> {
         let ids = self.active.lock().await.keys().cloned().collect::<Vec<_>>();
         let mut preserving = std::collections::BTreeSet::new();
+        for (id, entry) in &self.tools {
+            if entry
+                .client
+                .as_ref()
+                .is_some_and(|client| client.is_preserving())
+            {
+                preserving.insert(id.clone());
+            }
+        }
         for id in ids {
             if let Ok(attempt) = self.attempts.get(&id).await
                 && attempt.result.is_some()

@@ -45,8 +45,9 @@ export function App() {
         <h1>Your workshop</h1>
         <p className="workspace-intro">Try a tool. Inspect the result. Take it into your pipeline.</p>
         <p role="status">{connection}</p>
+        {api&&!snapshot&&<p>Loading workspace…</p>}
         {api && snapshot && snapshot.tools.length>0 && <Workspace api={api} initial={snapshot}/>}
-        {images && !snapshot?.tools.length && <section className="workspace-empty" aria-label="Image library">
+        {images && snapshot && snapshot.tools.length===0 && <section className="workspace-empty" aria-label="Image library">
           <ImageInput label="Reference image" min={0} max={1} value={selected} onChange={setSelected} preview={images.preview}
             upload={async file => {
               const image = await images.upload(file);
@@ -61,7 +62,7 @@ export function App() {
             </Button>)}</div>
           </details>}
         </section>}
-        {!snapshot?.tools.length && <section className="workspace-empty" aria-labelledby="setup-heading">
+        {snapshot && snapshot.tools.length===0 && <section className="workspace-empty" aria-labelledby="setup-heading">
           <h2 id="setup-heading">No tools connected yet</h2>
           <p id="connection-help">Connect a tool to try its actions and inspect the results. Tool connections are being added in the next milestone.</p>
         <div><Button disabled aria-describedby="connection-help">Connect a tool</Button></div>

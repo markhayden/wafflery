@@ -251,7 +251,7 @@ impl AttemptStore {
     pub async fn recover(&self) -> Result<()> {
         self.database.call(|db| {
             let tx = db.transaction()?;
-            let records = { let mut query=tx.prepare("SELECT id,record FROM attempts")?; query.query_map([],|r|Ok((r.get::<_,String>(0)?,r.get::<_,String>(1)?)))?.collect::<rusqlite::Result<Vec<_>>>()? };
+            let records = { let mut query=tx.prepare("SELECT id,record FROM attempts WHERE json_extract(record,'$.execution') IN ('submitted','running','cancelling','unconfirmed') OR json_extract(record,'$.preservation.contract')='pending'")?; query.query_map([],|r|Ok((r.get::<_,String>(0)?,r.get::<_,String>(1)?)))?.collect::<rusqlite::Result<Vec<_>>>()? };
             for (id,record) in records {
                 let mut attempt: Attempt = serde_json::from_str(&record)?;
                 if matches!(attempt.execution.as_str(),"submitted"|"running"|"cancelling"|"unconfirmed") { attempt.execution="interrupted".into(); attempt.notices.push("Host session ended. The tool's final outcome is unknown; this attempt was not retried.".into()); }

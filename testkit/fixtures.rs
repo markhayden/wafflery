@@ -13,6 +13,7 @@ pub fn description(version: &str) -> Value {
         "actions": [{
             "name": "mark_band", "title": "Add a test band", "purpose": "Creates a deterministic visual change for testing inputs, inspection and saved runs.",
             "params_schema": {"type": "object", "additionalProperties": false, "properties": {
+                "tags":{"type":"array","title":"Tags","items":{"type":"string"}},
                 "label": {"type": "string", "title": "Label", "description": "A note to identify this experiment.", "minLength": 1, "maxLength": 120},
                 "tone": {"type": "string", "title": "Band color", "enum": ["blue", "amber"], "default": "blue"},
                 "strength": {"type": "number", "title": "Strength", "minimum": 0, "maximum": 1, "default": 0.5}
