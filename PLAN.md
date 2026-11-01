@@ -425,7 +425,8 @@ v0.3 table. Rascal M12 and Squint M9 supply the real peers. No sibling files are
 
 ### M4a — v0.3 setup, sessions and image inputs
 
-**V01 — Establish independent v0.3 peer fixtures.** Add schema-valid descriptions for ready,
+**V01 — Establish independent v0.3 peer fixtures. Complete.**
+Verified in [the execution checkpoint](docs/plans/v03-execution.md). Add schema-valid descriptions for ready,
 needs-setup and unavailable actions; session/estimate/refusal fixtures and differently named fake
 tools. Script the reserved estimate control with deterministic, zero-provider behavior. Initially
 exercise these as independent wire/fixture tests; the live host still refuses v0.3 and paid calls.

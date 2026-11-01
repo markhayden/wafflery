@@ -3,7 +3,8 @@
 The owner approved V01–V18 on 2026-11-01. Implement in PLAN order, with tests first, accurate docs,
 short branches, the full matrix under the shared heavy-check lock, and local merges after review.
 The coordinator scans and pushes; no sibling edits, tags or compatibility shims.
-The browser correction at 51d7935 is awaiting hosted confirmation before the next merge.
+The browser correction at 51d7935 passed hosted run
+[41358441245](https://github.com/markhayden/wafflery/actions/runs/41358441245); the CI gate is green.
 
 ## V01: independent fixtures before live cutover
 
@@ -26,3 +27,17 @@ validator prematurely. Remove the archive in V02 when the dependency supplies th
 Rollback newest dependent commits first. V01 changes only disposable peer/test coverage; no real
 library migration, provider calls or host dispatch behavior. Later rollback checkpoints remain
 those in PLAN.md.
+
+## V01 verification
+
+Both test slices were observed failing before implementation: null fixture objects fail the
+reviewed schema, and the old peer neither describes v0.3 nor implements estimate. The completed
+fixtures and wire probes pass, including actual payload schema validation, before/after ledger
+identity, zero spend/reservations, no runs/files, fresh serving sessions, reserved-name exclusion,
+readiness/cap/budget estimates and invalid-argument refusals. The runtime still rejects v0.3.
+
+Implementation and test coverage passed review. Under the shared heavy-check lock: formatting,
+clippy, 77 Rust tests (three existing opt-in ignores), UI/script typecheck, 12 UI unit tests,
+two asset-tooling tests, Storybook, byte-identical clean UI builds, release build and 70 browser
+cases passed; four existing real-tool browser cases were skipped. Generated assets/lockfiles
+remained unchanged. No provider calls, sibling edits, push or tags.

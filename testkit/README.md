@@ -130,3 +130,13 @@ It is generated input, not a fork of the contract. Its accompanying Apache-2.0 l
 from that revision. The archive lets CI validate the approved draft without a sibling checkout;
 V02 removes it when the exact published crate provides the schemas. Fixed timestamps/UUIDs in
 fixture examples are test data; serving processes must provide fresh sessions and live expiry.
+
+The `v03-ready`, `v03-lens`, `v03-needs-setup`, `v03-unavailable` and `v03-budget` scenarios expose
+those objects over MCP 2025-11-25. They are **control-only preparation probes**, not complete
+execution peers: describe, estimate, session/runs reads and discovery work; action execution is
+explicitly unsupported until its owning task. The normal/held execution scenarios remain v0.2.
+`price_test` estimates are deterministic and local, with a scripted $0.12 worst case and $1
+configured cap. Delivery flags do not affect the binding. Each process gets a fresh session;
+no estimate allocates a run, claims a client run ID, reserves money or changes the ledger.
+The wire tests validate returned objects against the same archived schemas, compare the ledger
+before and after controls/refusals, and verify the workspace remains empty.

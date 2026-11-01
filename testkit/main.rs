@@ -1,6 +1,8 @@
 //! Independent, line-delimited MCP peer. Deliberately does not import rmcp or wafflery.
 mod fixtures;
 mod scenarios;
+mod v03_control;
+mod v03_fixtures;
 use serde_json::{Value, json};
 use std::{
     io::{self, BufRead, Read, Write},
@@ -77,6 +79,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     std::fs::create_dir_all(&root)?;
     let root = root.canonicalize()?;
     let scenario = arguments.next().unwrap_or_else(|| "normal".into());
+    if scenario.starts_with("v03-") {
+        return v03_control::serve(&scenario);
+    }
     if scenario == "malformed" {
         println!("not JSON");
         return Ok(());
