@@ -416,3 +416,8 @@ uses the same bounded recovery. Raw errors remain saved alongside recovered evid
 references never release the claim. No recovery path dispatches another action. Progress
 association is captured in transport receive order before rmcp moves metadata into notification
 context or schedules handlers; handler progress remains display-only.
+
+Definitive refusals display “No run created” and the tool's reason instead of a comparison or
+missing-result warning. The browser retains submission identity only while its acknowledgement
+is uncertain. Once submit returns an attempt, its cached request is cleared before any history
+refresh; a refresh failure cannot make the next deliberate run reuse an acknowledged attempt.

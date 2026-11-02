@@ -421,3 +421,17 @@ seven independent wire tests, three readiness tests and the receive-boundary reg
 The full matrix passed: 125 Rust tests (three ignored), 23 UI unit tests, two asset tests,
 92 browser cases (four skipped), fmt, clippy, typecheck, Storybook, asset reproducibility and
 release build. The metadata correction adds no protocol or dependency change; no replay occurs.
+
+V08c covers plain/structured refusal display, tool-provided reasons, explicit unchanged/corrected
+retry identities and lost HTTP acknowledgements. The initial browser regressions reproduced
+missing no-run messaging and reuse of an acknowledged attempt after a snapshot refresh failed.
+Clear the cached submission immediately upon acknowledgement; keep it for uncertain transport
+outcomes. Tests check the selected saved-attempt id before asserting a later result, so an old
+completed result cannot satisfy the new execution check. No server API, storage or dependency
+changes; reverting the workspace edit and its generated assets rolls back this UI slice.
+
+V08c verification: review approved; all eight refusal/retry browser cases pass. The full matrix
+passed: 125 Rust tests (three ignored), 23 UI unit tests, two asset tests and 100 browser cases
+(four skipped), plus fmt, clippy, typecheck, Storybook, reproducible assets and release build.
+The WebKit result screenshot was inspected: the refusal and correction appear without a false
+missing-result warning. Native Safari was not rerun for this slice.

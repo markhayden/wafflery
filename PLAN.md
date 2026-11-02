@@ -577,7 +577,7 @@ automatic discovery, production installation or the full three first-install jou
 
 ### M6a — Estimates and bounded paid execution
 
-**V08 — Preserve no-run refusals without replay.** Every new attempt gets a fresh correlation
+**V08 — Preserve no-run refusals without replay. Complete.** Every new attempt gets a fresh correlation
 id; keep attempt id, submission id and client_run_id aligned. A definitive pre-allocation JSON-RPC
 error records a terminal no-run refusal with zero spend; an explicit corrected retry creates a
 new attempt, optionally linked by `retry_of` on Attempt, not a new field on the strict Submission.
@@ -602,7 +602,7 @@ Implementation slices (each reviewed and full-matrix verified):
   receive adapter's progress metadata handling, exposed by the known-run RPC regression; the
   six authored implementation files keep that boundary, recovery and independent peer coherent.
   Commit: `fix: reconcile claimed attempts without replay`.
-- **V08c:** display general no-run refusals and verify explicit UI retries use fresh identities
+- **V08c: Complete.** Display general no-run refusals and verify explicit UI retries use fresh identities
   while transport uncertainty retains idempotent submission identity. Commit: `feat: explain no-run refusals in the workspace`.
 Rollback later slices before earlier ones; no library migration.
 

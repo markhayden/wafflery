@@ -253,10 +253,11 @@ export function Workspace({
           },
         };
       const attempt = await client.submit(submitted.current.request);
+      // The submission is acknowledged even if refreshing history fails afterward.
+      submitted.current = null;
       setSelectedId(attempt.id);
       setSelected(attempt);
       await updateSnapshot();
-      submitted.current = null;
     } catch (failure) {
       setError(
         failure instanceof Error
@@ -267,7 +268,9 @@ export function Workspace({
       setBusy(false);
     }
   }
-  const noRun = selected?.execution === "rejected" && object(object(selected.observations)?.refusal)?.reason === "not_ready";
+  const noRun = selected?.execution === "rejected";
+  const rpcError = object(object(selected?.raw_response)?.error);
+  const refusalReason = object(object(rpcError?.data)?.error)?.reason ?? rpcError?.message;
   const working =
     selected &&
     (["submitted", "running", "unconfirmed", "cancelling"].includes(
@@ -478,7 +481,10 @@ export function Workspace({
                 {working && tool?.progress?.message && (
                   <p className={styles.note}>{tool.progress.message}</p>
                 )}
-                {noRun ? <p role="status">No run created.</p> : <>
+                {noRun ? <>
+                  <p role="status">No run created.</p>
+                  {typeof refusalReason === "string" && <p>{refusalReason}</p>}
+                </> : <>
                 <SavedComparison
                   attempt={selected}
                   client={client}

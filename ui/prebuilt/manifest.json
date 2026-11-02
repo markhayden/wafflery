@@ -52,16 +52,16 @@
     "ui/src/features/workspace/ToolSetup.stories.tsx": "7c59a58dadaa4df7ae67093510199b64d8e59717ded0e783a2f2cff29969696f",
     "ui/src/features/workspace/ToolSetup.tsx": "cb2a276feb49bcf6beec67845313e6c79539fed57dd6489f36bfe45306d024e8",
     "ui/src/features/workspace/Workspace.module.css": "361e7bcd908349eeab575c460663b28de162ce1f1d7527d805d27ef6f3fd74a3",
-    "ui/src/features/workspace/Workspace.tsx": "161097d14149b72821c8b94915a6726c68b3dc456d8944b18df3493177ddb9ad",
+    "ui/src/features/workspace/Workspace.tsx": "073e51002fb514df0b7cf1a94b44863f47b1cdced42f2310236b6054266fe79a",
     "ui/src/main.tsx": "03b2482769b6e395650dff286faa5e047805a68788a2d0c019ca79ca59b5cadf",
     "ui/src/tokens.css": "c3b0eee13fac143223d12e52a63497a6dab95065469028a0c3e49e4532b603ef",
     "ui/tsconfig.json": "cb18bc2ac7dda71c2c6b1688c5af0722292143bafb109a84a1d8464e28733ffe",
     "ui/vite.config.ts": "3aec7d6174ffca99d4d5288bea2f837d5e91335cbd7135a9682e6d18a40476b4"
   },
   "outputs": {
-    "assets/index-BFoIH4ZF.js": "6bb684dcffbfb0b485dc601b1e1b79ace668fa6f3c9ddc80a20236029deb0754",
+    "assets/index-BsKgdpMN.js": "e5a6921b6655190d26d8282e1f3aafbac4f05d0ff961aa67ea77daf1c1b971de",
     "assets/index-CorKJFNC.css": "1647315705746a9789e6d67ceed160edf5201770c24c8f1ebecae5bb60480c28",
     "assets/wafflery-mark-CML0EpfM.svg": "51bc8a040e26b897a948238598b8cabdf69bf4687c2b1a70613b542de1c99f1f",
-    "index.html": "c4915b6f086352533ad9455d4c32efd08b412653b2c1e04684b304a86efac408"
+    "index.html": "7a843dd9cd65e3574b2e55942e8b5ddefcd8442d4c1b6d38bc1143994c7ca22f"
   }
 }
