@@ -403,7 +403,10 @@ workspace update. A per-tool discovery mutex serializes reads through publicatio
 holds that same owned guard through preflight and the actual transport write, then releases it
 before waiting for the tool result. A concurrent refresh cannot replace authorization between
 validation and dispatch. Saved attempt declarations stay immutable. UI drafts survive refresh.
-A valid -32602 `not_ready` response with no prior run reference is a terminal rejected attempt,
-not an interrupted provider run. Preserve its raw error and requirements without fabricating a
-run/result, then release local execution inputs and the reservation. Malformed refusals, transport
-loss and a refusal after a known run remain uncertain. Broader refusal/retry rules land in V08.
+A definitive pre-run RPC error is a terminal rejected attempt. Plain RPC errors and validated
+-32602 `not_ready`/`invalid_arguments` refusals preserve raw evidence, an explicit zero-spend
+observation and setup requirements where present, without fabricating a tool run/result. Local
+execution inputs and the reservation are released after preservation. A repeated HTTP submission
+still returns its original attempt; an explicit corrected attempt uses a fresh id. Malformed or
+unrecognized structured refusals, transport loss, reused claims and errors after a known run
+remain uncertain. V08b adds reconciliation for the latter two cases; none authorize replay.

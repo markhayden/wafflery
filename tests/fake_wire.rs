@@ -287,3 +287,48 @@ fn optional_setup_refuses_only_needed_calls_and_releases_the_correlation_id() {
         "completed"
     );
 }
+
+#[test]
+fn pre_run_refusals_release_the_claim_for_a_corrected_wire_request() {
+    for (scenario, label) in [
+        ("refusals", "refuse plain"),
+        ("refusals", "refuse structured"),
+        ("refusals", "refuse internal"),
+        ("readiness", "Needs setup"),
+    ] {
+        let temp = tempfile::tempdir().unwrap();
+        let source = temp.path().join("source.png");
+        std::fs::write(&source, include_bytes!("../ui/tests/fixtures/sample.png")).unwrap();
+        let mut peer = Peer::start(temp.path(), scenario);
+        peer.initialize();
+        let mut params = json!({"name":"mark_band","arguments":{"source":{"path":source},"label":label},"_meta":{"table-manners/client_run_id":"released-id"}});
+        if scenario == "readiness" {
+            params["arguments"]["filler"] = json!(true);
+        }
+        let refusal = peer.call(3, "tools/call", params.clone());
+        assert!(refusal["error"].is_object(), "{refusal}");
+        assert!(!temp.path().join("runs/calls.ndjson").exists());
+        params["arguments"]["label"] = json!("Corrected input");
+        if scenario == "readiness" {
+            params["arguments"]["filler"] = json!(false);
+        }
+        let corrected = peer.call(4, "tools/call", params.clone());
+        assert_eq!(
+            corrected["result"]["structuredContent"]["status"], "completed",
+            "{corrected}"
+        );
+        let duplicate = peer.call(5, "tools/call", params);
+        assert_eq!(duplicate["error"]["data"]["reason"], "client_run_id_reused");
+        assert_eq!(
+            duplicate["error"]["data"]["run"]["client_run_id"],
+            "released-id"
+        );
+        assert_eq!(
+            std::fs::read_to_string(temp.path().join("runs/calls.ndjson"))
+                .unwrap()
+                .lines()
+                .count(),
+            1
+        );
+    }
+}

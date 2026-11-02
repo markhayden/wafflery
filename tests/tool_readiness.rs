@@ -217,3 +217,72 @@ async fn a_not_ready_call_has_no_run_and_does_not_block_a_corrected_free_attempt
     assert_eq!(corrected.unwrap().execution, "completed");
     assert_eq!(session["spent_usd"], 0);
 }
+
+#[tokio::test]
+async fn definitive_rpc_refusals_preserve_zero_spend_and_allow_fresh_corrected_attempts() {
+    for label in ["refuse plain", "refuse structured", "refuse internal"] {
+        let host = Harness::new("refusals").await;
+        let mut request = host.request("refused", false).await;
+        request.params = json!({"label":label});
+        host.coordinator.submit(request.clone()).await.unwrap();
+        // Read the state before teardown even on a failure, so the peer is always reaped.
+        let refused = tokio::time::timeout(Duration::from_secs(3), async {
+            loop {
+                let attempt = host.coordinator.attempts.get("refused").await.unwrap();
+                if attempt.preservation["contract"] != "pending" {
+                    return attempt;
+                }
+                tokio::time::sleep(Duration::from_millis(10)).await;
+            }
+        })
+        .await
+        .unwrap();
+        let no_run = !host.root.path().join("tool/calls.ndjson").exists();
+        let mut corrected = request.clone();
+        corrected.id = "corrected".into();
+        corrected.params["label"] = json!("Corrected input");
+        // Availability follows input cleanup, not just publication of the refusal.
+        let available = tokio::time::timeout(Duration::from_secs(2), async {
+            while host.coordinator.snapshot().await.unwrap()["tools"][0]["busy"] == true {
+                tokio::time::sleep(Duration::from_millis(10)).await;
+            }
+        })
+        .await
+        .is_ok();
+        let completed = if available {
+            host.coordinator.submit(corrected).await.unwrap();
+            Some(host.terminal("corrected").await)
+        } else {
+            None
+        };
+        let original = host.coordinator.submit(request).await.unwrap();
+        let count = std::fs::read_to_string(host.root.path().join("tool/calls.ndjson"))
+            .unwrap_or_default()
+            .lines()
+            .count();
+        host.close().await;
+        assert_eq!(
+            refused.execution, "rejected",
+            "{label}: {:?}",
+            refused.notices
+        );
+        assert!(no_run);
+        assert!(refused.result.is_none());
+        assert_eq!(refused.preservation["contract"], "not_applicable");
+        assert_eq!(refused.observations["refusal"]["run"], Value::Null);
+        assert_eq!(refused.observations["spent_usd"], 0);
+        assert!(refused.raw_response.as_ref().unwrap()["error"]["code"].is_number());
+        let completed = completed.expect("definitive refusal releases the host slot");
+        assert_eq!(completed.execution, "completed");
+        assert_eq!(completed.id, completed.request.id);
+        assert_eq!(
+            completed.wire.as_ref().unwrap()["params"]["_meta"]["table-manners/client_run_id"],
+            completed.id
+        );
+        assert_eq!(
+            original.execution, "rejected",
+            "idempotent HTTP retry must not redispatch"
+        );
+        assert_eq!(count, 1);
+    }
+}

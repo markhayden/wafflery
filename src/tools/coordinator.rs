@@ -360,7 +360,7 @@ impl Coordinator {
             }
             Err(error) => {
                 client.end_preservation();
-                let _ = self.preserve_not_ready(&client, &request.id, &error).await;
+                let _ = self.preserve_no_run(&client, &request.id, &error).await;
                 let message = error.to_string();
                 let _ = self
                     .attempts

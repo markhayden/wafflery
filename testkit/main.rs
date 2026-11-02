@@ -261,6 +261,29 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                         continue;
                     }
                 }
+                if scenario == "refusals" {
+                    let error = match params["arguments"]["label"].as_str() {
+                        Some("refuse plain") => {
+                            Some(json!({"code":-32602,"message":"Correct the input"}))
+                        }
+                        Some("refuse internal") => Some(
+                            json!({"code":-32603,"message":"Input setup failed before allocation"}),
+                        ),
+                        Some("refuse structured") => Some(
+                            json!({"code":-32602,"message":"Correct the input","data":{"reason":"invalid_arguments","run":null,"error":{"code":"input","reason":"Correct the input","retryable":false}}}),
+                        ),
+                        _ => None,
+                    };
+                    if let Some(error) = error {
+                        if let Some(correlation) =
+                            params["_meta"]["table-manners/client_run_id"].as_str()
+                        {
+                            state.lock().unwrap().claimed.remove(correlation);
+                        }
+                        send(&output, json!({"jsonrpc":"2.0","id":id,"error":error}));
+                        continue;
+                    }
+                }
                 let cancelled = Arc::new(AtomicBool::new(false));
                 state
                     .lock()

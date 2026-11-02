@@ -594,7 +594,14 @@ keeps the claim; a new attempt still uses a new id. Never automatically replay.
 Files: association/coordinator, attempt observations, refusal tests, fake scenarios, recovery tests.
 Verify corrected fresh-id retry, wire-level released-id reuse, duplicate null/non-null reference,
 known-run JSON-RPC error, not_ready claim release, queued cancellation and uncertain disconnect. Depends: V02.
-Commit: `fix: distinguish no-run refusals from uncertainty`.
+Implementation slices (each reviewed and full-matrix verified):
+- **V08a: Complete.** Preserve definitive pre-run RPC refusals and zero spend; test corrected fresh-id
+  attempts and wire-level released-id reuse. Commit: `fix: preserve definitive no-run refusals`.
+- **V08b:** reconcile reused claims and known-run RPC errors; test null references, queued
+  cancellation and uncertain disconnect without automatic replay. Commit: `fix: reconcile claimed attempts without replay`.
+- **V08c:** display general no-run refusals and verify explicit UI retries use fresh identities
+  while transport uncertainty retains idempotent submission identity. Commit: `feat: explain no-run refusals in the workspace`.
+Rollback later slices before earlier ones; no library migration.
 
 **V09 — Prepare immutable calls without creating attempts.** Extract a bounded prepared-call
 resource holding exact arguments and owned materialized inputs before estimation. Bind it to

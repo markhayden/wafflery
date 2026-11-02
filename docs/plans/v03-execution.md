@@ -381,3 +381,21 @@ Review approved the corrected implementation. Full matrix passed: 117 Rust tests
 23 UI unit tests, two asset tests and 92 browser cases (four skipped), plus fmt, clippy, typecheck,
 Storybook, reproducible assets and release build. Responsive screenshots were inspected; native
 Safari was not rerun for this slice.
+
+## V08 execution slices
+
+V08a extends the existing readiness refusal boundary to definitive pre-run RPC errors. Named
+refusals must validate; malformed refusal data, reuse of a claimed id and transport failures
+remain uncertain. Save raw RPC evidence and an explicit zero-spend observation without inventing
+a tool result. Explicit corrected attempts use new ids; independent wire tests also prove the
+contract permits a released id to be reused. V08b owns reconciliation of existing claims and
+known runs; V08c owns workspace messaging and browser retry checks. Each slice gets review and
+the full matrix. Revert in reverse order; no stored-data migration or automatic replay.
+
+V08a verification: the host regression first recorded `interrupted` for a plain RPC refusal.
+After the fix, three refusal variants preserve zero spend and allow a fresh corrected attempt;
+resubmitting the old HTTP identity returns its saved refusal without dispatch. Independent wire
+tests prove released-id reuse and subsequent duplicate rejection. Negative unit cases retain
+uncertainty for malformed/reused claims and known runs. Review found no blockers. Full matrix
+passed: 120 Rust tests (three ignored), 23 UI unit tests, two asset tests, 92 browser cases
+(four skipped), fmt, clippy, typecheck, Storybook, reproducible assets and release build.

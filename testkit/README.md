@@ -4,7 +4,7 @@
 in for Rascal's repair operations or Squint's judgments. Its wire implementation does not use
 rmcp or Wafflery's coordinator/client. It may use the published contract's data/schema crate.
 
-The fixtures target `table-manners =0.3.0` (authorized sibling path at e503a23 until publication). `fixtures.rs` builds deterministic
+The fixtures target published `table-manners =0.3.0`. `fixtures.rs` builds deterministic
 description/result documents. The owned PNG is `ui/tests/fixtures/sample.png`, a generated RGB
 gradient; its byte fingerprint is computed, not copied from another tool's output. The fixture
 input identity is a documented placeholder until the wire peer computes actual request identity.
@@ -181,3 +181,8 @@ The peer reads, fingerprints and records each image in order, including duplicat
 results, not provider calls. Host tests verify completed lists and preservation notices without
 relabeling partial non-completed outcomes. Binding tests separately exercise per-occurrence
 coordinates; the sample image processor itself only interprets flat bounded images.
+
+The `refusals` scenario rejects scripted labels before allocation: `refuse plain`,
+`refuse structured`, and `refuse internal`. It releases the claimed client id before replying.
+Wire tests correct the request under that same id; host tests retain the refused attempt and
+submit a corrected request with a new id. No refusal creates a run or spends money.
