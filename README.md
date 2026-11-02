@@ -50,6 +50,11 @@ and an idle tool; it reprobes the selected config and starts a new spending ledg
 and unknown charges remain in history. The drawer reports the new session ID, and other tabs
 refresh their setup observations. A failed restart leaves recovery available in the same drawer.
 Environment changes require quitting and relaunching Wafflery from the updated terminal.
+**Folder access** separates requested input folders from folders Wafflery may read results from.
+The current v0.3 session cannot report its effective input permissions, so setup says **Not reported**;
+it never treats the requested list as proof of access. Failed session refreshes show **Unavailable**.
+Changing registration folders requires stopping Wafflery; changing the tool's configuration requires
+restarting that tool session. Effective v0.4 permissions are added in M5.03.
 Paid actions expose explicit cap and estimate controls. Edits, declaration/session changes and
 expiry invalidate the quote. **Run** sends the exact reviewed preparation; another paid attempt
 requires a fresh estimate. If acknowledgement is lost, **Retry submission** keeps the original run
@@ -142,7 +147,8 @@ never a shell command), absolute `cwd`, required `allow_dirs` and `evidence_dirs
 the file; a conflicting `--config` in `args` is refused. Omit `config` for the tool’s default lookup. See the real-tool helper
 for a concrete Rascal descriptor. These records select programs that will execute when the host
 starts; only register executables you intend to run. Both directory arrays contain existing absolute
-directories, resolved canonically during validation. `allow_dirs` authorizes caller inputs; the host
+directories, resolved canonically during validation. Directory names must remain valid UTF-8 after
+resolving symlinks so permissions can be represented exactly. `allow_dirs` authorizes caller inputs; the host
 passes each as a literal `--allow-dir` argument. Hand-written `--allow-dir` flags in `args` are refused.
 `evidence_dirs` authorizes Wafflery to read returned image paths and run/report directories; it is
 never passed to the child. Neither list grants the other permission. Empty lists are allowed.

@@ -94,6 +94,46 @@ fn both_directory_lists_reject_relative_missing_and_file_paths() {
     }
 }
 
+#[test]
+fn directory_grants_refuse_non_utf8_names() {
+    use std::{ffi::OsString, os::unix::ffi::OsStringExt};
+    let root = tempfile::tempdir().unwrap();
+    let target = root.path().join(OsString::from_vec(b"input-\xff".to_vec()));
+    for field in ["allow_dirs", "evidence_dirs"] {
+        let mut descriptor: Descriptor = serde_json::from_value(record(root.path())).unwrap();
+        if field == "allow_dirs" {
+            descriptor.allow_dirs.push(target.clone());
+        } else {
+            descriptor.evidence_dirs.push(target.clone());
+        }
+        let error = descriptor
+            .validate()
+            .expect_err("unrepresentable grant accepted");
+        assert!(error.to_string().contains("UTF-8"), "{field}: {error}");
+    }
+}
+
+// macOS rejects creation of these names; Linux also needs the post-canonicalization check.
+#[cfg(target_os = "linux")]
+#[test]
+fn directory_grants_refuse_symlinks_to_non_utf8_names() {
+    use std::{ffi::OsString, os::unix::ffi::OsStringExt};
+    let root = tempfile::tempdir().unwrap();
+    let target = root.path().join(OsString::from_vec(b"input-\xff".to_vec()));
+    fs::create_dir(&target).unwrap();
+    let link = root.path().join("readable-link");
+    symlink(&target, &link).unwrap();
+    for field in ["allow_dirs", "evidence_dirs"] {
+        let mut value = record(root.path());
+        value[field] = json!([link]);
+        let descriptor: Descriptor = serde_json::from_value(value).unwrap();
+        let error = descriptor
+            .validate()
+            .expect_err("unrepresentable grant accepted");
+        assert!(error.to_string().contains("UTF-8"), "{field}: {error}");
+    }
+}
+
 #[tokio::test]
 async fn child_receives_only_input_grants_as_literal_arguments() {
     let root = tempfile::tempdir().unwrap();

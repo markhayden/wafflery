@@ -1586,7 +1586,8 @@ and memory behavior must be measured before choosing a downscaled-decoding imple
 
 - **M5.02a: Complete — registration, argv and read-boundary cutover** — acceptance 1–2 and registration rollback;
   path/argv tests.
-- **M5.02b: effective-grant setup display** — acceptance 3; session/restart browser tests and stories.
+- **M5.02b: staged grant setup display** — requested/evidence observations and effective-access states;
+  live v0.4 narrowing/restart acceptance finishes in M5.03 as approved.
 
 M5.02b is staged in three commits: **b1 (requested/evidence grant observation and boundary tests)**,
 **b2 (grant display, stories and browser states)**, then **b3 (setup wiring and live refresh checks)**.
@@ -1606,6 +1607,11 @@ and WebKit checks cover narrow grants, separate result folders, escaped literal 
 wrapping at 320/768/1024/1440px. b3's live setup regression failed before wiring; its refresh path
 must clear effective status on failure while retaining the distinct registered folder observations.
 
+Independent review approved the staged display and identified a directory-name serialization edge:
+canonicalization can reach a non-UTF-8 target on Linux. Registration now rejects non-UTF-8 grants
+before and after canonicalization instead of losing bytes or panicking during snapshot serialization.
+The explicit-refusal regression failed first on macOS; the symlink regression is Linux-only because
+macOS refuses to create such names. Linux execution remains unverified on this macOS-first checkpoint.
 
 M5.02a is one coordinated registration cutover. Replacing the public descriptor fields requires
 updating every Rust constructor and disposable JSON registration together; retaining an alias would
@@ -1659,7 +1665,9 @@ published dependency wiring. **Verify:** contract mismatch tests and complete ex
 
 - **M5.03a: v0.4 semantic validators** — acceptance 2; malformed-contract tests.
 - **M5.03b: live cutover and reproducible test/dependency wiring** — acceptance 1 and 3; fake defaults,
-  published exact pin and real-harness preflight.
+  published exact pin and real-harness preflight. Finish M5.02's deferred live setup checks: validated
+  effective `allowed_dirs`, configured narrowing, denied access, refresh/restart and retained old-session
+  spending. Wire the staged grant display to the validated session without copying requested grants.
 
 **Checkpoint A:** merge M5.01–03 as a coherent cutover of validation, launch arguments and fake
 defaults; v0.4 is the only supported live contract afterward. Green matrix, an independent fake

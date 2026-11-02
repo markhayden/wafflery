@@ -61,9 +61,11 @@ impl Descriptor {
                 .allow_dirs
                 .iter()
                 .chain(&self.evidence_dirs)
-                .any(|p| !p.is_absolute())
+                .any(|p| !p.is_absolute() || p.to_str().is_none())
         {
-            return Err(Error::Invalid("Registration paths must be absolute".into()));
+            return Err(Error::Invalid(
+                "Registration paths must be absolute; directory grants must be UTF-8".into(),
+            ));
         }
         if let Some(config) = &self.config {
             if !config.is_absolute() || config.as_os_str().as_encoded_bytes().contains(&0) {
@@ -107,6 +109,11 @@ impl Descriptor {
         }
         for root in self.allow_dirs.iter_mut().chain(&mut self.evidence_dirs) {
             *root = root.canonicalize()?;
+            if root.to_str().is_none() {
+                return Err(Error::Invalid(
+                    "Resolved input and evidence directory grants must be UTF-8".into(),
+                ));
+            }
             if !root.is_dir() {
                 return Err(Error::Invalid(
                     "Input and evidence grants must be directories".into(),
