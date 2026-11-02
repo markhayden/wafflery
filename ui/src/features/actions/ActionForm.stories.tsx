@@ -73,3 +73,10 @@ export const ImageLists: Story = {args:{
   preview:async () => (await fetch(sample)).blob(),
   upload:async () => ({...sampleAsset}),
 }};
+
+export const PaidJson: Story = {args:{
+  action:{...meta.args.action,cost:{may_spend:true},params_schema:{
+    type:"object",allOf:[{required:["prompt"]}],properties:{prompt:{type:"string"},max_spend_usd:{type:"number",exclusiveMinimum:0}},
+  }},
+  params:{prompt:"Example",max_spend_usd:0.5},
+}};

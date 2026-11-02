@@ -44,3 +44,16 @@ test("declared form keeps arrays as JSON and invalid edits block submission", as
   await expect(page.locator("output")).not.toContainText("Changed");
   await expect(page.getByRole("alert")).toBeVisible();
 });
+
+test("a paid JSON form preserves the dedicated cap and refuses a second cap", async ({page}) => {
+  await page.goto("http://127.0.0.1:6006/iframe.html?id=inputs-actionform--paid-json&viewMode=story");
+  const field = page.getByRole("textbox",{name:"Parameters (JSON)",exact:true});
+  await expect(field).not.toHaveValue(/max_spend_usd/);
+  await field.fill('{"prompt":"New inputs"}');
+  await page.getByRole("button",{name:"Validate form"}).click();
+  await expect(page.locator("output")).toHaveText('{"prompt":"New inputs","max_spend_usd":0.5}');
+  await field.fill('{"prompt":"Override","max_spend_usd":99}');
+  await expect(page.getByRole("alert")).toContainText("Use the Spending cap field");
+  await page.getByRole("button",{name:"Validate form"}).click();
+  await expect(page.locator("output")).not.toContainText("Override");
+});

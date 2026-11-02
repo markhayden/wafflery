@@ -35,6 +35,16 @@ pub fn start(
                 std::thread::sleep(Duration::from_millis(5));
             }
         }
+        let cap = arguments["max_spend_usd"].as_f64().unwrap();
+        if cap > 1.0 {
+            let mut data = super::v03_fixtures::refusal("invalid_arguments");
+            data["error"]["reason"] = json!("The requested cap exceeds the configured cap of $1.");
+            send(
+                &output,
+                json!({"jsonrpc":"2.0","id":message["id"],"error":{"code":-32602,"message":"Requested cap exceeds the configured cap","data":data}}),
+            );
+            return;
+        }
         if label.ends_with("error") {
             let mut error = json!({"code":-32602,"message":"Scripted estimate rejection"});
             if label == "structured-error" {
@@ -51,15 +61,23 @@ pub fn start(
             std::fs::read(path).expect("prepared inputs must remain until this reader finishes");
         let digest = hash(&bytes);
         std::fs::write(root.join("estimate-read"), &digest).unwrap();
-        if label == "ledger" {
-            state.lock().unwrap().session["spent_usd"] = json!(0.08);
+        if matches!(label, "ledger" | "drain") {
+            let mut state = state.lock().unwrap();
+            let spent = if label == "drain" { 0.19 } else { 0.08 };
+            state.session["spent_usd"] = json!(spent);
+            state.session["remaining_usd"] = json!(0.2 - spent);
         }
         let session = state.lock().unwrap().session.clone();
-        let mut value = super::v03_fixtures::estimate(
-            super::fixtures::TOOL,
-            &session,
-            (label == "readiness").then_some("readiness"),
-        );
+        let refused = if label == "readiness" {
+            Some("readiness")
+        } else if cap < 0.12 {
+            Some("cap")
+        } else if session["remaining_usd"].as_f64().unwrap() + 1e-6 < 0.12 {
+            Some("budget")
+        } else {
+            None
+        };
+        let mut value = super::v03_fixtures::estimate(super::fixtures::TOOL, &session, refused);
         value["effective"]["x-sample-lab"] = json!({"path":path,"binding":"internal-debug"});
         value["session"] = session.clone();
         value["cap_usd"] = arguments["max_spend_usd"].clone();
@@ -67,6 +85,12 @@ pub fn start(
         bound.as_object_mut().unwrap().remove("return_images");
         bound.as_object_mut().unwrap().remove("image_blocks");
         bound["source"] = json!({"file_sha256":digest,"expect":arguments["source"]["expect"]});
+        if let Some(references) = bound.get_mut("references").and_then(Value::as_array_mut) {
+            for image in references {
+                let bytes = std::fs::read(image["path"].as_str().unwrap()).unwrap();
+                *image = json!({"file_sha256":hash(&bytes),"expect":image["expect"]});
+            }
+        }
         value["binding"] = json!(format!(
             "sha256:{}",
             hash(

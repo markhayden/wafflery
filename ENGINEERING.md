@@ -286,7 +286,7 @@ receipt's wall-clock deadline is for display; monotonic time controls eligibilit
 HTTP controls now expose prepare, receipt lookup, discard and explicit prepared submission
 through the existing same-origin bearer boundary. The path id must match the strict saved request;
 other workspaces cannot resolve these ids. None of the preparation controls create history or
-call the action until explicit submission. UI estimation controls remain V10–V11.
+call the action until explicit submission. V11 connects these controls to an explicitly requested browser estimate; V12 still owns paid dispatch.
 Before copying, the host writes a private versioned ownership marker. Startup validates its
 execution root, skips recorded attempts before inspecting their contents, and reclaims only
 marked, unclaimed directories containing recognized regular input copies. Unknown content,
@@ -295,8 +295,8 @@ recursively removes discovered directories. A crash between persistence and mark
 cannot expose a saved attempt to this cleanup. A retained marker is also removed by terminal
 input cleanup after the tool has relinquished those paths.
 
-Planned v0.3 integration (PLAN V10–V13; not connected to the browser yet): request estimates
-outside the host execution reservation. Estimates remain responsive while
+v0.3 estimates (PLAN V10–V11) run outside the host execution reservation.
+Paid dispatch enforcement remains V12–V13. Estimates remain responsive while
 an action runs; they neither consume a run-dispatch permit nor create attempts. The exact allowed
 quote, positive cap and binding are checked again under the host's execution reservation before
 dispatch. Tool-side caps and budgets remain authoritative; a quote is not a reservation.
@@ -326,7 +326,7 @@ cannot replace newer observations. Requester cancellation cannot abandon this wo
 Discarded/expired drafts become unavailable immediately, but leased copies still count against
 retention limits and block library cleanup until the reader ends. Shutdown closes owned children
 before joining these workers. A returned quote must still match the same prepared object,
-current declaration and owned client. Browser estimate controls remain V11; paid authorization remains V12.
+current declaration and owned client. Browser estimate controls are connected in V11; paid authorization remains V12.
 Controls do not wait for
 an execution slot. The former Squint behavior that created estimate runs describes v0.2 integration
 history only: v0.3 prohibits it. Until the approved paid slice lands, dispatch stays offline-only.
@@ -486,3 +486,13 @@ Definitive refusals display “No run created” and the tool's reason instead o
 missing-result warning. The browser retains submission identity only while its acknowledgement
 is uncertain. Once submit returns an attempt, its cached request is cleared before any history
 refresh; a refresh failure cannot make the next deliberate run reuse an acknowledged attempt.
+
+
+The browser retains one prepared draft for its exact action/declaration/session, parameters,
+cap, ordered image bindings and coordinates. Any input edit, including malformed JSON, invalidates
+its display and discards its preparation. A late reply cannot restore that quote. Preparation
+and quote expiry both apply; hidden-tab visibility restoration rechecks the display deadline.
+There are no automatic estimates or paid calls. Session amount observations update the balance
+without changing draft identity; the tool remains authoritative at execution time. The dedicated
+cap editor is excluded from generic parameter fields and whole-object JSON edits cannot replace
+it. Abandoned-copy disposal is best effort; the host's bounded retention remains authoritative.

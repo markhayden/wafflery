@@ -690,3 +690,36 @@ shared-lock matrix: 167 Rust tests (three ignored), 32 UI unit tests, two asset 
 108 browser cases (four opt-in skips), fmt, clippy, typecheck, Storybook, reproducible assets
 and release build. Generated UI assets were refreshed for the shared formatter; lockfiles
 are unchanged. This slice can be reverted independently until the workspace consumes it.
+
+
+### V11c live draft estimates
+
+The workspace owns a preparation only for the exact selected tool, action, declaration, session
+and draft. Explicit estimation copies the current ordered image bindings and coordinates and
+normalizes the user's positive cap to a number. Edits discard that preparation, hide its quote
+and never trigger another estimate. Late preparation or estimate replies are discarded; expiry
+uses the shorter preparation/quote deadline and checks visibility restoration. Disposal is best
+effort after disconnection, with the host's existing TTL bounding abandoned copies.
+
+The paid cap has one editor, including for whole-object JSON forms. JSON parameters cannot
+replace it. Review found that malformed JSON initially retained a quote for the last valid
+parameters; a failing browser regression demonstrated it. A separate input-edit revision now
+invalidates ownership even when the editor cannot parse the new text, without remounting the
+editor or losing its last valid parameters. Correcting the text still requires an explicit
+estimate. The paid submit guard stays closed on both client and server until V12.
+
+Live Chromium/WebKit checks cover exact arguments, no attempts/history, cap and parameter edits,
+late preparation and estimate replies, expiry, restart, description changes, ordered image
+coordinates, configured-cap refusal without clamping, unknown cost, and a second tab reducing
+session allowance while the first tab retains its quote. Additional form coverage proves that
+whole-object JSON cannot overwrite the dedicated cap. The independent fake supplies these
+states without network or provider calls; its ledger mutations are synthetic. This cohesive
+lifecycle slice exceeds the usual authored-file guideline to keep fake scenarios, UI wiring,
+stories, tests and their documentation together.
+
+V11c passed final review and all 28 targeted lifecycle/form browser cases. The full shared-lock
+matrix passed: 167 Rust tests (three ignored), 33 UI unit tests, two asset tests, 132 browser
+cases (four opt-in skips), fmt, clippy, typecheck, Storybook, reproducible assets and release
+build. Live cost screenshots were inspected in Chromium and WebKit. Generated UI assets are
+updated; dependency lockfiles are unchanged. Revert this lifecycle slice before V11b/V11a when
+rolling back; V12 remains gated.

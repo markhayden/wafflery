@@ -1,3 +1,7 @@
+import { CostReview } from "./CostReview";
+import { useEstimateDraft } from "./useEstimateDraft";
+import { positiveCap } from "../../api/estimates";
+import { parseToolSession } from "../../api/tool-session";
 import { RestartTool } from "./RestartTool";
 import { ToolSetup } from "./ToolSetup";
 import { readToolSession } from "../../api/tool-session";
@@ -85,6 +89,7 @@ export function Workspace({
   );
   const action = declaration?.document.actions.find((a) => a.name === actionId);
   const [draftRevision, setDraftRevision] = useState(0);
+  const [estimateEditRevision, setEstimateEditRevision] = useState(0);
   const [params, setParams] = useState<Schema>(() =>
     initialParameters(action?.params_schema ?? {}),
   );
@@ -224,7 +229,7 @@ export function Workspace({
     submitted.current = null;
   }
   async function run() {
-    if (!action || !declaration || busy) return;
+    if (!action || !declaration || busy || action.cost.may_spend) return;
     setError(undefined);
     setBusy(true);
     try {
@@ -268,6 +273,20 @@ export function Workspace({
       setBusy(false);
     }
   }
+  const estimateKey = JSON.stringify({toolId,actionId,revision:declaration?.revision,sessionId,restarting,
+    draftRevision,estimateEditRevision,params,images:Object.fromEntries(Object.entries(images).map(([slot,items]) =>
+      [slot,items.map(image => ({id:image.id,coordinates:image.coordinates}))]))});
+  const cost = useEstimateDraft(api, estimateKey, typeof sessionId === "string" && !restarting ? sessionId : undefined, () => {
+    if (!declaration || !action?.cost.may_spend) throw new Error("Choose a paid action before estimating.");
+    const cap = positiveCap(params.max_spend_usd);
+    if (cap === undefined) throw new Error("Choose a positive spending cap before estimating.");
+    const bindings = encodeSelection(declaration.document.contract, action.images ?? [], images);
+    return {id:crypto.randomUUID(),tool:toolId,action:actionId,revision:declaration.revision,
+      params:{...structuredClone(params),max_spend_usd:cap},...bindings};
+  }, updateSnapshot);
+  let costSession;
+  try { costSession = parseToolSession(declaration?.tool_session); } catch { /* No fabricated allowance. */ }
+  const capText = typeof params.max_spend_usd === "string" || typeof params.max_spend_usd === "number" ? String(params.max_spend_usd) : "";
   const noRun = selected?.execution === "rejected";
   const rpcError = object(object(selected?.raw_response)?.error);
   const refusalReason = object(object(rpcError?.data)?.error)?.reason ?? rpcError?.message;
@@ -358,6 +377,7 @@ export function Workspace({
             className={styles.panelBody}
             role="region"
             aria-label="Input settings"
+            onChangeCapture={() => setEstimateEditRevision(value => value + 1)}
             tabIndex={0}
             key={draftRevision}
           >
@@ -413,12 +433,18 @@ export function Workspace({
                 </div>
               </details>
             ) : null}
+            {action?.cost.may_spend && <CostReview cap={capText} state={cost.state}
+              onCapChange={value => setParams(current => ({...current,max_spend_usd:value}))}
+              onEstimate={() => { void cost.estimate(); }}
+              onSetup={opener => setDrawer({opener,view:"setup"})}
+              disabled={restarting || typeof sessionId !== "string"}
+              {...(costSession ? {session:costSession} : {})} />}
             {error && <p role="alert">{error}</p>}
           </div>
           <div className={styles.run}>
             <p>
               {action?.cost.may_spend
-                ? "Paid execution needs provider setup and a run limit."
+                ? "Paid runs are not available in this build."
                 : "Free action · Inputs are saved locally"}
             </p>
             <Button

@@ -205,4 +205,13 @@ not runs. Labels choose a held response, invalid session, plain or structured re
 broken transport. The latter plus `hold-after-eof` deliberately keeps the test child alive so
 shutdown tests distinguish a disconnected pipe from confirmed process exit. The host must
 retain its prepared inputs through that boundary. `release-run` completes the independent
-free run; none of these controls creates an attempt or changes spending.
+free run; none of these controls creates an attempt or incurs provider charges.
+
+The estimate scenario starts with a synthetic $0.20 session budget. Labels `ledger` and `drain`
+report spend of $0.08 and $0.19 to exercise later ledger observations; they do not charge anything.
+Caps above its configured $1 limit receive an `invalid_arguments` refusal, while a positive cap
+below the $0.12 worst case returns a cap-refused estimate. Optional ordered `references` are
+bound by content fingerprints and coordinates, as is `source`. The
+`estimate-declaration-changed` marker changes the paid action's description on the next refresh.
+Browser probes use these controls to verify draft/session/declaration invalidation separately
+from ledger updates, and that estimates never become history entries.

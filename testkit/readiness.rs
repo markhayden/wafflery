@@ -7,6 +7,16 @@ pub fn description(root: &Path, scenario: &str) -> Value {
     if scenario == "estimates" {
         let mut paid = document["actions"][0].clone();
         paid["name"] = json!("price_test");
+        paid["title"] = json!("Price a scripted call");
+        paid["purpose"] = json!(if root.join("estimate-declaration-changed").exists() {
+            "Updated estimate declaration."
+        } else {
+            "Estimate copied inputs without a provider call."
+        });
+        paid["images"]
+            .as_array_mut()
+            .unwrap()
+            .push(json!({"slot":"references","role":"reference","required":false,"many":true}));
         paid["cost"] = json!({"may_spend":true,"basis":"estimated"});
         paid["params_schema"]["properties"]["max_spend_usd"] =
             json!({"type":"number","exclusiveMinimum":0});

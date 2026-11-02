@@ -4,7 +4,8 @@ import { positiveCap, type Estimate } from "../../api/estimates";
 import { usd, type ToolSession } from "../../api/tool-session";
 import styles from "./CostReview.module.css";
 
-export type CostState = { kind: "idle" | "pending" | "stale" }
+export type CostState = { kind: "idle" | "stale" }
+  | { kind: "pending"; stale?: boolean }
   | { kind: "error"; message: string }
   | { kind: "quoted"; estimate: Estimate };
 type Props = {
@@ -41,7 +42,7 @@ export function CostReview({ cap, onCapChange, state, onEstimate, onSetup, sessi
         if (valid && event.currentTarget.form?.reportValidity() !== false) onEstimate();
       }}>Estimate cost</Button>
     </div>
-    {pending && <p role="status">Estimating these inputs…</p>}
+    {state.kind === "pending" && <p role="status">{state.stale ? "Waiting for the previous estimate to finish…" : "Estimating these inputs…"}</p>}
     {(state.kind === "stale" || changedSession) && <p role="status">Estimate again for the current inputs and session.</p>}
     {state.kind === "error" && <p role="alert">{state.message}</p>}
     {quote && <div className={styles.estimate}>

@@ -93,6 +93,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
     let output = Arc::new(Mutex::new(io::stdout()));
     let state = Arc::new(Mutex::new(PeerState::default()));
+    if scenario == "estimates" {
+        let mut state = state.lock().unwrap();
+        state.session["budget_usd"] = json!(0.2);
+        state.session["remaining_usd"] = json!(0.2);
+    }
     if let Some(configuration) = &mut configuration {
         configuration.started(state.lock().unwrap().session["id"].clone())?;
     }

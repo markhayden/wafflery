@@ -35,7 +35,7 @@ function JsonField({
   const [text, setText] = useState(() =>
     value === undefined ? "" : JSON.stringify(value, null, 2),
   );
-  const [error, setError] = useState(false);
+  const [error, setError] = useState<string>();
   return (
     <label className={styles.field}>
       <span id={labelId}>{label}</span>
@@ -44,7 +44,7 @@ function JsonField({
         value={text}
         disabled={disabled}
         spellCheck={false}
-        aria-invalid={error}
+        aria-invalid={!!error}
         rows={6}
         onChange={(event) => {
           setText(event.target.value);
@@ -55,16 +55,17 @@ function JsonField({
                 ? (JSON.parse(event.target.value) as Json)
                 : undefined,
             );
-            setError(false);
-          } catch {
-            setError(true);
-            event.target.setCustomValidity("Enter valid JSON.");
+            setError(undefined);
+          } catch (failure) {
+            const message = failure instanceof SyntaxError ? "Enter valid JSON." : failure instanceof Error ? failure.message : "Enter valid JSON.";
+            setError(message);
+            event.target.setCustomValidity(message);
           }
         }}
       />
       {error && (
         <small role="alert">
-          Enter valid JSON before running. The last valid value is retained.
+          {error} The last valid value is retained.
         </small>
       )}
     </label>
@@ -139,7 +140,7 @@ export function ActionForm({
         </section>
       ))}
       {simple ? (
-        Object.entries(properties).map(([key, entry]) => {
+        Object.entries(properties).filter(([key]) => !action.cost.may_spend || key !== "max_spend_usd").map(([key, entry]) => {
           const field = object(entry) ?? {};
           const label = `${typeof field.title === "string" ? field.title : key}${required.includes(key) ? " *" : ""}`;
           const mode = fieldMode(field);
@@ -234,10 +235,14 @@ export function ActionForm({
       ) : (
         <JsonField
           label="Parameters (JSON)"
-          value={params}
+          value={action.cost.may_spend ? Object.fromEntries(Object.entries(params).filter(([key]) => key !== "max_spend_usd")) : params}
           onChange={(value) => {
             const next = object(value);
             if (!next) throw new Error("Parameters must be an object");
+            if (action.cost.may_spend) {
+              if ("max_spend_usd" in next) throw new Error("Use the Spending cap field for max_spend_usd.");
+              if (params.max_spend_usd !== undefined) next.max_spend_usd = params.max_spend_usd;
+            }
             onChange(next);
           }}
           disabled={disabled}

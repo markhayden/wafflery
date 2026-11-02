@@ -28,7 +28,7 @@ Publishing and production installation are not authorized by this continuation.
 Current integration update (2026-11-01): published v0.2.0 and both tools are adopted on main.
 See [the v0.2 integration plan](docs/plans/table-manners-v02.md) and [verified checkpoint](docs/reviews/2026-11-01-table-manners-v02.md). The initial v0.1 fixture/version
 requirements below describe the completed foundation checkpoint, not the current live allowlist.
-The [v0.3 client task list](#v03-client--proposed-task-list) below is approved. V01–V10b are
+The [v0.3 client task list](#v03-client--proposed-task-list) below is approved. V01–V11 are
 merged locally; the live client requires exactly v0.3 and still refuses paid dispatch until
 its estimate/cap guards are implemented. See [execution checkpoints](docs/plans/v03-execution.md).
 
@@ -708,7 +708,7 @@ Commit: `fix: grant copied input access to Rascal`; rollback the descriptor/help
 together (old descriptors will fail against current Rascal). This small integration correction
 precedes V11; it does not adopt v0.4 or change MCP roots for the v0.3 client.
 
-**V11 — Present the cap and exact estimate.** Add one positive cap control backed by the declared
+**V11 — Complete: present the cap and exact estimate.** Add one positive cap control backed by the declared
 `max_spend_usd` field, avoiding a duplicate generic form field. Show worst case, effective model,
 cap, remaining session budget and unresolved spend; distinguish uncapped null from zero. Require
 an explicit cap before paid Run. Draft edits (including cap, ordered images or parameters),
@@ -730,7 +730,7 @@ V11 execution slices (full matrix and review per slice; rollback in reverse orde
   model/configuration, worst case, current allowance and refusal/setup information. Verify
   keyboard behavior, invalid values and unknown versus zero amounts in both browsers.
   Commit: `feat: present cost estimate states`.
-- **V11c:** Wire the component and owned preparation lifecycle into the workspace; remove the
+- **V11c: Complete.** Wire the component and owned preparation lifecycle into the workspace; remove the
   duplicate generic paid cap field. Invalidate on exact draft/session/declaration/expiry changes,
   ignore stale replies and discard abandoned preparations. Preserve estimates on ledger-only
   updates. Verify live independent-peer cases in both browsers, no attempt on estimate, and
