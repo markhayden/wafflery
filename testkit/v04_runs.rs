@@ -205,12 +205,14 @@ impl Runs {
         }
         Self::append(&directory, event)
     }
-    pub fn finish(&self, info: &RunInfo, result: &Value) -> Result<(), Value> {
+    /// Returns the exact saved result; an idempotent repeat must pass that returned value.
+    pub fn finish(&self, info: &RunInfo, result: &Value) -> Result<Value, Value> {
         let _guard = self.claims.lock().unwrap();
         let (directory, entry) = self.allocation(info)?;
         if result["run"] != info.reference
             || result["action"] != entry["action"]
             || result["started"] != entry["started"]
+            || !result["notes"].is_array()
             || !["completed", "error", "cancelled", "invalid"]
                 .contains(&result["status"].as_str().unwrap_or(""))
         {
@@ -219,16 +221,29 @@ impl Runs {
         let destination = directory.join("run.json");
         if destination.exists() {
             return if document(&destination)? == *result {
-                Ok(())
+                Ok(result.clone())
             } else {
                 Err(storage("Completed run is immutable"))
             };
         }
         // This journal event records a publication attempt. A failed write may leave it behind
         // and a retry may repeat it; only run.json establishes terminal status. No crash recovery.
-        Self::append(&directory, result["status"].as_str().unwrap())?;
-        // run.json is last: readers see either a running entry or the entire terminal result.
-        atomic(&destination, result)
+        let mut saved = result.clone();
+        if let Err(error) = Self::append(&directory, result["status"].as_str().unwrap()) {
+            let reason = format!(
+                "Run journal could not be updated: {}",
+                error["message"].as_str().unwrap()
+            );
+            saved["notes"].as_array_mut().unwrap().push(json!(reason));
+            if saved["status"] == "completed" {
+                saved["status"] = json!("error");
+                saved["error"] = json!({"code":"io","retryable":false,"reason":reason});
+            }
+        }
+        // A broken journal cannot suppress writable final evidence. If the final store itself
+        // fails, the caller reports a server storage failure and retains the allocated claim.
+        atomic(&destination, &saved)?;
+        Ok(saved)
     }
     pub fn list(&self, cursor: Option<&str>) -> Result<Value, Value> {
         let position = cursor

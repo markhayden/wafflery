@@ -270,7 +270,15 @@ fn preview_write_failure_is_a_run_error_with_its_resolved_invocation() {
     assert_eq!(run["status"], "error");
     assert_eq!(run["error"]["code"], "io");
     assert_eq!(run["invocation"]["action"], "make_token");
-    assert_eq!(run["artifacts"]["out"], json!([]));
+    assert_eq!(run["artifacts"]["out"].as_array().unwrap().len(), 1);
+    let output = &run["artifacts"]["out"][0];
+    assert!(output["preview"]["resource"].is_string());
+    assert!(
+        store
+            .preview(output["artifact"]["identity"].as_str().unwrap())
+            .is_ok()
+    );
+    assert_eq!(run["images"]["out"][0], output["preview"]);
 }
 
 #[test]
@@ -329,7 +337,7 @@ fn cancellation_before_work_and_between_outputs_keeps_only_completed_work() {
 }
 
 #[test]
-fn a_late_write_failure_preserves_the_first_output_and_its_preview() {
+fn a_late_preview_failure_keeps_completed_native_outputs_and_fallback_previews() {
     let root = tempfile::tempdir().unwrap();
     let store = v04_store::Store::new(root.path(), "sample-lab", vec![]).unwrap();
     let token = v04_fixtures::artifact("sample-lab", "sample-lab:Token");
@@ -354,9 +362,15 @@ fn a_late_write_failure_preserves_the_first_output_and_its_preview() {
     check(&run);
     assert_eq!(run["status"], "error");
     assert_eq!(run["error"]["code"], "io");
-    assert_eq!(run["artifacts"]["out"].as_array().unwrap().len(), 1);
-    assert_eq!(run["images"]["out"].as_array().unwrap().len(), 1);
+    assert_eq!(run["artifacts"]["out"].as_array().unwrap().len(), 2);
+    assert_eq!(run["images"]["out"].as_array().unwrap().len(), 2);
     assert_eq!(run["artifacts"]["out"][0]["artifact"], token["artifact"]);
+    assert_eq!(
+        run["artifacts"]["out"][1]["artifact"],
+        second["artifacts"]["out"][0]["artifact"]
+    );
+    assert!(run["images"]["out"][0]["path"].is_string());
+    assert!(run["images"]["out"][1]["resource"].is_string());
     assert!(!run["error"]["reason"].as_str().unwrap().starts_with('{'));
 }
 
@@ -447,4 +461,32 @@ fn invalid_input_identity_excludes_delivery_flags() {
         "Invalid image",
     );
     assert_eq!(first["input_identity"], second["input_identity"]);
+}
+
+#[test]
+fn resolved_io_failure_before_work_keeps_invocation_without_executing() {
+    let root = tempfile::tempdir().unwrap();
+    let store = v04_store::Store::new(root.path(), "sample-lab", vec![]).unwrap();
+    let prepared = v04_bindings::prepare(
+        &store,
+        "sample-lab",
+        "make_token",
+        json!({"source":image()}),
+    )
+    .unwrap();
+    let mut run = results::resolved(&prepared, &info(root.path(), "before-work"));
+    results::settle(
+        &mut run,
+        results::Outcome::Error {
+            code: "io",
+            reason: "Journal unavailable".into(),
+        },
+        Duration::ZERO,
+    );
+    check(&run);
+    assert_eq!(run["invocation"]["action"], "make_token");
+    assert!(!run["invocation"]["arguments"]["source"]["expect"].is_null());
+    assert_eq!(run["status"], "error");
+    assert_eq!(run["artifacts"], json!({"in":[],"out":[]}));
+    assert_eq!(std::fs::read_dir(root.path()).unwrap().count(), 0);
 }

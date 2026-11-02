@@ -314,3 +314,102 @@ fn unpublished_allocation_journals_are_not_resources() {
     assert!(runs.read(id, "journal").is_err());
     assert_eq!(runs.list(None).unwrap()["runs"], json!([]));
 }
+
+#[test]
+fn a_missing_journal_still_publishes_an_io_result_with_completed_outputs() {
+    let root = tempfile::tempdir().unwrap();
+    let runs = book(root.path());
+    let info = runs.allocate("summarize", None).unwrap();
+    let result = completed(&info);
+    let directory = root
+        .path()
+        .join("runs")
+        .join(info.reference["id"].as_str().unwrap());
+    std::fs::remove_file(directory.join("journal")).unwrap();
+    let saved = runs
+        .finish(&info, &result)
+        .expect("final result remains writable");
+    assert_eq!(saved["status"], "error");
+    assert_eq!(saved["error"]["code"], "io");
+    assert_eq!(saved["artifacts"], result["artifacts"]);
+    assert_eq!(saved["invocation"], result["invocation"]);
+    assert_eq!(saved["notes"].as_array().unwrap().len(), 1);
+    let observed: Value = serde_json::from_str(
+        &runs
+            .read(info.reference["id"].as_str().unwrap(), "run.json")
+            .unwrap(),
+    )
+    .unwrap();
+    assert_eq!(observed, saved);
+    assert_eq!(runs.finish(&info, &saved).unwrap(), saved);
+    assert_eq!(runs.list(None).unwrap()["runs"][0]["status"], "error");
+}
+
+#[test]
+fn missing_journal_keeps_cancellation_and_the_original_failure() {
+    let root = tempfile::tempdir().unwrap();
+    let runs = book(root.path());
+    for outcome in [
+        v04_results::Outcome::Cancelled,
+        v04_results::Outcome::Error {
+            code: "input",
+            reason: "Original failure".into(),
+        },
+    ] {
+        let info = runs.allocate("summarize", None).unwrap();
+        let mut result = completed(&info);
+        v04_results::settle(&mut result, outcome, std::time::Duration::ZERO);
+        std::fs::remove_file(
+            root.path()
+                .join("runs")
+                .join(info.reference["id"].as_str().unwrap())
+                .join("journal"),
+        )
+        .unwrap();
+        let saved = runs.finish(&info, &result).unwrap();
+        assert_eq!(saved["status"], result["status"]);
+        assert_eq!(saved["error"], result["error"]);
+        assert_eq!(saved["artifacts"], result["artifacts"]);
+        assert_eq!(saved["notes"].as_array().unwrap().len(), 1);
+    }
+}
+
+#[test]
+fn an_unwritable_final_record_is_a_server_failure_and_keeps_the_claim() {
+    let root = tempfile::tempdir().unwrap();
+    let runs = book(root.path());
+    let claim = runs.claim(Some("unsaved")).unwrap();
+    let info = runs.allocate("summarize", claim.as_ref()).unwrap();
+    let destination = root
+        .path()
+        .join("runs")
+        .join(info.reference["id"].as_str().unwrap())
+        .join("run.json");
+    use std::os::unix::fs::PermissionsExt;
+    let directory = destination.parent().unwrap();
+    let permissions = std::fs::metadata(directory).unwrap().permissions();
+    let journal = directory.join("journal");
+    let before = std::fs::read_to_string(&journal).unwrap();
+    std::fs::set_permissions(directory, std::fs::Permissions::from_mode(0o500)).unwrap();
+    let failed = runs.finish(&info, &completed(&info));
+    // Restore before asserting, so a failed assertion cannot leave an undeletable fixture.
+    std::fs::set_permissions(directory, permissions).unwrap();
+    let error = failed.unwrap_err();
+    assert_eq!(error["code"], -32603);
+    let refused = runs.claim(Some("unsaved")).unwrap_err();
+    assert_eq!(refused["data"]["reason"], "client_run_id_reused");
+    assert_eq!(refused["data"]["run"]["id"], info.reference["id"]);
+    assert!(!destination.exists());
+    let after = std::fs::read_to_string(&journal).unwrap();
+    assert_eq!(after.lines().count(), before.lines().count() + 1);
+    let event: Value = serde_json::from_str(after.lines().last().unwrap()).unwrap();
+    assert_eq!(event["event"], "completed");
+    let saved = runs.finish(&info, &completed(&info)).unwrap();
+    assert_eq!(saved["status"], "completed");
+    assert_eq!(
+        std::fs::read_to_string(&journal).unwrap().lines().count(),
+        before.lines().count() + 2
+    );
+    let observed: Value = serde_json::from_slice(&std::fs::read(destination).unwrap()).unwrap();
+    assert_eq!(observed, saved);
+}

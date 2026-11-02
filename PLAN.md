@@ -1259,6 +1259,16 @@ schemas and completed run records to stdio. This avoids duplicating call validat
 and keeps each slice within five authored files.
 Each slice includes testkit documentation, targeted tests, the full matrix and review.
 
+Review split **M5.01b3c2b** into **c2b1 (terminal outcome finalization)** and **c2b2 (wire dispatch)**
+before further implementation. c2b1 exposes a resolved, not-yet-executed result for I/O failures
+before work, and ensures a failed terminal journal append cannot prevent an otherwise writable
+run.json from recording the outcome. Preserve completed artifacts and cancellation status; return
+the exact saved result, including any journal diagnostic. A native artifact already written
+also survives failed preview delivery, using its resource preview as the fallback. Test missing
+journals, retained artifacts and immutable final evidence directly. c2b2 then builds optional image blocks before finalization and converts
+post-allocation recoverable I/O failures into results; only an unwritable final store remains a
+server-level failure. Both slices retain the five-file bound and full verification/review.
+
 **M5.01a implementation checkpoint (2026-11-02, complete):**
 `testkit/v04_fixtures.rs` independently authors the descriptions, result outcomes, artifact
 resources and binding/export/import/session examples. It imports neither host nor peer code.
@@ -1407,7 +1417,7 @@ Independent review and the full matrix passed: fmt/clippy, 295 Rust tests (4 ign
 53 UI tests, 2 asset-tool tests, Storybook, reproducible assets, release build and 220 browser
 tests (8 skipped). No production behavior, retry count or assertion timeout changed.
 Evidence and disposition: [report close review](docs/reviews/report-close-deadline.md).
-M5 schema/wire branches remain unmerged until main is green.
+Hosted rerun 41511603508 passed for the permanent fix; the schema/wire merge gate is clear.
 
 **M5.01b3c2a implementation checkpoint (2026-11-02, complete):**
 The fake's resolver and upcoming callable catalogue share one declared-input schema builder.
@@ -1421,6 +1431,22 @@ The final full matrix passed: fmt/clippy, 299 Rust tests (4 ignored), typecheck,
 2 asset-tool tests, Storybook, reproducible assets, release build and 220 browser tests
 (8 skipped). Local browser checks used the temporary 4187 override; lockfile/prebuilt assets
 are unchanged. The wire peer remains control-only until c2b.
+
+**M5.01b3c2b1 implementation checkpoint (2026-11-02, complete):**
+Resolved invocation evidence can be constructed without executing work. Terminal journal failures
+no longer suppress an otherwise writable final result: completed runs become I/O errors, while
+prior failure/cancellation outcomes retain their status and gain a diagnostic. The exact saved
+value is returned for dispatch. Completed native outputs also survive failed preview delivery,
+with their canonical resource preview retained; that address does not guarantee a later read.
+Missing journals remain unavailable resources even when final evidence is readable. An unwritable
+final result remains a server storage failure and retains the claimed run reference.
+Regression tests failed first for absent resolved evidence and dropped completed outputs. Review
+corrected a final-store test that stopped before the write; its permission fault now proves the
+journal append happened, the final write failed, and retry preserves the claim and publishes the
+exact result. Follow-up review found no blockers. The full matrix passed: fmt/clippy, 303 Rust tests
+(4 ignored), typecheck, 53 UI tests, 2 asset-tool tests, Storybook, reproducible assets, release
+build and 220 browser tests (8 skipped). The temporary local 4187 override is removed; lockfiles
+and prebuilt assets are unchanged. Wire dispatch remains c2b2, then held-run cancellation is c3.
 
 #### V20 — Image import feedback (M5-adjacent; coordinator-approved 2026-11-02)
 

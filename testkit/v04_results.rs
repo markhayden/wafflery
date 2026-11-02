@@ -155,20 +155,24 @@ fn outputs(tool: &str, prepared: &Prepared) -> Vec<(String, Value)> {
 fn append(run: &mut Value, profile: &str, field: &str, value: Value) {
     run[profile][field].as_array_mut().unwrap().push(value);
 }
+/// Construct resolved evidence without touching inputs or producing artifacts.
+pub fn resolved(prepared: &Prepared, info: &RunInfo) -> Value {
+    let invocation = json!({"action":prepared.action["name"],"arguments":prepared.arguments,
+        "effective":{"model":null,"config_identity":digest(&json!({"defaults":"synthetic-v04"}))},"requirements":[]});
+    base(
+        info,
+        prepared.action["name"].as_str().unwrap(),
+        invocation.clone(),
+        digest(&invocation),
+    )
+}
 pub fn execute(
     store: &Store,
     prepared: &Prepared,
     info: &RunInfo,
     mut cancelled: impl FnMut() -> bool,
 ) -> Value {
-    let invocation = json!({"action":prepared.action["name"],"arguments":prepared.arguments,
-        "effective":{"model":null,"config_identity":digest(&json!({"defaults":"synthetic-v04"}))},"requirements":[]});
-    let mut run = base(
-        info,
-        prepared.action["name"].as_str().unwrap(),
-        invocation.clone(),
-        digest(&invocation),
-    );
+    let mut run = resolved(prepared, info);
     let operation = prepared.action["kind"] == "operation";
     let execution = || -> Result<Outcome, Outcome> {
         for input in &prepared.inputs {
@@ -206,7 +210,14 @@ pub fn execute(
                 return Ok(Outcome::Cancelled);
             }
             store.remember(&document).map_err(store_failure)?;
-            let preview = preview(store, &info.root, &document, &prepared.return_images)?;
+            let delivery = preview(store, &info.root, &document, &prepared.return_images);
+            // The native output is already complete. A failed delivery must retain it with
+            // its resource preview instead of dropping the artifact from the failed result.
+            let preview = delivery
+                .as_ref()
+                .ok()
+                .cloned()
+                .unwrap_or_else(|| document["preview"].clone());
             if !preview.is_null() {
                 append(&mut run, "images", "out", preview.clone());
             }
@@ -219,6 +230,7 @@ pub fn execute(
                 "out",
                 json!({"port":port,"artifact":document["artifact"],"preview":preview}),
             );
+            delivery?;
         }
         Ok(if cancelled() {
             Outcome::Cancelled
