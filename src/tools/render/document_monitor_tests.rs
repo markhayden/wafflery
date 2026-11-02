@@ -1,3 +1,4 @@
+use super::super::closed_socket_tests::assert_closed;
 use super::*;
 use crate::tools::render::process::tests::setup;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
@@ -74,11 +75,7 @@ async fn finished_renderer_keeps_its_document_live_until_close() {
     assert!(monitor.snapshot().closed);
     assert!(monitor.current_url().is_err());
     assert!(!matches!(monitor.snapshot().readiness, Readiness::Ready(_)));
-    assert!(
-        tokio::net::TcpStream::connect(("127.0.0.1", url.port().unwrap()))
-            .await
-            .is_err()
-    );
+    assert_closed(&url).await;
 }
 
 #[tokio::test]
@@ -95,11 +92,7 @@ async fn a_content_policy_failure_closes_the_listener_without_changing_saved_evi
         state.readiness,
         Readiness::Failed("Report requires content blocked by its isolation policy")
     );
-    assert!(
-        tokio::net::TcpStream::connect(("127.0.0.1", url.port().unwrap()))
-            .await
-            .is_err()
-    );
+    assert_closed(&url).await;
     assert_eq!(
         std::fs::read_to_string(root.path().join("saved run/untouched")).unwrap(),
         "saved evidence"
@@ -130,11 +123,7 @@ async fn idle_expiry_outlives_the_renderer_and_closes_the_content_server() {
     observed(&monitor, |s| s.closed).await;
     assert!(idle.expired());
     assert!(!idle.touch());
-    assert!(
-        tokio::net::TcpStream::connect(("127.0.0.1", url.port().unwrap()))
-            .await
-            .is_err()
-    );
+    assert_closed(&url).await;
 }
 #[tokio::test]
 async fn generation_has_a_deadline_and_never_auto_forces_a_stuck_process() {
@@ -183,9 +172,5 @@ async fn close_during_generation_and_last_owner_drop_cannot_publish_a_late_view(
         .await
         .unwrap()
         .unwrap();
-    assert!(
-        tokio::net::TcpStream::connect(("127.0.0.1", url.port().unwrap()))
-            .await
-            .is_err()
-    );
+    assert_closed(&url).await;
 }

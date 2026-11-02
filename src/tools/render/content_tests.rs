@@ -1,3 +1,4 @@
+use super::super::closed_socket_tests::assert_closed;
 use super::*;
 use crate::tools::render::{
     document::DocumentGrant,
@@ -117,11 +118,7 @@ async fn only_the_immutable_document_is_served_with_an_exact_frame_origin() {
     server.close().await.unwrap();
     assert!(server.snapshot().closed);
     assert!(server.url().is_err());
-    assert!(
-        tokio::net::TcpStream::connect(("127.0.0.1", url.port().unwrap()))
-            .await
-            .is_err()
-    );
+    assert_closed(&url).await;
 }
 #[tokio::test]
 async fn csp_reports_mark_nonconforming_content_without_retaining_report_details() {
@@ -200,11 +197,7 @@ async fn closing_or_dropping_the_owner_closes_partial_http_connections() {
                     std::io::ErrorKind::ConnectionReset
                 )
         );
-        assert!(
-            tokio::net::TcpStream::connect(("127.0.0.1", url.port().unwrap()))
-                .await
-                .is_err()
-        );
+        assert_closed(&url).await;
     }
 }
 #[tokio::test]

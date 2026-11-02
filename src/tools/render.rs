@@ -1,4 +1,6 @@
 //! Resolve declared argv from saved evidence. No render executes during resolution.
+#[cfg(test)]
+mod closed_socket_tests;
 pub mod content;
 pub mod document;
 pub mod document_monitor;

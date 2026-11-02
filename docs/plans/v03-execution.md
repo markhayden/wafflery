@@ -1213,3 +1213,16 @@ Rollback this slice before removing the V17a frame endpoints; no stored evidence
 Verification: focused tests, independent review and the full matrix passed: 242 Rust tests
 (three ignored), 51 UI unit tests, two asset tests and 180 browser cases (four skips), plus fmt,
 clippy, typecheck, Storybook, reproducible UI and release build. Hold merge until hosted run 41419440339 confirms the preceding spawn-isolation correction.
+
+### Document closure test correction
+
+V17b2's matrix caught a pre-existing post-close TCP assertion. Diagnostics found a CLOSED
+connection, no listener, and BrokenPipe on writing; inspect the
+[closure observation review](../reviews/2026-11-02-document-close-observation.md).
+Use refusal or confirmed EOF/reset as the test oracle, still rejecting a connected live socket
+or any response bytes. No production behavior changes. Commit: `test: observe closed document
+connections through EOF`; rollback the test/docs slice independently of the report drawer.
+Thirty full-library stress rounds (2,970 tests), the leaked-listener negative check, independent
+review and the full shared-lock matrix passed: 243 Rust tests (three ignored), 51 UI unit tests,
+two asset tests, 180 browser cases (four skips), fmt, clippy, typecheck, Storybook, reproducible
+assets and release build.
