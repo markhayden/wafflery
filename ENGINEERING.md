@@ -235,8 +235,9 @@ the agreed tool-selection context. They do not read locks, authenticate a host e
 browser secrets, or open the final browser URL. The Wafflery binary owns all those details.
 
 The Wafflery launcher resolves the configured library and tries to attach to the existing host. The
-host owns an OS lock for its entire lifetime; a stale discovery record alone cannot authorize
-attachment or killing a PID. Authenticate the live endpoint and check host protocol/library
+host owns an OS lock for its entire lifetime and explicitly unlocks on release (including
+failed acquisition cleanup), so inherited descriptors cannot extend ownership. A stale discovery
+record alone cannot authorize attachment or killing a PID. Authenticate the live endpoint and check host protocol/library
 identity. Simultaneous launches must converge on one host. An incompatible live host is an
 explicit restart requirement, not a reason to launch a second writer or upgrade it mid-run.
 

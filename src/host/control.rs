@@ -13,9 +13,18 @@ use std::{
 };
 
 pub struct Ownership {
-    _lock: File,
+    _lock: OwnershipLock,
     pub root: PathBuf,
     pub socket: PathBuf,
+}
+
+// End the lock with this guard, not with the last inherited/duplicated descriptor.
+// This also releases ownership if acquire fails after taking the lock.
+struct OwnershipLock(File);
+impl Drop for OwnershipLock {
+    fn drop(&mut self) {
+        let _ = self.0.unlock();
+    }
 }
 
 fn private_directory(path: &Path) -> io::Result<()> {
@@ -80,9 +89,13 @@ impl Ownership {
         {
             return Err(io::Error::other("invalid host lock"));
         }
-        lock.try_lock().map_err(|_| {
-            io::Error::new(io::ErrorKind::WouldBlock, "another host owns this library")
+        lock.try_lock().map_err(|error| match error {
+            fs::TryLockError::WouldBlock => {
+                io::Error::new(io::ErrorKind::WouldBlock, "another host owns this library")
+            }
+            fs::TryLockError::Error(error) => error,
         })?;
+        let lock = OwnershipLock(lock);
         let socket = socket_path(&root)?;
         // A stale socket is removable only after winning the lifetime lock.
         match fs::symlink_metadata(&socket) {
@@ -234,5 +247,31 @@ pub async fn listen(
             Ok(())
         })
         .await;
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn dropping_owner_releases_lock_even_while_a_duplicate_descriptor_exists() {
+        let dir = tempfile::tempdir().unwrap();
+        let root = dir.path().join("library");
+        let owner = Ownership::acquire(&root).unwrap();
+        // Model the shared open-file description inherited during concurrent process creation.
+        let duplicate = owner._lock.0.try_clone().unwrap();
+        assert!(
+            matches!(Ownership::acquire(&root), Err(error) if error.kind() == io::ErrorKind::WouldBlock)
+        );
+        drop(owner);
+        let replacement =
+            Ownership::acquire(&root).expect("ownership ended despite a duplicated descriptor");
+        drop(duplicate);
+        assert!(
+            matches!(Ownership::acquire(&root), Err(error) if error.kind() == io::ErrorKind::WouldBlock)
+        );
+        drop(replacement);
+        Ownership::acquire(&root).unwrap();
     }
 }
