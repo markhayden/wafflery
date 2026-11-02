@@ -900,7 +900,7 @@ V16 execution slices (review and full matrix per slice; rollback in reverse orde
   and `feat: coordinate document report lifetimes`.
 No content is embedded in the workspace until V17's framing checks pass.
 
-**V17a — Add exact-origin report framing.** Replace the app's `frame-src 'none'` only with
+**V17a — Add exact-origin report framing. Complete.** Replace the app's `frame-src 'none'` only with
 permission to frame a host-owned report wrapper. That wrapper contains no tool HTML and sets a
 per-response CSP permitting only the selected report's exact origin. Both ancestors use the
 host origin, matching the server's exact frame-ancestor contract. Tool/document content stays on
@@ -928,7 +928,7 @@ V17a execution slices (review and full matrix per slice; rollback in reverse ord
 - **V17a3: Complete.** Extend independent malicious-report fixtures and browser checks for parent/API access,
   redirects, external resources and navigation restrictions. Commit: `test: verify report frame isolation`.
 
-**V17b — Embed reports in the shared run drawer.** Offer tool-declared views on a saved run;
+**V17b — Embed reports in the shared run drawer. Complete.** Offer tool-declared views on a saved run;
 show readiness/loading/error and open V17a's wrapper. Close/replacement releases the viewer;
 visible activity refreshes its idle timeout. Keep raw evidence/comparison usable on start failure.
 Files: report drawer, API client, story, browser tests, README.
@@ -937,7 +937,7 @@ Verify frame load, blocked external-link behavior, close/reopen/replacement, bac
 startup failure. Dependencies: V17a. Commit: `feat: inspect tool reports in the run drawer`.
 
 V17b execution slices (review and full matrix per slice; rollback in reverse order):
-- **V17b1:** Typed private report client and lifecycle ownership. Expose the existing view for a
+- **V17b1: Complete.** Typed private report client and lifecycle ownership. Expose the existing view for a
   saved attempt so reopening inspection can recover a pending close/force state without starting
   another renderer. Keep one ownership manager across drawer mounts; serialize open/replacement/
   close, retain late-open ownership after dismissal, and reject malformed observations/frame
@@ -946,15 +946,15 @@ V17b execution slices (review and full matrix per slice; rollback in reverse ord
   ID. Never adopt another tab's current view as evidence that an uncertain request settled.
   Prove ordering with deferred-response tests.
   Commit: `feat: own report drawer lifetimes`.
-- **V17b2:** Shared-drawer report selector, embedded wrapper, loading/error/diagnostic states and
+- **V17b2: Complete.** Shared-drawer report selector, embedded wrapper, loading/error/diagnostic states and
   explicit force confirmation. Activity renews only during visible inspection; dismissal or
   switching evidence releases the view. Match drawer mocks and add stories plus browser coverage.
   Commit: `feat: inspect tool reports in the run drawer`.
-- **V17b3:** Browser lifecycle checks for dismissal during startup, replacement, reopening,
+- **V17b3: Complete.** Browser lifecycle checks for dismissal during startup, replacement, reopening,
   hidden-tab expiry and failures with raw evidence still usable. Record checkpoint V-C, including
   any separately pending native Safari check. Commit: `test: verify report drawer lifecycle`.
 
-**Checkpoint V-C:** Full matrix and review with real fake-peer report processes, not static UI
+**Checkpoint V-C: Automated checks complete.** [Evidence and native Safari limit](docs/plans/v03-reports-checkpoint.md). Full matrix and review with real fake-peer report processes, not static UI
 fixtures. Confirm shutdown ownership and no run-status mutation on report failure. Native Safari
 gets a focused report/frame/restart walkthrough; report it separately if pending. Record evidence.
 

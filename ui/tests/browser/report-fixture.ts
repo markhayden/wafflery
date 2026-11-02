@@ -42,3 +42,9 @@ export async function frame(page: Page, host: Host, url: string) {
     .frameLocator('iframe[title="Tool report"]');
 }
 
+
+export async function chooseReport(page: Page, name: string, kind: string) {
+  await page.getByRole("button", { name: /^Report / }).click();
+  await page.getByRole("dialog", { name: "Choose report", exact: true })
+    .getByRole("button", { name: `${name} ${kind}`, exact: true }).click();
+}

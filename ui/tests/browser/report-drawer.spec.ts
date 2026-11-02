@@ -1,13 +1,8 @@
 import { test, expect } from "./tool-host";
-import { savedRun } from "./report-fixture";
-import type { Page } from "@playwright/test";
+import { savedRun, chooseReport } from "./report-fixture";
 
 test.use({ hostScenario: "renders" });
-async function chooseReport(page: Page, name: string, kind: string) {
-  await page.getByRole("button", { name: /^Report / }).click();
-  await page.getByRole("dialog", { name: "Choose report", exact: true })
-    .getByRole("button", { name: `${name} ${kind}`, exact: true }).click();
-}
+
 
 for (const [name, kind, heading] of [["document", "Document", "Saved document"], ["server", "Live viewer", "Saved report"]] as const) {
 test(`the shared drawer opens a saved ${name} explicitly and closes it when returning to evidence`, async ({ page, host }) => {

@@ -1252,3 +1252,15 @@ Verification: full matrix passed, including the final UI rerun after the lifecyc
 (four opt-in skips), fmt, clippy, typecheck, Storybook, reproducible assets and release build.
 Independent review approved the correction. Rust was unchanged after its passing matrix.
 
+
+## V17b3: report lifecycle checkpoint
+
+Add real-process browser checks for generation dismissal, replacement without automatic open,
+reopening, force-required ownership and keyboard return to host controls. The deterministic
+visibility boundary test complements the actual Rust lease-clock tests; their evidence and
+manual Safari limit are recorded in [checkpoint V-C](v03-reports-checkpoint.md). The independent
+peer emits readiness on diagnostics after installing its signal handler. No host behavior or
+protocol changes in this slice. Independent review, 160 lifecycle repetitions and the full
+shared-lock matrix passed: 243 Rust tests (three ignored), 53 UI unit tests, two asset tests,
+198 browser cases (four opt-in skips), fmt, clippy, typecheck, Storybook, reproducible assets
+and release build. Automated V-C is complete; native Safari remains separately pending.

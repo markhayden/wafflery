@@ -45,6 +45,7 @@ pub fn run(mode: &str, run: &Path) -> Result<(), Box<dyn std::error::Error>> {
             )?;
         } else {
             println!("synthetic renderer started");
+            eprintln!("synthetic renderer started");
             io::stdout().flush()?;
         }
         let expires = tokio::time::Instant::now() + Duration::from_secs(30);
