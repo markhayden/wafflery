@@ -1,5 +1,4 @@
-use super::{Coordinator, Error, Result};
-use crate::tools::estimate::ValidatedEstimate;
+use super::{Coordinator, Error, PreparedEstimate, Result};
 use std::{
     sync::{Arc, atomic::Ordering},
     time::Duration,
@@ -7,8 +6,7 @@ use std::{
 use tokio::time::{Instant, timeout_at};
 
 impl Coordinator {
-    /// Rust control service only; the authenticated browser route joins in V10b3.
-    pub async fn estimate_prepared(self: &Arc<Self>, id: &str) -> Result<ValidatedEstimate> {
+    pub async fn estimate_prepared(self: &Arc<Self>, id: &str) -> Result<PreparedEstimate> {
         let deadline = Instant::now() + Duration::from_secs(30);
         let submission = timeout_at(deadline, self.submission.lock()).await?;
         if self.stopping.load(Ordering::Acquire) {
@@ -28,7 +26,9 @@ impl Coordinator {
             .try_acquire_owned()
             .map_err(|_| Error::Conflict("An estimate is already pending for this tool"))?;
         let declaration = self.description(&receipt.tool).await?;
-        let lease = self.preparations.lease(id, &declaration, &client.session)?;
+        let (lease, ticket) =
+            self.preparations
+                .begin_estimate(id, &declaration, &client.session)?;
         let action = declaration.document["actions"]
             .as_array()
             .unwrap()
@@ -50,6 +50,7 @@ impl Coordinator {
         let mut workers = timeout_at(deadline, self.workers.lock()).await?;
         workers.retain(|worker| !worker.is_finished());
         let coordinator = self.clone();
+        let worker_ticket = ticket.clone();
         workers.push(tokio::spawn(async move {
             let result = client
                 .estimate_control(
@@ -85,7 +86,13 @@ impl Coordinator {
                         "Estimate no longer belongs to an available preparation",
                     ));
                 }
-                Ok(quote)
+                coordinator.preparations.save_estimate(
+                    &lease,
+                    &worker_ticket,
+                    current,
+                    &client.session,
+                    quote,
+                )
             });
             // Release ownership before reporting completion; invalidated inputs can now disappear.
             drop(lease);
@@ -95,8 +102,33 @@ impl Coordinator {
         }));
         drop(workers);
         drop(submission);
-        timeout_at(deadline, receiver)
-            .await?
-            .map_err(|_| Error::Invalid("Owned estimate task did not complete".into()))?
+        let result = match timeout_at(deadline, receiver).await {
+            Ok(Ok(result)) => result,
+            Ok(Err(_)) => Err(Error::Invalid(
+                "Owned estimate task did not complete".into(),
+            )),
+            Err(error) => Err(error.into()),
+        };
+        if result.is_err() {
+            ticket.invalidate();
+        }
+        result
+    }
+    pub async fn prepared_estimate(&self, id: &str) -> Result<PreparedEstimate> {
+        let _submission = self.submission.lock().await;
+        let receipt = self.preparations.get(id)?;
+        let current = self.description(&receipt.tool).await?;
+        let client = self.tools[&receipt.tool]
+            .client()
+            .ok_or(Error::Missing("Tool is unavailable"))?;
+        if client.generation() != current.generation || client.peer().is_err() {
+            self.preparations.invalidate_tool(&receipt.tool);
+            return Err(Error::Conflict(
+                "Tool changed or disconnected; prepare a new estimate",
+            ));
+        }
+        self.preparations
+            .reconcile(&receipt.tool, &current, &client.session);
+        self.preparations.estimate(id)
     }
 }

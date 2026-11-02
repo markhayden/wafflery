@@ -1,7 +1,7 @@
 mod estimates;
 mod preparation;
 mod readiness;
-pub use super::prepared::retained::Preparation;
+pub use super::prepared::retained::{Preparation, PreparedEstimate};
 mod recovery;
 mod restart;
 mod shutdown;
@@ -152,7 +152,15 @@ impl Coordinator {
         self.reap_exited().await;
         let tools: Vec<_> = self.tools.iter().map(|(id, entry)| {
             let state = entry.state.read().unwrap_or_else(|e| e.into_inner());
-            json!({"id":id,"declaration":state.declaration,"error":state.error,
+            let mut declaration = state.declaration.clone();
+            if let (Some(declaration), Some(client)) = (&mut declaration, &state.client)
+                && let Some(observed) = client.last_session.read().unwrap_or_else(|e| e.into_inner()).clone()
+                && observed["id"] == declaration.tool_session["id"]
+            {
+                // Amounts are observations, not input schema changes or spending permission.
+                declaration.tool_session = observed;
+            }
+            json!({"id":id,"declaration":declaration,"error":state.error,
                 "busy":entry.reservation.available_permits()==0,
                 "progress":state.client.as_ref().and_then(|client|client.progress().borrow().clone())})
         }).collect();

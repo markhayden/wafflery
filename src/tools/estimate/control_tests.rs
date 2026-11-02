@@ -82,7 +82,9 @@ async fn late_response_cannot_overwrite_a_newer_session_observation() {
     let mut guard = tokio::time::timeout(Duration::from_secs(1), client.observed_session.lock())
         .await
         .unwrap();
-    guard.as_mut().unwrap()["spent_usd"] = json!(0.33);
+    let mut newer = guard.as_ref().unwrap().clone();
+    newer["spent_usd"] = json!(0.33);
+    client.publish_session(&mut guard, newer);
     drop(guard);
     assert!(
         !task.is_finished(),
@@ -100,5 +102,62 @@ async fn late_response_cannot_overwrite_a_newer_session_observation() {
         client.observed_session.lock().await.as_ref().unwrap()["spent_usd"],
         json!(0.33)
     );
+    assert_eq!(
+        client.last_session.read().unwrap().as_ref().unwrap()["spent_usd"],
+        json!(0.33)
+    );
     assert!(client.close().await.unwrap());
+}
+
+#[tokio::test]
+async fn peer_binding_ignores_delivery_flags_and_locators_but_prices_exact_arguments() {
+    let (dir, client, declaration, mut arguments) = client().await;
+    arguments["label"] = json!("normal");
+    arguments["return_images"] = json!("path");
+    arguments["image_blocks"] = json!(false);
+    let first = client
+        .estimate_control(
+            &declaration,
+            "price_test",
+            &arguments,
+            0.5,
+            Instant::now() + Duration::from_secs(5),
+        )
+        .await
+        .unwrap();
+    let alternate = dir.path().join("identical.png");
+    std::fs::copy(dir.path().join("input.png"), &alternate).unwrap();
+    arguments["source"]["path"] = json!(alternate);
+    arguments["return_images"] = json!("inline");
+    arguments["image_blocks"] = json!(true);
+    let second = client
+        .estimate_control(
+            &declaration,
+            "price_test",
+            &arguments,
+            0.5,
+            Instant::now() + Duration::from_secs(5),
+        )
+        .await
+        .unwrap();
+    arguments["max_spend_usd"] = json!(0.6);
+    let changed = client
+        .estimate_control(
+            &declaration,
+            "price_test",
+            &arguments,
+            0.6,
+            Instant::now() + Duration::from_secs(5),
+        )
+        .await
+        .unwrap();
+    assert!(client.close().await.unwrap());
+    assert_eq!(
+        first.observation()["binding"],
+        second.observation()["binding"]
+    );
+    assert_ne!(
+        second.observation()["binding"],
+        changed.observation()["binding"]
+    );
 }

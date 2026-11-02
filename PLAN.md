@@ -28,7 +28,7 @@ Publishing and production installation are not authorized by this continuation.
 Current integration update (2026-11-01): published v0.2.0 and both tools are adopted on main.
 See [the v0.2 integration plan](docs/plans/table-manners-v02.md) and [verified checkpoint](docs/reviews/2026-11-01-table-manners-v02.md). The initial v0.1 fixture/version
 requirements below describe the completed foundation checkpoint, not the current live allowlist.
-The [v0.3 client task list](#v03-client--proposed-task-list) below is approved. V01–V03 are
+The [v0.3 client task list](#v03-client--proposed-task-list) below is approved. V01–V10b are
 merged locally; the live client requires exactly v0.3 and still refuses paid dispatch until
 its estimate/cap guards are implemented. See [execution checkpoints](docs/plans/v03-execution.md).
 
@@ -639,7 +639,7 @@ Verify an estimate while a run permit is staged but not written leaves that perm
 both calls succeed; arbitrary tool names cannot bypass the gate. Depends: V02.
 Commit: `fix: keep estimate controls outside the dispatch gate`.
 
-**V10b — Request and validate bound estimates.** Call reserved `estimate` with `{action, arguments}`
+**V10b — Complete: request and validate bound estimates.** Call reserved `estimate` with `{action, arguments}`
 from V09, outside the execution permit. Hold a preparation lease through the control call so
 expiry or draft invalidation cannot delete inputs while the tool reads them; an expired or
 invalidated preparation still cannot dispatch afterward. Use a separate 30-second estimate deadline for image
@@ -687,8 +687,11 @@ V10b execution slices (same acceptance criteria; full matrix and review per slic
   wiring/service, independent peer wiring/readiness/estimates/held-run behavior and the live
   estimate test. Review these together: splitting the reader lease from timeout and shutdown
   handling would leave an unsafe intermediate control path. It exceeds the usual file budget.
-- **V10b3:** Authenticated estimate API, retained opaque bindings and snapshot publication;
+- **V10b3: Complete.** Authenticated estimate API, retained opaque bindings and snapshot publication;
   recheck preparation validity before accepting a response. Commit: `feat: expose prepared cost estimates`.
+  This API/lifetime slice includes the retained quote module, expiry and ticket handling, control
+  routes/service, snapshot projection and their independent-peer/unit/API coverage. Review the
+  joined boundary together so a timeout cannot publish a quote through an unguarded intermediate API.
 Rollback in reverse order. V10b1's cohesive validation slice includes estimate module/tests,
 module registration, session-validator visibility, the existing MCP transport probe and moving the pinned time dependency
 into production with parsing enabled. Later slices connect it without enabling paid dispatch.

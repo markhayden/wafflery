@@ -11,6 +11,8 @@ const USD_TOLERANCE: f64 = 1e-6;
 /// The coordinator must retain it with the exact prepared call and recheck its lifetime.
 pub struct ValidatedEstimate {
     value: Value,
+    expires: OffsetDateTime,
+    deadline: tokio::time::Instant,
 }
 impl ValidatedEstimate {
     pub fn validate(
@@ -21,6 +23,7 @@ impl ValidatedEstimate {
         session: &Value,
         received: OffsetDateTime,
     ) -> Result<Self> {
+        let received_monotonic = tokio::time::Instant::now();
         validate_contract("urn:table-manners:core:estimate", &value)?;
         if !cap.is_finite() || cap <= 0.0 {
             return Err(Error::Invalid(
@@ -94,7 +97,13 @@ impl ValidatedEstimate {
                 ));
             }
         }
-        Ok(Self { value })
+        let lifetime = std::time::Duration::try_from(expires - received)
+            .map_err(|_| Error::Invalid("Invalid estimate lifetime".into()))?;
+        Ok(Self {
+            value,
+            expires,
+            deadline: received_monotonic + lifetime,
+        })
     }
     /// MCP estimates require structuredContent; a text-only response or run is not a quote.
     pub fn from_response(
@@ -117,6 +126,10 @@ impl ValidatedEstimate {
     }
     /// Server-side evidence, including the opaque binding. Never serialize this directly
     /// into a browser response; the presentation layer selects display fields separately.
+    pub(crate) fn expired(&self) -> bool {
+        time::OffsetDateTime::now_utc() >= self.expires
+            || tokio::time::Instant::now() >= self.deadline
+    }
     pub fn observation(&self) -> &Value {
         &self.value
     }

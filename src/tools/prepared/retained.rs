@@ -1,5 +1,7 @@
 //! Bounded, session-owned drafts. This map never contains a dispatched attempt.
+mod quotes;
 use super::{Declaration, Error, PreparedCall, Result, Submission};
+pub use quotes::PreparedEstimate;
 use std::{
     collections::BTreeMap,
     sync::{Arc, Mutex, MutexGuard},
@@ -19,6 +21,8 @@ struct Draft {
     call: Arc<PreparedCall>,
     receipt: Preparation,
     expires: Instant,
+    estimate_ticket: Option<quotes::EstimateTicket>,
+    quote: Option<crate::tools::estimate::ValidatedEstimate>,
 }
 struct Tracked {
     call: std::sync::Weak<PreparedCall>,
@@ -135,6 +139,8 @@ impl Retained {
                 call,
                 receipt: receipt.clone(),
                 expires: Instant::now() + self.ttl,
+                estimate_ticket: None,
+                quote: None,
             },
         );
         Ok(receipt)

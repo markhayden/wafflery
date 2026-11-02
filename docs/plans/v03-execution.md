@@ -570,3 +570,61 @@ V10b2 passed final review and the full shared-lock matrix: 160 Rust tests (three
 27 UI unit tests, two asset tests, 100 browser cases (four opt-in skips), fmt, clippy, typecheck,
 Storybook, reproducible UI assets and release build. No lockfile or generated UI asset changed.
 Rollback this ownership slice as a unit; V10b1's standalone validation may remain.
+
+### V10b3 authenticated estimates
+
+Add strict empty-body POST and GET controls at `/api/preparations/{id}/estimate`. The browser
+gets a preparation receipt and an explicit allowlist of estimate display fields, never the
+binding, copied input paths or raw effective extensions. Opaque bindings stay with the exact
+retained preparation for V12. GET does not renew preparation or quote lifetime. Both UTC expiry
+and elapsed monotonic lifetime apply.
+
+An accepted re-estimation clears the prior quote; rejected busy or malformed API requests do
+not. Every accepted estimate owns a private ticket. A reported timeout invalidates only that
+ticket, including a quote saved just before the timeout won; late cleanup cannot remove a newer
+estimate. Publication checks the same prepared object, ticket, current declaration/session and
+expiry under the retained-map lock. Rejected/expired preparations never regain availability.
+
+Workspace snapshots show the newest validated session observation without changing the input
+declaration revision. A separate short-lived cache lock preserves the latest observation while
+an estimate holds the request mutex; it is never spending authorization. This slice leaves the
+paid guard closed.
+
+The storage/expiry tests failed before quote retention existed, and the authenticated POST test
+failed with the absent route before API wiring. The snapshot regression saw the cached zero
+balance instead of the peer's new observation. Tests now cover display allowlisting, no lifetime
+renewal, ticket-specific timeout invalidation, refusal unknowns, unchanged draft revision and
+zero attempts. A further independent-peer test found delivery flags and file locators included in
+its new image-quote binding. The fake now binds image content and priced arguments/configuration,
+excluding delivery flags; the host still treats the digest as opaque.
+
+Review found that falling back to the original declaration while an estimate held the ledger
+mutex could roll the display back from 0.08 to zero. The live sequence regression reproduced
+that failure. Both validated publication paths now update a separate cache under serialized
+ledger ownership, and snapshots read that cache instead. The late-response test also checks that
+an expired estimate cannot overwrite the newer cached balance. The first full-matrix command was
+cancelled while waiting for the shared lock, before it ran any checks, to fix this review finding.
+
+The subsequent matrix caught a duplicate test-fixture module through Clippy. Both unit-test
+consumers now import one test-only fixture module; runtime behavior is unchanged.
+
+The browser matrix found a WebKit layout-test setup failure: no attempt was sent, and the
+required label remained empty immediately after fill while the image import completed. No
+parameter-reset path was found; the exact browser mechanism remains unconfirmed. Twenty
+repetitions per engine with a value assertion passed before the setup change. The layout test
+now waits for the imported preview and idle input, establishes label focus, and asserts the
+filled value before checking scrolling. No timeout, retry or product behavior changed.
+
+A second full browser pass reproduced the same empty-label setup in the missing-evidence test,
+again without a dispatched attempt. These setup prerequisites now live in one sample-input
+helper used by the existing immediate-upload/label scenarios. Import concurrency tests retain
+their explicit controls. The repeated failure changes only test setup, not paid controls or
+runtime behavior; the browser mechanism is still not claimed as established.
+
+V10b3 passed final review and every full-matrix check: 167 Rust tests (three ignored),
+27 UI unit tests, two asset tests, fmt, clippy, typecheck, Storybook, reproducible assets,
+release build and 100 browser cases (four opt-in skips). After the setup-only correction,
+80 stress cases and the complete browser suite passed; unchanged Rust/build checks were not
+repeated. Lockfiles and generated UI assets are unchanged. The common browser setup correction
+is a separate test commit before the estimate API commit. Revert the API/lifetime slice as a
+unit; the test correction and V10b1/V10b2 may remain.

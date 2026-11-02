@@ -24,6 +24,10 @@ pub fn router(coordinator: Arc<Coordinator>) -> Router {
             get(preparation).delete(discard_preparation),
         )
         .route("/api/preparations/{id}/submit", post(submit_prepared))
+        .route(
+            "/api/preparations/{id}/estimate",
+            get(estimate).post(request_estimate),
+        )
         .route("/api/attempts", get(list).post(submit))
         .route("/api/attempts/{id}", get(attempt))
         .route("/api/attempts/{id}/cancel", post(cancel))
@@ -50,6 +54,12 @@ impl IntoResponse for ApiError {
                 (StatusCode::NOT_FOUND, "not_found")
             }
             Error::Invalid(_) | Error::Json(_) => {
+                (StatusCode::UNPROCESSABLE_ENTITY, "invalid_inputs")
+            }
+            Error::Timeout(_) => (StatusCode::GATEWAY_TIMEOUT, "control_timeout"),
+            Error::Mcp(rmcp::ServiceError::McpError(error))
+                if error.code == rmcp::model::ErrorCode::INVALID_PARAMS =>
+            {
                 (StatusCode::UNPROCESSABLE_ENTITY, "invalid_inputs")
             }
             _ => (StatusCode::INTERNAL_SERVER_ERROR, "execution_unavailable"),
@@ -204,4 +214,18 @@ async fn submit_prepared(
         StatusCode::ACCEPTED,
         Json(c.submit_prepared(request).await?),
     ))
+}
+
+async fn request_estimate(
+    State(c): State<Arc<Coordinator>>,
+    Path(id): Path<String>,
+    Json(_): Json<Empty>,
+) -> Result<Json<crate::tools::coordinator::PreparedEstimate>, ApiError> {
+    Ok(Json(c.estimate_prepared(&id).await?))
+}
+async fn estimate(
+    State(c): State<Arc<Coordinator>>,
+    Path(id): Path<String>,
+) -> Result<Json<crate::tools::coordinator::PreparedEstimate>, ApiError> {
+    Ok(Json(c.prepared_estimate(&id).await?))
 }

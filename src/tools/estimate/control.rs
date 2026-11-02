@@ -78,7 +78,7 @@ impl ToolClient {
                 "Estimate deadline elapsed during validation",
             ));
         }
-        *previous = Some(quote.observation()["session"].clone());
+        self.publish_session(&mut previous, quote.observation()["session"].clone());
         Ok(quote)
     }
     async fn drain_estimate<F>(&self, response: F)

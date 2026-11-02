@@ -308,8 +308,17 @@ V10b1 implements the estimate-validation boundary: strict structuredContent/sche
 serving-session attribution, shared ledger consistency, expiry and cap/decision checks. Valid
 readiness refusals retain unknown prices and configuration; they never authorize dispatch. The
 opaque binding remains server-side evidence. The independent peer and contradictory fixtures
-exercise this boundary. V10b2 adds the owned Rust estimate service; browser routes and retained
-quotes remain V10b3. At most one estimate reader runs per tool, outside its execution permit.
+exercise this boundary. V10b2 adds the owned Rust estimate service. V10b3 provides authenticated
+POST/GET `/api/preparations/{id}/estimate` controls: POST accepts only an empty object, and
+GET never renews either lifetime. Display responses omit opaque bindings, input paths and raw
+effective extensions. Bindings remain with the retained preparation for the paid-dispatch gate.
+Accepted re-estimation clears the old quote; invalid or busy requests leave it unchanged. A
+per-request ticket prevents a reported timeout from leaving a saved quote accessible or removing
+a newer quote. Both UTC expiry and elapsed monotonic lifetime apply. Workspace snapshots show
+the latest validated ledger observation without changing the declaration revision. A separate
+short-lived cache lock preserves that observation while an estimate holds the request mutex;
+starting another estimate cannot display an older startup balance. Display amounts never authorize
+spending. At most one estimate reader runs per tool, outside its execution permit.
 The 30-second deadline includes ledger-lock acquisition. A timed-out dispatched request keeps
 its input lease and estimate slot until its original reply completes or child exit is confirmed;
 there is no automatic retry. The ledger mutex is released at the deadline, and a late reply
@@ -317,7 +326,7 @@ cannot replace newer observations. Requester cancellation cannot abandon this wo
 Discarded/expired drafts become unavailable immediately, but leased copies still count against
 retention limits and block library cleanup until the reader ends. Shutdown closes owned children
 before joining these workers. A returned quote must still match the same prepared object,
-current declaration and owned client. No browser endpoint or paid authorization is added yet.
+current declaration and owned client. Browser estimate controls remain V11; paid authorization remains V12.
 Controls do not wait for
 an execution slot. The former Squint behavior that created estimate runs describes v0.2 integration
 history only: v0.3 prohibits it. Until the approved paid slice lands, dispatch stays offline-only.

@@ -40,6 +40,13 @@ pub(super) fn validate_observation(
 }
 
 impl ToolClient {
+    /// Caller holds observed_session through validation and publication. Snapshot reads use
+    /// this separate short-lived lock, so a pending RPC never rolls the display backward.
+    pub(super) fn publish_session(&self, previous: &mut Option<Value>, value: Value) {
+        *previous = Some(value.clone());
+        *self.last_session.write().unwrap_or_else(|e| e.into_inner()) = Some(value);
+    }
+
     /// Observations are serialized so concurrent control requests cannot move the ledger backward.
     pub async fn observe_session(&self, tool: &Value) -> Result<Value> {
         let mut previous = self.observed_session.lock().await;
@@ -51,7 +58,7 @@ impl ToolClient {
         let (_, bytes) = resource_content(&response, &uri, 64 * 1024)?;
         let value = serde_json::from_slice(&bytes)?;
         validate_observation(&value, tool, previous.as_ref())?;
-        *previous = Some(value.clone());
+        self.publish_session(&mut previous, value.clone());
         Ok(value)
     }
 }

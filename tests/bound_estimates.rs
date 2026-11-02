@@ -89,7 +89,7 @@ async fn estimates_use_exact_prepared_inputs_while_a_free_run_holds_execution() 
     .unwrap();
     std::fs::write(dir.path().join("runs/release-run"), b"").unwrap();
     finish(&c).await;
-    assert!(quote.unwrap().observation()["allowed"].as_bool().unwrap());
+    assert!(quote.unwrap().estimate["allowed"].as_bool().unwrap());
     assert_eq!(snapshot["attempts"].as_array().unwrap().len(), 1);
     assert_eq!(snapshot["tools"][0]["busy"], true);
     assert_eq!(
@@ -251,4 +251,195 @@ async fn broken_transport_keeps_inputs_until_the_owned_child_is_confirmed_stoppe
     assert!(task.await.unwrap().is_err());
     assert!(!path.exists());
     c.assets.database.shutdown().await.unwrap();
+}
+
+#[tokio::test]
+async fn estimate_api_is_private_strict_and_never_accepts_caller_bindings() {
+    use axum::{
+        body::Body,
+        http::{Request, StatusCode},
+    };
+    use http_body_util::BodyExt;
+    use tower::ServiceExt;
+    let (dir, c, input) = setup("normal").await;
+    c.prepare(input).await.unwrap();
+    let auth = wafflery::host::auth::Auth::new().unwrap();
+    let token = auth
+        .exchange(&auth.issue().unwrap())
+        .unwrap()
+        .unwrap()
+        .token;
+    let (quit, _) = tokio::sync::watch::channel(false);
+    let origin = "http://127.0.0.1:9999";
+    let app = wafflery::host::api::router_with_tools(
+        origin,
+        auth,
+        quit,
+        c.assets.clone(),
+        Some(c.clone()),
+    );
+    let request = |method: &str, credential: &str, site: &str, body: Value| {
+        Request::builder()
+            .method(method)
+            .uri("/api/preparations/prepared/estimate")
+            .header("host", "127.0.0.1:9999")
+            .header("origin", site)
+            .header("authorization", format!("Bearer {credential}"))
+            .header("content-type", "application/json")
+            .body(Body::from(body.to_string()))
+            .unwrap()
+    };
+    for (credential, site, expected) in [
+        ("wrong", origin, StatusCode::UNAUTHORIZED),
+        (&token[..], "https://other.invalid", StatusCode::FORBIDDEN),
+    ] {
+        assert_eq!(
+            app.clone()
+                .oneshot(request("POST", credential, site, json!({})))
+                .await
+                .unwrap()
+                .status(),
+            expected
+        );
+    }
+    assert_eq!(
+        app.clone()
+            .oneshot(request("GET", &token, origin, json!({})))
+            .await
+            .unwrap()
+            .status(),
+        StatusCode::NOT_FOUND
+    );
+    for body in [
+        json!({"binding":"invented"}),
+        json!({"max_spend_usd":9}),
+        json!({"arguments":{}}),
+    ] {
+        assert_eq!(
+            app.clone()
+                .oneshot(request("POST", &token, origin, body))
+                .await
+                .unwrap()
+                .status(),
+            StatusCode::UNPROCESSABLE_ENTITY
+        );
+    }
+    assert!(!dir.path().join("runs/estimates.ndjson").exists());
+    let response = app
+        .clone()
+        .oneshot(request("POST", &token, origin, json!({})))
+        .await
+        .unwrap();
+    assert_eq!(response.status(), StatusCode::OK);
+    let body: Value =
+        serde_json::from_slice(&response.into_body().collect().await.unwrap().to_bytes()).unwrap();
+    assert_eq!(body["preparation"]["id"], "prepared");
+    assert_eq!(body["estimate"]["allowed"], true);
+    assert!(body["estimate"].get("binding").is_none());
+    assert_eq!(body["estimate"]["effective"].as_object().unwrap().len(), 2);
+    assert!(!body.to_string().contains("execution/"));
+    for _ in 0..2 {
+        let response = app
+            .clone()
+            .oneshot(request("GET", &token, origin, json!({})))
+            .await
+            .unwrap();
+        assert_eq!(response.status(), StatusCode::OK);
+        let stored: Value =
+            serde_json::from_slice(&response.into_body().collect().await.unwrap().to_bytes())
+                .unwrap();
+        assert_eq!(stored, body);
+    }
+    assert!(
+        c.snapshot().await.unwrap()["attempts"]
+            .as_array()
+            .unwrap()
+            .is_empty()
+    );
+    c.discard_preparation("prepared").await.unwrap();
+    assert_eq!(
+        app.oneshot(request("GET", &token, origin, json!({})))
+            .await
+            .unwrap()
+            .status(),
+        StatusCode::NOT_FOUND
+    );
+    finish(&c).await;
+}
+
+#[tokio::test]
+async fn quote_observations_update_snapshot_balance_without_resetting_prepared_inputs() {
+    let (_dir, c, input) = setup("ledger").await;
+    let before = c.prepare(input.clone()).await.unwrap();
+    c.estimate_prepared("prepared").await.unwrap();
+    let snapshot = c.snapshot().await.unwrap();
+    assert_eq!(
+        snapshot["tools"][0]["declaration"]["tool_session"]["spent_usd"],
+        json!(0.08)
+    );
+    assert_eq!(
+        snapshot["tools"][0]["declaration"]["revision"],
+        before.revision
+    );
+    assert_eq!(
+        c.preparation("prepared").await.unwrap().expires_ms,
+        before.expires_ms
+    );
+    assert!(snapshot["attempts"].as_array().unwrap().is_empty());
+    finish(&c).await;
+}
+
+#[tokio::test]
+async fn readiness_refusal_remains_an_unknown_cost_observation_without_an_attempt() {
+    let (_dir, c, input) = setup("readiness").await;
+    c.prepare(input).await.unwrap();
+    let view = c.estimate_prepared("prepared").await.unwrap();
+    assert_eq!(view.estimate["allowed"], false);
+    assert_eq!(view.estimate["refused"], "readiness");
+    assert!(view.estimate["worst_case_usd"].is_null());
+    assert!(view.estimate["effective"]["config_identity"].is_null());
+    assert_eq!(
+        c.prepared_estimate("prepared").await.unwrap().estimate,
+        view.estimate
+    );
+    assert!(
+        c.snapshot().await.unwrap()["attempts"]
+            .as_array()
+            .unwrap()
+            .is_empty()
+    );
+    finish(&c).await;
+}
+
+#[tokio::test]
+async fn snapshot_keeps_latest_balance_while_an_estimate_holds_the_ledger_lock() {
+    let (dir, c, input) = setup("ledger").await;
+    c.prepare(input.clone()).await.unwrap();
+    let mut held = input;
+    held.id = "held-estimate".into();
+    held.params["label"] = json!("hold");
+    let prepared = c.prepare(held).await.unwrap();
+    c.estimate_prepared("prepared").await.unwrap();
+    assert_eq!(
+        c.snapshot().await.unwrap()["tools"][0]["declaration"]["tool_session"]["spent_usd"],
+        json!(0.08)
+    );
+    std::fs::remove_file(dir.path().join("runs/estimate-started")).unwrap();
+    let task = tokio::spawn({
+        let c = c.clone();
+        async move { c.estimate_prepared("held-estimate").await }
+    });
+    marker(&dir.path().join("runs/estimate-started")).await;
+    let snapshot = c.snapshot().await.unwrap();
+    std::fs::write(dir.path().join("runs/release-estimate"), b"").unwrap();
+    task.await.unwrap().unwrap();
+    finish(&c).await;
+    assert_eq!(
+        snapshot["tools"][0]["declaration"]["tool_session"]["spent_usd"],
+        json!(0.08)
+    );
+    assert_eq!(
+        snapshot["tools"][0]["declaration"]["revision"],
+        prepared.revision
+    );
 }

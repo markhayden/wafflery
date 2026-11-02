@@ -1,9 +1,7 @@
 use super::*;
+use crate::tools::fixtures;
 use serde_json::json;
 use time::{Duration, format_description::well_known::Rfc3339};
-#[allow(dead_code)]
-#[path = "../../../testkit/v03_fixtures.rs"]
-mod fixtures;
 
 fn now() -> OffsetDateTime {
     OffsetDateTime::parse("2026-11-01T00:00:00Z", &Rfc3339).unwrap()

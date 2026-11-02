@@ -1,3 +1,8 @@
+#[cfg(test)]
+#[allow(dead_code)]
+#[path = "../../testkit/v03_fixtures.rs"]
+mod fixtures;
+
 mod association;
 mod bindings;
 pub mod client;

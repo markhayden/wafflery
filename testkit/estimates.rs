@@ -51,13 +51,35 @@ pub fn start(
             std::fs::read(path).expect("prepared inputs must remain until this reader finishes");
         let digest = hash(&bytes);
         std::fs::write(root.join("estimate-read"), &digest).unwrap();
+        if label == "ledger" {
+            state.lock().unwrap().session["spent_usd"] = json!(0.08);
+        }
         let session = state.lock().unwrap().session.clone();
-        let mut value = super::v03_fixtures::estimate(super::fixtures::TOOL, &session, None);
+        let mut value = super::v03_fixtures::estimate(
+            super::fixtures::TOOL,
+            &session,
+            (label == "readiness").then_some("readiness"),
+        );
+        value["effective"]["x-sample-lab"] = json!({"path":path,"binding":"internal-debug"});
         value["session"] = session.clone();
         value["cap_usd"] = arguments["max_spend_usd"].clone();
+        let mut bound = arguments.clone();
+        bound.as_object_mut().unwrap().remove("return_images");
+        bound.as_object_mut().unwrap().remove("image_blocks");
+        bound["source"] = json!({"file_sha256":digest,"expect":arguments["source"]["expect"]});
         value["binding"] = json!(format!(
             "sha256:{}",
-            hash(&serde_json::to_vec(&json!([arguments, digest, session["id"]])).unwrap())
+            hash(
+                &serde_json::to_vec(&json!([
+                    "price_test",
+                    bound,
+                    value["tool"],
+                    value["effective"]["model"],
+                    value["effective"]["config_identity"],
+                    session["id"]
+                ]))
+                .unwrap()
+            )
         ));
         value["expires"] = json!(
             (time::OffsetDateTime::now_utc() + time::Duration::minutes(5))
