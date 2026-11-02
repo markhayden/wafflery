@@ -520,3 +520,26 @@ shared lock; review approved the transport changes and this test correction.
 V10a's final full matrix passed: 143 Rust tests (three ignored), 27 UI unit tests, two asset
 tests, 100 browser cases (four opt-in skips), formatting, clippy, typecheck, Storybook,
 reproducible assets and release build. Lockfiles and generated UI assets are unchanged.
+
+### V10b slices and validation
+
+V10b1 implements only validation; V10b2 owns bounded requests and preparation leases, and V10b3
+connects the authenticated API and retained quotes. Each slice gets its own review/full matrix.
+A timed-out request is not proof that the tool stopped reading. V10b2 must retain input ownership
+until the reply completes or the child exits, keep those bytes/counts charged to retention limits,
+and prevent late replies from resurrecting invalidated drafts.
+
+V10b1's positive independent fixtures and structured-response/refusal tests failed before
+implementation. The validator checks schema-valid contradictions too: action/tool/version/session
+identity, nested ledger identity/arithmetic, readiness, cap equality, worst case versus cap/budget,
+expired and over-24-hour quotes, and CLI quotes without serving sessions. A readiness refusal may
+retain unknown price/configuration/cap; it remains refused. Numeric comparisons use 1e-6 USD;
+conservative refusals within rounding tolerance remain refusals. No configuration digest or
+binding is recreated by the host. The actual independent MCP transport probe also feeds its
+response through the validator. The existing pinned time crate moves from dev-only to runtime
+with parsing enabled; no version or lockfile change is needed. There is no attempt, library schema,
+UI or dispatch change in this slice.
+
+V10b1 passed review and the full locked matrix: 150 Rust tests (three ignored), 27 UI unit tests,
+two asset tests, 100 browser cases (four opt-in skips), fmt, clippy, typecheck, Storybook,
+reproducible UI assets and release build. Lockfiles and generated UI assets remain unchanged.

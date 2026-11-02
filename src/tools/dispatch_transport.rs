@@ -445,7 +445,7 @@ mod tests {
         })
         .unwrap();
         client.initialize().await.unwrap();
-        client.describe().await.unwrap();
+        let declaration = client.describe().await.unwrap();
         let request = serde_json::from_value(json!({"method":"tools/call","params":{"name":"estimate","arguments":{"action":"price_test","arguments":{"label":"Transport control probe","max_spend_usd":0.5}}}})).unwrap();
         let response = tokio::time::timeout(
             std::time::Duration::from_secs(5),
@@ -455,7 +455,16 @@ mod tests {
         let runs = client.read_resource("sample-lab://runs").await;
         assert!(client.close().await.unwrap());
         let response = serde_json::to_value(response.unwrap().unwrap()).unwrap();
-        assert_eq!(response["structuredContent"]["allowed"], true);
+        let quote = crate::tools::estimate::ValidatedEstimate::from_response(
+            &response,
+            &declaration.document["tool"],
+            "price_test",
+            0.5,
+            &declaration.tool_session,
+            time::OffsetDateTime::now_utc(),
+        )
+        .unwrap();
+        assert_eq!(quote.observation()["allowed"], true);
         let runs: serde_json::Value =
             serde_json::from_str(runs.unwrap()["contents"][0]["text"].as_str().unwrap()).unwrap();
         assert!(runs["runs"].as_array().unwrap().is_empty());

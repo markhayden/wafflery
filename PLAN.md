@@ -677,6 +677,18 @@ session/tool mismatch, CLI null sessions, unpriceable readiness, defaults-based 
 invalid_arguments vs plain invalid params, control timeout and expiry over 24 hours. Depends: V09/V10a.
 Commit: `feat: request bound cost estimates`.
 
+V10b execution slices (same acceptance criteria; full matrix and review per slice):
+- **V10b1: Complete.** Strict estimate/refusal validation with the shared session validator and independent
+  fixtures. No live request or paid-dispatch path yet. Commit: `feat: validate bound estimate observations`.
+- **V10b2:** Bounded control requests, serialized ledger observations and preparation leases.
+  A timeout returns no quote but retains input ownership until the response completes or the
+  child exits; such leases still count against retention limits. Commit: `feat: own estimate requests through completion`.
+- **V10b3:** Authenticated estimate API, retained opaque bindings and snapshot publication;
+  recheck preparation validity before accepting a response. Commit: `feat: expose prepared cost estimates`.
+Rollback in reverse order. V10b1's cohesive validation slice includes estimate module/tests,
+module registration, session-validator visibility, the existing MCP transport probe and moving the pinned time dependency
+into production with parsing enabled. Later slices connect it without enabling paid dispatch.
+
 **V11 — Present the cap and exact estimate.** Add one positive cap control backed by the declared
 `max_spend_usd` field, avoiding a duplicate generic form field. Show worst case, effective model,
 cap, remaining session budget and unresolved spend; distinguish uncapped null from zero. Require

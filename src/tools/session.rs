@@ -1,7 +1,11 @@
 use super::{Error, Result, client::ToolClient, evidence::resource_content, validate_contract};
 use serde_json::Value;
 
-fn validate_observation(value: &Value, tool: &Value, previous: Option<&Value>) -> Result<()> {
+pub(super) fn validate_observation(
+    value: &Value,
+    tool: &Value,
+    previous: Option<&Value>,
+) -> Result<()> {
     validate_contract("urn:table-manners:core:session", value)?;
     if value["tool"]["name"] != tool["name"] || value["tool"]["version"] != tool["version"] {
         return Err(Error::Invalid("Session belongs to a different tool".into()));

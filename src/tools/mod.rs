@@ -3,6 +3,7 @@ mod bindings;
 pub mod client;
 pub mod coordinator;
 mod environment;
+pub mod estimate;
 mod materialized;
 mod prepared;
 mod probe;

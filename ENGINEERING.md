@@ -295,7 +295,7 @@ recursively removes discovered directories. A crash between persistence and mark
 cannot expose a saved attempt to this cleanup. A retained marker is also removed by terminal
 input cleanup after the tool has relinquished those paths.
 
-Planned v0.3 behavior (PLAN V10–V13; not implemented): request and validate estimates
+Planned v0.3 integration (PLAN V10–V13; not connected to the browser yet): request estimates
 outside the host execution reservation. Estimates remain responsive while
 an action runs; they neither consume a run-dispatch permit nor create attempts. The exact allowed
 quote, positive cap and binding are checked again under the host's execution reservation before
@@ -304,7 +304,12 @@ Keep one active execution per tool and reject a second submission as busy. The t
 exempts exactly reserved `describe` and `estimate` calls from its persisted execution permit;
 controls cannot consume a staged action permit, record attempt wire evidence or reset its
 progress association. All other tool calls still require matching action authorization.
-Host quote validation and the separate estimate deadline are V10b. Controls do not wait for
+V10b1 implements the estimate-validation boundary: strict structuredContent/schema, tool/action/
+serving-session attribution, shared ledger consistency, expiry and cap/decision checks. Valid
+readiness refusals retain unknown prices and configuration; they never authorize dispatch. The
+opaque binding remains server-side evidence. The independent peer and contradictory fixtures
+exercise this boundary; live request ownership, deadline and API integration remain V10b2–V10b3.
+Controls do not wait for
 an execution slot. The former Squint behavior that created estimate runs describes v0.2 integration
 history only: v0.3 prohibits it. Until the approved paid slice lands, dispatch stays offline-only.
 Changing config or restarting a tool invalidates estimates and ends its old budget session.
