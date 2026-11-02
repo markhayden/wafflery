@@ -1685,6 +1685,33 @@ published dependency wiring. **Verify:** contract mismatch tests and complete ex
   effective `allowed_dirs`, configured narrowing, denied access, refresh/restart and retained old-session
   spending. Wire the staged grant display to the validated session without copying requested grants.
 
+M5.03a is split before implementation: **a1 description relationships** (kinds/groups, unique
+actions/types/ports, tool-owned type names and input-name collisions), then **a2 session/result/refusal
+relationships** (effective-grant boundaries and continuity, invocation identity, contextual binding
+errors). Each validator is tested against the published v0.4 schemas and independent fixtures before
+the live caller is switched. Tests may compile the staged validator directly; live dispatch remains
+exactly v0.3 until M5.03b, without a dual-version path. Each implementation commit includes its tests
+and plan evidence within five authored files. M5.03b's caller/fixture/UI changes must be split by
+dependency before building; generated assets and lockfiles stay separate. M5.02b CI confirmation is
+required before the first local merge of this milestone.
+
+M5.03a1's staged description validator now checks cross-field action/group/type/port relationships
+and direct parameter/profile-input collisions. Six tests cover independent renamed peers, core-only
+tools and structurally valid but inconsistent declarations. Production is not wired to it yet.
+The 25 published v0.4.0 source/schema/contract files match `d1c49a7` byte-for-byte; the crate's explicit
+include policy intentionally keeps fixtures in its repository. Independent fixtures continue to
+validate against the published schemas. No packaging discrepancy was found.
+Independent review approved a1 with the live-cutover follow-ups kept explicit: inspect parameter
+names introduced by referenced/composed schemas and verify callable input/profile relationships;
+switch the staged test module to the live module once it is wired. Direct-name checks alone do not
+close acceptance 2. M5.03a2 is further split into **a2.1 session grants**, **a2.2 invocation identity**
+and **a2.3 binding-refusal context**, each with its own tests and no more than five authored files.
+**a1 checkpoint (2026-11-02):** initial test compilation failed before the validator existed; six
+targeted tests now pass. Independent review found no blockers. The shared-lock full matrix passed:
+fmt/clippy, 341 Rust tests (4 ignored), typecheck, 55 UI tests, 2 asset-tool tests, Storybook,
+reproducible assets, release build and 226 browser tests (8 skipped). No live behavior or wire-version
+gate changed. Temporary port 4187 config was removed; lockfiles and prebuilt assets are unchanged.
+
 **Checkpoint A:** merge M5.01–03 as a coherent cutover of validation, launch arguments and fake
 defaults; v0.4 is the only supported live contract afterward. Green matrix, an independent fake
 task run and the published exact dependency pin are required.
