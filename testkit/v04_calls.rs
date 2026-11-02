@@ -1,7 +1,9 @@
-//! Bounded, synchronous operation dispatch. Held workers and notifications are the next slice.
+//! Independent operation dispatch with acceptance, allocation and cancellation boundaries.
 use super::{v04_fixtures, v04_store};
 #[path = "v04_bindings.rs"]
 mod v04_bindings;
+#[path = "v04_cancellation.rs"]
+mod v04_cancellation;
 #[path = "v04_results.rs"]
 mod v04_results;
 #[path = "v04_runs.rs"]
@@ -10,7 +12,21 @@ use base64::{Engine, engine::general_purpose::STANDARD};
 use serde_json::{Value, json};
 use std::{path::Path, time::Instant};
 use v04_bindings::Failure;
+pub use v04_cancellation::Cancellation;
+pub use v04_results::RunInfo;
 use v04_store::Store;
+
+pub struct Pending {
+    action: String,
+    arguments: Value,
+    prepared: Result<v04_bindings::Prepared, Failure>,
+    claim: Option<v04_runs::Claim>,
+}
+#[derive(Clone, Copy, PartialEq, Eq)]
+pub enum Stage {
+    Allocated,
+    Executed,
+}
 
 pub struct Calls {
     tool: String,
@@ -38,6 +54,11 @@ impl Calls {
         v04_bindings::schemas::standalone(&serde_json::from_str(text).unwrap())
     }
     pub fn call(&self, store: &Store, params: &Value) -> Result<Value, Value> {
+        let pending = self.accept(store, params)?;
+        self.execute(store, pending, &Cancellation::default(), |_, _| {})
+            .map(|reply| reply.expect("synchronous calls are never cancelled"))
+    }
+    pub fn accept(&self, store: &Store, params: &Value) -> Result<Pending, Value> {
         let client = params["_meta"].get("table-manners/client_run_id");
         if client.is_some_and(|value| !value.is_string()) {
             return Err(json!({"code":-32602,"message":"client_run_id must be a string"}));
@@ -55,41 +76,68 @@ impl Calls {
             }
             other => other,
         };
+        Ok(Pending {
+            action: action.into(),
+            arguments,
+            prepared,
+            claim,
+        })
+    }
+    pub fn execute(
+        &self,
+        store: &Store,
+        pending: Pending,
+        cancellation: &Cancellation,
+        mut observe: impl FnMut(&RunInfo, Stage),
+    ) -> Result<Option<Value>, Value> {
         let elapsed = Instant::now();
-        let info = match self.runs.allocate(action, claim.as_ref()) {
-            Ok(info) => info,
+        let info = match cancellation
+            .allocate(|| self.runs.allocate(&pending.action, pending.claim.as_ref()))
+        {
+            Ok(Some(info)) => info,
+            Ok(None) => return Ok(None), // Cancellation before allocation retains the claimed ID.
             Err(error) => {
-                self.runs.release(claim.as_ref());
+                self.runs.release(pending.claim.as_ref());
                 return Err(error);
             }
         };
-        self.complete(store, &info, prepared, action, &arguments, elapsed)
+        observe(&info, Stage::Allocated);
+        self.complete(store, &info, pending, cancellation, &mut observe, elapsed)
     }
     fn complete(
         &self,
         store: &Store,
-        info: &v04_results::RunInfo,
-        prepared: Result<v04_bindings::Prepared, Failure>,
-        action: &str,
-        arguments: &Value,
+        info: &RunInfo,
+        pending: Pending,
+        cancellation: &Cancellation,
+        observe: &mut impl FnMut(&RunInfo, Stage),
         elapsed: Instant,
-    ) -> Result<Value, Value> {
+    ) -> Result<Option<Value>, Value> {
+        let Pending {
+            action,
+            arguments,
+            prepared,
+            ..
+        } = pending;
         let journal = self.runs.journal(info, "executing");
         let image_blocks = prepared
             .as_ref()
             .is_ok_and(|prepared| prepared.image_blocks);
         let mut run = match prepared {
             Ok(prepared) if journal.is_ok() => {
-                v04_results::execute(store, &prepared, info, || false)
+                v04_results::execute(store, &prepared, info, || cancellation.cancelled())
             }
             Ok(prepared) => v04_results::resolved(&prepared, info),
-            Err(Failure::Invalid(reason)) => v04_results::invalid(info, action, arguments, &reason),
+            Err(Failure::Invalid(reason)) => {
+                v04_results::invalid(info, &action, &arguments, &reason)
+            }
             Err(Failure::Rpc(_)) => unreachable!("RPC refusal returned before allocation"),
         };
         if let Err(error) = journal {
             Self::io_failure(&mut run, "Execution journal", &error);
         }
-        self.respond(store, info, run, image_blocks, elapsed)
+        observe(info, Stage::Executed);
+        self.respond(store, info, run, image_blocks, cancellation, elapsed)
     }
     fn respond(
         &self,
@@ -97,8 +145,9 @@ impl Calls {
         info: &v04_results::RunInfo,
         mut run: Value,
         image_blocks: bool,
+        cancellation: &Cancellation,
         elapsed: Instant,
-    ) -> Result<Value, Value> {
+    ) -> Result<Option<Value>, Value> {
         let mut images = vec![];
         if image_blocks {
             for artifact in run["artifacts"]["out"].as_array().unwrap() {
@@ -113,15 +162,24 @@ impl Calls {
                 }
             }
         }
-        v04_results::finish(&mut run, elapsed.elapsed());
-        // Only failure to validate or publish final evidence escapes as a server error here.
-        // Keep its claim: retrying execution would lose correlation with work already performed.
-        let run = self.runs.finish(info, &run)?;
-        let mut content = vec![json!({"type":"text","text":run.to_string()})];
-        content.extend(images);
-        Ok(
-            json!({"isError":run["status"] != "completed","structuredContent":run,"content":content}),
-        )
+        cancellation.finish(|cancelled| {
+            if cancelled {
+                // Publication is the terminal boundary: before it, cancellation wins (4.2).
+                // Preserve any earlier failure details even though no MCP response is sent.
+                if let Some(reason) = run["error"]["reason"].as_str().map(str::to_owned) {
+                    run["notes"].as_array_mut().unwrap().push(json!(reason));
+                }
+                v04_results::settle(&mut run, v04_results::Outcome::Cancelled, elapsed.elapsed());
+            } else {
+                v04_results::finish(&mut run, elapsed.elapsed());
+            }
+            // Only failure to validate or publish final evidence escapes as a server error here.
+            // Cancellation::finish suppresses even storage errors for a cancelled request.
+            let run = self.runs.finish(info, &run)?;
+            let mut content = vec![json!({"type":"text","text":run.to_string()})];
+            content.extend(images);
+            Ok(json!({"isError":run["status"] != "completed","structuredContent":run,"content":content}))
+        })
     }
     fn io_failure(run: &mut Value, context: &str, error: &Value) {
         let reason = format!(
@@ -194,8 +252,21 @@ mod tests {
         std::fs::remove_file(Path::new(info.reference["dir"].as_str().unwrap()).join("journal"))
             .unwrap();
         let response = calls
-            .complete(&store, &info, prepared, "summarize", &args, Instant::now())
-            .expect("allocated failures are tool results");
+            .complete(
+                &store,
+                &info,
+                Pending {
+                    action: "summarize".into(),
+                    arguments: args,
+                    prepared,
+                    claim: None,
+                },
+                &Cancellation::default(),
+                &mut |_, _| {},
+                Instant::now(),
+            )
+            .expect("allocated failures are tool results")
+            .unwrap();
         let run = &response["structuredContent"];
         assert_eq!(run["status"], "error");
         assert_eq!(run["error"]["code"], "io");
@@ -225,8 +296,16 @@ mod tests {
         let outputs = run["artifacts"]["out"].clone();
         std::fs::remove_dir_all(root.path().join("artifacts")).unwrap();
         let response = calls
-            .respond(&store, &info, run, true, Instant::now())
-            .expect("delivery failure is a tool result");
+            .respond(
+                &store,
+                &info,
+                run,
+                true,
+                &Cancellation::default(),
+                Instant::now(),
+            )
+            .expect("delivery failure is a tool result")
+            .unwrap();
         let run = &response["structuredContent"];
         assert_eq!(run["status"], "error");
         assert_eq!(run["error"]["code"], "io");
@@ -235,5 +314,192 @@ mod tests {
         assert_eq!(*run, saved(&calls, &info));
         assert_eq!(response["isError"], true);
         assert_eq!(response["content"].as_array().unwrap().len(), 1);
+    }
+    fn image() -> Value {
+        json!({"inline":{"media_type":"image/png","data":STANDARD.encode(include_bytes!("../ui/tests/fixtures/sample.png"))}})
+    }
+    #[test]
+    fn cancelled_queued_calls_keep_their_id_without_allocating_a_run() {
+        let root = tempfile::tempdir().unwrap();
+        let calls = Calls::new(
+            root.path(),
+            "sample-lab",
+            "11111111-1111-4111-8111-111111111111",
+        );
+        let store = Store::new(root.path(), "sample-lab", vec![]).unwrap();
+        let pending = calls.accept(&store, &json!({"name":"summarize","arguments":{},"_meta":{"table-manners/client_run_id":"queued"}})).unwrap();
+        let cancellation = Cancellation::default();
+        cancellation.cancel();
+        assert!(
+            calls
+                .execute(&store, pending, &cancellation, |_, _| panic!(
+                    "no allocation"
+                ))
+                .unwrap()
+                .is_none()
+        );
+        assert_eq!(calls.runs.list(None).unwrap()["runs"], json!([]));
+        let refused = calls.runs.claim(Some("queued")).unwrap_err();
+        assert_eq!(refused["data"]["reason"], "client_run_id_reused");
+        assert_eq!(refused["data"]["run"], Value::Null);
+        assert!(!root.path().join("artifacts").exists());
+    }
+    #[test]
+    fn allocated_cancellation_persists_invocation_and_only_completed_outputs_without_a_reply() {
+        for stop_at in [Stage::Allocated, Stage::Executed] {
+            let root = tempfile::tempdir().unwrap();
+            let calls = Calls::new(
+                root.path(),
+                "sample-lab",
+                "11111111-1111-4111-8111-111111111111",
+            );
+            let store = Store::new(root.path(), "sample-lab", vec![]).unwrap();
+            let pending = calls.accept(&store, &json!({"name":"make_token","arguments":{"source":image()},"_meta":{"table-manners/client_run_id":"running"}})).unwrap();
+            let cancellation = Cancellation::default();
+            let mut reference = None;
+            let response = calls
+                .execute(&store, pending, &cancellation, |info, stage| {
+                    reference = Some(info.reference.clone());
+                    if stage == stop_at {
+                        cancellation.cancel();
+                    }
+                })
+                .unwrap();
+            assert!(response.is_none());
+            let reference = reference.unwrap();
+            let run: Value = serde_json::from_str(
+                &calls
+                    .runs
+                    .read(reference["id"].as_str().unwrap(), "run.json")
+                    .unwrap(),
+            )
+            .unwrap();
+            assert_eq!(run["status"], "cancelled");
+            assert_eq!(run["error"], Value::Null);
+            assert_eq!(run["invocation"]["action"], "make_token");
+            assert_eq!(run["spend"]["usd"], 0);
+            assert_eq!(
+                run["artifacts"]["out"].as_array().unwrap().len(),
+                usize::from(stop_at == Stage::Executed)
+            );
+            assert_eq!(
+                calls.runs.claim(Some("running")).unwrap_err()["data"]["run"]["id"],
+                reference["id"]
+            );
+        }
+    }
+    #[test]
+    fn finalization_wins_over_a_late_cancel_and_response_stays_equal_to_saved_evidence() {
+        let root = tempfile::tempdir().unwrap();
+        let calls = Calls::new(
+            root.path(),
+            "sample-lab",
+            "11111111-1111-4111-8111-111111111111",
+        );
+        let store = Store::new(root.path(), "sample-lab", vec![]).unwrap();
+        let pending = calls
+            .accept(&store, &json!({"name":"summarize","arguments":{}}))
+            .unwrap();
+        let cancellation = Cancellation::default();
+        let response = calls
+            .execute(&store, pending, &cancellation, |_, _| {})
+            .unwrap()
+            .unwrap();
+        cancellation.cancel();
+        assert!(!cancellation.cancelled());
+        let run = &response["structuredContent"];
+        assert_eq!(run["status"], "completed");
+        let saved: Value = serde_json::from_str(
+            &calls
+                .runs
+                .read(run["run"]["id"].as_str().unwrap(), "run.json")
+                .unwrap(),
+        )
+        .unwrap();
+        assert_eq!(*run, saved);
+    }
+    #[test]
+    fn cancelled_requests_never_reply_even_if_final_evidence_cannot_be_saved() {
+        for cancelled in [false, true] {
+            let root = tempfile::tempdir().unwrap();
+            let calls = Calls::new(
+                root.path(),
+                "sample-lab",
+                "11111111-1111-4111-8111-111111111111",
+            );
+            let store = Store::new(root.path(), "sample-lab", vec![]).unwrap();
+            let pending = calls.accept(&store, &json!({"name":"summarize","arguments":{},"_meta":{"table-manners/client_run_id":"unsaved"}})).unwrap();
+            let cancellation = Cancellation::default();
+            let response = calls.execute(&store, pending, &cancellation, |info, stage| {
+                if stage == Stage::Executed {
+                    std::fs::create_dir(
+                        Path::new(info.reference["dir"].as_str().unwrap()).join("run.json"),
+                    )
+                    .unwrap();
+                    if cancelled {
+                        cancellation.cancel();
+                    }
+                }
+            });
+            if cancelled {
+                assert!(response.unwrap().is_none());
+            } else {
+                assert_eq!(response.unwrap_err()["code"], -32603);
+            }
+            let refusal = calls.runs.claim(Some("unsaved")).unwrap_err();
+            assert!(refusal["data"]["run"]["id"].is_string());
+        }
+    }
+    #[test]
+    fn cancellation_before_publication_retains_prior_error_details_in_notes() {
+        for invalid in [false, true] {
+            let root = tempfile::tempdir().unwrap();
+            let calls = Calls::new(
+                root.path(),
+                "sample-lab",
+                "11111111-1111-4111-8111-111111111111",
+            );
+            let store = Store::new(root.path(), "sample-lab", vec![]).unwrap();
+            let source = if invalid {
+                json!({"inline":{"media_type":"image/png","data":"e30="}})
+            } else {
+                image()
+            };
+            if !invalid {
+                std::fs::write(root.path().join("previews"), "blocked").unwrap();
+            }
+            let pending = calls
+                .accept(
+                    &store,
+                    &json!({"name":"make_token","arguments":{"source":source}}),
+                )
+                .unwrap();
+            let cancellation = Cancellation::default();
+            let response = calls
+                .execute(&store, pending, &cancellation, |_, stage| {
+                    if stage == Stage::Executed {
+                        cancellation.cancel();
+                    }
+                })
+                .unwrap();
+            assert!(response.is_none());
+            let listed = calls.runs.list(None).unwrap();
+            assert_eq!(listed["runs"][0]["status"], "cancelled");
+            let run: Value = serde_json::from_str(
+                &calls
+                    .runs
+                    .read(listed["runs"][0]["id"].as_str().unwrap(), "run.json")
+                    .unwrap(),
+            )
+            .unwrap();
+            assert_eq!(run["status"], "cancelled");
+            assert_eq!(run["error"], Value::Null);
+            assert!(!run["notes"][0].as_str().unwrap().is_empty());
+            assert_eq!(run["invocation"].is_null(), invalid);
+            assert_eq!(
+                run["artifacts"]["out"].as_array().unwrap().len(),
+                usize::from(!invalid)
+            );
+        }
     }
 }

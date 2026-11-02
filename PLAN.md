@@ -1277,6 +1277,16 @@ pre-run binding/schema refusals are RPC errors. Verify a renamed wire chain, ID 
 paging, original-byte evidence and both delivery modes. Held workers, progress and cancellation
 remain c3 and are explicitly absent from this intermediate peer.
 
+M5.01b3c3 is split into **c3a (cancellable dispatch boundaries)** and **c3b (worker lifetime and wire notifications)**.
+c3a separates acceptance/claiming from allocation, adds explicit cancellation at allocation and
+finalization, and exposes allocation/execution observations for the upcoming worker. Direct tests
+prove cancelled queued IDs remain claimed without runs, allocated cancellation retains evidence,
+and finalization cannot be changed by a late cancel. c3b keeps one execution worker with responsive
+control requests, monotonically increasing progress/heartbeats carrying structured run references,
+a file-released held-run fixture, cancellation without an MCP reply, and EOF cancellation/join.
+If worker wiring exceeds five authored files, split the worker core and its stdio integration
+before implementation; every slice retains targeted tests, review and the full matrix.
+
 **M5.01a implementation checkpoint (2026-11-02, complete):**
 `testkit/v04_fixtures.rs` independently authors the descriptions, result outcomes, artifact
 resources and binding/export/import/session examples. It imports neither host nor peer code.
@@ -1470,6 +1480,22 @@ fmt/clippy, 309 Rust tests (4 ignored), typecheck, 53 UI tests, 2 asset-tool tes
 reproducible assets, release build and 220 browser tests (8 skipped). Temporary port 4187 config
 was removed; lockfiles/prebuilt assets are unchanged. Execution remains synchronous until c3;
 progress, held-run controls, cancellation and EOF worker ownership are not yet implemented.
+
+**M5.01b3c3a implementation checkpoint (2026-11-02, complete):**
+Dispatch acceptance claims/validates without allocating, then executes through a per-request
+cancellation guard. The guard serializes cancellation with allocation and terminal publication.
+Queued cancellation retains its ID with no run; allocated cancellation retains invocation and
+completed outputs, saves cancelled and returns no reply. Publication is the cutoff: an earlier
+execution failure remains in notes if cancellation arrives before publication, while a later
+cancel cannot rewrite saved evidence. Even a failed final save produces no cancelled-request
+reply; it logs a stderr diagnostic and retains the claim. Seven direct dispatch tests cover these
+boundaries and previous storage faults; the missing API and cancelled-save error tests failed
+first. Two review rounds found no remaining blockers after clarifying the cutoff and moving
+reply suppression into the guard. The final full matrix passed: fmt/clippy, 314 Rust tests
+(4 ignored), typecheck, 53 UI tests, 2 asset-tool tests, Storybook, reproducible assets, release
+build and 220 browser tests (8 skipped). Temporary port 4187 config is removed; lockfiles and
+prebuilt assets are unchanged. The wire path is still synchronous; c3b owns worker/notification
+integration. Production remains on v0.3 until M5.03.
 
 #### V20 — Image import feedback (M5-adjacent; coordinator-approved 2026-11-02)
 

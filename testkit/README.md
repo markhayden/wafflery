@@ -435,7 +435,25 @@ b3c3 work before the host adopts this peer.
 After allocation, recoverable journal or image-content delivery failures become saved I/O results,
 retaining resolved invocation and completed outputs. Image blocks are prepared before publication;
 the text, structured result and run resource agree on the exact saved outcome. Earlier invalid or
-cancelled outcomes retain their primary status with a diagnostic. A failed execution journal and a
+cancelled outcomes retain their primary status when a later journal or delivery failure occurs,
+with a diagnostic. A failed execution journal and a
 failed final journal append may each add evidence; diagnostic count is not an API. Missing journals
 remain unreadable even when run.json is writable. Only failure to validate the allocated record or write final evidence itself is a
 server error; the allocated claim remains held. Direct dispatch fault tests cover both failure phases.
+
+### Cancellable dispatch boundaries (M5.01b3c3a)
+
+Acceptance now claims and validates before the execution permit; allocation is a separate phase.
+A per-request cancellation guard serializes cancellation with allocation and final publication.
+A queued cancellation keeps its claimed ID and creates no run. An allocated cancellation writes
+`cancelled`, retains resolved invocation and completed outputs, and yields no reply. Cancellation
+after final publication cannot rewrite its outcome. Allocation/execution callbacks provide the
+next worker's deterministic hold points without timers. The synchronous wire path uses these same
+boundaries with an uncancelled request; cancellation notifications and EOF worker cleanup remain
+c3b, not implemented by this slice. Publication is the terminal boundary: a cancellation received
+before it saves `cancelled` even if an earlier execution failure is already known; that failure's
+reason is retained in notes. After publication, cancellation cannot rewrite the outcome. The guard
+also suppresses storage-error replies for cancelled requests, writing a stderr diagnostic instead;
+the retained claim still prevents redispatch. Such a storage failure can leave a running entry
+without final evidence. A cancelled run may have null invocation if inputs never resolved.
+Panics are not recovered by this synthetic dispatcher.
