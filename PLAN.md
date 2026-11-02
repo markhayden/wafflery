@@ -828,9 +828,11 @@ V14 execution slices (full matrix and review per slice; rollback in reverse orde
   executable, authorized run directory, whole-argument placeholders and host framing origin.
   Build the minimal-environment command without spawning it. Verify malformed commands, path
   escapes, spaces and literal shell metacharacters. Commit: `feat: resolve saved run render commands`.
-- **V14b:** Own renderer children and bounded output, add the independent fake renderer and
-  authenticated host integration. Keep report content unavailable until V15/V16 establish
-  readiness and output isolation. Commit: `feat: own declared renderer processes`.
+- **V14b1: Complete.** Own renderer children and bounded output, with the independent fake renderer and
+  process-level tests. Commit: `feat: own declared renderer processes`.
+- **V14b2:** Retain renderer ownership in the coordinator and add authenticated host controls.
+  Keep report content unavailable until V15/V16 establish readiness and output isolation.
+  Commit: `feat: coordinate saved report processes`.
 The first slice cannot execute a render and introduces no route or browser policy change.
 
 **V15 — Manage server readiness and lifetime.** Pass the host's exact origin through the declared

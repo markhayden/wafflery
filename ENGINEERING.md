@@ -568,3 +568,16 @@ requirements, API bearer or bootstrap token forwarded. It performs no shell expa
 not spawn. Process ownership, output bounds and authenticated viewer routes follow in V14b–V17;
 reports remain unavailable in the UI at this slice. These path/identity checks authorize host
 operations; they do not sandbox the installed tool against filesystem changes after launch.
+
+V14b1 adds an owned render worker beneath that boundary. It retains the child while stdout
+and stderr are drained concurrently, capped at 8 KiB and 64 KiB respectively. Overflow/read
+errors request graceful stdin closure; truncation is explicit in the observation. The worker
+preserves exit codes and bounded diagnostics. Closing or dropping the last request handle
+closes stdin; a child that ignores EOF remains owned in `NeedsForce`, and force-stop uses only
+the retained child handle after graceful closure has timed out. Force acknowledgement is a
+separate control reply, not an inferred transient status. A wait error never proves exit.
+
+This low-level slice has no host route. V14b2 must retain handles in the coordinator through
+request cancellation and shutdown; V15 adds server readiness, owned process groups/SIGTERM,
+idle expiry and descendant handling before report content becomes available. The synthetic
+renderer tests process behavior without providing a real report or calling a provider.

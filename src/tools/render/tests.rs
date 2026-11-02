@@ -4,9 +4,6 @@ use std::{
     fs,
     os::unix::fs::{PermissionsExt, symlink},
 };
-#[allow(dead_code)]
-#[path = "../../../testkit/fixtures.rs"]
-mod fixtures;
 
 fn setup() -> (tempfile::TempDir, Descriptor, Attempt) {
     let temp = tempfile::tempdir().unwrap();

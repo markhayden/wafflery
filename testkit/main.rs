@@ -5,6 +5,7 @@ mod fixtures;
 mod paid;
 mod paid_scenarios;
 mod readiness;
+mod render;
 mod scenarios;
 mod v03_control;
 mod v03_fixtures;
@@ -78,6 +79,10 @@ fn reject(output: &Arc<Mutex<io::Stdout>>, id: &Value, code: i64, message: &str)
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut arguments = std::env::args().skip(1);
+    if std::env::args().nth(1).as_deref() == Some("--render-test") {
+        arguments.next();
+        return render::run(arguments);
+    }
     let root = PathBuf::from(
         arguments
             .next()

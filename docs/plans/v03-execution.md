@@ -899,3 +899,19 @@ registration paths. Review and the shared-lock full matrix passed: 189 Rust test
 41 UI unit tests, two asset tests, 164 Chromium/WebKit cases (four opt-in skips), fmt, clippy,
 typecheck, Storybook, reproducible assets and release build. This slice adds no dependencies, library
 migration or UI assets. Roll it back after dependent process/viewer slices.
+
+### V14b1 owned render worker
+
+A dedicated worker retains each spawned child and drains bounded stdout/stderr concurrently.
+Graceful close is stdin EOF; a stuck process remains observable for an explicit force-stop.
+Control acknowledgement does not depend on observing a transient watch state, and child-wait
+errors retain ownership rather than claiming exit. The synthetic renderer exercises literal
+arguments, the minimal environment, untouched run files, EOF/drop closure, noisy diagnostics,
+early error exit and forced stop after the grace period. Initial missing-worker tests failed;
+all four process tests then passed. Clippy caught duplicate fixture imports, now shared at the
+render module boundary. Review and the shared-lock full matrix passed: 193 Rust tests (three
+ignored), 41 UI unit tests, two asset tests, 164 browser cases (four opt-in skips), fmt, clippy,
+typecheck, Storybook, reproducible assets and release build. Coordinator retention,
+process groups, ready URLs and report content are still subsequent gates. This cohesive slice
+keeps the worker, its real child fixture, module wiring, shared fixture import and tests together
+despite exceeding the usual five authored files; it introduces no browser or public host API.

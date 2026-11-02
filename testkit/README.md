@@ -247,3 +247,13 @@ Paid outcome labels extend that same independent peer:
 responsive while `paid-held` waits, with one-second progress heartbeats. Reservations and settlement hold the ledger mutex only for
 atomic updates; unresolved spend remains in the session after cancellation. These probes test
 host accounting and presentation, not real provider pricing or behavior.
+
+### Render process fixtures
+
+`sample-lab --render-test <mode> <existing-run-directory> [literal-arguments...]` exercises the
+host's process boundary independently of MCP. It does not change the run directory. `echo`
+reports argument strings, environment variable names (never values) and the working directory;
+`hold` stays alive until stdin EOF; `stuck` deliberately ignores EOF until explicitly killed;
+`early-error` exits 17 with a synthetic diagnostic; `stdout-flood` and `stderr-flood` exceed the
+host's output limits. These are process-test behaviors, not yet conforming server/document views.
+V15/V16 add report readiness and document fixtures. No mode calls a provider.
