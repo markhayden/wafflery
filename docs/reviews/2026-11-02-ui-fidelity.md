@@ -1,6 +1,6 @@
 # V19 UI fidelity review
 
-Status: V19a–c complete; V19d remains. The coordinator authorized
+Status: V19a–d complete locally; final V19d hosted CI is left to the coordinator. The coordinator authorized
 starting this pass while V18c awaited the Squint report-style fix. V18c subsequently passed
 against approved Squint `54b1f41`; this visual pass does not weaken its console check.
 
@@ -94,7 +94,7 @@ at 768px. Host report ownership, iframe policies, explicit actions and error cop
 Full shared-lock matrix passed: 243 Rust tests (four opt-in ignored), 53 UI unit tests, two
 asset tests, 206 browser cases (eight opt-in skips), fmt/clippy/typecheck/Storybook/check-ui and
 release build. Independent code and representative screenshot review approved. One low-priority
-review suggestion is scheduled in V19d: let the close control grow with larger font settings
+review suggestion is resolved in V19d: let the close control grow with larger font settings
 while preserving its 44px minimum. The current normal-size layout already meets that minimum.
 
 ## Hosted-runner visual baseline correction
@@ -132,5 +132,45 @@ matrix passed: 243 Rust tests (four opt-in ignored), 53 UI unit tests, two asset
 206 Chromium/WebKit cases (eight opt-in skips), fmt/clippy/typecheck, Storybook, reproducible
 UI assets, check-ui and release build. The typecheck first caught a test-only DOM annotation;
 it was corrected before completing the remaining matrix. Independent review found no required
-code changes. Hosted macOS validation remains pending the coordinator's push; local checks do
-not claim that hosted run has passed. Rollback this test-only correction as a single commit.
+code changes. Hosted macOS run 41436171703 subsequently passed on `6f49d7b`, including Chromium and WebKit. Rollback this test-only correction as a single commit.
+
+## V19d: examples and preview states
+
+Examples and cleanup now share an owned library stylesheet instead of depending on Workspace's
+CSS import. Saved examples appear first as full-width named rows with tool/action context; the
+selected-run save form is separated below them. Opening still fills a draft and never dispatches.
+Loading, empty and failed listings have distinct states, so a pending or failed request no longer
+claims the library is empty. Listing, opening and saving errors are separate: opening failures
+stay with their row, saving failures stay next to the form button, and failed saves do not
+erase a listing error or hide a legitimately empty library. A successful save followed by a
+failed list refresh reports the save as successful and clears the form, avoiding a misleading
+retry that could create a duplicate. The loading-state and action-error
+placement and save/refresh-status regressions failed before their corresponding changes.
+
+Standalone drawer stories cover saved/empty/loading/unavailable states. Comparison stories and
+region baselines cover wipe, mismatched frames, missing images, read failures and loading at
+320/1440px in Chromium and WebKit. The existing preview controls already match the approved
+wipe/comparison studies, so no image-coordinate or comparison behavior changed. The close target
+now grows with text size while retaining its 44px floor; a 24px root-font test verifies a 66px
+square target. Pipeline navigation also has an explicit narrow-screen keyboard reachability check.
+
+[Saved examples](../../ui/tests/browser/library-fidelity.spec.ts-snapshots/examples-saved-1440-chromium-darwin.png)
+· [Narrow examples](../../ui/tests/browser/library-fidelity.spec.ts-snapshots/examples-saved-320-webkit-darwin.png)
+· [Wipe](../../ui/tests/browser/library-fidelity.spec.ts-snapshots/compare-wipe-320-chromium-darwin.png).
+All new baselines use the shared region/tolerance/scrollbar policy above. Focus outlines remain
+visible when the modal initially focuses its heading. Example summary rows contain metadata;
+they do not invent thumbnail references absent from that summary. The mock's fixture catalogue
+is still not advertised as an installed examples library.
+
+Verification: the loading, row/form error and save/refresh-status checks each failed before
+their fixes. Targeted browser checks then passed with reviewed baselines, followed by a plain
+full shared-lock matrix: 243 Rust tests (four opt-in ignored), 53 UI unit tests, two asset tests,
+220 Chromium/WebKit cases (eight opt-in skips), fmt/clippy/typecheck, Storybook, byte-identical
+UI builds, check-ui and release build. Independent review approved after the error-path fixes.
+The preceding visual-runner correction passed hosted run 41436171703. This final slice's hosted
+run remains the coordinator's next check. Rollback reverts owned styles, consumers, stories and
+tests together; saved library records and the v0.3 protocol are unchanged.
+
+The approved V19 gap list is addressed within the deliberate differences above. Native Safari's
+report/frame/restart walkthrough and an actual billed-provider check remain explicitly separate
+limits in the V18 checkpoint, not claims made by this visual pass.

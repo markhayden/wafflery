@@ -1,3 +1,4 @@
+import styles from "./Library.module.css";
 import { useEffect, useState } from "react";
 import type { LocalApi } from "../../api/client";
 import { workspaceClient, type AttemptSummary } from "../../api/workspace";
@@ -148,7 +149,7 @@ export function Cleanup({
     }
   }
   return (
-    <div className="examples">
+    <div className={styles.library}>
       <p>
         {usage === undefined
           ? "Reading local image usage…"

@@ -1,0 +1,59 @@
+.library,
+.library form,
+.library label {
+  display: grid;
+  gap: 1rem;
+}
+.library input,
+.library textarea {
+  width: 100%;
+  padding: 0.75rem;
+  color: var(--color-text);
+  background: var(--color-background);
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-control);
+}
+.library h3 {
+  font-size: 1rem;
+  font-weight: 500;
+}
+.library p {
+  color: var(--color-muted);
+  font-size: 0.875rem;
+}
+.library ul {
+  list-style: none;
+  padding: 0;
+  display: grid;
+  gap: 1rem;
+}
+.library fieldset {
+  display: grid;
+  gap: 0.75rem;
+  border: 1px solid var(--color-line);
+  padding: 1rem;
+  min-width: 0;
+}
+.library label:has(input[type="checkbox"]) {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  font-size: 0.875rem;
+}
+.library input[type="checkbox"] {
+  width: auto;
+  margin-top: 0.2rem;
+}
+.library { min-width: 0; }
+.library h3 { margin: 0; }
+.library textarea { resize: vertical; }
+.library label { min-width: 0; }
+.library button { justify-self: start; }
+.library .entry { width: 100%; justify-content: space-between; padding: 1rem; gap: 1rem; text-align: left; }
+.entry > span:first-child { min-width: 0; }
+.entry strong { display: block; font-size: 1rem; font-weight: 500; }
+.entry small { display: block; margin-top: .375rem; font-size: .8125rem; color: var(--color-muted); }
+.entry > span:last-child { flex: none; color: var(--color-muted); }
+.saveForm { border-top: 1px solid var(--color-line); padding-top: 1.5rem; }
+.empty { display: grid; gap: .5rem; padding: 1.5rem; border: 1px dashed var(--color-line); border-radius: var(--radius-panel); }
+.library [role="alert"] { padding: 1rem; border-left: 2px solid var(--color-muted); background: var(--color-background); }

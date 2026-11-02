@@ -11,3 +11,5 @@ export const Incompatible:Story={args:{right:{asset,image:{...image,width:320},l
 export const Missing:Story={args:{right:undefined}};
 export const Unavailable:Story={args:{load:async()=>{throw new Error("Missing bytes");}}};
 export const LongLabels:Story={args:{left:{asset,image,label:"A very long source image name from a saved experiment"}}};
+
+export const Loading:Story = {args:{load:()=>new Promise(()=>{})}};

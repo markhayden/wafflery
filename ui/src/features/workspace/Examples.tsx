@@ -1,3 +1,4 @@
+import styles from "./Library.module.css";
 import { useEffect, useState } from "react";
 import {
   exampleClient,
@@ -18,10 +19,16 @@ export function Examples({
     [cursor, setCursor] = useState<number | null>(null);
   const [name, setName] = useState(""),
     [notes, setNotes] = useState("");
-  const [busy, setBusy] = useState(false),
-    [error, setError] = useState<string>();
+  const [loading, setLoading] = useState(true);
+  const [busy, setBusy] = useState(false);
+  const [listError, setListError] = useState<string>();
+  const [saveError, setSaveError] = useState<string>();
+  const [saveNotice, setSaveNotice] = useState<string>();
+  const [openError, setOpenError] = useState<{id:string; message:string}>();
   useEffect(() => {
     let active = true;
+    setLoading(true);
+    setListError(undefined);
     void client
       .list()
       .then((page) => {
@@ -31,8 +38,9 @@ export function Examples({
         }
       })
       .catch((failure) => {
-        if (active) setError(String(failure));
-      });
+        if (active) setListError(String(failure));
+      })
+      .finally(() => { if (active) setLoading(false); });
     return () => {
       active = false;
     };
@@ -40,45 +48,80 @@ export function Examples({
   async function save() {
     if (!selectedId) return;
     setBusy(true);
-    setError(undefined);
+    setSaveError(undefined);
+    setSaveNotice(undefined);
     try {
       await client.save(selectedId, name, notes);
+    } catch (failure) {
+      setSaveError(String(failure));
+      setBusy(false);
+      return;
+    }
+    // Saving succeeded even if the following list refresh is unavailable.
+    setName("");
+    setNotes("");
+    try {
       const page = await client.list();
       setItems(page.items);
       setCursor(page.cursor);
-      setName("");
-      setNotes("");
+      setListError(undefined);
+      setSaveNotice("Example saved.");
     } catch (failure) {
-      setError(String(failure));
+      setListError(String(failure));
+      setSaveNotice("Example saved. The list could not be refreshed.");
     } finally {
       setBusy(false);
     }
   }
   async function open(id: string) {
-    setError(undefined);
+    setOpenError(undefined);
     try {
       onOpen(await client.open(id));
     } catch (failure) {
-      setError(String(failure));
+      setOpenError({id,message:String(failure)});
     }
   }
   async function more() {
     if (cursor === null) return;
+    setListError(undefined);
     setBusy(true);
     try {
       const page = await client.list(cursor);
       setItems((previous) => [...previous, ...page.items]);
       setCursor(page.cursor);
     } catch (failure) {
-      setError(String(failure));
+      setListError(String(failure));
     } finally {
       setBusy(false);
     }
   }
   return (
-    <div className="examples">
+    <div className={styles.library} aria-busy={loading}>
+      <h3>Saved examples</h3>
+      <p>Opening an example fills a new draft. It does not run the tool.</p>
+      {loading && <p role="status">Loading examples…</p>}
+      {!loading && !listError && !items.length && <div className={styles.empty}>
+        <p>No examples saved yet.</p><p>Run a tool, then save its inputs here to try them again.</p>
+      </div>}
+      {!!items.length && <ul>
+        {items.map((item) => (
+          <li key={item.id}>
+            <Button className={styles.entry} aria-label={`Open ${item.name}`} onClick={() => void open(item.id)}>
+              <span><strong>{item.name}</strong><small>{item.tool} / {item.action}</small></span>
+              <span aria-hidden="true">→</span>
+            </Button>
+            {openError?.id === item.id && <p role="alert">{openError.message}</p>}
+          </li>
+        ))}
+      </ul>}
+      {listError && <p role="alert">{listError}</p>}
+      {cursor !== null && (
+        <Button busy={busy} onClick={() => void more()}>
+          Load older examples
+        </Button>
+      )}
       {selectedId && (
-        <form
+        <form className={styles.saveForm}
           onSubmit={(event) => {
             event.preventDefault();
             void save();
@@ -105,29 +148,12 @@ export function Examples({
               onChange={(event) => setNotes(event.target.value)}
             />
           </label>
+          {saveError && <p role="alert">{saveError}</p>}
+          {saveNotice && <p role="status">{saveNotice}</p>}
           <Button type="submit" busy={busy}>
             Save example
           </Button>
         </form>
-      )}
-      {error && <p role="alert">{error}</p>}
-      <h3>Saved examples</h3>
-      <p>Opening an example fills a new draft. It does not run the tool.</p>
-      {!items.length && <p>No examples saved yet.</p>}
-      <ul>
-        {items.map((item) => (
-          <li key={item.id}>
-            <Button onClick={() => void open(item.id)}>Open {item.name}</Button>
-            <p>
-              {item.tool} / {item.action}
-            </p>
-          </li>
-        ))}
-      </ul>
-      {cursor !== null && (
-        <Button busy={busy} onClick={() => void more()}>
-          Load older examples
-        </Button>
       )}
     </div>
   );

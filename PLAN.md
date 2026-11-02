@@ -987,8 +987,8 @@ V18 execution slices (review and full matrix per slice; rollback newest first):
   references and saved evidence after editing/restart. Record the real-peer checkpoint and
   remaining manual/provider limits. Commit: `test: record real v0.3 browser acceptance`.
 
-**V19 — Bring the implemented UI into alignment with the mockups.** Final task of the v0.3
-client. The coordinator authorized starting it while V18c awaits the Squint CSP fix; V18c remains a separate strict gate. Use `work/mockups.html`, `comparison-ui`, `drawer-ui`, `examples-ui`,
+**V19 — Complete locally: bring the implemented UI into alignment with the mockups.** Final task of the v0.3
+client. The coordinator authorized starting it while V18c awaited the Squint CSP fix; V18c subsequently passed its separate strict gate. Use `work/mockups.html`, `comparison-ui`, `drawer-ui`, `examples-ui`,
 `journey-ui`, `wipe-ui`, `interface-study`, `activity-hierarchy` and `preview-controls` HTML studies.
 Capture current screens and corresponding mock views, then record a short screenshot-backed gap
 list under `docs/reviews/`: layout, spacing, typography, colour tokens, iconography,
@@ -1013,21 +1013,23 @@ V19 execution slices (review and full matrix per behavior slice; rollback newest
 - **V19c: Complete.** Shared drawer evidence navigation and report layout: compact, accessible navigation
   without a second row on desktop; narrow-screen overflow remains reachable. Cover inspector,
   pipeline and report states in stories and screenshots. Commit: `style: refine evidence drawers`.
-- **V19 visual-runner correction: Complete locally; hosted verification pending.** Normalize OS scrollbar geometry only during capture; use
+- **V19 visual-runner correction: Complete; hosted run 41436171703 passed.** Normalize OS scrollbar geometry only during capture; use
   region baselines with a shared antialiasing tolerance, prove layout/colour mutations fail,
   and upload screenshot diffs. Covers V19b/c and is required for V19d.
   Commit: `test: stabilize visual regions across macOS runners`.
-- **V19d:** Examples and preview polish: self-contained example styling, clear saved entries and
+- **V19d: Complete locally.** Examples and preview polish: self-contained example styling, clear saved entries and
   empty/loading/error states; inspect comparison controls against the wipe/comparison mocks.
   Add screenshot coverage for the retained/adjusted previews, verify responsive states, and
-  record remaining deliberate divergences. Commit: `style: refine examples and preview states`.
+  record remaining deliberate divergences. Full matrix and review passed; final hosted CI follows
+  the coordinator push. Commit: `style: refine examples and preview states`.
 
 ### Approval, sequencing and rollback checkpoints
 
 Mark approved V01–V18 on 2026-11-01 after the two review rounds and subsequently added V19
 as the final UI fidelity pass. The initial proposal was
 commit 0033af8. Implementation proceeds in order with the per-task checks below; the coordinator
-reviews and pushes local merges. Paid dispatch remains blocked until its complete guard lands.
+reviews and pushes local merges. Paid dispatch was gated on the complete guard, now implemented
+and verified by the checkpoints above.
 
 After approval, use short-lived branches for V-A, V-B and V-C; V08 can follow V02 and V14
 can follow V02/V04a independently, while paid dispatch must wait for its complete guard. Each
