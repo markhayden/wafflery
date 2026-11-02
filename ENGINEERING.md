@@ -87,8 +87,15 @@ Missing variables remain absent. Values are copied only from the host environmen
 the child command; registration, logs and saved evidence never receive those values, including
 non-secret `env` values. Requirement names alone are safe to retain.
 
-V04a installs the base environment at startup. V04b adds the discovery probe that selects declared
-credential/env names for the final serving process. External environment changes require
+Startup first runs an MCP discovery probe under the base environment, using the registered
+config path or the tool's default lookup. It closes the probe before starting one serving
+process with the declared credential/env names. Only the serving process's session is published.
+A probe that fails to close remains owned for deliberate shutdown; no serving process starts
+and no force kill is automatic. A failed discovery also prevents serving startup.
+
+If the serving description adds credential/env names, setup remains visibly incomplete, including
+after a refresh. Discovery does not loop or restart automatically to acquire more variables.
+External environment changes require
 relaunching Wafflery; restarting a tool cannot refresh its parent process's inherited environment.
 The host does not read configuration contents or load shell profiles to discover credentials.
 

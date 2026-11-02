@@ -1,4 +1,5 @@
 //! Independent, line-delimited MCP peer. Deliberately does not import rmcp or wafflery.
+mod configuration;
 mod fixtures;
 mod readiness;
 mod scenarios;
@@ -80,6 +81,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     std::fs::create_dir_all(&root)?;
     let root = root.canonicalize()?;
     let scenario = arguments.next().unwrap_or_else(|| "normal".into());
+    let mut configuration =
+        configuration::Configuration::load(&root, &scenario, arguments.collect())?;
     if scenario.starts_with("v03-") {
         return v03_control::serve(&scenario);
     }
@@ -89,6 +92,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
     let output = Arc::new(Mutex::new(io::stdout()));
     let state = Arc::new(Mutex::new(PeerState::default()));
+    if let Some(configuration) = &mut configuration {
+        configuration.started(state.lock().unwrap().session["id"].clone())?;
+    }
     let mut input = io::stdin().lock();
     let mut initialized = false;
     let mut workers = Vec::new();
@@ -149,7 +155,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             }
             "ping" if initialized => reply(&output, id, json!({})),
             "tools/list" if initialized => {
-                let description = readiness::description(&root, &scenario);
+                let mut description = readiness::description(&root, &scenario);
+                if let Some(configuration) = &configuration {
+                    description = configuration.describe(description);
+                }
                 if params.get("cursor").is_none() {
                     let mut controls = vec![
                         json!({"name":"describe","description":"Shared contract description","inputSchema":{"type":"object","additionalProperties":false}}),
@@ -189,7 +198,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 } else {
                     &scenario
                 };
-                let description = readiness::description(&root, effective);
+                let mut description = readiness::description(&root, effective);
+                if let Some(configuration) = &configuration {
+                    description = configuration.describe(description);
+                }
                 reply(
                     &output,
                     id,

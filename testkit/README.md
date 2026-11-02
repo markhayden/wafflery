@@ -156,3 +156,14 @@ refresh tests. The paid action is discovery-only; estimate execution remains in 
 V03a validation: five wire tests and fake-peer clippy passed. Review found and corrected an
 image-free action schema that incorrectly required source; input schemas now derive image fields
 from declared slots. Both optional setup and that schema regression failed before their fixes.
+
+## Configuration discovery scenarios
+
+The `configuration` scenarios read a synthetic tool config from `--config`, XDG_CONFIG_HOME or
+HOME. The independent peer reports config-dependent credential and non-secret env requirements.
+`configuration-fails` rejects discovery; the synthetic config’s `extra_when_configured` flag
+adds a requirement only in the serving process. Tests verify missing credentials remain setup requirements without a retry loop.
+The fixture's startup journal records process/session boundaries and present variable names only,
+never values. Tests confirm probe exit precedes serving startup, only the serving session is
+published, and neither process executes an action. The existing `ignore-eof` scenario verifies
+that an unresponsive probe stays owned and requires deliberate force authorization.

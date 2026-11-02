@@ -31,7 +31,7 @@ impl Coordinator {
             match &refreshed {
                 Ok(value) => {
                     state.declaration = Some(value.clone());
-                    state.error = None;
+                    state.error = client.setup_notice(value);
                 }
                 Err(error) => {
                     state.declaration = None;

@@ -495,7 +495,7 @@ secret exclusion, non-secret env forwarding, non-identifier unknown credentials 
 logs/exports. Depends: V02.
 Commit: `feat: define isolated child environments`.
 
-**V04b — Select configuration and discover credentials.** Add an optional config path to explicit
+**V04b — Select configuration and discover credentials. Complete.** Add an optional config path to explicit
 registration; reject a conflicting existing `--config` argument and pass path as separate argv.
 The path is chosen at registration; changing an existing registration remains a stopped-host
 operation and needs an explicit replace/update path, not silent append-only registration reuse.

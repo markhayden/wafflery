@@ -3,6 +3,7 @@ pub mod client;
 pub mod coordinator;
 mod environment;
 mod materialized;
+mod probe;
 pub mod registration;
 mod session;
 

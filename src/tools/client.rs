@@ -81,6 +81,7 @@ pub struct Declaration {
 pub struct ToolClient {
     pub descriptor: Descriptor,
     pub session: String,
+    provided_requirements: Option<std::collections::BTreeSet<String>>,
     pub(super) observed_session: Mutex<Option<Value>>,
     pub(crate) gate: Gate,
     child: Mutex<Child>,
@@ -95,12 +96,18 @@ pub struct ToolClient {
 }
 impl ToolClient {
     pub fn spawn(descriptor: Descriptor) -> Result<Self> {
+        Self::spawn_with_requirements(descriptor, None)
+    }
+    pub(super) fn spawn_with_requirements(
+        descriptor: Descriptor,
+        requirements: Option<&[Value]>,
+    ) -> Result<Self> {
         let descriptor = descriptor.validate()?;
         let mut random = [0u8; 32];
         getrandom::fill(&mut random).map_err(|e| Error::Invalid(e.to_string()))?;
         let session = random.iter().map(|b| format!("{b:02x}")).collect();
         let mut command = Command::new(&descriptor.executable);
-        super::environment::apply(&mut command, &[]);
+        super::environment::apply(&mut command, requirements.unwrap_or_default());
         command.args(&descriptor.args);
         if let Some(config) = &descriptor.config {
             command.arg("--config").arg(config);
@@ -123,6 +130,7 @@ impl ToolClient {
         Ok(Self {
             descriptor,
             session,
+            provided_requirements: requirements.map(super::environment::names),
             gate: Gate::default(),
             child: Mutex::new(child),
             observed_session: Mutex::new(None),
@@ -134,6 +142,16 @@ impl ToolClient {
             association: Default::default(),
             lifecycle: std::sync::atomic::AtomicU8::new(0),
         })
+    }
+    pub(super) fn setup_notice(&self, declaration: &Declaration) -> Option<String> {
+        let provided = self.provided_requirements.as_ref()?;
+        let current =
+            super::environment::names(&super::environment::requirements(&declaration.document));
+        let added: Vec<_> = current.difference(provided).map(String::as_str).collect();
+        (!added.is_empty()).then(|| format!(
+            "Incomplete setup: the serving tool added credential/environment requirements absent from its probe: {}. They were not included in environment discovery; check the tool's configuration.",
+            added.join(", ")
+        ))
     }
     pub async fn initialize(&mut self) -> Result<()> {
         let roots = self

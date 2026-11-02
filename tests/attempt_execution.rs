@@ -372,7 +372,16 @@ async fn active_shutdown_requires_confirmation_and_keeps_unknown_outcomes_honest
 }
 #[tokio::test]
 async fn an_unresponsive_owned_child_needs_a_separate_force_request() {
-    let (_dir, c, _request) = setup("ignore-eof").await;
+    let (dir, c, _request) = setup("ignore-eof").await;
+    let snapshot = c.snapshot().await.unwrap();
+    assert!(snapshot["tools"][0]["declaration"].is_null());
+    assert!(
+        snapshot["tools"][0]["error"]
+            .as_str()
+            .unwrap()
+            .contains("Configuration probe did not stop")
+    );
+    assert!(!dir.path().join("runs/calls.ndjson").exists());
     let (quit, mut stopped) = tokio::sync::watch::channel(false);
     assert!(c.force_shutdown(quit.clone()).await.is_err());
     c.begin_shutdown(false, quit.clone()).await.unwrap();

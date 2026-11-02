@@ -74,21 +74,11 @@ impl Coordinator {
             }
             descriptor.roots.push(execution.clone());
             let id = descriptor.id.clone();
-            let (client, declaration, error) = match ToolClient::spawn(descriptor) {
-                Ok(mut client) => {
-                    let initialized = client.initialize().await;
-                    let description = match initialized {
-                        Ok(()) => client.describe().await,
-                        Err(e) => Err(e),
-                    };
-                    let (declaration, error) = match description {
-                        Ok(d) => (Some(d), None),
-                        Err(e) => (None, Some(e.to_string())),
-                    };
-                    (Some(Arc::new(client)), declaration, error)
-                }
-                Err(e) => (None, None, Some(e.to_string())),
-            };
+            let super::probe::Started {
+                client,
+                declaration,
+                error,
+            } = super::probe::start(descriptor).await;
             tools.insert(
                 id,
                 Entry {

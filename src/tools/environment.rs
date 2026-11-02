@@ -9,6 +9,29 @@ pub(super) fn apply(command: &mut Command, requirements: &[Value]) {
         .envs(select(requirements, |name| std::env::var_os(name)));
 }
 
+pub(super) fn requirements(document: &Value) -> Vec<Value> {
+    document["actions"]
+        .as_array()
+        .into_iter()
+        .flatten()
+        .flat_map(|action| {
+            action["readiness"]["requirements"]
+                .as_array()
+                .into_iter()
+                .flatten()
+        })
+        .filter(|requirement| matches!(requirement["kind"].as_str(), Some("credential" | "env")))
+        .cloned()
+        .collect()
+}
+
+pub(super) fn names(requirements: &[Value]) -> std::collections::BTreeSet<String> {
+    requirements
+        .iter()
+        .filter_map(|requirement| requirement["name"].as_str().map(str::to_owned))
+        .collect()
+}
+
 const BASE: &[&str] = &[
     "HOME",
     "XDG_CONFIG_HOME",

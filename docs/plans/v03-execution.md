@@ -182,3 +182,20 @@ remained unchanged. No provider calls, sibling edits, push or tags.
 Each slice gets failing-first targeted checks and review. The joined V04b full matrix gates its
 local merge. Roll back newest slices first; registration's optional config path is additive,
 but there is no alternate invocation or legacy environment fallback.
+
+## V04b verification
+
+Configuration-path and replacement slices each passed failing-first checks and review.
+The independent startup tests failed before probe integration, then passed for explicit paths,
+HOME/XDG defaults, missing variables, additional serving requirements and failed discovery.
+The unresponsive-child regression now also verifies ownership of a retained probe and that no
+serving declaration or action exists. Review found no blocking issues.
+
+The host never parses config contents. The fake alone reads synthetic config; its startup log
+records names and session IDs without environment values. Only the final serving session is
+exposed, and refreshing cannot erase the incomplete-setup notice.
+
+The full matrix passed under the shared lock: formatting, clippy, 98 Rust tests (three opt-in
+ignores), typecheck, 18 UI unit tests, two asset tests, Storybook, byte-identical UI builds,
+release build and 78 browser cases (four real-tool skips). Assets and lockfiles stayed unchanged.
+No provider calls, sibling edits, push or tags.

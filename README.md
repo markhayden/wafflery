@@ -126,7 +126,11 @@ for a concrete Rascal descriptor. These records select programs that will execut
 starts; only register executables you intend to run. The host supplies its own input staging root
 and starts the tool with a minimal environment for default configuration lookup and locale,
 plus a fixed system PATH. See the [environment policy](ENGINEERING.md#child-process-environment).
-Credential discovery comes in the next integration slice.
+The host first probes the tool over MCP with that base environment, closes the probe, then starts
+one serving session with only its declared credential and non-secret environment variables.
+Missing variables remain absent; the tool reports its readiness. If serving adds requirement
+names absent from the probe, setup is marked incomplete without restarting automatically.
+Configuration contents and environment values are never copied into the host library.
 
 While the host is stopped:
 
