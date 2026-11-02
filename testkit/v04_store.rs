@@ -126,11 +126,12 @@ impl Store {
         let token = format!("{}:Token", self.tool);
         let memo = format!("{}:Memo", self.tool);
         if kind != "location"
-            && (owner != self.tool || (kind != token && (portable || kind != memo)))
+            && (owner != self.tool
+                || (kind != token && (portable || (kind != memo && kind != "image"))))
         {
             return Err(invalid("Unsupported portable type or tool owner"));
         }
-        let amount = if kind == "location" {
+        let amount = if kind == "location" || kind == "image" {
             0.0
         } else {
             document["record"]["amount"]
@@ -163,6 +164,9 @@ impl Store {
             return Err(invalid("This artifact has no preview"));
         }
         let kind = document["artifact"]["type"].as_str().unwrap();
+        if kind == "image" {
+            return Ok(include_bytes!("../ui/tests/fixtures/sample.png").to_vec());
+        }
         Ok(fixtures::preview_png(
             kind,
             document["record"]["amount"].as_f64().unwrap_or(0.0),
@@ -197,45 +201,30 @@ impl Store {
             Err(error) => Err(internal(error)),
         }
     }
+    pub fn read_path(&self, path: &str) -> Result<Vec<u8>> {
+        let refusal = || invalid("Input path is not available under the current grants");
+        let path = Path::new(path);
+        if !path.is_absolute() {
+            return Err(refusal());
+        }
+        let path = path.canonicalize().map_err(|_| refusal())?;
+        if !self.allowed.iter().any(|grant| path.starts_with(grant)) {
+            return Err(refusal());
+        }
+        read_regular(&path).map_err(|_| refusal())
+    }
     pub fn import(&self, request: Value) -> Result<Value> {
         let request: ImportRequest =
             serde_json::from_value(request).map_err(|_| invalid("Invalid import request"))?;
         let (bytes, expected_hash, declared_media) = match request {
             ImportRequest::File(request) => {
-                let path = Path::new(&request.file.path);
-                if !path.is_absolute() {
-                    return Err(invalid(
-                        "Import path is not available under the current grants",
-                    ));
-                }
-                let path = path.canonicalize().map_err(|_| {
-                    invalid("Import path is not available under the current grants")
-                })?;
-                if !self.allowed.iter().any(|grant| path.starts_with(grant)) {
-                    return Err(invalid(
-                        "Import path is not available under the current grants",
-                    ));
-                }
-                (
-                    read_regular(&path).map_err(|_| {
-                        invalid("Import path is not available under the current grants")
-                    })?,
-                    request.sha256,
-                    None,
-                )
+                (self.read_path(&request.file.path)?, request.sha256, None)
             }
-            ImportRequest::Inline(request) => {
-                if request.inline.data.len() > INLINE_LIMIT.div_ceil(3) * 4 {
-                    return Err(invalid("Inline import exceeds 1 MiB"));
-                }
-                let bytes = STANDARD
-                    .decode(request.inline.data)
-                    .map_err(|_| invalid("Invalid base64"))?;
-                if bytes.len() > INLINE_LIMIT {
-                    return Err(invalid("Inline import exceeds 1 MiB"));
-                }
-                (bytes, request.sha256, Some(request.inline.media_type))
-            }
+            ImportRequest::Inline(request) => (
+                inline_bytes(&request.inline.data)?,
+                request.sha256,
+                Some(request.inline.media_type),
+            ),
         };
         if expected_hash.is_some_and(|expected| expected != hash(&bytes)) {
             return Err(invalid("Import digest mismatch"));
@@ -276,4 +265,17 @@ impl Store {
             "file":{"path":destination,"bytes":bytes.len(),"sha256":hash(&bytes),"media_type":media(&self.tool,kind)}}),
         )
     }
+}
+
+pub fn inline_bytes(encoded: &str) -> Result<Vec<u8>> {
+    if encoded.len() > INLINE_LIMIT.div_ceil(3) * 4 {
+        return Err(invalid("Inline import exceeds 1 MiB"));
+    }
+    let bytes = STANDARD
+        .decode(encoded)
+        .map_err(|_| invalid("Invalid base64"))?;
+    if bytes.len() > INLINE_LIMIT {
+        return Err(invalid("Inline import exceeds 1 MiB"));
+    }
+    Ok(bytes)
 }

@@ -342,3 +342,24 @@ Digest failures and malformed records are refused before saving; corrupt stored 
 reported as store errors on import rather than overwritten. Nothing
 in these controls creates runs or spend. Host preservation and path enforcement remain separate
 M5 tasks; passing these independent tests does not claim live-client support yet.
+
+### Binding groundwork (M5.01b3a)
+
+`v04_bindings.rs` resolves declared scalar/list operation ports and task image slots using the
+published input schemas. Unknown actions, malformed arguments and missing required inputs are
+plain invalid-params errors. Reference failures collect every problem in declaration/item order,
+with indices only for list ports. Defaults are applied and delivery-only flags are kept separately.
+Binding allocates no run, writes no artifact and never reconstructs an upstream operation.
+References must name this peer's held record, including its frame and emitted `on` metadata
+(optional pixel hashes are ignored). A missing/foreign image reference offers the actionable
+remedy of supplying the original image file/inline bytes; native/location references offer import.
+
+This illustrative peer accepts the owned sample PNG and midpoint marker in its synthetic frame;
+other image bytes or literal marker geometry produce an explicit invalid-input outcome, never
+an example substituted for the request. Native inputs may come from imports, including after the
+producer workspace is deleted. File inputs use the same canonical grants as controls. File
+fingerprints/dimensions/frame must match `expect`; optional pixel hashes never override matching
+file identity. Image artifact references remain references in resolved arguments; file/inline
+images become `{expect}`; literal locations stay literal. The store can hold the owned image
+internally and serve its original bytes as its preview, but cannot import/export it as a native
+Token. Tests live in `tests/v04_bindings.rs`; b3b/b3c still own run outcomes and wire execution.

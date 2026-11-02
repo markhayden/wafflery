@@ -1285,6 +1285,13 @@ verification. The default CI configuration is unchanged. Independent review appr
 production behavior, dependency lock or prebuilt asset changed.
 
 
+**M5.01b3a implementation scope:** resolve inputs without run allocation or store writes.
+Use published schemas for whole-call shape and report all typed-reference failures in port/list
+order. Preserve distinct image-reference, image-locator and literal-location invocation forms;
+apply defaults and remove only delivery options. Reject mismatched original bytes or synthetic
+frames explicitly. Optional pixel hashes cannot override matching file identities. Test imported
+native references after deleting the producer workspace. This groundwork does not dispatch runs.
+
 **M5.01b2b implementation scope:** expose store controls and artifact/preview resource reads
 through the independently framed peer. Published control schemas are self-contained in tools/list.
 The transport envelope rises to 2 MiB to accommodate 1 MiB inline files after base64; the decoded
@@ -1323,6 +1330,22 @@ Independent review approved. Schema expansion is intentionally limited to the tw
 acyclic control schemas; do not reuse it for recursive or unevaluated-property schemas.
 The peer remains control-only until b3. Tests of schema-invalid calls in later client work
 must accept plain invalid-params errors, not depend on the fake store's richer refusal data.
+
+
+**M5.01b3a implementation checkpoint (2026-11-02, complete):**
+The independent resolver validates declared call shape, binds scalar/list ports in order,
+collects indexed reference failures, and distinguishes pre-run refusals from invalid image/location
+inputs. Defaults are resolved; delivery flags stay out of replay arguments. It reads actual
+owned-fixture bytes under explicit grants and preserves artifact-reference vs literal-location
+forms. Binding allocates no run or artifact. Nine binding tests pass alongside the store tests;
+portable inputs bind after deleting their producer workspace. A pixel-hint regression failed
+before ignoring optional pixel hashes where the original file identity matches. Review tightened
+image-reference remedies and added negative marker/media/path and binding-priority coverage;
+the actionable-remedy assertion failed first. Both review rounds approved. The full matrix
+passed: fmt/clippy, 277 Rust tests (4 ignored), typecheck, 53 UI tests, 2 asset-tool tests,
+Storybook, reproducible assets, release build and 220 browser tests (8 skipped), with the same
+temporary local 4187 override and unchanged lockfile/prebuilt assets. Results and execution
+remain b3b/b3c work; no production host behavior changes in this slice.
 
 #### V20 — Image import feedback (M5-adjacent; coordinator-approved 2026-11-02)
 
