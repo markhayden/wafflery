@@ -789,7 +789,7 @@ V13 execution slices (full matrix and review per slice; rollback in reverse orde
 - **V13a: Complete.** Independent fake failures, actual/unresolved spend and cancellation reservations;
   refresh host readiness after credential outcomes and verify sequential budget changes separately
   from readiness changes. Commit: `feat: preserve paid outcomes and refresh readiness`.
-- **V13b:** Selected-run failure/spend presentation and focused recovery guidance, with stories,
+- **V13b: Complete.** Selected-run failure/spend presentation and focused recovery guidance, with stories,
   unit and browser coverage. Commit: `feat: explain paid outcomes in the workspace`.
 - **V13c:** Complete the fake paid journey through cancellation, history and exported evidence;
   record checkpoint V-B. Commit: `test: verify the paid workflow checkpoint`.

@@ -1,3 +1,4 @@
+import { RunOutcome } from "./RunOutcome";
 import { CostReview } from "./CostReview";
 import { useEstimateDraft } from "./useEstimateDraft";
 import { positiveCap } from "../../api/estimates";
@@ -50,6 +51,13 @@ export function Workspace({
   const [toolId, setToolId] = useState(
     preferred ?? snapshot.tools[0]?.id ?? "",
   );
+  const [drawer, setDrawer] = useState<{
+    opener: HTMLElement;
+    tool?: string;
+    action?: string;
+    view: "inspect" | "history" | "examples" | "pipeline" | "cleanup" | "setup";
+  } | null>(null);
+  const setupToolId = drawer?.view === "setup" ? drawer.tool ?? toolId : toolId;
   const snapshotReads = useRef<Promise<void>>(Promise.resolve());
   const updateSnapshot = useCallback((signal?: AbortSignal): Promise<void> => {
     // All snapshot reads are serialized so older responses cannot replace newer state.
@@ -63,27 +71,27 @@ export function Workspace({
   }, [client]);
   const loadToolSession = useCallback(async () => {
     // The refresh emits an invalidation. Only ordered snapshots update the declaration.
-    await client.refresh(toolId);
-    return readToolSession(api, toolId);
-  }, [api, client, toolId]);
+    await client.refresh(setupToolId);
+    return readToolSession(api, setupToolId);
+  }, [api, client, setupToolId]);
   const tool = snapshot.tools.find((tool) => tool.id === toolId);
   const declaration = tool?.declaration;
   const sessionId = object(declaration?.tool_session)?.id;
   const [restartingTools, setRestartingTools] = useState<Set<string>>(() => new Set());
   const restarting = restartingTools.has(toolId);
   const restartToolSession = useCallback(async () => {
-    setRestartingTools(current => new Set(current).add(toolId));
+    setRestartingTools(current => new Set(current).add(setupToolId));
     try {
-      const restarted = await client.restart(toolId);
+      const restarted = await client.restart(setupToolId);
       const id = object(restarted.tool_session)?.id;
       if (typeof id !== "string") throw new Error("The new session could not be identified.");
       return id;
     } finally {
       // Only ordered snapshots publish declarations, including a failed replacement.
       try { await updateSnapshot(); }
-      finally { setRestartingTools(current => { const next = new Set(current); next.delete(toolId); return next; }); }
+      finally { setRestartingTools(current => { const next = new Set(current); next.delete(setupToolId); return next; }); }
     }
-  }, [client, toolId, updateSnapshot]);
+  }, [client, setupToolId, updateSnapshot]);
   const [actionId, setActionId] = useState(
     declaration?.document.actions[0]?.name ?? "",
   );
@@ -100,10 +108,6 @@ export function Workspace({
   const [selectedId, setSelectedId] = useState<string | null>();
   const [busy, setBusy] = useState(false),
     [error, setError] = useState<string>();
-  const [drawer, setDrawer] = useState<{
-    opener: HTMLElement;
-    view: "inspect" | "history" | "examples" | "pipeline" | "cleanup" | "setup";
-  } | null>(null);
   const submitted = useRef<{ body: string; request: Submission } | null>(null);
   useEffect(() => {
     void assets
@@ -298,8 +302,10 @@ export function Workspace({
   try { costSession = parseToolSession(declaration?.tool_session); } catch { /* No fabricated allowance. */ }
   const capText = typeof params.max_spend_usd === "string" || typeof params.max_spend_usd === "number" ? String(params.max_spend_usd) : "";
   const noRun = selected?.execution === "rejected";
-  const rpcError = object(object(selected?.raw_response)?.error);
-  const refusalReason = object(object(rpcError?.data)?.error)?.reason ?? rpcError?.message;
+  const setupTool = snapshot.tools.find(tool => tool.id === setupToolId);
+  const setupDeclaration = setupTool?.declaration;
+  const setupAction = setupDeclaration?.document.actions.find(action => action.name === (drawer?.action ?? actionId));
+  const setupRestarting = restartingTools.has(setupToolId);
   const working =
     selected &&
     (["submitted", "running", "unconfirmed", "cancelling"].includes(
@@ -524,10 +530,11 @@ export function Workspace({
                 {working && tool?.progress?.message && (
                   <p className={styles.note}>{tool.progress.message}</p>
                 )}
-                {noRun ? <>
-                  <p role="status">No run created.</p>
-                  {typeof refusalReason === "string" && <p>{refusalReason}</p>}
-                </> : <>
+                <RunOutcome attempt={selected}
+                  paid={selected.declaration?.document?.actions?.some(action => action.name === selected.request.action && action.cost.may_spend) ?? false}
+                  onSetup={event => setDrawer({opener:event.currentTarget,
+                  view:"setup",tool:selected.request.tool,action:selected.request.action})} />
+                {!noRun && <>
                 <SavedComparison
                   attempt={selected}
                   client={client}
@@ -624,7 +631,7 @@ export function Workspace({
         }
         description={
           drawer?.view === "setup"
-            ? `${declaration?.document.tool.name ?? toolId} · Requirements and session spending`
+            ? `${setupDeclaration?.document.tool.name ?? setupToolId} · Requirements and session spending`
             : drawer?.view === "history"
             ? "Saved local attempts. Opening a run never executes it."
             : drawer?.view === "examples"
@@ -638,17 +645,17 @@ export function Workspace({
       >
         {drawer?.view === "setup" ? (
           <>
-            {restarting ? <p role="status">Checking the replacement session…</p> : declaration && action ? (
+            {setupRestarting ? <p role="status">Checking the replacement session…</p> : setupDeclaration && setupAction ? (
               <ToolSetup
-                key={`${toolId}:${actionId}:${sessionId}`}
-                tool={declaration.document.tool}
-                action={action}
+                key={`${setupToolId}:${setupAction.name}:${object(setupDeclaration.tool_session)?.id}`}
+                tool={setupDeclaration.document.tool}
+                action={setupAction}
                 loadSession={loadToolSession}
               />
             ) : (
               <p role="status">Setup is unavailable because this tool or action is no longer available.</p>
             )}
-            {tool && <RestartTool key={toolId} busy={tool.busy || restarting} onRestart={restartToolSession} />}
+            {setupTool && <RestartTool key={setupToolId} busy={setupTool.busy || setupRestarting} onRestart={restartToolSession} />}
           </>
         ) : drawer?.view === "history" ? (
           <History client={client} onOpen={openAttempt} />

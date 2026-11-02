@@ -536,3 +536,12 @@ that tool's description once before releasing its execution reservation. Other t
 usual invalidation; changed readiness invalidates retained estimates. This is discovery only,
 never an automatic retry, configuration change or session restart. A failed refresh leaves setup
 unavailable without rewriting the saved run or dropping its spend evidence.
+
+
+The selected-run outcome summary derives failure guidance and spend from saved evidence, never
+from the edited draft. Missing, malformed or unfinished spend remains unavailable/not final;
+only a definitive no-run observation can show zero without a result. Unresolved totals are upper
+bounds, rounded upward at display precision. Estimated settled spend identifies configured prices.
+Recovery guidance never retries, increases caps or resets sessions. The setup drawer can bind to
+the saved request's tool/action; refresh and confirmed restart use that context, while draft
+inputs retain their own selected tool/action and quote lifecycle.

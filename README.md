@@ -47,6 +47,9 @@ Paid actions expose explicit cap and estimate controls. Edits, declaration/sessi
 expiry invalidate the quote. **Run** sends the exact reviewed preparation; another paid attempt
 requires a fresh estimate. If acknowledgement is lost, **Retry submission** keeps the original run
 ID and inputs while preserving later edits separately. There is no automatic paid retry.
+The result summary explains stale estimates, credential rejection, caps and session budgets.
+Failed and cancelled runs retain their reported spend; unresolved charges are shown as “at most,”
+not zero. **Review tool setup** opens setup for that saved run’s tool and action.
 
 **Clean up library** previews selected runs/examples and reclaimable image bytes. Shared examples
 retain their images; deleting a baseline run clears its pin. Cleanup requires idle tools, rechecks

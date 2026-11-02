@@ -843,3 +843,31 @@ Storybook, reproducible assets and release build. No lockfile or UI asset change
 This slice groups the fake's protocol,
 ledger and execution paths with the host observer and outcome tests; the renderer stays V13b.
 Rollback the host refresh and scripted peer scenarios together before reverting V12.
+
+
+### V13b selected outcome guidance
+
+The result panel now explains stale estimates, provider authentication rejection, caps and
+session budget failures. No-run setup refusals remain distinct from allocated error results.
+Known failure/cancellation charges are retained; unresolved spend is displayed as “at most,”
+with upward rounding so display precision cannot understate the bound. Missing or invalid spend
+never becomes a fabricated zero. Other outputs and the inspection/export drawers remain available.
+
+Review tool setup binds the drawer to the saved request's tool and action, independently of an
+edited current draft. Refresh and deliberate restart follow that same context. Guidance does
+not retry, increase a cap or reset a budget. New stories cover successful, failed, cancelled,
+no-run and unknown outcomes; narrow viewport checks cover wrapping and keyboard-accessible setup.
+
+Six unit tests pass. Targeted Chromium/WebKit checks passed 54 cases, including live scripted
+errors, a later budget refusal, saved-action setup after an edited draft, and existing submission/
+setup regressions. The unresolved-spend result was visually inspected in WebKit. Review passed;
+The first full browser pass exposed a duplicated live cancellation status; only no-run summaries
+now announce an additional status, while allocated runs retain the canonical header status.
+A failing regression also corrected free-action guidance that requested an unavailable estimate.
+Guidance uses the saved action's cost declaration, never the edited draft. Six targeted browser
+regressions passed after correction. Final review and the shared-lock full matrix passed:
+183 Rust tests (three ignored), 41 UI unit tests, two asset tests, 162 Chromium/WebKit cases
+(four opt-in skips), fmt, clippy, typecheck, Storybook, reproducible assets and release build.
+Component/model/style/story and workspace wiring are one
+cohesive presentation slice with their tests. Rollback this UI slice before V13a; stored evidence
+and server behavior are unchanged.
