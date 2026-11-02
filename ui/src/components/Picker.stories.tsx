@@ -8,3 +8,5 @@ export const Focused:Story = {};
 export const LongList:Story = {args:{choices:Array.from({length:60},(_,index)=>({id:String(index),title:`Action ${index+1}`,description:"A longer description that wraps without displacing the indicator",group:index<30?"Find":"Refine"}))}};
 export const Empty:Story = {args:{choices:[],value:""}};
 export const Disabled:Story = {args:{disabled:true}};
+
+export const Compact:Story = {args:{compact:true,label:"Tool",value:"sample",choices:[{id:"sample",title:"sample-lab",description:"Version 0.1.0"}]}};

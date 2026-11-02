@@ -41,8 +41,8 @@ a { color: inherit; }
 .workspace-header strong { font-size: 1.125rem; letter-spacing: -0.025em; }
 .workspace-brand { display: inline-flex; align-items: center; gap: var(--space-3); }
 .workspace-brand img { display: block; flex: none; object-fit: contain; }
-.workspace-header span { color: var(--color-muted); font-size: 0.8125rem; }
-.workspace-main { max-width: 82rem; margin: auto; padding: var(--space-12) var(--space-8); }
+.workspace-connection { color: var(--color-muted); font-size: 0.8125rem; }
+.workspace-main { max-width: 92rem; margin: auto; padding: var(--space-12) var(--space-8); }
 .workspace-main h1 { font-size: 1.75rem; font-weight: 500; letter-spacing: -0.035em; }
 .workspace-intro { color: var(--color-muted); margin-top: var(--space-2); }
 .workspace-empty {
@@ -64,7 +64,13 @@ summary { cursor: pointer; }
 }
 
 .workspace-header > button { margin-left:auto; }
-@media(max-width:30rem){.workspace-header > span {display:none;}}
+.workspace-tool { min-width: 0; max-width: 24rem; border-left: 1px solid var(--color-line); padding-left: var(--space-3); }
+.workspace-connection { overflow-wrap: anywhere; }
+@media(max-width:40rem) {
+  .workspace-header { gap: var(--space-2); }
+  .workspace-tool { max-width: calc(100% - 3.5rem); }
+  .workspace-connection { flex-basis: 100%; order: 1; }
+}
 
 /* Long forms share the available desktop height; small/short windows use page scrolling. */
 @media (min-width: 60.01rem) and (min-height: 48rem) {
@@ -82,7 +88,7 @@ summary { cursor: pointer; }
     flex-direction: column;
     padding-block: var(--space-6);
   }
-  .workspace-main[data-connected="true"] h1 { font-size: 1.25rem; }
+  .workspace-main[data-connected="true"] h1 { font-size: 1.5rem; }
   .workspace-main[data-connected="true"] > [role="status"] {
     color: var(--color-muted);
     font-size: 0.8125rem;

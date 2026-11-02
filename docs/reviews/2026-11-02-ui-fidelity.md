@@ -1,8 +1,8 @@
 # V19 UI fidelity review
 
-Status: audit complete; implementation slices V19b–V19d open. The coordinator authorized
-starting this pass while V18c waits for the approved Squint report-style fix. This review
-neither closes V18c nor weakens its console check.
+Status: V19a/b complete; V19c/d remain. The coordinator authorized
+starting this pass while V18c awaited the Squint report-style fix. V18c subsequently passed
+against approved Squint `54b1f41`; this visual pass does not weaken its console check.
 
 ## Evidence and gaps
 
@@ -46,3 +46,29 @@ also passed before this documentation-only branch (198 browser cases, eight opt-
 Each subsequent visual slice runs its own full matrix, screenshot review and code review.
 Screenshot regressions use synthetic fixture states; real report screenshots and traces stay
 local. Revert visual slices newest first without reverting the V18 protocol work.
+
+## V19b: workspace hierarchy
+
+The shared frame now places Tool beside the brand; the selected tool name/purpose heads the
+workspace and Action has its own subordinate picker. Library/setup actions stay reachable as
+quiet buttons. Results get three fifths of the panel width and a deliberate empty preview
+surface. The same picker owns search, selection and focus return in compact/full presentations.
+Button targets have an explicit 44px floor (2.75rem alone was 41.25px at the existing root size).
+
+The new layout regression failed first on both desktop and mobile because Tool was outside the
+header. Targeted Chromium/WebKit checks then passed for header hierarchy, keyboard restoration,
+long input scrolling, result/run visibility, short/narrow page flow and disconnected states.
+The [desktop](../../ui/tests/browser/workspace-fidelity.spec.ts-snapshots/workspace-1440-chromium-darwin.png)
+and [mobile](../../ui/tests/browser/workspace-fidelity.spec.ts-snapshots/workspace-390-webkit-darwin.png)
+baselines use the live independent peer with no runs, paths or capabilities displayed. Both
+browser baselines are reviewed; differences above 0.1% of pixels fail rather than auto-update.
+WorkspaceFrame and compact Picker stories cover long tool names and connection states.
+
+The shell extraction and its two consumers land together to avoid two competing headers.
+No setup, estimate, dispatch or saved-evidence logic changed. The full matrix and review gate
+remain required before this slice is marked complete.
+
+Full shared-lock matrix passed for V19b: 243 Rust tests (four opt-in ignored), 53 UI unit tests,
+two asset tests, 202 Chromium/WebKit cases (eight opt-in skips), fmt/clippy/typecheck, Storybook,
+byte-identical UI rebuilds, check-ui and release build. Independent code and four-baseline visual
+review approved. Rollback reverts the shell/consumer/style slice together; protocol work remains.

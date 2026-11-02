@@ -15,3 +15,11 @@
 .options button:hover, .options button[aria-pressed=true] { background: var(--color-fill); border-color: var(--color-line); }
 .options small { color: var(--color-muted); }
 .group { padding: .75rem; }
+
+.chevron { flex: none; color: var(--color-muted); }
+.compact { display: block; }
+.compact .label { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.compact .trigger { min-height: 44px; padding: .5rem .75rem; gap: 1rem; background: transparent; border-color: transparent; }
+.compact .trigger:hover { background: var(--color-fill); border-color: var(--color-line); }
+.compact .trigger strong { font-size: .9375rem; }
+.compact .trigger small { display: none; }

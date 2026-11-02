@@ -3,7 +3,7 @@
   align-items: center;
   justify-content: center;
   gap: var(--space-2);
-  min-height: 2.75rem;
+  min-height: max(2.75rem, 44px);
   max-width: 100%;
   padding: var(--space-2) var(--space-4);
   border: 1px solid var(--color-line);

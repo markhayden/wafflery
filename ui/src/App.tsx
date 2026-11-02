@@ -7,7 +7,7 @@ import { connect } from "./api/session";
 import type { LocalApi } from "./api/client";
 import { assetClient, type Asset } from "./api/assets";
 import { ImageInput } from "./components/ImageInput";
-import mark from "./assets/wafflery-mark.svg";
+import { WorkspaceFrame } from "./components/WorkspaceFrame";
 
 export function App() {
   const [snapshot, setSnapshot] = useState<Snapshot>();
@@ -71,23 +71,16 @@ export function App() {
       active = false;
     };
   }, [images]);
+  if (api && snapshot && snapshot.tools.length > 0) {
+    return <Workspace api={api} initial={snapshot} />;
+  }
   return (
-    <>
-      <header className="workspace-header">
-        <strong className="workspace-brand"><img src={mark} alt="" width="32" height="32" />wafflery</strong>
-        <span>Local workspace</span>
-        {api && <Shutdown api={api} />}
-      </header>
-      <main className="workspace-main" data-connected={api && snapshot && snapshot.tools.length > 0 ? "true" : undefined}>
+    <WorkspaceFrame connection={connection} controls={api && <Shutdown api={api} />}>
         <h1>Your workshop</h1>
         <p className="workspace-intro">
           Try a tool. Inspect the result. Take it into your pipeline.
         </p>
-        <p role="status">{connection}</p>
         {api && !snapshot && <p>Loading workspace…</p>}
-        {api && snapshot && snapshot.tools.length > 0 && (
-          <Workspace api={api} initial={snapshot} />
-        )}
         {images && snapshot && snapshot.tools.length === 0 && (
           <section className="workspace-empty" aria-label="Image library">
             <ImageInput
@@ -137,7 +130,6 @@ export function App() {
             </div>
           </section>
         )}
-      </main>
-    </>
+    </WorkspaceFrame>
   );
 }

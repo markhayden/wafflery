@@ -1004,9 +1004,9 @@ commits per screen. Rollback visual slices in reverse order while retaining V18'
 and accessibility behavior. The coordinator reviews and pushes; this session does not push/tag.
 
 V19 execution slices (review and full matrix per behavior slice; rollback newest first):
-- **V19a:** Screenshot-backed audit of current UI and mock counterparts, with named gaps and
+- **V19a: Complete.** [Audit](docs/reviews/2026-11-02-ui-fidelity.md). Screenshot-backed audit of current UI and mock counterparts, with named gaps and
   intentional contract/accessibility divergences. Commit: `docs: record UI fidelity gaps`.
-- **V19b:** Workspace hierarchy: tool selection in the application header, contextual tool title,
+- **V19b: Complete.** Workspace hierarchy: tool selection in the application header, contextual tool title,
   subordinate action picker, quiet library navigation and more space for results. Keep desktop
   input scrolling and narrow/short-window page scrolling. Shared shell/picker stories and
   deterministic desktop/mobile screenshots. Commit: `style: restore workspace tool hierarchy`.

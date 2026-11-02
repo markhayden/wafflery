@@ -1,3 +1,5 @@
+import { WorkspaceFrame } from "../../components/WorkspaceFrame";
+import { Shutdown } from "../../components/Shutdown";
 import { reportClient } from "../../api/reports";
 import { ReportOwner } from "./report-owner";
 import { RunOutcome } from "./RunOutcome";
@@ -316,63 +318,28 @@ export function Workspace({
     ) ||
       selected.preservation.contract === "pending");
   return (
+    <WorkspaceFrame connected connection="Connected locally" controls={<Shutdown api={api} />}
+      toolPicker={<Picker compact label="Tool" value={toolId} onChange={chooseTool}
+        choices={snapshot.tools.map(t => ({id:t.id,title:t.declaration?.document.tool.name ?? t.id,
+          description:t.error ?? `Version ${t.declaration?.document.tool.version ?? "unknown"}`}))} />}>
     <div className={styles.workspace}>
-      <div>
-        <Button
-          onClick={(event) =>
-            setDrawer({ opener: event.currentTarget, view: "history" })
-          }
-        >
-          History
-        </Button>{" "}
-        <Button
-          onClick={(event) =>
-            setDrawer({ opener: event.currentTarget, view: "examples" })
-          }
-        >
-          Examples
-        </Button>{" "}
-        <Button
-          onClick={(event) =>
-            setDrawer({ opener: event.currentTarget, view: "cleanup" })
-          }
-        >
-          Clean up library
-        </Button>
-      </div>
-      <div className={styles.pickers}>
-        <Picker
-          label="Tool"
-          value={toolId}
-          onChange={chooseTool}
-          choices={snapshot.tools.map((t) => ({
-            id: t.id,
-            title: t.declaration?.document.tool.name ?? t.id,
-            description:
-              t.error ??
-              `Version ${t.declaration?.document.tool.version ?? "unknown"}`,
-          }))}
-        />
-        <Picker
-          label="Action"
-          value={actionId}
-          onChange={chooseAction}
-          disabled={!declaration}
-          choices={(declaration?.document.actions ?? []).map((a) => ({
-            id: a.name,
-            title: a.title,
-            description: (a.images ?? []).length
-              ? "Image → Result"
-              : "Parameters → Result",
-          }))}
-        />
-      </div>
-      {tool && (
-        <div className={styles.toolContext}>
+      <div className={styles.toolContext}>
+        <div className={styles.toolHeading}>
+          <h1>{declaration?.document.tool.name ?? toolId ?? "Your workshop"}</h1>
           <p className={styles.note}>{declaration?.document.tool.purpose ?? "Tool setup is unavailable."}</p>
-          <Button onClick={event => setDrawer({ opener: event.currentTarget, view: "setup" })}>Tool setup</Button>
         </div>
-      )}
+        <nav className={styles.library} aria-label="Workspace library">
+          <Button onClick={event => setDrawer({opener:event.currentTarget,view:"history"})}>History</Button>
+          <Button onClick={event => setDrawer({opener:event.currentTarget,view:"examples"})}>Examples</Button>
+          <Button onClick={event => setDrawer({opener:event.currentTarget,view:"cleanup"})}>Clean up library</Button>
+          {tool && <Button onClick={event => setDrawer({opener:event.currentTarget,view:"setup"})}>Tool setup</Button>}
+        </nav>
+      </div>
+      <div className={styles.actionPicker}>
+        <Picker label="Action" value={actionId} onChange={chooseAction} disabled={!declaration}
+          choices={(declaration?.document.actions ?? []).map(a => ({id:a.name,title:a.title,
+            description:(a.images ?? []).length ? "Image → Result" : "Parameters → Result"}))} />
+      </div>
       {!tool && toolId && (
         <p role="status">
           Tool “{toolId}” is not registered in this workspace. Register it while
@@ -685,5 +652,6 @@ export function Workspace({
         )}
       </Drawer>
     </div>
+    </WorkspaceFrame>
   );
 }
