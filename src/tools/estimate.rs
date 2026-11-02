@@ -130,6 +130,43 @@ impl ValidatedEstimate {
         time::OffsetDateTime::now_utc() >= self.expires
             || tokio::time::Instant::now() >= self.deadline
     }
+    pub(crate) fn authorize(
+        &self,
+        tool: &Value,
+        action: &str,
+        arguments: &Value,
+        session: &Value,
+    ) -> Result<()> {
+        let cap = arguments["max_spend_usd"]
+            .as_f64()
+            .filter(|cap| cap.is_finite() && *cap > 0.0);
+        if self.expired() || self.value["allowed"] != true {
+            return Err(Error::Conflict(
+                "A current allowed estimate is required before running",
+            ));
+        }
+        if self.value["tool"]["name"] != tool["name"]
+            || self.value["tool"]["version"] != tool["version"]
+            || self.value["action"] != action
+            || self.value["session_id"] != session["id"]
+            || cap
+                .zip(self.value["cap_usd"].as_f64())
+                .is_none_or(|(requested, quoted)| (requested - quoted).abs() > USD_TOLERANCE)
+        {
+            return Err(Error::Conflict(
+                "Estimate belongs to different inputs, cap or session",
+            ));
+        }
+        Ok(())
+    }
+    pub(crate) fn evidence(&self) -> Value {
+        // Preserve authorization facts, not arbitrary provider/debug extensions.
+        json!({"tool":self.value["tool"],"action":self.value["action"],"binding":self.value["binding"],
+            "session_id":self.value["session_id"],"cap_usd":self.value["cap_usd"],
+            "worst_case_usd":self.value["worst_case_usd"],"allowed":self.value["allowed"],
+            "effective":{"model":self.value["effective"]["model"],"config_identity":self.value["effective"]["config_identity"]},
+            "expires":self.value["expires"]})
+    }
     pub fn observation(&self) -> &Value {
         &self.value
     }

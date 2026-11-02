@@ -744,3 +744,32 @@ V12a passed final review and the full shared-lock matrix: 170 Rust tests (three 
 33 UI unit tests, two asset tests, 132 browser cases (four opt-in skips), fmt, clippy, typecheck,
 Storybook, reproducible assets and release build. UI assets and dependency lockfiles are unchanged.
 This internal transport boundary can be reverted independently until V12b/c consume it.
+
+
+### V12b owned quote consumption
+
+Preparation consumption now checks request equality, process/tool session, declaration, reader
+ownership and paid quote eligibility under one lock before removing the draft. A paid draft must
+have its own non-invalidated estimate ticket and an allowed unexpired quote with matching tool,
+action, session and positive cap. The consumed owner and quote transfer together; neither expiry
+cleanup nor another submission can take them again. The coordinator's paid guard remains closed
+until V12c.
+
+Paid persistence rechecks the exact copied inputs in a blocking worker using bounded reads,
+size and SHA-256 checks, regular owned files, no symlinks or hard links, and the owned directory.
+Every list occurrence is verified. Review caught an accepted empty optional scalar slot being
+mistaken for a missing file; its failing regression now also exercises an altered later list
+copy. The verifier skips only explicitly empty supplied slots and checks nonempty list counts.
+The tool remains authoritative for binding verification when the call arrives.
+
+The attempt transaction now saves selected authorization facts in `observations.estimate`
+alongside input references and the immutable request. Binding, cap, worst case, effective model/
+config identity, expiry and attribution are retained; arbitrary effective/debug extensions are
+excluded. Source metadata, retained ownership, quote validation, file verification and the atomic
+storage path form one coherent boundary across more than the usual five authored files.
+
+The missing-quote and optional-image regressions failed before their fixes. V12b passed all 17
+preparation checks, final review and the full shared-lock matrix: 175 Rust tests (three ignored),
+33 UI unit tests, two asset tests, 132 browser cases (four opt-in skips), fmt, clippy, typecheck,
+Storybook, reproducible assets and release build. UI assets and dependency lockfiles are unchanged.
+Rollback this consumption slice before V12a; ordinary submissions still cannot authorize paid work.

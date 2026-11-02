@@ -758,7 +758,7 @@ V12 execution slices (full matrix and review per slice; rollback in reverse orde
 - **V12a: Complete.** Carry the validated quote in the transport permit; reject absent, substituted,
   unexpected, refused or expired bindings before a wire write, including expiry during evidence
   persistence. Keep the coordinator's paid guard closed. Commit: `feat: bind dispatch permits to validated estimates`.
-- **V12b:** Atomically consume matching retained preparations with their allowed live quotes,
+- **V12b: Complete.** Atomically consume matching retained preparations with their allowed live quotes,
   verify copied inputs and preserve selected quote/cap evidence. Keep ordinary submissions
   unable to authorize paid work. Commit: `feat: consume priced preparations atomically`.
 - **V12c:** Connect paid prepared submission to the coordinator and exact wire metadata;

@@ -210,22 +210,51 @@ impl Retained {
         request: &Submission,
         current: &Declaration,
         session: &str,
-    ) -> Result<PreparedCall> {
-        self.existing(request, current, session)?
-            .ok_or(Error::Missing("Preparation is missing or expired"))?;
+    ) -> Result<(
+        PreparedCall,
+        Option<crate::tools::estimate::ValidatedEstimate>,
+    )> {
         let mut state = self.lock();
         let draft = state
             .drafts
             .get(&request.id)
             .ok_or(Error::Missing("Preparation is missing or expired"))?;
+        // Identity, quote eligibility and removal share one lock. No intervening lease,
+        // replacement or invalidation can swap which preparation is consumed.
+        if !matches(&draft.call, current, session) {
+            state.drafts.remove(&request.id);
+            return Err(Error::Conflict(
+                "Preparation belongs to an outdated tool session or declaration",
+            ));
+        }
+        if draft.call.request != *request {
+            return Err(Error::Conflict(
+                "Preparation ID already has different inputs",
+            ));
+        }
         if Arc::strong_count(&draft.call) != 1 {
             return Err(Error::Conflict(
                 "An estimate is still reading these prepared inputs",
             ));
         }
+        let paid = current.document["actions"]
+            .as_array()
+            .and_then(|actions| {
+                actions
+                    .iter()
+                    .find(|action| action["name"] == request.action)
+            })
+            .and_then(|action| action["cost"]["may_spend"].as_bool())
+            .ok_or(Error::Conflict(
+                "Action spending declaration is unavailable",
+            ))?;
+        if paid {
+            quotes::view_for_dispatch(draft, current)?;
+        }
         let draft = state.drafts.remove(&request.id).unwrap();
-        Arc::try_unwrap(draft.call)
-            .map_err(|_| Error::Conflict("Prepared inputs still have a reader"))
+        let call = Arc::try_unwrap(draft.call)
+            .map_err(|_| Error::Conflict("Prepared inputs still have a reader"))?;
+        Ok((call, if paid { draft.quote } else { None }))
     }
     pub fn discard(&self, id: &str) {
         self.lock().drafts.remove(id);
@@ -332,12 +361,13 @@ mod tests {
             .await
             .unwrap();
         retained.insert(call).unwrap();
-        let owned = retained.take(&request, &declaration, "session").unwrap();
+        let (owned, quote) = retained.take(&request, &declaration, "session").unwrap();
+        assert!(quote.is_none());
         retained.discard(&request.id);
         retained.expire_at(Instant::now() + Duration::from_secs(3600));
         assert!(assets.root().join("execution/prepared").exists());
         let saved = owned
-            .persist(&AttemptStore::new(assets.database.clone()))
+            .persist(&AttemptStore::new(assets.database.clone()), None)
             .await
             .unwrap();
         assert!(assets.root().join("execution/prepared").exists());
@@ -433,5 +463,27 @@ mod tests {
         drop(call);
         assert!(!assets.root().join("execution/prepared").exists());
         assets.database.shutdown().await.unwrap();
+    }
+    #[tokio::test]
+    async fn a_paid_preparation_without_a_quote_cannot_be_consumed() {
+        let (_dir, assets, mut request, mut declaration) = super::super::tests::fixture().await;
+        request.params["max_spend_usd"] = serde_json::json!(0.5);
+        declaration.document["actions"][0]["cost"] = serde_json::json!({"may_spend":true});
+        let retained = Retained::new();
+        retained
+            .insert(
+                PreparedCall::new(&assets, request.clone(), &declaration, "session")
+                    .await
+                    .unwrap(),
+            )
+            .unwrap();
+        let taken = retained.take(&request, &declaration, "session");
+        let refused = taken.is_err();
+        drop(taken);
+        let still_owned = retained.get(&request.id).is_ok();
+        retained.clear();
+        assets.database.shutdown().await.unwrap();
+        assert!(refused, "a paid preparation needs its own allowed estimate");
+        assert!(still_owned, "requesting an estimate must remain possible");
     }
 }

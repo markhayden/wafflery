@@ -275,7 +275,17 @@ attempt cancellation control. V09b retains up to 16 preparations and 1 GiB of co
 15-minute absolute monotonic expiry. Identical preparation requests return the same deadline;
 conflicting inputs cannot replace an identity. Submission checks and consumes a live matching
 process session, tool session and declaration under the same discovery guard as dispatch.
-Preparing consumes no execution slot; paid preparations still cannot dispatch until V12.
+Preparing consumes no execution slot; paid preparations still cannot dispatch until V12c.
+V12b consumes request identity, session/declaration and quote eligibility atomically. Paid drafts
+require their current non-invalidated estimate ticket, an allowed unexpired quote attributed to
+the tool/action/session and positive cap, and no outstanding reader. Consumption returns that
+quote with the owned copies, so disposal/re-estimation cannot reuse them. Before paid persistence,
+the host rechecks each materialized copy's bounded size and SHA-256 without following symlinks
+or accepting hard links. Empty optional scalar slots remain omitted; every list occurrence is
+checked. The tool must still check the binding as the call arrives. Selected binding, cap, worst
+case, model/config identity, expiry and attribution are committed in `observations.estimate`
+with the attempt and input references, without arbitrary effective/debug extensions. A rejected
+or changed copy creates no attempt and its consumed preparation cannot be reused.
 The submission lock serializes capacity preflight through copying, so in-progress preparations
 count against the bound before any bytes are copied. Duplicate image bindings count per copy.
 A weak-owner sweep frees expired copies every 30 seconds; every lookup/consume also checks expiry.

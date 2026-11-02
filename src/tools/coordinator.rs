@@ -215,7 +215,7 @@ impl Coordinator {
                 "This foundation only runs actions declared free and offline.",
             ));
         }
-        let prepared = if retained {
+        let (prepared, estimate) = if retained {
             self.preparations
                 .take(&request, &current, &client.session)?
         } else {
@@ -224,16 +224,19 @@ impl Coordinator {
                     "This ID belongs to a prepared draft. Submit that preparation instead.",
                 ));
             }
-            super::prepared::PreparedCall::new(
-                &self.assets,
-                request.clone(),
-                &current,
-                &client.session,
+            (
+                super::prepared::PreparedCall::new(
+                    &self.assets,
+                    request.clone(),
+                    &current,
+                    &client.session,
+                )
+                .await?,
+                None,
             )
-            .await?
         };
         let arguments = prepared.arguments().clone();
-        let attempt = prepared.persist(&self.attempts).await?;
+        let attempt = prepared.persist(&self.attempts, estimate.as_ref()).await?;
         let (written, dispatched) = tokio::sync::watch::channel(false);
         *client.gate.lock().unwrap_or_else(|e| e.into_inner()) = Some(Permit {
             discovery,
@@ -242,7 +245,7 @@ impl Coordinator {
             action: request.action.clone(),
             arguments: arguments.clone(),
             generation: current.generation,
-            estimate: None,
+            estimate,
             written,
         });
         let finished = Arc::new(AtomicBool::new(false));

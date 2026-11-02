@@ -1,6 +1,7 @@
 //! Exact input copies belong to a preparation until its attempt is durably recorded.
 pub(super) mod files;
 pub(super) mod retained;
+mod verify;
 use super::{Error, Result, client::Declaration, validator};
 use crate::library::{
     assets::AssetStore,
@@ -65,13 +66,35 @@ impl PreparedCall {
     pub fn arguments(&self) -> &Value {
         &self.arguments
     }
-    pub async fn persist(mut self, attempts: &AttemptStore) -> Result<Attempt> {
+    pub async fn persist(
+        mut self,
+        attempts: &AttemptStore,
+        quote: Option<&super::estimate::ValidatedEstimate>,
+    ) -> Result<Attempt> {
+        let observations = if let Some(quote) = quote {
+            quote.authorize(
+                &self.declaration["document"]["tool"],
+                &self.request.action,
+                &self.arguments,
+                &self.declaration["tool_session"],
+            )?;
+            verify::inputs(&self).await?;
+            if quote.expired() {
+                return Err(Error::Conflict(
+                    "Estimate expired while checking prepared inputs",
+                ));
+            }
+            serde_json::json!({"estimate":quote.evidence()})
+        } else {
+            serde_json::json!({})
+        };
         let attempt = attempts
-            .create(
+            .create_with_observations(
                 self.request.clone(),
                 self.arguments.clone(),
                 self.declaration.clone(),
                 self.inputs.clone(),
+                observations,
             )
             .await?;
         // The durable attempt now owns these same paths; never copy or move them again.
@@ -122,7 +145,7 @@ mod tests {
         let asset = assets.import_path(path).await.unwrap();
         let request = serde_json::from_value(json!({"id":"prepared", "tool":"fixture", "action":"mark", "revision":"r", "params":{"label":"before"}, "images":{"source":[asset.id]}})).unwrap();
         let declaration = Declaration {
-            document: json!({"profiles":["images"],"actions":[{"name":"mark", "params_schema":{"type":"object"}, "images":[{"slot":"source","role":"source","required":true}]}]}),
+            document: json!({"profiles":["images"],"actions":[{"name":"mark", "cost":{"may_spend":false}, "params_schema":{"type":"object"}, "images":[{"slot":"source","role":"source","required":true}]}]}),
             revision: "r".into(),
             generation: 0,
             tool_session: json!({"id":"bb8f5520-a822-4cdc-a9eb-f1a72018e000"}),
@@ -157,7 +180,7 @@ mod tests {
         std::fs::write(library_path, b"changed bytes").unwrap();
         std::fs::write(dir.path().join("source.png"), b"changed original").unwrap();
         request.params["label"] = json!("after");
-        let saved = prepared.persist(&attempts).await.unwrap();
+        let saved = prepared.persist(&attempts, None).await.unwrap();
         assert_eq!(saved.arguments, arguments);
         assert_eq!(saved.request.params["label"], "before");
         assert_eq!(std::fs::read(&path).unwrap(), before);
@@ -221,7 +244,7 @@ mod tests {
                 .is_err()
         );
         let attempts = AttemptStore::new(assets.database.clone());
-        let saved = prepared.persist(&attempts).await.unwrap();
+        let saved = prepared.persist(&attempts, None).await.unwrap();
         assert!(
             cleaning.await.is_err(),
             "the old cleanup preview must be stale after transfer"

@@ -113,6 +113,17 @@ impl AttemptStore {
         declaration: Value,
         inputs: Value,
     ) -> Result<Attempt> {
+        self.create_with_observations(submission, arguments, declaration, inputs, json!({}))
+            .await
+    }
+    pub(crate) async fn create_with_observations(
+        &self,
+        submission: Submission,
+        arguments: Value,
+        declaration: Value,
+        inputs: Value,
+        observations: Value,
+    ) -> Result<Attempt> {
         let mut attempt = Attempt {
             id: submission.id.clone(),
             sequence: 0,
@@ -128,7 +139,7 @@ impl AttemptStore {
             execution: "submitted".into(),
             result: None,
             raw_response: None,
-            observations: json!({}),
+            observations,
             preservation: json!({"contract":"pending","native":"unsupported","report":"unsupported"}),
             outputs: vec![],
             journal: None,
