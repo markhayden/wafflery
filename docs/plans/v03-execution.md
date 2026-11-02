@@ -1019,3 +1019,23 @@ tests, 164 browser cases (four opt-in skips), fmt, clippy, typecheck, Storybook,
 assets and release build. The lease, coordinator/API wiring, shared process fixture access and
 tests remain together beyond the usual file budget. V15 is complete; content isolation and
 visible report controls remain V16/V17.
+
+### V16a document output grants
+
+A successful document renderer grants access to exactly its returned regular file outside
+the pinned run directory. The host reads an immutable copy of at most 32 MiB with a five-second
+deadline. Ancestor identity checks reject in-run aliases; before/open/after snapshots reject
+replacement and mutation. No adjacent file is read and the original is left untouched. Six
+tests cover output/status validation, missing/non-regular/oversized files, aliases, run movement,
+replacement races and retained reader capacity after timeout. Review strengthened ancestor
+identity validation and global reader permits, then approved. The sixteen permits remain held
+inside blocking workers until completion, even if their caller times out or disconnects.
+
+The first matrix exposed an existing offscreen WebKit edit in the held-preparation test.
+The [test correction](../reviews/2026-11-02-preparation-edit.md) uses the existing focused-edit
+helper and observes invalidation before releasing responses. All 160 focused browser repetitions
+passed with zero retries; review approved. The final shared-lock full matrix passed: 221 Rust
+tests (three ignored), 41 UI unit tests, two asset tests, 164 browser cases (four opt-in skips),
+fmt, clippy, typecheck, Storybook, reproducible assets and release build. The reader/module,
+tests and matching plan/engineering/execution docs form a cohesive slice beyond the usual
+five-file budget. V16b supplies isolated serving; V16c connects the retained view lifecycle.

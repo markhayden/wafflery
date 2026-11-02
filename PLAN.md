@@ -885,6 +885,18 @@ Verify outside-run output, in-run rejection, missing/nonzero output, non-regular
 active HTML isolation, byte limit, no neighboring-file reads and a copied run directory.
 Depends: V14. Commit: `feat: isolate rendered documents`.
 
+V16 execution slices (review and full matrix per slice; rollback in reverse order):
+- **V16a: Complete.** Consume the successful document renderer's one path line through a narrow output
+  grant, with a 32 MiB immutable read, five-second read deadline and identity/race checks.
+  Read no adjacent files and leave the original untouched. Commit: `feat: read declared document outputs`.
+- **V16b:** Serve immutable documents from an isolated loopback origin with restrictive resource
+  policy, bounded lifetime and tests for neighboring-file refusal and external dependencies.
+  Commit: `feat: serve isolated report documents`.
+- **V16c:** Retain document generation/read/content lifetimes in views, enforce a 30-second
+  generation deadline, and integrate ready/error/close/idle/shutdown states with independent
+  document fixtures. Commit: `feat: coordinate document report lifetimes`.
+No content is embedded in the workspace until V17's framing checks pass.
+
 **V17a — Add exact-origin report framing.** Replace the app's `frame-src 'none'` only with
 permission to frame a host-owned report wrapper. That wrapper contains no tool HTML and sets a
 per-response CSP permitting only the selected report's exact origin. Both ancestors use the

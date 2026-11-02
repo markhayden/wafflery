@@ -635,3 +635,15 @@ after the deadline cannot resurrect the view, even if the timer has not yet run.
 the process through the same owned EOF/SIGTERM lifecycle, without automatic force, and exposes
 `idle_expired` for a later UI explanation. Closed/replaced IDs reject activity. There is no
 durable lease or caller-supplied TTL. V17b will send activity only during visible inspection.
+
+V16a reads one document output only after confirmed exit zero and complete bounded stdout/
+stderr. Stdout must contain one absolute UTF-8 path line. The grant pins the original run
+directory, rejects symlink/non-regular output and checks ancestor device/inode identities to
+exclude outputs inside the run even through case/path aliases. Before/open/after snapshots
+reject replacement or mutation; the source file is neither deleted nor served in place.
+
+Each immutable copy is capped at 32 MiB, with a five-second async read deadline. At most 16
+blocking readers may remain outstanding globally. A permit lives inside the blocking task,
+so caller cancellation or timeout cannot free capacity before that reader finishes; excess
+reads are refused without queuing. Only the declared file is read, plus ancestor metadata for
+containment checks. Serving/isolation remains V16b and retained view integration remains V16c.
