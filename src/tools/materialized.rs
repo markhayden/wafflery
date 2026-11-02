@@ -35,6 +35,7 @@ pub(super) fn discard(root: &Path, attempt: &Attempt) -> io::Result<()> {
         }
     }
     // Validate the entire set first; an invalid later path must not delete an earlier copy.
+    super::prepared::files::unmark(&directory, &attempt.id)?;
     for path in paths {
         match std::fs::remove_file(path) {
             Ok(()) => (),

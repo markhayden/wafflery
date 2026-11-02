@@ -76,6 +76,7 @@ impl Coordinator {
             .mode(0o700)
             .recursive(true)
             .create(&execution)?;
+        super::prepared::files::recover(&assets, &attempts).await?;
         let mut names = std::collections::HashSet::new();
         if descriptors.len() > 32 || descriptors.iter().any(|d| !names.insert(d.id.clone())) {
             return Err(Error::Invalid(

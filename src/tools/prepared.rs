@@ -1,4 +1,5 @@
 //! Exact input copies belong to a preparation until its attempt is durably recorded.
+pub(super) mod files;
 pub(super) mod retained;
 use super::{Error, Result, client::Declaration, validator};
 use crate::library::{
@@ -50,6 +51,7 @@ impl PreparedCall {
             directory: Some(directory.clone()),
             _storage: storage,
         };
+        files::mark(&directory, &prepared.request.id)?;
         prepared.declaration = serde_json::to_value(current)?;
         prepared.declaration["session"] = Value::String(session.to_owned());
         (prepared.arguments, prepared.inputs) =
@@ -70,7 +72,11 @@ impl PreparedCall {
             )
             .await?;
         // The durable attempt now owns these same paths; never copy or move them again.
-        self.directory.take();
+        if let Some(directory) = self.directory.take() {
+            // A failed unlink cannot undo durable transfer. Terminal input cleanup also
+            // removes a valid leftover marker; startup always skips recorded attempts.
+            let _ = files::unmark(&directory, &self.request.id);
+        }
         Ok(attempt)
     }
 }

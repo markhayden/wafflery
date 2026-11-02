@@ -283,10 +283,19 @@ Restart, declaration invalidation and close release only unclaimed drafts. Libra
 go through Coordinator: it checks retained drafts before requesting the storage write lock and
 refuses while they exist, preventing a queued writer from blocking later asset imports. The
 receipt's wall-clock deadline is for display; monotonic time controls eligibility. Authenticated
-HTTP controls and conservative startup cleanup are V09c; retained drafts are not exposed by the
-browser API yet.
+HTTP controls now expose prepare, receipt lookup, discard and explicit prepared submission
+through the existing same-origin bearer boundary. The path id must match the strict saved request;
+other workspaces cannot resolve these ids. None of the preparation controls create history or
+call the action until explicit submission. UI estimation controls remain V10–V11.
+Before copying, the host writes a private versioned ownership marker. Startup validates its
+execution root, skips recorded attempts before inspecting their contents, and reclaims only
+marked, unclaimed directories containing recognized regular input copies. Unknown content,
+unmarked directories, hard links and symlinks are preserved; cleanup never follows symlinks or
+recursively removes discovered directories. A crash between persistence and marker deletion
+cannot expose a saved attempt to this cleanup. A retained marker is also removed by terminal
+input cleanup after the tool has relinquished those paths.
 
-Planned v0.3 behavior (PLAN V09c–V13; not implemented): expose preparations and estimate
+Planned v0.3 behavior (PLAN V10–V13; not implemented): request and validate estimates
 outside the host execution reservation. Estimates remain responsive while
 an action runs; they neither consume a run-dispatch permit nor create attempts. The exact allowed
 quote, positive cap and binding are checked again under the host's execution reservation before

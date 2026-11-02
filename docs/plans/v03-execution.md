@@ -474,3 +474,29 @@ and 24 execution tests pass. The full matrix passed: 138 Rust tests (three ignor
 tests, two asset tests and 100 browser cases (four opt-in skips), plus fmt, clippy, typecheck,
 Storybook, reproducible assets and release build. Limits/expiry tests use disposable fixtures;
 no real assets, paid providers, dependency pins or library schemas changed.
+
+V09c exposes POST /api/preparations, GET/DELETE /api/preparations/{id}, and POST
+/api/preparations/{id}/submit through the existing authenticated, same-origin workspace router.
+Prepare and submit carry the strict Submission; the latter must match the path id and retained
+request. There is no implicit submit or rematerialization on GET, prepare, discard or expiry.
+Browser form/estimate integration remains V10–V11.
+
+A versioned private ownership marker is written before input materialization. Startup validates
+the execution root, skips every recorded attempt, and removes only private marked directories
+whose entries are the marker and regular generated input files. Unmarked/unknown content and
+symlinks are preserved. Cleanup never follows symlinks or recursively deletes discovered paths.
+The attempt transaction transfers ownership before marker removal; a marker surviving that
+transaction cannot make startup delete a saved attempt. Reverting this slice leaves markers and
+unclaimed copies safely on disk; it does not require a library-schema downgrade.
+
+The new API test first returned 405; startup tests first retained the orphan and accepted an
+execution-root symlink. Targeted checks passed after implementation. Review approved and suggested
+hard-link/public-marker coverage, now included. An additional unreadable-marker case reproduced
+startup attempting to inspect a recorded attempt; recovery now checks the saved identity first,
+without inspecting that directory's marker.
+
+V09c final verification: review approved the saved-attempt exclusion ordering. Startup ownership,
+authenticated controls and all execution/preparation targeted tests pass. Full matrix passed:
+141 Rust tests (three ignored), 27 UI unit tests, two asset tests, 100 browser cases (four opt-in
+skips), fmt, clippy, typecheck, Storybook, reproducible assets and release build. No public contract,
+dependency, library schema or generated UI asset change.

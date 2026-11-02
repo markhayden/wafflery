@@ -606,7 +606,7 @@ Implementation slices (each reviewed and full-matrix verified):
   while transport uncertainty retains idempotent submission identity. Commit: `feat: explain no-run refusals in the workspace`.
 Rollback later slices before earlier ones; no library migration.
 
-**V09 — Prepare immutable calls without creating attempts.** Extract a bounded prepared-call
+**V09 — Prepare immutable calls without creating attempts. Complete.** Extract a bounded prepared-call
 resource holding exact arguments and owned materialized inputs before estimation. Bind it to
 tool/session/declaration and authenticated workspace. Invalidating a draft releases only its
 unclaimed temporary inputs; expiration, abandoned drafts and host startup clean these safely.
@@ -624,7 +624,7 @@ Depends: V06a/V06b/V08. Implementation slices (each reviewed and full-matrix ver
   expiry, invalidation, restart cleanup and atomic consumption. The six implementation files
   keep lifecycle ownership and restart integration in one reviewable slice.
   Commit: `feat: retain bounded draft preparations`.
-- **V09c:** Add authenticated preparation controls and conservative startup cleanup, with API and
+- **V09c: Complete.** Add authenticated preparation controls and conservative startup cleanup, with API and
   crash-leftover coverage. Commit: `feat: expose owned draft preparations`.
 Rollback V09c before V09b before V09a. These slices do not change the shared contract; preparations are temporary
 host resources, not attempts or library examples.

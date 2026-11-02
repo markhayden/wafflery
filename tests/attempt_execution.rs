@@ -920,3 +920,188 @@ async fn preparation_stays_available_while_running_and_rejects_excess_before_cop
     }
     c.assets.database.shutdown().await.unwrap();
 }
+
+#[tokio::test]
+async fn preparation_controls_require_this_workspace_and_never_dispatch_on_prepare() {
+    use axum::{
+        body::Body,
+        http::{Request, StatusCode},
+    };
+    use tower::ServiceExt;
+    let (dir, c, mut input) = setup("normal").await;
+    let auth = wafflery::host::auth::Auth::new().unwrap();
+    let token = auth
+        .exchange(&auth.issue().unwrap())
+        .unwrap()
+        .unwrap()
+        .token;
+    let other_auth = wafflery::host::auth::Auth::new().unwrap();
+    let other_token = other_auth
+        .exchange(&other_auth.issue().unwrap())
+        .unwrap()
+        .unwrap()
+        .token;
+    let other_assets = AssetStore::open(&dir.path().join("other-library")).unwrap();
+    let other = Arc::new(
+        Coordinator::open(other_assets.clone(), vec![])
+            .await
+            .unwrap(),
+    );
+    let (quit, _) = tokio::sync::watch::channel(false);
+    let app = wafflery::host::api::router_with_tools(
+        "http://127.0.0.1:9999",
+        auth,
+        quit.clone(),
+        c.assets.clone(),
+        Some(c.clone()),
+    );
+    let other_app = wafflery::host::api::router_with_tools(
+        "http://127.0.0.1:9999",
+        other_auth,
+        quit,
+        other_assets.clone(),
+        Some(other.clone()),
+    );
+    let request =
+        |method: &str, path: &str, credential: &str, origin: &str, body: serde_json::Value| {
+            Request::builder()
+                .method(method)
+                .uri(path)
+                .header("host", "127.0.0.1:9999")
+                .header("origin", origin)
+                .header("authorization", format!("Bearer {credential}"))
+                .header("content-type", "application/json")
+                .body(Body::from(serde_json::to_vec(&body).unwrap()))
+                .unwrap()
+        };
+    let origin = "http://127.0.0.1:9999";
+    for (credential, site, expected) in [
+        ("bad", origin, StatusCode::UNAUTHORIZED),
+        (&token[..], "https://other.invalid", StatusCode::FORBIDDEN),
+    ] {
+        let response = app
+            .clone()
+            .oneshot(request(
+                "POST",
+                "/api/preparations",
+                credential,
+                site,
+                json!(input),
+            ))
+            .await
+            .unwrap();
+        assert_eq!(response.status(), expected);
+    }
+    for _ in 0..2 {
+        let response = app
+            .clone()
+            .oneshot(request(
+                "POST",
+                "/api/preparations",
+                &token,
+                origin,
+                json!(input),
+            ))
+            .await
+            .unwrap();
+        assert_eq!(response.status(), StatusCode::OK);
+    }
+    assert!(
+        c.attempts
+            .history(None, 50, None, None)
+            .await
+            .unwrap()
+            .is_empty()
+    );
+    assert!(!dir.path().join("runs/calls.ndjson").exists());
+    for (router, credential, expected) in [
+        (app.clone(), &token, StatusCode::OK),
+        (other_app.clone(), &token, StatusCode::UNAUTHORIZED),
+        (other_app.clone(), &other_token, StatusCode::NOT_FOUND),
+    ] {
+        let response = router
+            .oneshot(request(
+                "GET",
+                "/api/preparations/attempt-1",
+                credential,
+                origin,
+                json!({}),
+            ))
+            .await
+            .unwrap();
+        assert_eq!(response.status(), expected);
+    }
+    let response = app
+        .clone()
+        .oneshot(request(
+            "POST",
+            "/api/preparations/wrong-id/submit",
+            &token,
+            origin,
+            json!(input),
+        ))
+        .await
+        .unwrap();
+    assert_eq!(response.status(), StatusCode::UNPROCESSABLE_ENTITY);
+    let response = app
+        .clone()
+        .oneshot(request(
+            "DELETE",
+            "/api/preparations/attempt-1",
+            &token,
+            origin,
+            json!({}),
+        ))
+        .await
+        .unwrap();
+    assert_eq!(response.status(), StatusCode::NO_CONTENT);
+    assert!(c.preparation(&input.id).await.is_err());
+    input.id = "api-prepared-run".into();
+    let response = app
+        .clone()
+        .oneshot(request(
+            "POST",
+            "/api/preparations",
+            &token,
+            origin,
+            json!(input),
+        ))
+        .await
+        .unwrap();
+    assert_eq!(response.status(), StatusCode::OK);
+    let response = app
+        .clone()
+        .oneshot(request(
+            "POST",
+            "/api/preparations/api-prepared-run/submit",
+            &token,
+            origin,
+            json!(input),
+        ))
+        .await
+        .unwrap();
+    assert_eq!(response.status(), StatusCode::ACCEPTED);
+    let response = app
+        .oneshot(request(
+            "DELETE",
+            "/api/preparations/api-prepared-run",
+            &token,
+            origin,
+            json!({}),
+        ))
+        .await
+        .unwrap();
+    assert_eq!(response.status(), StatusCode::NO_CONTENT);
+    assert_eq!(
+        c.attempts
+            .history(None, 50, None, None)
+            .await
+            .unwrap()
+            .len(),
+        1
+    );
+    finish_host(&c).await;
+    finish_host(&other).await;
+    c.assets.database.shutdown().await.unwrap();
+    other_assets.database.shutdown().await.unwrap();
+}

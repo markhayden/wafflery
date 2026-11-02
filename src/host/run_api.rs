@@ -18,6 +18,12 @@ pub fn router(coordinator: Arc<Coordinator>) -> Router {
         .route("/api/tools/{id}/session", get(session))
         .route("/api/tools/{id}/refresh", post(refresh))
         .route("/api/tools/{id}/restart", post(restart))
+        .route("/api/preparations", post(prepare))
+        .route(
+            "/api/preparations/{id}",
+            get(preparation).delete(discard_preparation),
+        )
+        .route("/api/preparations/{id}/submit", post(submit_prepared))
         .route("/api/attempts", get(list).post(submit))
         .route("/api/attempts/{id}", get(attempt))
         .route("/api/attempts/{id}/cancel", post(cancel))
@@ -165,4 +171,37 @@ async fn pin(
         .await?;
     c.events.changed();
     Ok(StatusCode::NO_CONTENT)
+}
+
+async fn prepare(
+    State(c): State<Arc<Coordinator>>,
+    Json(request): Json<Submission>,
+) -> Result<Json<crate::tools::coordinator::Preparation>, ApiError> {
+    Ok(Json(c.prepare(request).await?))
+}
+async fn preparation(
+    State(c): State<Arc<Coordinator>>,
+    Path(id): Path<String>,
+) -> Result<Json<crate::tools::coordinator::Preparation>, ApiError> {
+    Ok(Json(c.preparation(&id).await?))
+}
+async fn discard_preparation(
+    State(c): State<Arc<Coordinator>>,
+    Path(id): Path<String>,
+) -> Result<StatusCode, ApiError> {
+    c.discard_preparation(&id).await?;
+    Ok(StatusCode::NO_CONTENT)
+}
+async fn submit_prepared(
+    State(c): State<Arc<Coordinator>>,
+    Path(id): Path<String>,
+    Json(request): Json<Submission>,
+) -> Result<(StatusCode, Json<crate::library::attempts::Attempt>), ApiError> {
+    if request.id != id {
+        return Err(Error::Invalid("Preparation path and submission IDs must match".into()).into());
+    }
+    Ok((
+        StatusCode::ACCEPTED,
+        Json(c.submit_prepared(request).await?),
+    ))
 }
