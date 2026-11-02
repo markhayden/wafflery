@@ -1061,3 +1061,23 @@ tests, two asset tests, 164 browser cases (four skips), fmt, clippy, typecheck, 
 reproducible assets and release build. Dependencies, server/module, tests and matching docs form
 one cohesive slice beyond the usual file budget. V16c1 adds retained generation/read/content
 supervision; V16c2 connects it to coordinator capacity, activity and shutdown.
+
+### V16c1 retained document lifetime
+
+The document monitor owns generation (thirty-second deadline), bounded reading and isolated
+content serving. Successful renderer exit leaves the content live. The five-minute idle lease
+continues until content closure; close, expiry, policy failure and last-owner drop all clean up
+without browser polling. Pending generation/read cannot publish a late view. Ready URLs are
+cleared at cleanup, and closed means both content connections and the process have stopped.
+A stuck process remains owned for explicit force; a premature force request has no close side
+effect. V16c2 must gate viewer access on current closing/expiry as well as readiness.
+
+Six tests cover live content after renderer exit, invalid outputs, idle expiry, generation timeout,
+confirmed force, cancellation/drop and policy-error cleanup without changing saved evidence.
+The independent fake renderer writes its own output outside the saved run; malformed variants
+exercise the host boundary. Tests failed before implementation and pass with the monitor.
+Review approved. Full shared-lock matrix passed: 231 Rust tests (three ignored), 41 UI unit
+tests, two asset tests, 164 browser cases (four skips), fmt, clippy, typecheck, Storybook,
+reproducible assets and release build. The monitor, idle attachment, fake fixture, tests and
+matching docs remain one cohesive slice beyond the usual file budget. Coordinator integration
+is still V16c2; no report content is yet embedded in the app.

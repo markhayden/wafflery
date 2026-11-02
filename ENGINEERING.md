@@ -670,3 +670,14 @@ hyper-util are direct dependencies at their already-locked versions so this boun
 each connection instead of relying on detached server connection tasks. Immutable bytes are
 shared across responses without copying the entire document per request. V16c connects this
 server to the view's idle/shutdown lifecycle.
+
+V16c1's document monitor retains generation, immutable reading and content serving as one
+owned lifetime. Generation must finish within thirty seconds, then the independent five-second
+reader bound applies. A renderer's exit does not close a ready document. A document idle lease
+remains active through content serving; observation does not renew it. Close, idle expiry,
+policy failure or last-owner drop closes the content listener and requests graceful renderer
+closure. A stuck process remains owned until an explicit, confirmed force action; a premature
+force request is refused without starting closure. A closed monitor means both the content
+listener/connections and renderer are confirmed stopped. Pending reads cannot publish after
+close; their bounded worker permits remain held as described above. Ready URLs are cleared
+when cleanup begins. Coordinator wiring and capacity accounting remain V16c2.

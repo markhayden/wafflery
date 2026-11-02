@@ -15,6 +15,9 @@ pub struct IdleLease {
     duration: Duration,
 }
 impl IdleLease {
+    pub fn document() -> Self {
+        Self::new(IDLE_TIMEOUT)
+    }
     pub fn attach(process: RenderProcess) -> Self {
         let lease = Self::new(IDLE_TIMEOUT);
         lease.supervise(process);
@@ -57,7 +60,7 @@ impl IdleLease {
         });
         self.expired()
     }
-    async fn wait_expired(&self) {
+    pub(super) async fn wait_expired(&self) {
         let mut changes = self.state.subscribe();
         loop {
             let state = *changes.borrow_and_update();

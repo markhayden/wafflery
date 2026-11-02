@@ -894,7 +894,7 @@ V16 execution slices (review and full matrix per slice; rollback in reverse orde
   Commit: `feat: serve isolated report documents`.
 - **V16c:** Retain document generation/read/content lifetimes in views, enforce a 30-second
   generation deadline, and integrate ready/error/close/idle/shutdown states with independent
-  document fixtures. Split into **V16c1**, the owned document monitor and independent fixtures,
+  document fixtures. Split into **V16c1: Complete**, the owned document monitor and independent fixtures,
   and **V16c2**, coordinator lifecycle integration and API regression tests. Review and run the
   full matrix for each; rollback V16c2 before V16c1. Commits: `feat: supervise document report lifetimes`
   and `feat: coordinate document report lifetimes`.

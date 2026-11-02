@@ -1,4 +1,5 @@
 //! Synthetic render processes; no provider, host library or shared host types.
+mod document;
 mod lifetime;
 mod server;
 use std::{
@@ -13,6 +14,9 @@ pub fn run(mut args: impl Iterator<Item = String>) -> Result<(), Box<dyn std::er
     }
     if mode.starts_with("server") {
         return server::run(&mode, args);
+    }
+    if mode.starts_with("document") {
+        return document::run(&mode, &run);
     }
     if matches!(
         mode.as_str(),
