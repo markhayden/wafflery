@@ -1,9 +1,9 @@
+import { prepareSampleInput } from "./sample-input";
 import { test, expect } from "./tool-host";
 test.use({ hostScenario: "slow" });
 test("associated cancellation preserves the result and session evidence", async ({ page, host }) => {
   await host.open(page);
-  await page.locator("input[type=file]").setInputFiles("tests/fixtures/sample.png");
-  await page.getByLabel("Label *", { exact: true }).fill("Recover this cancellation");
+  await prepareSampleInput(page, "Recover this cancellation");
   await page.getByRole("button", { name: "Run", exact: true }).click();
   await expect(page.getByText(/Started|Waiting in the offline test tool/, { exact: true })).toBeVisible();
   await page.getByRole("button", { name: "Cancel run" }).click();

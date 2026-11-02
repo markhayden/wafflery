@@ -1,3 +1,4 @@
+import { prepareSampleInput } from "./sample-input";
 import { test, expect } from "./tool-host";
 import { writeFile } from "node:fs/promises";
 import { join } from "node:path";
@@ -189,8 +190,7 @@ test.describe("live readiness", () => {
   });
   test("optional setup refuses only the requested filler and a corrected free run completes", async ({ page, host }) => {
     await host.open(page);
-    await page.locator("input[type=file]").setInputFiles("tests/fixtures/sample.png");
-    await page.getByLabel("Label *", { exact: true }).fill("Optional setup experiment");
+    await prepareSampleInput(page, "Optional setup experiment");
     await page.getByLabel("Use optional filler", { exact: true }).selectOption("true");
     await page.getByRole("button", { name: "Run", exact: true }).click();
     await expect(page.getByText("No run created.", { exact: true })).toBeVisible();

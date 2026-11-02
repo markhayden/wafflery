@@ -1,3 +1,4 @@
+import { prepareSampleInput } from "./sample-input";
 import { test, expect } from "./tool-host";
 import { readFile, rm } from "node:fs/promises";
 import { join, resolve } from "node:path";
@@ -6,10 +7,7 @@ test("history reports missing saved image bytes without changing the recorded ou
   host,
 }) => {
   await host.open(page);
-  await page
-    .locator("input[type=file]")
-    .setInputFiles("tests/fixtures/sample.png");
-  await page.getByLabel("Label *", { exact: true }).fill("Missing image check");
+  await prepareSampleInput(page, "Missing image check");
   await page.getByRole("button", { name: "Run", exact: true }).click();
   await expect(
     page.getByText("Contract evidence: complete.", { exact: false }).first(),

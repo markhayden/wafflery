@@ -1,3 +1,4 @@
+import { prepareSampleInput } from "./sample-input";
 import { test, expect } from "./tool-host";
 import { readFile } from "node:fs/promises";
 import { resolve } from "node:path";
@@ -6,10 +7,7 @@ test("an example owns saved inputs and opens a draft without execution", async (
   host,
 }) => {
   await host.open(page);
-  await page
-    .locator("input[type=file]")
-    .setInputFiles("tests/fixtures/sample.png");
-  await page.getByLabel("Label *", { exact: true }).fill("Saved example input");
+  await prepareSampleInput(page, "Saved example input");
   await page.getByLabel("Tags", { exact: true }).fill('["saved tag"]');
   await page.getByRole("button", { name: "Run", exact: true }).click();
   await expect(

@@ -1,13 +1,11 @@
+import { prepareSampleInput } from "./sample-input";
 import { test, expect } from "./tool-host";
 test("deleting a source run clears its baseline and preserves a saved example", async ({
   page,
   host,
 }) => {
   await host.open(page);
-  await page
-    .locator("input[type=file]")
-    .setInputFiles("tests/fixtures/sample.png");
-  await page.getByLabel("Label *", { exact: true }).fill("Keep these inputs");
+  await prepareSampleInput(page, "Keep these inputs");
   await page.getByRole("button", { name: "Run", exact: true }).click();
   await expect(
     page.getByText("Contract evidence: complete.", { exact: false }).first(),

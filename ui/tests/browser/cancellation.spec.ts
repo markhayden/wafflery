@@ -1,3 +1,4 @@
+import { prepareSampleInput } from "./sample-input";
 import { test, expect } from "./tool-host";
 test.use({ hostScenario: "unassociated" });
 test("cancelled calls without a structured run identity stay unconfirmed", async ({
@@ -5,10 +6,7 @@ test("cancelled calls without a structured run identity stay unconfirmed", async
   host,
 }) => {
   await host.open(page);
-  await page
-    .locator("input[type=file]")
-    .setInputFiles("tests/fixtures/sample.png");
-  await page.getByLabel("Label *", { exact: true }).fill("Cancel this attempt");
+  await prepareSampleInput(page, "Cancel this attempt");
   await page.getByRole("button", { name: "Run", exact: true }).click();
   await expect(
     page.getByRole("status").filter({ hasText: "running" }),

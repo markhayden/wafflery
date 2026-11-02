@@ -1,3 +1,4 @@
+import { prepareSampleInput } from "./sample-input";
 import { test, expect } from "./tool-host";
 import { readFile, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
@@ -18,12 +19,7 @@ test("another tab follows a run after a stream reconnect and the launching tab c
   });
   await host.open(other);
   await expect.poll(() => connections).toBeGreaterThanOrEqual(2);
-  await page
-    .locator("input[type=file]")
-    .setInputFiles("tests/fixtures/sample.png");
-  await page
-    .getByLabel("Label *", { exact: true })
-    .fill("Survives a closed tab");
+  await prepareSampleInput(page, "Survives a closed tab");
   await page.getByRole("button", { name: "Run", exact: true }).click();
   await expect(
     other.getByRole("status").filter({ hasText: "running" }),

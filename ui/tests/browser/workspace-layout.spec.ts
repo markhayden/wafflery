@@ -1,3 +1,4 @@
+import { prepareSampleInput } from "./sample-input";
 import { test, expect } from "./tool-host";
 
 test("long inputs scroll independently while run and result controls stay visible", async ({
@@ -6,10 +7,7 @@ test("long inputs scroll independently while run and result controls stay visibl
 }, testInfo) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await host.open(page);
-  await page
-    .locator("input[type=file]")
-    .setInputFiles("tests/fixtures/sample.png");
-  await page.getByLabel("Label *", { exact: true }).fill("Scrollable inputs");
+  await prepareSampleInput(page, "Scrollable inputs");
   const run = page.getByRole("button", { name: "Run", exact: true });
   await expect(run).toBeInViewport();
   const input = page.getByRole("region", {

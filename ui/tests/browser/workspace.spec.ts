@@ -1,3 +1,4 @@
+import { prepareSampleInput } from "./sample-input";
 import { test, expect } from "./tool-host";
 import { spawnSync } from "node:child_process";
 import { join } from "node:path";
@@ -44,12 +45,7 @@ test("run a real offline action and inspect immutable evidence after editing the
   await expect(
     page.getByRole("button", { name: /Action Add a test band/ }),
   ).toBeVisible();
-  await page
-    .locator("input[type=file]")
-    .setInputFiles("tests/fixtures/sample.png");
-  await page
-    .getByLabel("Label *", { exact: true })
-    .fill("Saved first experiment");
+  await prepareSampleInput(page, "Saved first experiment");
   await page.getByRole("button", { name: "Run", exact: true }).click();
   await expect(
     page.getByText("Contract evidence: complete.", { exact: false }).first(),

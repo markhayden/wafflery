@@ -1,3 +1,4 @@
+import { prepareSampleInput } from "./sample-input";
 import { test, expect } from "./tool-host";
 
 test.use({ hostScenario: "data-only" });
@@ -6,10 +7,7 @@ test("a data-only result shows saved data without an empty image comparison", as
   host,
 }) => {
   await host.open(page);
-  await page
-    .locator("input[type=file]")
-    .setInputFiles("tests/fixtures/sample.png");
-  await page.getByLabel("Label *", { exact: true }).fill("Data result");
+  await prepareSampleInput(page, "Data result");
   await page.getByRole("button", { name: "Run", exact: true }).click();
   await expect(
     page.getByText("Contract evidence: complete.", { exact: false }).first(),

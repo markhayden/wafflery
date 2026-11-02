@@ -1,3 +1,4 @@
+import { prepareSampleInput } from "./sample-input";
 import { test, expect } from "./tool-host";
 test.describe("active shutdown", () => {
   test.use({ hostScenario: "slow" });
@@ -12,10 +13,7 @@ test.describe("active shutdown", () => {
     const target = await quit.boundingBox();
     expect(target!.width).toBeGreaterThanOrEqual(44);
     expect(target!.height).toBeGreaterThanOrEqual(44);
-    await page
-      .locator("input[type=file]")
-      .setInputFiles("tests/fixtures/sample.png");
-    await page.getByLabel("Label *", { exact: true }).fill("Shutdown example");
+    await prepareSampleInput(page, "Shutdown example");
     await page.getByRole("button", { name: "Run", exact: true }).click();
     await expect(
       page.getByRole("button", { name: "Cancel run" }),

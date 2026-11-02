@@ -1,13 +1,11 @@
+import { prepareSampleInput } from "./sample-input";
 import { test, expect } from "./tool-host";
 test("baseline comparison uses two saved runs and survives restart", async ({
   page,
   host,
 }) => {
   await host.open(page);
-  await page
-    .locator("input[type=file]")
-    .setInputFiles("tests/fixtures/sample.png");
-  await page.getByLabel("Label *", { exact: true }).fill("Baseline experiment");
+  await prepareSampleInput(page, "Baseline experiment");
   await page.getByRole("button", { name: "Run", exact: true }).click();
   await expect(
     page.getByText("Contract evidence: complete.", { exact: false }).first(),

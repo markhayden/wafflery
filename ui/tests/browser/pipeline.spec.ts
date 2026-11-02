@@ -1,3 +1,4 @@
+import { prepareSampleInput } from "./sample-input";
 import { test, expect } from "./tool-host";
 import { spawnSync } from "node:child_process";
 test("pipeline drawer copies and downloads the selected saved evidence", async ({
@@ -5,10 +6,7 @@ test("pipeline drawer copies and downloads the selected saved evidence", async (
   host,
 }, testInfo) => {
   await host.open(page);
-  await page
-    .locator("input[type=file]")
-    .setInputFiles("tests/fixtures/sample.png");
-  await page.getByLabel("Label *", { exact: true }).fill("Export this run");
+  await prepareSampleInput(page, "Export this run");
   await page.getByRole("button", { name: "Run", exact: true }).click();
   await expect(
     page.getByText("Contract evidence: complete.", { exact: false }).first(),
