@@ -1228,6 +1228,11 @@ M5.01b is split before implementation to keep the wire peer reviewable:
   progress/cancellation and salvaged outputs, using actual request data and no providers. Verify a
   chain, indexed pre-run refusals with released IDs, and controls during a held run. Commit:
   `test: execute independent v0.4 operations over stdio`.
+M5.01b2 is split before implementation into **b2a (portable store)** and **b2b (wire controls)**.
+The first validates and persists the fake's own portable records, serves stored identity/preview
+bytes, and tests idempotence, corruption, relocation and grants. The second connects export/import
+and resource reads to stdio, with wire schema/refusal/no-run checks. This separates storage
+behavior from protocol dispatch while keeping each commit within five authored files.
 Each slice includes testkit documentation, targeted tests, the full matrix and review.
 
 **M5.01a implementation checkpoint (2026-11-02, complete):**
@@ -1269,6 +1274,23 @@ and 220 Chromium/WebKit tests (8 opt-in skipped). An unrelated preview occupied 
 a temporary config changed only the local test server/base URL to 4187 and was removed after
 verification. The default CI configuration is unchanged. Independent review approved; no
 production behavior, dependency lock or prebuilt asset changed.
+
+
+**M5.01b2a implementation checkpoint (2026-11-02, complete):**
+The independent portable store accepts complete verified synthetic Token/location records,
+retains identities across restart and workspace moves, and serves real fingerprinted preview
+bytes. Import verifies optional digests, media/type/record consistency and directory grants
+before recording anything; native Memo remains nonportable. Stable exports live outside runs.
+Eight direct store tests pass. Review regressions first reproduced existence-disclosing path
+errors, a concurrent duplicate-import race, invalid grant acceptance and the wrong error class
+for corrupt stored entries. Fixes make all path failures indistinguishable, verify the winning
+record after duplicate persistence, validate grants at the store boundary and preserve corrupt
+entries while reporting an internal error. No host types or peer implementation are imported.
+The full matrix and review passed: fmt/clippy, 266 Rust tests (4 ignored), typecheck, 53 UI
+unit tests, 2 asset-tool tests, Storybook, reproducible assets, release build and 220 browser
+tests (8 skipped). Browser verification again used the temporary 4187 override because an
+unrelated project held 4173. Lockfile/prebuilt assets are unchanged. M5.01b2b owns stdio wiring;
+these controls have not yet been exposed through the probe.
 
 #### V20 — Image import feedback (M5-adjacent; coordinator-approved 2026-11-02)
 

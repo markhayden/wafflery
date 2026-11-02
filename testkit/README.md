@@ -315,3 +315,27 @@ so consumers cannot assume a particular tool name. These flags belong to the fak
 Run `cargo test --locked --test v04_wire` for initialization, no-roots, restart, invalid/symlink/
 space-containing grants, no-run control behavior and bounded-input/EOF checks. This manually
 framed client uses no MCP SDK; only process spawning uses the host's descriptor-isolation helper.
+
+### Portable store groundwork (M5.01b2a)
+
+`v04_store.rs` is the fake's independent store, currently exercised directly by
+`tests/v04_artifact_store.rs`; b2b connects it to stdio. The fake portable format is a complete
+synthetic artifact-resource JSON document: `.bundle` with `application/x-<tool>-token` for Token,
+and `.json` with `application/json` for location. This is its own format, not Rascal's bundle.
+Whole-record/reference/preview validation and optional SHA-256 checks precede any store write.
+The test tool only understands its own synthetic records; it never accepts a preview PNG as a
+native artifact. Native types must belong to the same tool; shared locations can change owner
+while retaining identity. Memo is stored only by an internal producer and cannot be imported
+or exported. Every import is idempotent by identity, including concurrent duplicates, restart and workspace move.
+
+Stored documents and previews are read by identity; absent/corrupt records have structured
+binding refusals. Preview PNG bytes match the saved image fingerprint. Exports live separately
+under the fake workspace's `exports/`, never a run directory, and repeat byte for byte.
+File imports require canonical explicit grants and regular files; each path component is opened
+without following symlinks again after the grant check. File records are bounded to 4 MiB and
+inline bytes to the declared 1 MiB. Original symlinks resolving inside a grant are permitted;
+escapes, missing paths and non-files receive the same refusal without revealing file existence.
+Digest failures and malformed records are refused before saving; corrupt stored entries are
+reported as store errors on import rather than overwritten. Nothing
+in these controls creates runs or spend. Host preservation and path enforcement remain separate
+M5 tasks; passing these independent tests does not claim live-client support yet.

@@ -164,7 +164,7 @@ pub fn artifact(tool: &str, kind: &str) -> Value {
     artifact_variant(tool, kind, 0.0)
 }
 
-fn artifact_variant(tool: &str, kind: &str, amount: f64) -> Value {
+pub fn artifact_variant(tool: &str, kind: &str, amount: f64) -> Value {
     let image = image_reference();
     let record = if kind == "location" {
         json!({"image":image,"kind":"line","parts":[{"column":0.5,"width_px":2}],"straddles_wrap":false})
@@ -227,7 +227,7 @@ pub fn refusal(problem: &str, port: Option<&str>, index: Option<usize>) -> Value
     json!({"reason":"binding","run":null,"bindings":[binding]})
 }
 
-fn preview_png(kind: &str, amount: f64) -> Vec<u8> {
+pub fn preview_png(kind: &str, amount: f64) -> Vec<u8> {
     let mut pixels = image::RgbaImage::from_pixel(160, 100, image::Rgba([25, 25, 25, 255]));
     let half_width = if kind == "location" {
         1
