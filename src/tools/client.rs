@@ -110,12 +110,13 @@ impl ToolClient {
         if let Some(config) = &descriptor.config {
             command.arg("--config").arg(config);
         }
-        let mut child = command
-            .current_dir(&descriptor.cwd)
-            .stdin(Stdio::piped())
-            .stdout(Stdio::piped())
-            .stderr(Stdio::null())
-            .spawn()?;
+        let mut child = crate::process::spawn(
+            command
+                .current_dir(&descriptor.cwd)
+                .stdin(Stdio::piped())
+                .stdout(Stdio::piped())
+                .stderr(Stdio::null()),
+        )?;
         let stdout = child
             .stdout
             .take()

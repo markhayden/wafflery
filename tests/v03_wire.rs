@@ -27,14 +27,15 @@ impl Peer {
             );
             Path::new(env!("CARGO_MANIFEST_DIR")).join("target/debug/examples/sample-lab")
         });
-        let mut child = Command::new(binary)
-            .arg(root)
-            .arg(scenario)
-            .stdin(Stdio::piped())
-            .stdout(Stdio::piped())
-            .stderr(Stdio::inherit())
-            .spawn()
-            .unwrap();
+        let mut child = wafflery::process::spawn_std(
+            Command::new(binary)
+                .arg(root)
+                .arg(scenario)
+                .stdin(Stdio::piped())
+                .stdout(Stdio::piped())
+                .stderr(Stdio::inherit()),
+        )
+        .unwrap();
         let input = child.stdin.take().unwrap();
         let output = child.stdout.take().unwrap();
         let (tx, messages) = mpsc::channel();

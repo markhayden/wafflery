@@ -91,6 +91,21 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     std::fs::create_dir_all(&root)?;
     let root = root.canonicalize()?;
     let scenario = arguments.next().unwrap_or_else(|| "normal".into());
+    if scenario == "pipe-inheritance" {
+        use std::os::unix::fs::FileTypeExt;
+        let inherited: Vec<_> = std::fs::read_dir("/dev/fd")?
+            .filter_map(Result::ok)
+            .filter_map(|entry| {
+                let fd = entry.file_name().to_str()?.parse::<u32>().ok()?;
+                (fd > 2 && entry.path().metadata().ok()?.file_type().is_fifo()).then_some(fd)
+            })
+            .collect();
+        std::fs::write(
+            root.join("inherited-pipes.json"),
+            serde_json::to_vec(&inherited)?,
+        )?;
+    }
+
     let mut configuration =
         configuration::Configuration::load(&root, &scenario, arguments.collect())?;
     if scenario.starts_with("v03-") {

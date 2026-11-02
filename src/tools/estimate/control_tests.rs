@@ -9,11 +9,16 @@ async fn client() -> (tempfile::TempDir, Arc<ToolClient>, Declaration, Value) {
     static BINARY: OnceLock<PathBuf> = OnceLock::new();
     let binary = BINARY.get_or_init(|| {
         assert!(
-            std::process::Command::new(env!("CARGO"))
-                .args(["build", "--locked", "--example", "sample-lab"])
-                .status()
-                .unwrap()
-                .success()
+            crate::process::spawn_std(std::process::Command::new(env!("CARGO")).args([
+                "build",
+                "--locked",
+                "--example",
+                "sample-lab"
+            ]))
+            .unwrap()
+            .wait()
+            .unwrap()
+            .success()
         );
         Path::new(env!("CARGO_MANIFEST_DIR")).join("target/debug/examples/sample-lab")
     });

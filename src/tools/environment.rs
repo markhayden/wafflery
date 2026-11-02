@@ -187,10 +187,10 @@ mod tests {
             "XDG_CONFIG_HOME" => Some(config.clone().into_os_string()),
             _ => None,
         });
-        let status = Command::new("/bin/sh")
+        let status = crate::process::spawn(Command::new("/bin/sh")
             .args(["-c", "test -f \"$HOME/.config/example.conf\" && test -f \"$XDG_CONFIG_HOME/example.conf\" && test -z \"${UNRELATED_SECRET+x}\""])
             .env("UNRELATED_SECRET", "synthetic-unrelated")
-            .env_clear().envs(environment).status().await.unwrap();
+            .env_clear().envs(environment)).unwrap().wait().await.unwrap();
         assert!(status.success());
     }
 }

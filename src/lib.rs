@@ -26,3 +26,6 @@ WAFFLERY_DATA_DIR selects an absolute library parent for every entry point;
 pub mod tools;
 
 pub mod events;
+
+#[doc(hidden)]
+pub mod process;

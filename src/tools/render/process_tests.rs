@@ -12,11 +12,16 @@ pub(crate) fn setup(mode: &str) -> (tempfile::TempDir, ResolvedRender) {
     static BIN: OnceLock<PathBuf> = OnceLock::new();
     let bin = BIN.get_or_init(|| {
         assert!(
-            std::process::Command::new(env!("CARGO"))
-                .args(["build", "--locked", "--example", "sample-lab"])
-                .status()
-                .unwrap()
-                .success()
+            crate::process::spawn_std(std::process::Command::new(env!("CARGO")).args([
+                "build",
+                "--locked",
+                "--example",
+                "sample-lab"
+            ]))
+            .unwrap()
+            .wait()
+            .unwrap()
+            .success()
         );
         Path::new(env!("CARGO_MANIFEST_DIR")).join("target/debug/examples/sample-lab")
     });
@@ -168,10 +173,15 @@ async fn surviving_descendants_hold_the_group_until_graceful_or_explicit_force_c
         }
         assert_eq!(process.snapshot().phase, ProcessPhase::Exited);
         assert_eq!(process.snapshot().exit_code, Some(0));
-        let observed = std::process::Command::new("/bin/ps")
-            .args(["-p", &child.to_string(), "-o", "stat="])
-            .output()
-            .unwrap();
+        let observed = crate::process::spawn_std(
+            std::process::Command::new("/bin/ps")
+                .args(["-p", &child.to_string(), "-o", "stat="])
+                .stdout(std::process::Stdio::piped())
+                .stderr(std::process::Stdio::piped()),
+        )
+        .unwrap()
+        .wait_with_output()
+        .unwrap();
         assert!(
             observed.stdout.is_empty()
                 || String::from_utf8_lossy(&observed.stdout)

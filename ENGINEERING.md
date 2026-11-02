@@ -230,6 +230,13 @@ The library UUID and content digests remain stable. Final relocation tests depen
 
 ## Host and tool processes
 
+On macOS, every host-owned process spawn uses `process::spawn` or `process::spawn_std`.
+Their shared mutex covers synchronous pipe creation and spawning only; no wait or asynchronous
+work holds it. This prevents concurrent children inheriting temporary pipe ends before close-on-exec
+is set, which otherwise keeps another tool's stdin alive after its owner closes it. Tool, report,
+observer, launcher and browser-opening paths all participate. See the
+[spawn-isolation regression](docs/reviews/2026-11-02-spawn-isolation.md).
+
 Tool `playground` subcommands only locate/install and invoke the Wafflery executable with
 the agreed tool-selection context. They do not read locks, authenticate a host endpoint, mint
 browser secrets, or open the final browser URL. The Wafflery binary owns all those details.

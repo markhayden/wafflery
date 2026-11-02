@@ -33,14 +33,15 @@ struct Peer {
 
 impl Peer {
     fn start(root: &Path, scenario: &str) -> Self {
-        let mut child = Command::new(executable())
-            .arg(root.join("runs"))
-            .arg(scenario)
-            .stdin(Stdio::piped())
-            .stdout(Stdio::piped())
-            .stderr(Stdio::inherit())
-            .spawn()
-            .unwrap();
+        let mut child = wafflery::process::spawn_std(
+            Command::new(executable())
+                .arg(root.join("runs"))
+                .arg(scenario)
+                .stdin(Stdio::piped())
+                .stdout(Stdio::piped())
+                .stderr(Stdio::inherit()),
+        )
+        .unwrap();
         let input = child.stdin.take();
         let output = child.stdout.take().unwrap();
         let (sender, messages) = mpsc::channel();

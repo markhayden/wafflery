@@ -59,7 +59,7 @@ impl OwnedGroup {
     fn spawn_unwatched(command: &mut Command) -> Result<Self> {
         // Create the observer before starting a child we must retain on every error path.
         let events = Kqueue::new().map_err(os_error)?;
-        let child = command.process_group(0).spawn()?;
+        let child = crate::process::spawn(command.process_group(0))?;
         let pid = child.id().expect("newly spawned child has an ID") as i32;
         Ok(Self {
             child,
@@ -206,11 +206,12 @@ fn members(bytes: &[u8], leader: i32) -> Result<Members> {
 
 /// A detached worker retains and reaps this trusted helper even if its caller is cancelled.
 async fn capture(mut command: Command, limit: usize, timeout: Duration) -> Result<Vec<u8>> {
-    let mut child = command
-        .stdin(Stdio::null())
-        .stdout(Stdio::piped())
-        .stderr(Stdio::null())
-        .spawn()?;
+    let mut child = crate::process::spawn(
+        command
+            .stdin(Stdio::null())
+            .stdout(Stdio::piped())
+            .stderr(Stdio::null()),
+    )?;
     let stdout = child.stdout.take().expect("piped observation stdout");
     tokio::spawn(async move {
         let result = tokio::time::timeout(timeout, async {

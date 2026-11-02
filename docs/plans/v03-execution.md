@@ -1159,3 +1159,25 @@ Review approved. One hundred focused browser repetitions and the full shared-loc
 fmt, clippy, typecheck, Storybook, reproducible assets and release build. Fixture declarations, renderer pages,
 shared browser setup, tests and matching docs form one cohesive verification slice beyond the
 usual file budget. Visible report controls remain V17b.
+
+### Hosted draft edit fixture correction after V17a2
+
+Hosted run 41412340374 exposed the remaining focus-to-insertion gap in the label fixture helper.
+The focused reproduction, committed-value check and independent native-keyboard coverage are
+recorded in [the review note](../reviews/2026-11-02-draft-edit-commit.md). V17b1 remains on its
+branch while this correction gates further merges. No production behavior changes.
+Independent review approved; 420 focused browser repetitions and the full shared-lock matrix
+passed (241 Rust, 41 UI unit, two asset and 180 browser tests; three Rust ignores/four browser skips,
+fmt, clippy, typecheck, Storybook, reproducible UI and release build).
+
+### Concurrent process creation correction
+
+The helper's matrix exposed a separate probe EOF failure. Captured sibling descriptors and a
+failing independent peer regression establish the cause; see the
+[spawn-isolation review](../reviews/2026-11-02-spawn-isolation.md). Route every production child
+spawn through one short macOS critical section, retain concurrent execution and existing shutdown
+bounds, stress the regression and attempt suite, then run the full matrix. One cohesive commit
+covers all participating spawn sites and their documentation; rollback that commit as a whole.
+Twenty focused rounds passed: 3,840 simultaneous peer launches and 500 attempt tests.
+Independent review and the full matrix above passed. Final wire-test/fmt/clippy checks also passed (seven wire tests).
+No change to the remaining V17–V19 scope.

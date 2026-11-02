@@ -111,13 +111,14 @@ pub fn attach(options: &Options) -> io::Result<String> {
                 io::ErrorKind::NotFound | io::ErrorKind::ConnectionRefused
             ) =>
         {
-            let mut child = Command::new(std::env::current_exe()?)
-                .args(["--internal-host", "--no-open", "--data-dir"])
-                .arg(&options.root)
-                .stdin(Stdio::null())
-                .stdout(Stdio::null())
-                .stderr(Stdio::null())
-                .spawn()?;
+            let mut child = crate::process::spawn_std(
+                Command::new(std::env::current_exe()?)
+                    .args(["--internal-host", "--no-open", "--data-dir"])
+                    .arg(&options.root)
+                    .stdin(Stdio::null())
+                    .stdout(Stdio::null())
+                    .stderr(Stdio::null()),
+            )?;
             let deadline = Instant::now() + Duration::from_secs(10);
             loop {
                 match control::request(&options.root, "status") {
@@ -169,12 +170,14 @@ pub fn attach(options: &Options) -> io::Result<String> {
 }
 
 pub fn open_browser(url: &str) -> io::Result<()> {
-    let status = Command::new("/usr/bin/open")
-        .arg(url)
-        .stdin(Stdio::null())
-        .stdout(Stdio::null())
-        .stderr(Stdio::null())
-        .status()?;
+    let status = crate::process::spawn_std(
+        Command::new("/usr/bin/open")
+            .arg(url)
+            .stdin(Stdio::null())
+            .stdout(Stdio::null())
+            .stderr(Stdio::null()),
+    )?
+    .wait()?;
     if status.success() {
         Ok(())
     } else {

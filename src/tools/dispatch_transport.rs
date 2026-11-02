@@ -454,12 +454,15 @@ mod tests {
         use crate::tools::{client::ToolClient, registration::Descriptor};
         let repository = std::path::Path::new(env!("CARGO_MANIFEST_DIR"));
         assert!(
-            std::process::Command::new(env!("CARGO"))
-                .args(["build", "--locked", "--example", "sample-lab"])
-                .current_dir(repository)
-                .status()
-                .unwrap()
-                .success()
+            crate::process::spawn_std(
+                std::process::Command::new(env!("CARGO"))
+                    .args(["build", "--locked", "--example", "sample-lab"])
+                    .current_dir(repository)
+            )
+            .unwrap()
+            .wait()
+            .unwrap()
+            .success()
         );
         let mut client = ToolClient::spawn(Descriptor {
             config: None,
