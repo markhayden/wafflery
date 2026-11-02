@@ -7,9 +7,27 @@ Live execution uses published crates.io `table-manners =0.3.0`, source commit
 `e503a238ad6cc833834891c2c2cece7152b08bfc` schemas. Cargo.lock records the registry checksum.
 The temporary sibling dependency and CI checkout are removed. The host accepts only live v0.3
 and keeps older saved evidence readable.
-The independent peer supplies current discovery/offline validation; real Rascal M12 and Squint
-M9 remain V18 gates. Previously tested v0.2 executables below are historical evidence, not
+The independent peer supplies required discovery/offline validation. V18a additionally verifies
+the approved real snapshots below; remaining setup, estimate and browser checks remain V18 gates. Previously tested v0.2 executables below are historical evidence, not
 compatible live targets for the cutover. No sibling files are modified.
+
+### V18 real-peer runs and reports — 2026-11-02
+
+Approved snapshots: Rascal `9ee6bc8` and Squint `db5cf78`, built from isolated archives with
+`testkit`, locked dependencies and a separate target directory. Sibling worktrees are untouched.
+Both declare contract 0.3.0. Probes use disposable libraries and isolated XDG config/data/cache
+roots through the host's fixed environment/PATH policy; no provider credentials are supplied.
+
+- Rascal: offline `seam`, zero spend, verified output mask/journal and original bytes unchanged.
+  Its declared `dash` server and `page` document both serve framed HTML and close gracefully.
+- Squint: scripted `reference_consistency`, zero spend, complete input evidence and a pass fixture.
+  Three references preserve order, including one repeated asset copied to distinct execution paths.
+  Its declared `report` server and `export` document both serve framed HTML and close gracefully.
+- Each report uses the serving executable, the exact frame ancestor and a separate origin. Closing
+  removes frame access; the saved attempt is unchanged. Explicit probe failures cannot become skips.
+- These checks establish host interoperability, not provider quality or paid-provider readiness.
+  Setup/restart, estimates/caps and browser acceptance remain V18b/V18c. Estimates are no longer
+  actions or runs; the previous v0.2 estimate-journal test has been retired.
 
 ### Rascal explicit paths — 2026-11-01
 

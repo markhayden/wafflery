@@ -1264,3 +1264,28 @@ protocol changes in this slice. Independent review, 160 lifecycle repetitions an
 shared-lock matrix passed: 243 Rust tests (three ignored), 53 UI unit tests, two asset tests,
 198 browser cases (four opt-in skips), fmt, clippy, typecheck, Storybook, reproducible assets
 and release build. Automated V-C is complete; native Safari remains separately pending.
+
+## V18a: real peer runs and reports
+
+The owner approved isolated Rascal `9ee6bc8` and Squint `db5cf78` builds. Both declare v0.3;
+no sibling checkout was changed. Opt-in probes now fail invalid explicit selections instead of
+silently skipping them and require isolated XDG configuration/data/cache directories. Rascal's
+free seam preserves its output mask and original input. Squint's scripted reference-consistency
+run preserves three ordered references, including a repeated asset copied to separate paths,
+with complete evidence and zero spend. The script is a fixture verdict, not model evaluation.
+
+Both tools' server and document renderers serve HTML with the selected frame ancestor on a
+separate origin, then close gracefully without changing the saved attempt. Probe assertions are
+unwind-caught so observed shutdown runs before the original failure is propagated. Review found
+and corrected that cleanup gap. The old Squint estimate-as-run assertion was observed failing
+against v0.3 and retired; estimates belong to V18b's control checks. Initial source-fidelity
+references were correctly refused because no rule consulted them; the final reference-consistency
+fixture answers its three obligation and three reference checklist items.
+
+Setup/restart, estimates/caps and real-peer browser acceptance remain V18b/V18c. No production
+host behavior, dependency or shared contract changed. Rollback reverts the probes and fixture.
+
+Verification: both real-peer probes pass, independent review approved, and the full shared-lock
+matrix passed: 243 Rust tests (two opt-in ignored), 53 UI unit tests, two asset tests and
+198 Chromium/WebKit cases (four opt-in skips), fmt, clippy, typecheck, Storybook, reproducible
+assets and release build. Rust and both real-peer probes passed again after the cleanup correction.

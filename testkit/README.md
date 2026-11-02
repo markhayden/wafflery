@@ -39,15 +39,27 @@ test descriptor will opt into this executable. No real tool is discovered or ins
 
 ## Optional real Rascal smoke
 
-Select a local binary explicitly (never discovered or installed automatically):
+Select a local binary explicitly (never discovered or installed automatically). For Rust real-peer
+probes, first create isolated lookup/cache directories and keep these variables set for the probe:
+
+```sh
+probe_root=$(mktemp -d)
+mkdir -p "$probe_root/config" "$probe_root/cache" "$probe_root/data"
+export XDG_CONFIG_HOME="$probe_root/config"
+export XDG_CACHE_HOME="$probe_root/cache"
+export XDG_DATA_HOME="$probe_root/data"
+```
+
+Then select the approved contract 0.3.0 binary:
 
 ```sh
 WAFFLERY_RASCAL_BIN=/absolute/path/to/rascal cargo test --locked --test rascal_smoke -- --ignored --nocapture
 ```
 
 This uses the same host coordinator, fresh no-paid check, exact contract-version allowlist,
-image fingerprints and evidence capture as the fake. The child inherits no environment,
-receives no config or filler, and gets temporary workspace/run directories. It checks a real
+image fingerprints and evidence capture as the fake. The child uses the host
+environment allowlist and isolated XDG directories, receives no selected config or filler, and
+gets temporary workspace/run directories. It checks a real
 `seam` result, zero spend, verified outputs/journal and unchanged original bytes. `mask_rect`
 requires a location binding, which is outside the foundation's image-and-parameters form.
 
@@ -58,8 +70,10 @@ schema; the host never interprets a tool's private projection parameter. The smo
 sets Rascal's declared parameter as well. A flat seam can complete without producing an image,
 so that alone is not a successful output smoke.
 
-Missing binaries or unsupported contract versions print an explicit `SKIPPED` reason. Other
-failures remain failures; do not loosen the version, spend or fingerprint guards to pass them.
+Explicitly running an ignored probe fails if its binary, isolated directories or contract version
+are invalid. Without `--ignored`, Cargo reports it ignored. Both declared report kinds must serve
+HTML with the exact frame-ancestor policy, close gracefully, and leave saved evidence unchanged.
+Do not loosen the version, spend or fingerprint guards to pass these checks.
 
 ## Optional real Rascal browser journey
 
@@ -85,25 +99,25 @@ alignment. With no filler this verifies mask preparation, not a repaired image o
 ## Optional Squint and two-tool integration
 
 Use an explicitly selected, stable contract 0.3.0 Squint binary built with `--features testkit`
-at `3e6223a` or a later compatible commit. The coordinator probe owns config/script/files, clears
-its child environment, and supplies no credentials:
+at coordinator-approved revision `db5cf78`. The coordinator probe owns config/script/files, uses
+the host environment allowlist with the isolated XDG directories above, and supplies no credentials:
 
 ```sh
 WAFFLERY_SQUINT_BIN=/absolute/path/to/testkit/squint cargo test --locked --test squint_smoke real_squint_scripted -- --ignored --nocapture
 ```
 
-This verifies discovery, truthful free metadata, a source-fidelity scripted result, zero spend,
-recorded call, complete evidence and unchanged original images. The verdict is fixture data,
-not a model judgment. Other use cases and reference-list bindings are not certified by this test.
+This verifies discovery, truthful free metadata, a reference-consistency scripted result, zero spend,
+recorded call, complete evidence and unchanged original images. Ordered references include a repeated
+asset with distinct execution paths; both document and server reports are opened and closed. The
+verdict is fixture data, not a model judgment. Other use cases are not certified by this probe.
 
 With both `WAFFLERY_RASCAL_BIN` and `WAFFLERY_SQUINT_BIN` set to explicit stable binaries,
 `bun run --cwd ui test:browser` includes the two-tool journey: Squint check, inspect/export,
 example reload without execution, switch to Rascal and run a seam, restart, then restore Squint
 history without mixing results. Without both variables those cases are skipped.
 
-The separate ignored `real_squint_estimate` probe now passes on `3e6223a`: it preserves an
-empty readable journal, resolving [the follow-up](../docs/handoffs/squint-estimate-journal.md).
-Both probes require an explicitly selected testkit binary. [Original discovery blockers](../docs/handoffs/squint-discovery-blockers.md)
+The old estimate-as-run probe is retired: in v0.3, estimates are controls and never attempts.
+Its v0.2 journal evidence remains [historical](../docs/handoffs/squint-estimate-journal.md). [Original discovery blockers](../docs/handoffs/squint-discovery-blockers.md)
 are resolved. `scripts/dev-pipeline.ts` starts the same isolated offline setup through Squint's H1 launcher.
 
 ## v0.2 association and cancellation scenarios

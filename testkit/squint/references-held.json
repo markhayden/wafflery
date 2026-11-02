@@ -1,0 +1,75 @@
+[
+  {
+    "tool_calls": [
+      {
+        "id": "wafflery_scripted_verdict",
+        "name": "submit_verdict",
+        "arguments": {
+          "schema_version": 1,
+          "items": [
+            {
+              "id": "chk:ob:RC1@candidate",
+              "disposition": "held",
+              "confidence": "confident",
+              "reason": "Scripted integration fixture; no model evaluated this image.",
+              "allowed_by": null,
+              "location": null,
+              "evidence": []
+            },
+            {
+              "id": "chk:ob:RC2@candidate",
+              "disposition": "held",
+              "confidence": "confident",
+              "reason": "Scripted integration fixture; no model evaluated this image.",
+              "allowed_by": null,
+              "location": null,
+              "evidence": []
+            },
+            {
+              "id": "chk:ob:RC3@candidate",
+              "disposition": "held",
+              "confidence": "confident",
+              "reason": "Scripted integration fixture; no model evaluated this image.",
+              "allowed_by": null,
+              "location": null,
+              "evidence": []
+            },
+            {
+              "id": "chk:ref:ref:1",
+              "disposition": "held",
+              "confidence": "confident",
+              "reason": "Scripted integration fixture; no model evaluated this image.",
+              "allowed_by": null,
+              "location": null,
+              "evidence": []
+            },
+            {
+              "id": "chk:ref:ref:2",
+              "disposition": "held",
+              "confidence": "confident",
+              "reason": "Scripted integration fixture; no model evaluated this image.",
+              "allowed_by": null,
+              "location": null,
+              "evidence": []
+            },
+            {
+              "id": "chk:ref:ref:3",
+              "disposition": "held",
+              "confidence": "confident",
+              "reason": "Scripted integration fixture; no model evaluated this image.",
+              "allowed_by": null,
+              "location": null,
+              "evidence": []
+            }
+          ],
+          "findings": [],
+          "opinion": {
+            "verdict": "pass",
+            "reason": "Scripted test data only."
+          }
+        }
+      }
+    ],
+    "stop_reason": "tool_use"
+  }
+]

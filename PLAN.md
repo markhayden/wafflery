@@ -971,6 +971,20 @@ helper path, report the concrete need to the coordinator rather than broaden inh
 Verify exact wire/evidence with each real peer, then full matrix for any changed host code.
 Depends: V-A/V-B/V-C plus published tools. Commit: `test: verify real v0.3 integrations`.
 
+V18 execution slices (review and full matrix per slice; rollback newest first):
+- **V18a: Complete.** Refresh opt-in peer probes for the approved Rascal `9ee6bc8` and Squint `db5cf78`
+  snapshots. Fail invalid explicit binaries/contracts; use observed shutdown, ordered list image
+  inputs, zero-spend evidence and both declared renderer kinds. Retire the obsolete estimate-as-run
+  assertion. Commit: `test: verify v0.3 peer runs and reports`.
+- **V18b:** Real-peer readiness/default lookup and selected configuration/restart, plus bound
+  estimates and capped dispatch using a scripted paid Rascal filler. Verify Squint's estimate
+  control independently where its free scripted profile does not expose a host paid workflow.
+  Isolate configuration/cache directories without changing sibling checkouts. Record any live
+  provider-only checks separately. Commit: `test: verify real peer setup and estimate controls`.
+- **V18c:** Browser acceptance against both isolated binaries, including report frames, list
+  references and saved evidence after editing/restart. Record the real-peer checkpoint and
+  remaining manual/provider limits. Commit: `test: record real v0.3 browser acceptance`.
+
 **V19 — Bring the implemented UI into alignment with the mockups.** Final task of the v0.3
 client, after V18. Use `work/mockups.html`, `comparison-ui`, `drawer-ui`, `examples-ui`,
 `journey-ui`, `wipe-ui`, `interface-study`, `activity-hierarchy` and `preview-controls` HTML studies.
