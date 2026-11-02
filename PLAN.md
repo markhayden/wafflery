@@ -1930,6 +1930,28 @@ The shared-lock full matrix passed fmt/clippy, 366 Rust tests (4 opt-in ignored)
 temporary port 4187 config is removed. This commit changes the staged validator only; the live
 publication paths and their lifecycle evidence are the next slice.
 
+**b2 effective-session boundary (split before building):** wire the staged grant validator through
+one observation boundary for session reads and estimate-embedded sessions, using the canonical
+`--allow-dir` grants of that exact owned child. Neither path may publish an invalid observation.
+This slice changes `src/tools/mod.rs`, `src/tools/session.rs`, `src/tools/estimate/control.rs`,
+`ENGINEERING.md`, and this plan. Unit regressions cover narrowing/deny-all, invalid directories,
+same-session mutation and later ledger validation after directory deletion. Existing
+`control_tests.rs` and `tool_session_api.rs` exercise the two live callers; hostile-grant publication
+and retained old spending need the following wire/browser lifecycle slice.
+A following fake/browser slice owns configured narrowing/restart display and old-session evidence.
+The composed/callable-schema and invocation/refusal checks remain open; this ordering closes the
+shared observation boundary before presenting effective access in the UI.
+
+**b2 live-boundary checkpoint (2026-11-02):** three regressions failed before grant validation
+was wired. Five boundary tests now pass, including schema rejection, escape cases, stable later
+ledger observations after directory deletion, and fresh-client validation. Review found and then
+approved the separately committed stable-grant correction; follow-up approved both publication
+paths and state provenance. Final shared-lock matrix passed fmt/clippy, 370 Rust tests (4 opt-in
+ignored), typecheck, 56 UI unit tests, 2 asset tests, Storybook, byte-identical check-ui builds,
+release build and 226 Chromium/WebKit tests (8 opt-in skipped). The temporary port 4187 config is
+removed; lockfiles/prebuilt assets are unchanged. Hostile peer responses, actual post-run ledger
+publication and configured narrowing/restart remain the following wire lifecycle slice.
+
 **Checkpoint A:** merge M5.01–03 as a coherent cutover of validation, launch arguments and fake
 defaults; v0.4 is the only supported live contract afterward. Green matrix, an independent fake
 task run and the published exact dependency pin are required.
