@@ -889,12 +889,15 @@ V16 execution slices (review and full matrix per slice; rollback in reverse orde
 - **V16a: Complete.** Consume the successful document renderer's one path line through a narrow output
   grant, with a 32 MiB immutable read, five-second read deadline and identity/race checks.
   Read no adjacent files and leave the original untouched. Commit: `feat: read declared document outputs`.
-- **V16b:** Serve immutable documents from an isolated loopback origin with restrictive resource
+- **V16b: Complete.** Serve immutable documents from an isolated loopback origin with restrictive resource
   policy, bounded lifetime and tests for neighboring-file refusal and external dependencies.
   Commit: `feat: serve isolated report documents`.
 - **V16c:** Retain document generation/read/content lifetimes in views, enforce a 30-second
   generation deadline, and integrate ready/error/close/idle/shutdown states with independent
-  document fixtures. Commit: `feat: coordinate document report lifetimes`.
+  document fixtures. Split into **V16c1**, the owned document monitor and independent fixtures,
+  and **V16c2**, coordinator lifecycle integration and API regression tests. Review and run the
+  full matrix for each; rollback V16c2 before V16c1. Commits: `feat: supervise document report lifetimes`
+  and `feat: coordinate document report lifetimes`.
 No content is embedded in the workspace until V17's framing checks pass.
 
 **V17a — Add exact-origin report framing.** Replace the app's `frame-src 'none'` only with

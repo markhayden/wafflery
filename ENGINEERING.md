@@ -647,3 +647,26 @@ blocking readers may remain outstanding globally. A permit lives inside the bloc
 so caller cancellation or timeout cannot free capacity before that reader finishes; excess
 reads are refused without queuing. Only the declared file is read, plus ancestor metadata for
 containment checks. Serving/isolation remains V16b and retained view integration remains V16c.
+
+V16b serves each immutable copy from a separate literal-loopback port and an unguessable
+document path. There is no filesystem router, neighboring-file grant, API bearer, cookie or
+CORS grant. Exact Host validation rejects DNS aliases and duplicate Host headers. Unknown
+paths, query strings and absolute-form targets are refused. Known HTML/SVG/image/JSON suffixes
+receive their explicit media type; other names are shown as plain text with sniffing disabled.
+All responses use no-store and no-referrer. Content CSP allows inline script/style and embedded
+image/media/font data, denies network fetches and nested content, sandboxes active content, and
+permits framing by only the exact workspace origin.
+
+A scoped, bounded CSP-report endpoint converts blocked-resource reports into a generic content
+error. It does not retain blocked URLs, snippets or policy payloads. After failure, the document
+URL is unavailable and further content requests receive 422; the run remains untouched.
+Browser enforcement and the nested-frame integration are verified in V17, rather than inferred
+solely from these HTTP boundary tests. No content is embedded yet.
+
+The listener owns at most eight HTTP/1 connections, each with an eight-KiB header bound,
+sixteen-KiB violation-body bound and ten-second total connection deadline. Close or loss of all
+owners stops accepting, aborts and joins every connection, then confirms closure. Hyper and
+hyper-util are direct dependencies at their already-locked versions so this boundary can own
+each connection instead of relying on detached server connection tasks. Immutable bytes are
+shared across responses without copying the entire document per request. V16c connects this
+server to the view's idle/shutdown lifecycle.

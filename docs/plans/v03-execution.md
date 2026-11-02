@@ -1039,3 +1039,25 @@ tests (three ignored), 41 UI unit tests, two asset tests, 164 browser cases (fou
 fmt, clippy, typecheck, Storybook, reproducible assets and release build. The reader/module,
 tests and matching plan/engineering/execution docs form a cohesive slice beyond the usual
 five-file budget. V16b supplies isolated serving; V16c connects the retained view lifecycle.
+
+### V16b isolated document serving
+
+The document server owns a separate literal-loopback port and private path, serves immutable
+bytes without a filesystem router, validates Host exactly and grants no CORS access. CSP
+restricts resource loads to inline/embedded content, sandboxes active documents and permits
+only the workspace origin as a frame ancestor. Bounded violation reports mark the content
+unavailable without retaining URLs/snippets or modifying the run. Browser enforcement and
+nested framing remain V17's integration checks; these tests verify the HTTP boundary.
+
+Each owner tracks at most eight connections with bounded headers/body and a ten-second total
+connection deadline. Close and last-owner drop abort and join every connection before reporting
+closure. Hyper and hyper-util become direct dependencies at existing locked versions to provide
+explicit connection ownership; no package version changed. Four tests failed before the server
+existed, then passed, covering exact content, neighboring paths, Host aliases/duplicates, private
+headers, malformed/oversized violations, framing origins and stalled connections on close/drop.
+
+Review approved. The shared-lock full matrix passed: 225 Rust tests (three ignored), 41 UI unit
+tests, two asset tests, 164 browser cases (four skips), fmt, clippy, typecheck, Storybook,
+reproducible assets and release build. Dependencies, server/module, tests and matching docs form
+one cohesive slice beyond the usual file budget. V16c1 adds retained generation/read/content
+supervision; V16c2 connects it to coordinator capacity, activity and shutdown.

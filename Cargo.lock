@@ -1830,6 +1830,8 @@ dependencies = [
  "futures-util",
  "getrandom 0.4.3",
  "http-body-util",
+ "hyper",
+ "hyper-util",
  "image",
  "jsonschema",
  "nix",
