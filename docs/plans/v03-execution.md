@@ -1179,5 +1179,5 @@ spawn through one short macOS critical section, retain concurrent execution and 
 bounds, stress the regression and attempt suite, then run the full matrix. One cohesive commit
 covers all participating spawn sites and their documentation; rollback that commit as a whole.
 Twenty focused rounds passed: 3,840 simultaneous peer launches and 500 attempt tests.
-Independent review and the full matrix above passed. Final wire-test/fmt/clippy checks also passed (seven wire tests).
+Independent review and the full matrix above passed. Final wire-test/fmt/clippy checks also passed (nine wire tests).
 No change to the remaining V17–V19 scope.
