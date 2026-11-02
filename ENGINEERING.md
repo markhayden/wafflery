@@ -271,9 +271,22 @@ cleanup from deleting asset references before that transaction commits. Failed o
 unclaimed preparations remove only their private temporary directory. Submission is an owned
 task, so dropping an HTTP requester cannot interrupt materialization, persistence or dispatch;
 an uncertain reply is retried with the same submission id. Explicit cancellation still uses the
-attempt cancellation control. Retained preparations, bounds/expiry and startup cleanup are V09b.
+attempt cancellation control. V09b retains up to 16 preparations and 1 GiB of copied image bytes per workspace, with a
+15-minute absolute monotonic expiry. Identical preparation requests return the same deadline;
+conflicting inputs cannot replace an identity. Submission checks and consumes a live matching
+process session, tool session and declaration under the same discovery guard as dispatch.
+Preparing consumes no execution slot; paid preparations still cannot dispatch until V12.
+The submission lock serializes capacity preflight through copying, so in-progress preparations
+count against the bound before any bytes are copied. Duplicate image bindings count per copy.
+A weak-owner sweep frees expired copies every 30 seconds; every lookup/consume also checks expiry.
+Restart, declaration invalidation and close release only unclaimed drafts. Library cleanup must
+go through Coordinator: it checks retained drafts before requesting the storage write lock and
+refuses while they exist, preventing a queued writer from blocking later asset imports. The
+receipt's wall-clock deadline is for display; monotonic time controls eligibility. Authenticated
+HTTP controls and conservative startup cleanup are V09c; retained drafts are not exposed by the
+browser API yet.
 
-Planned v0.3 behavior (PLAN V09b–V13; not implemented): retain prepared inputs and estimate
+Planned v0.3 behavior (PLAN V09c–V13; not implemented): expose preparations and estimate
 outside the host execution reservation. Estimates remain responsive while
 an action runs; they neither consume a run-dispatch permit nor create attempts. The exact allowed
 quote, positive cap and binding are checked again under the host's execution reservation before

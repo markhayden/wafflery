@@ -454,3 +454,23 @@ V09a verification: review approved without blockers. Three preparation lifecycle
 two asset tests, 100 browser cases (four skipped), fmt, clippy, typecheck, Storybook, reproducible
 assets and release build. The tampered-library fixture replaces its read-only file explicitly;
 production asset immutability is unchanged. Retention and expiry remain V09b.
+
+V09b retains preparations in the coordinator (16 entries, 1 GiB copied inputs, 15-minute absolute
+expiry). Capacity is checked under the submission lock before copying; a weak-owner sweep and
+lookup/consume pruning release expired copies. Duplicate requests do not renew expiry. Explicit
+discard, restart, description invalidation and shutdown remove only unclaimed copies. The retained
+storage guard requires cleanup to refuse before queuing its write lock; all host cleanup already
+uses that coordinator entry point. Dispatch consumes a matching immutable request under discovery
+synchronization and never falls back to rematerialization for a missing preparation. V09c owns
+HTTP authorization and startup cleanup, so retained draft APIs remain internal in this slice.
+
+Review caught a mismatched session key in the retained binding: session observations use `id`,
+not run/result `session_id`. A regression changing only the actual session id failed before
+the correction. Matching now requires a present, nonempty observed session id; a null/null pair
+cannot pass. The independent unit fixture now uses the actual session-resource key.
+
+V09b final verification: review approved the corrected session binding. Eight preparation tests
+and 24 execution tests pass. The full matrix passed: 138 Rust tests (three ignored), 27 UI unit
+tests, two asset tests and 100 browser cases (four opt-in skips), plus fmt, clippy, typecheck,
+Storybook, reproducible assets and release build. Limits/expiry tests use disposable fixtures;
+no real assets, paid providers, dependency pins or library schemas changed.

@@ -620,10 +620,13 @@ Depends: V06a/V06b/V08. Implementation slices (each reviewed and full-matrix ver
 - **V09a: Complete.** Extract immutable prepared inputs with explicit ownership transfer to an attempt.
   Abandoned/failed preparation cleans only its own directory; submission remains owned across
   requester cancellation. Commit: `refactor: prepare exact calls before dispatch`.
-- **V09b:** Retain bounded preparations behind authenticated controls; enforce identity,
-  session/declaration, expiry, invalidation, restart/startup cleanup and atomic consumption.
+- **V09b: Complete.** Retain bounded preparations in the coordinator; enforce identity, session/declaration,
+  expiry, invalidation, restart cleanup and atomic consumption. The six implementation files
+  keep lifecycle ownership and restart integration in one reviewable slice.
   Commit: `feat: retain bounded draft preparations`.
-Rollback V09b before V09a. Neither slice changes the shared contract; preparations are temporary
+- **V09c:** Add authenticated preparation controls and conservative startup cleanup, with API and
+  crash-leftover coverage. Commit: `feat: expose owned draft preparations`.
+Rollback V09c before V09b before V09a. These slices do not change the shared contract; preparations are temporary
 host resources, not attempts or library examples.
 
 **V10a — Exempt estimate controls from the run transport gate.** Exempt exactly reserved
@@ -637,7 +640,9 @@ both calls succeed; arbitrary tool names cannot bypass the gate. Depends: V02.
 Commit: `fix: keep estimate controls outside the dispatch gate`.
 
 **V10b — Request and validate bound estimates.** Call reserved `estimate` with `{action, arguments}`
-from V09, outside the execution permit. Use a separate 30-second estimate deadline for image
+from V09, outside the execution permit. Hold a preparation lease through the control call so
+expiry or draft invalidation cannot delete inputs while the tool reads them; an expired or
+invalidated preparation still cannot dispatch afterward. Use a separate 30-second estimate deadline for image
 digests rather than the ordinary five-second control timeout. Expiry of that deadline gives no
 quote and no automatic retry. Bound concurrent estimate requests and serialize their ledger
 observations with session reads so late responses cannot overwrite newer observations. Validate

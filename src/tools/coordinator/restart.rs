@@ -34,6 +34,7 @@ impl Coordinator {
             )
         })?;
         let _discovery = entry.discovery.lock().await;
+        self.preparations.invalidate_tool(id);
         {
             let mut state = entry.state.write().unwrap_or_else(|e| e.into_inner());
             state.declaration = None;

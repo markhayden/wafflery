@@ -25,6 +25,10 @@ impl Coordinator {
             .client()
             .ok_or(Error::Missing("Tool is unavailable"))?;
         let refreshed = client.describe().await;
+        match &refreshed {
+            Ok(current) => self.preparations.reconcile(id, current, &client.session),
+            Err(_) => self.preparations.invalidate_tool(id),
+        }
         {
             let mut state = entry.state.write().unwrap_or_else(|e| e.into_inner());
             match &refreshed {

@@ -1,4 +1,6 @@
+mod preparation;
 mod readiness;
+pub use super::prepared::retained::Preparation;
 mod recovery;
 mod restart;
 mod shutdown;
@@ -59,6 +61,7 @@ pub struct Coordinator {
     pub attempts: AttemptStore,
     tools: BTreeMap<String, Entry>,
     submission: Mutex<()>,
+    preparations: super::prepared::retained::Retained,
     active: Mutex<BTreeMap<String, Active>>,
     workers: Mutex<Vec<tokio::task::JoinHandle<()>>>,
     stopping: AtomicBool,
@@ -113,6 +116,7 @@ impl Coordinator {
             attempts,
             tools,
             submission: Mutex::new(()),
+            preparations: super::prepared::retained::Retained::new(),
             active: Mutex::new(BTreeMap::new()),
             workers: Mutex::new(vec![]),
             stopping: AtomicBool::new(false),
@@ -156,11 +160,15 @@ impl Coordinator {
     }
     pub async fn submit(self: &Arc<Self>, request: Submission) -> Result<Attempt> {
         let coordinator = self.clone();
-        tokio::spawn(async move { coordinator.submit_owned(request).await })
+        tokio::spawn(async move { coordinator.submit_owned(request, false).await })
             .await
             .map_err(|error| Error::Invalid(format!("Submission task failed: {error}")))?
     }
-    async fn submit_owned(self: &Arc<Self>, request: Submission) -> Result<Attempt> {
+    async fn submit_owned(
+        self: &Arc<Self>,
+        request: Submission,
+        retained: bool,
+    ) -> Result<Attempt> {
         super::prepared::validate_id(&request.id)?;
         let _submission = self.submission.lock().await;
         let _change = SubmissionChange(self.events.clone());
@@ -197,13 +205,23 @@ impl Coordinator {
                 "This foundation only runs actions declared free and offline.",
             ));
         }
-        let prepared = super::prepared::PreparedCall::new(
-            &self.assets,
-            request.clone(),
-            &current,
-            &client.session,
-        )
-        .await?;
+        let prepared = if retained {
+            self.preparations
+                .take(&request, &current, &client.session)?
+        } else {
+            if self.preparations.get(&request.id).is_ok() {
+                return Err(Error::Conflict(
+                    "This ID belongs to a prepared draft. Submit that preparation instead.",
+                ));
+            }
+            super::prepared::PreparedCall::new(
+                &self.assets,
+                request.clone(),
+                &current,
+                &client.session,
+            )
+            .await?
+        };
         let arguments = prepared.arguments().clone();
         let attempt = prepared.persist(&self.attempts).await?;
         let (written, dispatched) = tokio::sync::watch::channel(false);
@@ -494,6 +512,11 @@ impl Coordinator {
                 "Wait until all tool activity has stopped before cleaning the library",
             ));
         }
+        if !self.preparations.is_empty() {
+            return Err(Error::Conflict(
+                "Discard prepared drafts before cleaning the library",
+            ));
+        }
         let result = crate::library::cleanup::Cleanup(self.assets.clone())
             .confirm(selection, token)
             .await?;
@@ -502,6 +525,7 @@ impl Coordinator {
     }
     pub async fn close(&self) -> bool {
         let _submission = self.submission.lock().await;
+        self.preparations.clear();
         let preserving = self.preserving_tools().await;
         let mut stopped = preserving.is_empty();
         for (id, entry) in &self.tools {

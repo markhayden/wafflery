@@ -740,3 +740,183 @@ async fn dropping_submission_requester_does_not_abandon_the_owned_dispatch() {
         1
     );
 }
+
+#[tokio::test]
+async fn retained_preparation_is_immutable_idempotent_and_transferred_once() {
+    use wafflery::library::cleanup::{Cleanup, Selection};
+    let (dir, c, request) = setup("normal").await;
+    let receipt = c.prepare(request.clone()).await.unwrap();
+    assert_eq!(
+        receipt.expires_ms,
+        c.prepare(request.clone()).await.unwrap().expires_ms
+    );
+    assert!(
+        c.attempts
+            .history(None, 50, None, None)
+            .await
+            .unwrap()
+            .is_empty()
+    );
+    assert!(!dir.path().join("runs/calls.ndjson").exists());
+    let mut changed = request.clone();
+    changed.params["label"] = json!("changed");
+    assert!(c.prepare(changed.clone()).await.is_err());
+    assert!(c.submit_prepared(changed).await.is_err());
+    assert!(
+        c.submit(request.clone()).await.is_err(),
+        "direct dispatch must not replace a preparation"
+    );
+    let selection = Selection {
+        unused_assets: true,
+        ..Default::default()
+    };
+    let preview = Cleanup(c.assets.clone())
+        .preview(selection.clone())
+        .await
+        .unwrap();
+    assert!(
+        tokio::time::timeout(
+            std::time::Duration::from_secs(1),
+            c.cleanup(selection, preview.token)
+        )
+        .await
+        .unwrap()
+        .is_err()
+    );
+    std::fs::write(dir.path().join("original.png"), b"source changed").unwrap();
+    let (first, duplicate) = tokio::join!(
+        c.submit_prepared(request.clone()),
+        c.submit_prepared(request.clone())
+    );
+    let saved = first.unwrap();
+    assert_eq!(saved.id, duplicate.unwrap().id);
+    assert_eq!(
+        saved.arguments["source"]["path"],
+        c.assets
+            .root()
+            .join("execution/attempt-1/input-0.png")
+            .display()
+            .to_string()
+    );
+    assert!(c.preparation(&request.id).await.is_err());
+    c.discard_preparation(&request.id).await.unwrap();
+    tokio::time::timeout(std::time::Duration::from_secs(5), async {
+        loop {
+            if c.attempts.get(&request.id).await.unwrap().preservation["contract"] == "complete" {
+                break;
+            }
+            tokio::time::sleep(std::time::Duration::from_millis(10)).await;
+        }
+    })
+    .await
+    .unwrap();
+    assert_eq!(
+        std::fs::read_to_string(dir.path().join("runs/calls.ndjson"))
+            .unwrap()
+            .lines()
+            .count(),
+        1
+    );
+    finish_host(&c).await;
+    c.assets.database.shutdown().await.unwrap();
+}
+
+#[tokio::test]
+async fn discarded_or_restarted_preparations_cannot_fall_back_to_new_materialization() {
+    let (dir, c, mut request) = setup("normal").await;
+    c.prepare(request.clone()).await.unwrap();
+    c.discard_preparation(&request.id).await.unwrap();
+    assert!(c.submit_prepared(request.clone()).await.is_err());
+    assert!(!c.assets.root().join("execution/attempt-1").exists());
+    request.id = "before-restart".into();
+    c.prepare(request.clone()).await.unwrap();
+    let replacement = c.restart("example", true).await.unwrap();
+    assert!(c.preparation(&request.id).await.is_err());
+    assert!(!c.assets.root().join("execution/before-restart").exists());
+    assert!(c.submit_prepared(request.clone()).await.is_err());
+    request.id = "after-restart".into();
+    request.revision = replacement.revision;
+    c.prepare(request).await.unwrap();
+    finish_host(&c).await;
+    assert!(!c.assets.root().join("execution/after-restart").exists());
+    assert!(!dir.path().join("runs/calls.ndjson").exists());
+    assert!(
+        c.attempts
+            .history(None, 50, None, None)
+            .await
+            .unwrap()
+            .is_empty()
+    );
+    c.assets.database.shutdown().await.unwrap();
+}
+
+#[tokio::test]
+async fn paid_preparation_creates_no_attempt_and_cannot_bypass_the_paid_guard() {
+    let (dir, c, request) = setup("paid").await;
+    c.prepare(request.clone()).await.unwrap();
+    assert!(c.submit_prepared(request).await.is_err());
+    assert!(!dir.path().join("runs/calls.ndjson").exists());
+    assert!(
+        c.attempts
+            .history(None, 50, None, None)
+            .await
+            .unwrap()
+            .is_empty()
+    );
+    finish_host(&c).await;
+    c.assets.database.shutdown().await.unwrap();
+}
+
+#[tokio::test]
+async fn preparation_stays_available_while_running_and_rejects_excess_before_copying() {
+    let (dir, c, request) = setup("held").await;
+    c.submit(request.clone()).await.unwrap();
+    tokio::time::timeout(std::time::Duration::from_secs(3), async {
+        while c.attempts.get(&request.id).await.unwrap().execution != "running" {
+            tokio::time::sleep(std::time::Duration::from_millis(10)).await;
+        }
+    })
+    .await
+    .unwrap();
+    let drafts = (0..17).map(|index| {
+        let c = c.clone();
+        let mut draft = request.clone();
+        draft.id = format!("draft-{index}");
+        async move {
+            let id = draft.id.clone();
+            (id, c.prepare(draft).await)
+        }
+    });
+    let results = futures_util::future::join_all(drafts).await;
+    assert_eq!(
+        results.iter().filter(|(_, result)| result.is_ok()).count(),
+        16
+    );
+    let refused = &results
+        .iter()
+        .find(|(_, result)| result.is_err())
+        .unwrap()
+        .0;
+    assert!(!c.assets.root().join("execution").join(refused).exists());
+    assert_eq!(
+        c.attempts
+            .history(None, 50, None, None)
+            .await
+            .unwrap()
+            .len(),
+        1
+    );
+    assert_eq!(
+        std::fs::read_to_string(dir.path().join("runs/calls.ndjson"))
+            .unwrap()
+            .lines()
+            .count(),
+        1
+    );
+    std::fs::write(dir.path().join("runs/release-run"), b"finish").unwrap();
+    finish_host(&c).await;
+    for (id, _) in results {
+        assert!(!c.assets.root().join("execution").join(id).exists());
+    }
+    c.assets.database.shutdown().await.unwrap();
+}

@@ -1,4 +1,5 @@
 //! Exact input copies belong to a preparation until its attempt is durably recorded.
+pub(super) mod retained;
 use super::{Error, Result, client::Declaration, validator};
 use crate::library::{
     assets::AssetStore,
@@ -103,7 +104,7 @@ mod tests {
     use crate::library::cleanup::{Cleanup, Selection};
     use serde_json::json;
 
-    async fn fixture() -> (tempfile::TempDir, AssetStore, Submission, Declaration) {
+    pub(super) async fn fixture() -> (tempfile::TempDir, AssetStore, Submission, Declaration) {
         let dir = tempfile::tempdir().unwrap();
         let assets = AssetStore::open(&dir.path().join("library")).unwrap();
         std::fs::create_dir(assets.root().join("execution")).unwrap();
@@ -115,7 +116,7 @@ mod tests {
             document: json!({"profiles":["images"],"actions":[{"name":"mark", "params_schema":{"type":"object"}, "images":[{"slot":"source","role":"source","required":true}]}]}),
             revision: "r".into(),
             generation: 0,
-            tool_session: json!({"session_id":"session"}),
+            tool_session: json!({"id":"bb8f5520-a822-4cdc-a9eb-f1a72018e000"}),
             schemas: [("mark".into(), json!({"type":"object"}))].into(),
         };
         (dir, assets, request, declaration)
