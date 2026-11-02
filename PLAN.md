@@ -1762,6 +1762,43 @@ behavior rides along. Runtime validation/display changes stay in their own slice
 Full review, full matrix and strict version-gate tests still apply. This is a one-off, not a budget
 change for later tasks.
 
+**Exact mechanical cutover inventory (recorded before building M5.03b):**
+The following files form that single atomic commit. Changes are the exact published pin/alias removal,
+version gates, required v0.4 wire fields in existing fake documents, matching test/story documents,
+version-neutral names for the former control-only fake, and current-version documentation. New
+runtime semantics, grant-display wiring, callable-schema checks and real-peer preflight behavior are
+excluded and land separately. Existing pre-v0.3 saved-history coverage stays unchanged.
+
+- Dependency: `Cargo.toml`, `Cargo.lock`.
+- Host gates/test fixtures: `src/tools/mod.rs`, `src/tools/session.rs`,
+  `src/tools/dispatch_transport.rs`, `src/tools/render/process_tests.rs`, `src/tools/render/tests.rs`.
+- Existing fake documents/callers: `testkit/fixtures.rs`, `testkit/main.rs`, `testkit/estimates.rs`,
+  `testkit/readiness.rs`, `testkit/scenarios.rs`, `testkit/v04_calls.rs`, `testkit/v04_schemas.rs`,
+  `testkit/v04_store.rs`; rename `testkit/v03_control.rs` to `testkit/control_peer.rs` and
+  `testkit/v03_fixtures.rs` to `testkit/control_fixtures.rs`. The prepared task-invocation helper
+  is wired to existing result construction here; its logic/tests land separately beforehand.
+- Rust contract tests: `tests/contract_fixtures.rs`, `tests/description_semantics.rs`,
+  `tests/mcp_client.rs`, `tests/rascal_smoke.rs`, `tests/squint_smoke.rs`, `tests/tool_session_api.rs`,
+  `tests/v04_bindings.rs`, `tests/v04_contract_fixtures.rs`, `tests/v04_results.rs`, `tests/v04_runs.rs`,
+  `tests/v04_schemas.rs`, `tests/v04_wire.rs`, and the preparatory `tests/task_invocation.rs`.
+  Rename `tests/v03_fixtures.rs` to `tests/control_fixtures.rs`, `tests/v03_wire.rs` to
+  `tests/control_wire.rs`, and `tests/support/v03_schema.rs` to `tests/support/contract_schema.rs`.
+- UI version gates/documents: `ui/src/api/tool-session.ts`, `ui/src/api/workspace.ts`,
+  `ui/src/features/actions/model.ts`, `ui/src/features/workspace/CostReview.stories.tsx`,
+  `ui/src/features/workspace/Evidence.stories.tsx`, `ui/src/features/workspace/ToolSetup.stories.tsx`,
+  `ui/tests/browser/real-peer-reports.spec.ts`, `ui/tests/browser/squint.spec.ts`,
+  `ui/tests/unit/action-form.test.ts`, `ui/tests/unit/estimates.test.ts`,
+  `ui/tests/unit/image-selection.test.ts`, `ui/tests/unit/tool-session.test.ts`,
+  `ui/tests/unit/workspace-contract.test.ts`.
+- Current-state docs: `README.md`, `ENGINEERING.md`, `docs/integration-sources.md`, `testkit/README.md`,
+  and this `PLAN.md`. Historical review evidence is not rewritten.
+
+Generated `ui/prebuilt` output remains a separately reviewed build commit. If a further authored
+file is required, amend this inventory with its reason before editing it; do not turn the exception
+into unrelated cleanup. Strict tests must demonstrate v0.4 acceptance and v0.3 live rejection while
+saved older records remain readable. Preparatory task-invocation generation is independently tested
+against v0.4 before the fake's version switch; no temporary live compatibility path is introduced.
+
 **Checkpoint A:** merge M5.01–03 as a coherent cutover of validation, launch arguments and fake
 defaults; v0.4 is the only supported live contract afterward. Green matrix, an independent fake
 task run and the published exact dependency pin are required.
