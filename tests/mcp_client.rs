@@ -87,13 +87,25 @@ fn rejects_missing_or_relative_executable_and_relative_input_grants() {
 
 #[tokio::test]
 async fn invalid_schema_names_its_tool_and_does_not_block_another_registration() {
+    invalid_schema_isolation("normal", false).await;
+}
+
+#[tokio::test]
+async fn invalid_schema_isolation_can_shutdown_during_other_registration_preservation() {
+    invalid_schema_isolation("gated-preservation", true).await;
+}
+
+async fn invalid_schema_isolation(working_scenario: &str, stop_during_preservation: bool) {
     let dir = tempfile::tempdir().unwrap();
     let store = AssetStore::open(&dir.path().join("Library")).unwrap();
     let input = dir.path().join("source.png");
     std::fs::write(&input, include_bytes!("../ui/tests/fixtures/sample.png")).unwrap();
     let asset = store.import_path(input).await.unwrap();
     let mut registrations = Vec::new();
-    for (id, scenario) in [("broken", "misplaced-definitions"), ("working", "normal")] {
+    for (id, scenario) in [
+        ("broken", "misplaced-definitions"),
+        ("working", working_scenario),
+    ] {
         let root = dir.path().join(id);
         std::fs::create_dir(&root).unwrap();
         let mut entry = descriptor(&root, scenario);
@@ -120,7 +132,9 @@ async fn invalid_schema_names_its_tool_and_does_not_block_another_registration()
     let saved = tokio::time::timeout(std::time::Duration::from_secs(10), async {
         loop {
             let saved = coordinator.attempts.get("working-attempt").await.unwrap();
-            if saved.preservation["contract"] != "pending" {
+            if (stop_during_preservation && saved.result.is_some())
+                || (!stop_during_preservation && saved.preservation["contract"] != "pending")
+            {
                 break saved;
             }
             tokio::time::sleep(std::time::Duration::from_millis(20)).await;
@@ -128,7 +142,50 @@ async fn invalid_schema_names_its_tool_and_does_not_block_another_registration()
     })
     .await
     .unwrap();
-    assert!(coordinator.close().await);
+    if stop_during_preservation {
+        tokio::time::timeout(std::time::Duration::from_secs(5), async {
+            while !dir.path().join("working/runs/preservation-held").exists() {
+                tokio::time::sleep(std::time::Duration::from_millis(5)).await;
+            }
+        })
+        .await
+        .expect("the peer must reach the journal preservation gate");
+        assert_eq!(saved.preservation["contract"], "pending");
+        assert!(
+            !coordinator.close().await,
+            "a preserving peer must stay owned"
+        );
+    }
+    // Terminal DB evidence can precede release of the client's preservation guard.
+    // close() may defer; only the host's completion signal means teardown is done.
+    let (quit, mut stopped) = tokio::sync::watch::channel(false);
+    coordinator.begin_shutdown(true, quit).await.unwrap();
+    if stop_during_preservation {
+        assert!(!*stopped.borrow());
+        std::fs::write(
+            dir.path().join("working/runs/release-preservation"),
+            "release",
+        )
+        .unwrap();
+    }
+    tokio::time::timeout(
+        std::time::Duration::from_secs(8),
+        stopped.wait_for(|value| *value),
+    )
+    .await
+    .expect("graceful host shutdown did not complete")
+    .unwrap();
+    let status = coordinator.shutdown_status().await;
+    assert_eq!(status.phase, "stopped");
+    assert_eq!(status.active_attempts, 0);
+    assert!(
+        !coordinator
+            .assets
+            .root()
+            .join("execution/working-attempt")
+            .exists()
+    );
+    let saved = coordinator.attempts.get("working-attempt").await.unwrap();
     coordinator.assets.database.shutdown().await.unwrap();
     assert!(
         error.contains("MCP tool 'mark_band' input schema"),

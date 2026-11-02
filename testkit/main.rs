@@ -412,6 +412,17 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     reject(&output, id, -32603, "Synthetic recovery lookup failure");
                     continue;
                 }
+                if scenario == "gated-preservation"
+                    && params["uri"]
+                        .as_str()
+                        .is_some_and(|uri| uri.ends_with("/journal"))
+                {
+                    std::fs::write(root.join("preservation-held"), "waiting for test release")
+                        .unwrap();
+                    while root.exists() && !root.join("release-preservation").exists() {
+                        std::thread::sleep(std::time::Duration::from_millis(5));
+                    }
+                }
                 if scenario == "slow-resource" {
                     std::thread::sleep(std::time::Duration::from_millis(600));
                 }

@@ -1902,6 +1902,32 @@ The temporary port 4187 config was removed; lockfiles and prebuilt assets are un
 and renderer resolution now enforce the same direct description relationships. The composed-schema,
 callable-schema and remaining semantic/display follow-ups above are still open.
 
+**Cutover CI teardown correction (2026-11-02):** a separate three-file slice
+(`tests/mcp_client.rs`, `testkit/main.rs`, this plan) corrects the invalid-registration test's shutdown
+assumption. A saved terminal preservation record does not imply that its worker has released
+the client preservation guard; `close()` is one bounded step and deliberately defers in that
+window. The cutover did not change this test body or shutdown ownership, and the failed
+configuration probe is closed before its declaration error is stored. Use the same
+`begin_shutdown` / quit-watch completion signal as the host, then check stopped phase,
+zero active attempts, disposable-input cleanup and the final saved evidence. Add an explicitly gated resource
+case alongside the invalid registration to exercise shutdown during preservation without a
+scheduling-delay assumption.
+Keep the preservation guard and force-stop policy unchanged. Require a failing reproduction,
+stress runs, independent review and the full matrix before merging this correction.
+
+**As built — cutover CI teardown correction (2026-11-02):** the original timing window did
+not recur in 200 local repetitions. A held journal read reproduced the old positive `close()`
+assertion failure after the test confirmed the peer had reached its preservation gate. The
+corrected regression proves one close step defers, releases the gate after shutdown begins,
+and waits for the host's completion signal before checking final evidence and cleanup. Pairing
+this with a rejected registration also verifies discovery isolation during shutdown. Independent
+review approved after correcting the initial gate to target the journal actually read on success.
+The final two cases each passed 200 repetitions. The full shared-lock matrix passed fmt/clippy,
+366 Rust tests (4 opt-in ignored), typecheck, 56 UI unit tests, 2 asset tests, Storybook,
+byte-identical check-ui builds, release build and 226 Chromium/WebKit tests (8 opt-in skipped).
+Lockfiles and generated assets are unchanged; the temporary browser-port config was removed.
+This is a test-only lifecycle correction; the remaining M5.03 gates are still open.
+
 **Checkpoint A:** merge M5.01–03 as a coherent cutover of validation, launch arguments and fake
 defaults; v0.4 is the only supported live contract afterward. Green matrix, an independent fake
 task run and the published exact dependency pin are required.
