@@ -596,7 +596,7 @@ balance instead of the peer's new observation. Tests now cover display allowlist
 renewal, ticket-specific timeout invalidation, refusal unknowns, unchanged draft revision and
 zero attempts. A further independent-peer test found delivery flags and file locators included in
 its new image-quote binding. The fake now binds image content and priced arguments/configuration,
-excluding delivery flags; the host still treats the digest as opaque.
+excluding delivery flags; the host still treats the digest as nontransparent.
 
 Review found that falling back to the original declaration while an estimate held the ledger
 mutex could roll the display back from 0.08 to zero. The live sequence regression reproduced
@@ -728,7 +728,7 @@ rolling back; V12 remains gated.
 ### V12a dispatch estimate boundary
 
 The transport permit now retains a validated quote when pricing is required. Before recording or
-sending an action, it checks the exact opaque binding, allowed decision, matching action and
+sending an action, it checks the exact nontransparent binding, allowed decision, matching action and
 quote lifetime. Unpriced permits reject injected estimate metadata. The final expiry check runs
 after queued database persistence and before polling the wire write. If the quote expired during
 persistence, the recorded wire intent remains inspectable but the sent signal stays false.
@@ -1310,3 +1310,36 @@ Independent review approved. Full shared-lock matrix passed: 243 Rust tests (fou
 ignored), 53 UI unit tests, two asset tests and 198 Chromium/WebKit cases (four opt-in skips),
 fmt, clippy, typecheck, Storybook, reproducible assets and release build. All four real-peer
 probes passed separately with the approved isolated binaries and no provider credentials.
+
+## V18c: real browser acceptance
+
+Extend the opt-in browser journeys with both real tools' server and document report frames,
+three ordered/repeated Squint references, saved evidence after draft edits, observed report
+closure and document reopen after host restart. Real-tool browser hosts now own isolated XDG
+lookup/data/cache directories across restart. The test descriptor uses selected config rather
+than embedding its flag in args, and selects the reference-consistency script only for that case.
+
+The initial new browser selector incorrectly repeated the candidate role in its label; it was
+corrected to the actual accessible name. Existing four journeys and four new report cases pass
+in Chromium/WebKit. Screenshots were visually inspected; local path-bearing report screenshots
+are not committed. No product behavior changed. Review approved. Coverage and provider/native
+Safari limits are explicit in [checkpoint V18](v03-real-peer-checkpoint.md). Rollback reverts the
+browser fixture/test additions while preserving the Rust real-peer probes.
+
+Final console assertions initially exposed Squint's server CSP blocking its own inline styles. V18c was held
+open pending the [coordinator handoff](../handoffs/squint-report-csp.md); earlier content/evidence
+passes do not supersede that failure. The expected host-stop disconnect was isolated by navigating
+away before intentional shutdown. No test retries or error suppression were added.
+
+The coordinator approved Squint `54b1f41` (CSSOM/classes, unchanged CSP). Its isolated build
+passes all four Rust probes and eight real-peer browser cases. The strict WebKit run exposed
+one additional test-instrumentation error: Playwright inserts an inline `body {}` style during
+screenshot preparation. Trace/source evidence identified that call, so optional screenshots
+were removed from this strict test. Four nontransparent/distinct legend colors are checked directly;
+console/page-error collection stays unfiltered across the entire run and restart.
+
+The default full matrix passed: 243 Rust tests (four opt-in ignored), 53 UI unit tests, two
+asset tests, 198 browser cases (eight opt-in skips), fmt/clippy/typecheck/Storybook/check-ui and
+release build. The final test-only adjustment was followed by all eight real browser journeys
+passing; it does not alter default-matrix behavior. V18c is complete with the checkpoint's
+native Safari and billed-provider limits retained.

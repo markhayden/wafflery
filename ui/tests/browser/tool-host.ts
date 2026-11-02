@@ -34,6 +34,14 @@ export const test = base.extend<{
       toolRoot = join(temporary, "tool");
     await mkdir(root, { mode: 0o700 });
     await mkdir(toolRoot, { mode: 0o700 });
+    const peerEnvironment: NodeJS.ProcessEnv = { ...process.env };
+    if (hostKind !== "sample") {
+      for (const name of ["XDG_CONFIG_HOME", "XDG_DATA_HOME", "XDG_CACHE_HOME"]) {
+        const path = join(temporary, name.toLowerCase());
+        await mkdir(path, { mode: 0o700 });
+        peerEnvironment[name] = path;
+      }
+    }
     const selectedBinary = process.env.WAFFLERY_RASCAL_BIN;
     if (
       hostKind === "rascal" &&
@@ -52,6 +60,7 @@ export const test = base.extend<{
               temporary,
               process.env.WAFFLERY_RASCAL_BIN ?? "",
               process.env.WAFFLERY_SQUINT_BIN ?? "",
+              hostScenario === "references",
             )
           : [
               {
@@ -118,7 +127,7 @@ export const test = base.extend<{
         child = spawn(
           resolve("../target/debug/wafflery"),
           ["--foreground", "--no-open", "--data-dir", root],
-          { stdio: ["ignore", "pipe", "pipe"] },
+          { stdio: ["ignore", "pipe", "pipe"], env: peerEnvironment },
         );
         lifetime = new HostLifetime(child);
         teardown = undefined;

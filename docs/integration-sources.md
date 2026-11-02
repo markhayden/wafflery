@@ -8,12 +8,13 @@ Live execution uses published crates.io `table-manners =0.3.0`, source commit
 The temporary sibling dependency and CI checkout are removed. The host accepts only live v0.3
 and keeps older saved evidence readable.
 The independent peer supplies required discovery/offline validation. V18a additionally verifies
-the approved real snapshots below; remaining setup, estimate and browser checks remain V18 gates. Previously tested v0.2 executables below are historical evidence, not
+the approved real snapshots below; verified paths, resolved viewer issues and provider/manual limits are recorded in
+[checkpoint V18](plans/v03-real-peer-checkpoint.md). Previously tested v0.2 executables below are historical evidence, not
 compatible live targets for the cutover. No sibling files are modified.
 
 ### V18 real-peer runs and reports — 2026-11-02
 
-Approved snapshots: Rascal `9ee6bc8` and Squint `db5cf78`, built from isolated archives with
+Approved snapshots: Rascal `9ee6bc8` and Squint `54b1f41` (superseding `db5cf78` after its viewer CSP fix), built from isolated archives with
 `testkit`, locked dependencies and a separate target directory. Sibling worktrees are untouched.
 Both declare contract 0.3.0. Probes use disposable libraries and isolated XDG config/data/cache
 roots through the host's fixed environment/PATH policy; no provider credentials are supplied.
@@ -26,7 +27,7 @@ roots through the host's fixed environment/PATH policy; no provider credentials 
 - Each report uses the serving executable, the exact frame ancestor and a separate origin. Closing
   removes frame access; the saved attempt is unchanged. Explicit probe failures cannot become skips.
 - These checks establish host interoperability, not provider quality or paid-provider readiness.
-  Browser acceptance remains V18c. Estimates are no longer
+  Browser acceptance is recorded in checkpoint V18. Estimates are no longer
   actions or runs; the previous v0.2 estimate-journal test has been retired.
 
 ### V18 setup and cost controls — 2026-11-02

@@ -981,7 +981,9 @@ V18 execution slices (review and full matrix per slice; rollback newest first):
   estimate control without credentials; its scripted profile declares free actions.
   Isolate configuration/cache directories without changing sibling checkouts. Record any live
   provider-only checks separately. Commit: `test: verify real peer setup and estimate controls`.
-- **V18c:** Browser acceptance against both isolated binaries, including report frames, list
+- **V18c: Complete.** [Checkpoint](docs/plans/v03-real-peer-checkpoint.md). Approved Squint `54b1f41`
+  fixes its viewer CSP violation; strict Chromium/WebKit checks pass. Browser acceptance against
+  both isolated binaries, including report frames, list
   references and saved evidence after editing/restart. Record the real-peer checkpoint and
   remaining manual/provider limits. Commit: `test: record real v0.3 browser acceptance`.
 

@@ -99,8 +99,8 @@ alignment. With no filler this verifies mask preparation, not a repaired image o
 ## Optional Squint and two-tool integration
 
 Use an explicitly selected, stable contract 0.3.0 Squint binary built with `--features testkit`
-at coordinator-approved revision `db5cf78`. The coordinator probe owns config/script/files, uses
-the host environment allowlist with the isolated XDG directories above, and supplies no credentials:
+at coordinator-approved revision `54b1f41` (the viewer CSP fix over `db5cf78`). The coordinator
+probe owns config/script/files, uses the host environment allowlist with the isolated XDG directories above, and supplies no credentials:
 
 ```sh
 env -u ANTHROPIC_API_KEY WAFFLERY_SQUINT_BIN=/absolute/path/to/testkit/squint cargo test --locked --test squint_smoke -- --ignored --nocapture
@@ -115,6 +115,11 @@ With both `WAFFLERY_RASCAL_BIN` and `WAFFLERY_SQUINT_BIN` set to explicit stable
 `bun run --cwd ui test:browser` includes the two-tool journey: Squint check, inspect/export,
 example reload without execution, switch to Rascal and run a seam, restart, then restore Squint
 history without mixing results. Without both variables those cases are skipped.
+
+`real-peer-reports.spec.ts` additionally opens both tools' server/document renderers inside the
+shared drawer after draft edits, observes their closure, and reopens the saved document after
+host restart. Its Squint fixture uses ordered/repeated references. Browser fixtures isolate XDG
+config/data/cache directories per host. See [V18 coverage and limits](../docs/plans/v03-real-peer-checkpoint.md).
 
 The setup probe additionally verifies default `./squint.toml` lookup and explicit selected paths,
 missing configuration/credentials, configuration frozen until restart, and real-profile catalog
