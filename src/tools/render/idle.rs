@@ -31,7 +31,8 @@ impl IdleLease {
         Self { state, duration }
     }
     pub fn expired(&self) -> bool {
-        self.state.borrow().expired
+        let state = self.state.borrow();
+        state.expired || Instant::now() >= state.deadline
     }
     pub fn touch(&self) -> bool {
         let mut accepted = false;

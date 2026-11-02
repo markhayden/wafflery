@@ -1,6 +1,8 @@
 use super::{Coordinator, Error, Result};
 use crate::tools::render::{
     RenderKind, ResolvedRender,
+    document::DocumentGrant,
+    document_monitor::DocumentMonitor,
     idle::IdleLease,
     process::{ProcessPhase, RenderProcess},
     readiness::{Readiness, ServerReadiness},
@@ -16,13 +18,19 @@ pub(super) struct View {
     kind: RenderKind,
     process: RenderProcess,
     server: Option<ServerMonitor>,
+    document: Option<DocumentMonitor>,
     idle: IdleLease,
 }
 impl View {
     fn observation(&self) -> Value {
         let state = self.process.snapshot();
-        let readiness = self.server.as_ref().map(ServerMonitor::snapshot);
-        let error = match &readiness {
+        let document = self.document.as_ref().map(DocumentMonitor::snapshot);
+        let server = self.server.as_ref().map(ServerMonitor::snapshot);
+        let readiness = document
+            .as_ref()
+            .map(|view| &view.readiness)
+            .or(server.as_ref());
+        let error = match readiness {
             Some(Readiness::Failed(reason)) => Some((*reason).to_owned()),
             _ => state.error.clone().or_else(|| {
                 (self.server.is_some()
@@ -31,11 +39,59 @@ impl View {
                     .then(|| "Report process is not running".to_owned())
             }),
         };
+        let phase = match state.phase {
+            ProcessPhase::NeedsForce => "needs_force",
+            ProcessPhase::Exited if document.as_ref().is_none_or(|view| view.closed) => "exited",
+            _ if state.phase == ProcessPhase::Stopping
+                || state.close_requested
+                || self.idle.expired()
+                || document.as_ref().is_some_and(|view| view.closing) =>
+            {
+                "stopping"
+            }
+            _ if matches!(readiness, Some(Readiness::Ready(_))) => "ready",
+            _ => "starting",
+        };
         json!({"id":self.id,"attempt":self.attempt,"name":self.name,
    "kind":match self.kind {RenderKind::Server=>"server",RenderKind::Document=>"document"},
-   "phase":match state.phase {ProcessPhase::Running=>if matches!(readiness, Some(Readiness::Ready(_))) {"ready"} else {"starting"},ProcessPhase::Stopping=>"stopping",ProcessPhase::NeedsForce=>"needs_force",ProcessPhase::Exited=>"exited"},
+   "phase":phase,
    "exit_code":state.exit_code,"error":error,"idle_expired":self.idle.expired(),
    "diagnostics":String::from_utf8_lossy(&state.stderr.bytes),"diagnostics_truncated":state.stderr.overflow})
+    }
+    fn stopped(&self) -> bool {
+        self.process.snapshot().phase == ProcessPhase::Exited
+            && self
+                .document
+                .as_ref()
+                .is_none_or(|view| view.snapshot().closed)
+    }
+    fn accepts_activity(&self) -> bool {
+        let process = self.process.snapshot();
+        if process.close_requested || self.idle.expired() {
+            return false;
+        }
+        if let Some(document) = &self.document {
+            let view = document.snapshot();
+            !view.closing
+                && !view.closed
+                && !matches!(view.readiness, Readiness::Failed(_))
+                && matches!(process.phase, ProcessPhase::Running | ProcessPhase::Exited)
+        } else {
+            process.phase == ProcessPhase::Running
+        }
+    }
+}
+async fn close_owned_view(
+    process: RenderProcess,
+    document: Option<DocumentMonitor>,
+    force: bool,
+) -> Result<bool> {
+    if let Some(document) = document {
+        document.close(force).await
+    } else if force {
+        process.force_stop().await
+    } else {
+        process.close().await
     }
 }
 impl Coordinator {
@@ -62,10 +118,10 @@ impl Coordinator {
         client.peer()?;
         let mut views = self.renders.lock().await;
         if let Some(view) = views.get(attempt_id)
-            && view.process.snapshot().phase != ProcessPhase::Exited
+            && !view.stopped()
         {
-            return if view.name == name && view.process.snapshot().phase == ProcessPhase::Running {
-                if !view.process.snapshot().close_requested && view.idle.touch() {
+            return if view.name == name && view.accepts_activity() {
+                if view.idle.touch() {
                     Ok(view.observation())
                 } else {
                     Err(Error::Conflict(
@@ -79,11 +135,9 @@ impl Coordinator {
             };
         }
         if views.len() >= 16 {
-            views.retain(|_, view| view.process.snapshot().phase != ProcessPhase::Exited);
+            views.retain(|_, view| !view.stopped());
             if views.len() >= 16 {
-                return Err(Error::Conflict(
-                    "At most 16 report processes may remain open",
-                ));
+                return Err(Error::Conflict("At most 16 report views may remain open"));
             }
         }
         let plan = ResolvedRender::resolve(&client.descriptor, &attempt, name, origin)?;
@@ -98,9 +152,27 @@ impl Coordinator {
         } else {
             None
         };
+        let grant = if plan.kind() == RenderKind::Document {
+            Some(DocumentGrant::new(plan.run_dir())?)
+        } else {
+            None
+        };
         let process = RenderProcess::spawn(&plan)?;
         let server = validator.map(|validator| ServerMonitor::start(process.clone(), validator));
-        let idle = IdleLease::attach(process.clone());
+        let (document, idle) = if let Some(grant) = grant {
+            let idle = IdleLease::document();
+            (
+                Some(DocumentMonitor::start(
+                    process.clone(),
+                    grant,
+                    origin,
+                    idle.clone(),
+                )),
+                idle,
+            )
+        } else {
+            (None, IdleLease::attach(process.clone()))
+        };
         let view = View {
             id,
             attempt: attempt_id.into(),
@@ -108,6 +180,7 @@ impl Coordinator {
             kind: plan.kind(),
             process,
             server,
+            document,
             idle,
         };
         let observation = view.observation();
@@ -132,8 +205,7 @@ impl Coordinator {
             .values()
             .find(|view| view.id == id)
             .ok_or(Error::Missing("Report view is no longer available"))?;
-        let state = view.process.snapshot();
-        if state.phase != ProcessPhase::Running || state.close_requested || !view.idle.touch() {
+        if !view.accepts_activity() || !view.idle.touch() {
             return Err(Error::Conflict("Report is closing or expired"));
         }
         Ok(view.observation())
@@ -142,19 +214,15 @@ impl Coordinator {
         if force && !confirmed {
             return Err(Error::Conflict("Confirm force-closing this report"));
         }
-        let process = self
+        let (process, document) = self
             .renders
             .lock()
             .await
             .values()
             .find(|view| view.id == id)
-            .map(|view| view.process.clone())
+            .map(|view| (view.process.clone(), view.document.clone()))
             .ok_or(Error::Missing("Report view is no longer available"))?;
-        if force {
-            process.force_stop().await?;
-        } else {
-            process.close().await?;
-        }
+        close_owned_view(process, document, force).await?;
         self.render_state(id).await
     }
     pub(super) async fn close_renderers(&self, force: bool) -> bool {
@@ -163,24 +231,20 @@ impl Coordinator {
             .lock()
             .await
             .values()
-            .map(|view| view.process.clone())
+            .map(|view| (view.process.clone(), view.document.clone()))
             .collect::<Vec<_>>();
-        futures_util::future::join_all(processes.into_iter().map(|process| async move {
-            if force {
-                process.force_stop().await.unwrap_or(false)
-            } else {
-                process.close().await.unwrap_or(false)
-            }
-        }))
+        futures_util::future::join_all(processes.into_iter().map(
+            |(process, document)| async move {
+                close_owned_view(process, document, force)
+                    .await
+                    .unwrap_or(false)
+            },
+        ))
         .await
         .into_iter()
         .all(|stopped| stopped)
     }
     pub(super) async fn renderers_stopped(&self) -> bool {
-        self.renders
-            .lock()
-            .await
-            .values()
-            .all(|view| view.process.snapshot().phase == ProcessPhase::Exited)
+        self.renders.lock().await.values().all(View::stopped)
     }
 }

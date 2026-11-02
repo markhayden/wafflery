@@ -10,6 +10,8 @@ use std::{
     time::Duration,
 };
 use tower::ServiceExt;
+#[path = "render_controls/documents.rs"]
+mod documents;
 use wafflery::{
     host::{api, auth::Auth},
     library::{assets::AssetStore, attempts::Submission},

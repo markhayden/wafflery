@@ -871,7 +871,7 @@ V15 execution slices (full matrix and review per slice; rollback in reverse orde
   lifecycle coverage. Commit: `feat: expire idle report viewers`.
 No slice enables tool HTML in the app origin; V17 owns framing and the drawer integration.
 
-**V16 — Isolate document outputs.** A declared document renderer writes one self-contained
+**V16 — Isolate document outputs. Complete.** A declared document renderer writes one self-contained
 file outside run.dir, with images/styles inline, then prints only its absolute path and exits
 zero. Read exactly that returned regular file through a narrowly scoped per-render output grant;
 its location is tool-chosen, not restricted to run.dir or the image output roots. Apply a bounded
@@ -895,7 +895,7 @@ V16 execution slices (review and full matrix per slice; rollback in reverse orde
 - **V16c:** Retain document generation/read/content lifetimes in views, enforce a 30-second
   generation deadline, and integrate ready/error/close/idle/shutdown states with independent
   document fixtures. Split into **V16c1: Complete**, the owned document monitor and independent fixtures,
-  and **V16c2**, coordinator lifecycle integration and API regression tests. Review and run the
+  and **V16c2: Complete**, coordinator lifecycle integration and API regression tests. Review and run the
   full matrix for each; rollback V16c2 before V16c1. Commits: `feat: supervise document report lifetimes`
   and `feat: coordinate document report lifetimes`.
 No content is embedded in the workspace until V17's framing checks pass.

@@ -10,6 +10,10 @@ async fn visible_activity_extends_five_minutes_but_late_activity_never_resurrect
     assert!(!lease.expire_if_due());
     tokio::time::advance(Duration::from_secs(1)).await;
     assert!(
+        lease.expired(),
+        "deadline observation cannot depend on the expiry worker running first"
+    );
+    assert!(
         !lease.touch(),
         "late activity cannot race the expiry worker to renew"
     );

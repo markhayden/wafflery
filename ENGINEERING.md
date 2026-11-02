@@ -681,3 +681,12 @@ force request is refused without starting closure. A closed monitor means both t
 listener/connections and renderer are confirmed stopped. Pending reads cannot publish after
 close; their bounded worker permits remain held as described above. Ready URLs are cleared
 when cleanup begins. Coordinator wiring and capacity accounting remain V16c2.
+
+V16c2 connects that monitor to workspace views. A completed document renderer can still have a
+ready view; the view occupies a slot until both its content server and renderer are closed.
+Reopening the same active view renews its lease and keeps its identity, while replacement waits
+for confirmed closure. Activity, close, force-close and workspace shutdown use the full document
+lifetime. Public observations expose status and bounded diagnostics, never output paths or URLs.
+Output failures preserve the saved run. Deadline checks consult the clock even before the expiry
+worker runs, so activity or later viewer grants cannot revive a deadline that already passed.
+Reports are ready for V17 framing; the workspace still does not embed content.

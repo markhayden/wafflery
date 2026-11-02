@@ -1081,3 +1081,23 @@ tests, two asset tests, 164 browser cases (four skips), fmt, clippy, typecheck, 
 reproducible assets and release build. The monitor, idle attachment, fake fixture, tests and
 matching docs remain one cohesive slice beyond the usual file budget. Coordinator integration
 is still V16c2; no report content is yet embedded in the app.
+
+### V16c2 workspace document views
+
+Document views now use the retained monitor for readiness, activity, replacement, close, force
+and workspace shutdown. A renderer's successful exit leaves its content ready and its slot
+occupied. Slots are released only when the monitor and process both confirm closure. Public
+observations include phase, errors and bounded diagnostics without content URLs/output paths.
+Current-clock expiry checks prevent access/renewal after a deadline even before the expiry
+worker runs. Report failures never rewrite the saved attempt.
+
+Three API regressions first failed, then passed: ready content after renderer exit with stable
+reopen/activity identity and shutdown; malformed output with unchanged saved evidence; sixteen
+live document slots retained after every renderer exits, with confirmed close freeing one slot.
+The idle regression also failed before the current-clock check. All nine report API tests and
+three idle tests pass. Review approved. The shared-lock full matrix passed: 234 Rust tests
+(three ignored), 41 UI unit tests, two asset tests, 164 browser cases (four skips), fmt, clippy,
+typecheck, Storybook, reproducible assets and release build. Coordinator lifecycle integration,
+idle deadline checks, fake declarations, tests and docs are one cohesive slice beyond the usual
+file budget. V16 is complete; V17 still owns private framing grants, browser isolation proof and
+visible drawer controls.
