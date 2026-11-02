@@ -1586,7 +1586,7 @@ and memory behavior must be measured before choosing a downscaled-decoding imple
 
 - **M5.02a: Complete — registration, argv and read-boundary cutover** — acceptance 1–2 and registration rollback;
   path/argv tests.
-- **M5.02b: staged grant setup display** — requested/evidence observations and effective-access states;
+- **M5.02b: Complete — staged grant setup display** — requested/evidence observations and effective-access states;
   live v0.4 narrowing/restart acceptance finishes in M5.03 as approved.
 
 M5.02b is staged in three commits: **b1 (requested/evidence grant observation and boundary tests)**,
@@ -1642,6 +1642,22 @@ tests (8 skipped). Temporary port 4187 config is removed; lockfiles/prebuilt ass
 Real registrations were not touched. The old V18 Squint snapshot needs roots and is explicitly
 unsupported on this intermediate build; M5.03 adopts the approved v0.4 peer and validator. M5.02b
 still owns the requested/effective grant display and configuration-narrowing/session checks.
+
+**M5.02b implementation checkpoint (2026-11-02, staged display complete):**
+Tool setup now separates the serving child's requested input grants from Wafflery's result-read
+permissions. Live v0.3 sessions show Not reported for effective access; refresh shows loading or
+Unavailable without replacing unknown access with an empty or requested set. Independent stories
+cover reported, narrowed and empty grants alongside long literal paths. Chromium/WebKit tests
+check separation, refresh failure/recovery, escaping and 320/768/1024/1440px layouts; screenshots
+were inspected for the narrow component and live setup. The requested/evidence snapshot boundary,
+parser and live wiring tests failed first. All three implementation slices stayed within five
+authored files; generated assets were committed separately. Independent review and follow-up found
+no remaining blockers; the directory-name refusal above addresses its serialization finding.
+Final verification passed under the shared heavy-check lock: fmt/clippy, 335 Rust tests (4 ignored),
+typecheck, 55 UI tests, 2 asset-tool tests, Storybook, byte-identical clean UI builds, release build
+and 226 browser tests (8 skipped). Temporary port 4187 config was removed and lockfiles/prebuilt
+assets remained unchanged. M5.02's final acceptance stays open until M5.03 validates and displays
+live v0.4 effective grants and verifies narrowing/restart with retained old-session spending.
 
 #### M5.03 — Cut over live validation to v0.4
 
