@@ -1693,7 +1693,8 @@ the live caller is switched. Tests may compile the staged validator directly; li
 exactly v0.3 until M5.03b, without a dual-version path. Each implementation commit includes its tests
 and plan evidence within five authored files. M5.03b's caller/fixture/UI changes must be split by
 dependency before building; generated assets and lockfiles stay separate. M5.02b CI confirmation is
-required before the first local merge of this milestone.
+required before the first local merge of this milestone; the coordinator confirmed run 41528363837
+green on 2026-11-02.
 
 M5.03a1's staged description validator now checks cross-field action/group/type/port relationships
 and direct parameter/profile-input collisions. Six tests cover independent renamed peers, core-only
@@ -1711,6 +1712,22 @@ targeted tests now pass. Independent review found no blockers. The shared-lock f
 fmt/clippy, 341 Rust tests (4 ignored), typecheck, 55 UI tests, 2 asset-tool tests, Storybook,
 reproducible assets, release build and 226 browser tests (8 skipped). No live behavior or wire-version
 gate changed. Temporary port 4187 config was removed; lockfiles and prebuilt assets are unchanged.
+M5.03a2.1 stages session-grant validation: effective directories must be canonical existing
+directories inside that child's requested inputs. Empty means deny all; order is immaterial, but
+the set and session identity cannot change within one observed client. Only an explicit replacement
+starts with no previous observation. Three filesystem tests cover narrowing, empty access, unrelated
+paths, symlink escape, non-canonical/missing/file paths and same-session mutation. Live wiring and
+old-session spend preservation remain in M5.03b.
+The independent a2.1 review found no blockers. When wiring, pass only schema-validated current/prior
+observations from the same owned child and that child's already-canonical argv grants. Existing
+ledger checks still own tool identity, start time and budget continuity. An unexpected session ID
+continues to require explicit reconnect, preserving the existing no-silent-reset policy. Directory
+checks are point-in-time observations; the tool still enforces the path rule on each actual read.
+**a2.1 checkpoint (2026-11-02):** three targeted tests pass after the initial missing-module failure.
+The shared-lock full matrix passed fmt/clippy, 344 Rust tests (4 ignored), typecheck, 55 UI tests,
+2 asset-tool tests, Storybook, reproducible assets, release build and 226 browser tests (8 skipped).
+The temporary port 4187 config was removed; lockfiles/prebuilt assets are unchanged. This slice is
+still staged validation; live session wiring and its browser acceptance remain in M5.03b.
 
 **Checkpoint A:** merge M5.01–03 as a coherent cutover of validation, launch arguments and fake
 defaults; v0.4 is the only supported live contract afterward. Green matrix, an independent fake
