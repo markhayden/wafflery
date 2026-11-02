@@ -597,8 +597,11 @@ known-run JSON-RPC error, not_ready claim release, queued cancellation and uncer
 Implementation slices (each reviewed and full-matrix verified):
 - **V08a: Complete.** Preserve definitive pre-run RPC refusals and zero spend; test corrected fresh-id
   attempts and wire-level released-id reuse. Commit: `fix: preserve definitive no-run refusals`.
-- **V08b:** reconcile reused claims and known-run RPC errors; test null references, queued
-  cancellation and uncertain disconnect without automatic replay. Commit: `fix: reconcile claimed attempts without replay`.
+- **V08b: Complete.** Reconcile reused claims and known-run RPC errors; test null references, queued
+  cancellation and uncertain disconnect without automatic replay. This slice also fixes the
+  receive adapter's progress metadata handling, exposed by the known-run RPC regression; the
+  six authored implementation files keep that boundary, recovery and independent peer coherent.
+  Commit: `fix: reconcile claimed attempts without replay`.
 - **V08c:** display general no-run refusals and verify explicit UI retries use fresh identities
   while transport uncertainty retains idempotent submission identity. Commit: `feat: explain no-run refusals in the workspace`.
 Rollback later slices before earlier ones; no library migration.

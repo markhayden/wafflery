@@ -410,4 +410,9 @@ observation and setup requirements where present, without fabricating a tool run
 execution inputs and the reservation are released after preservation. A repeated HTTP submission
 still returns its original attempt; an explicit corrected attempt uses a fresh id. Malformed or
 unrecognized structured refusals, transport loss, reused claims and errors after a known run
-remain uncertain. V08b adds reconciliation for the latter two cases; none authorize replay.
+remain uncertain. A schema-valid reused-id reference is checked against the original saved
+attempt's tool, session and client id before resource recovery. Any RPC error after a known run
+uses the same bounded recovery. Raw errors remain saved alongside recovered evidence; null reuse
+references never release the claim. No recovery path dispatches another action. Progress
+association is captured in transport receive order before rmcp moves metadata into notification
+context or schedules handlers; handler progress remains display-only.

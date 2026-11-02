@@ -215,6 +215,35 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 );
             }
             "tools/call" if initialized && params["name"] == "mark_band" => {
+                if let Some(correlation) = params["_meta"]["table-manners/client_run_id"].as_str() {
+                    if let Err(error) = scenarios::validate(
+                        &json!({"$ref":"urn:table-manners:core:run-ref#/$defs/client_run_id"}),
+                        &json!(correlation),
+                    ) {
+                        reject(&output, id, -32602, &error);
+                        continue;
+                    }
+                    let mut state = state.lock().unwrap();
+                    if scenario == "reused-null" {
+                        state.claimed.insert(correlation.to_owned());
+                    }
+                    if state.claimed.contains(correlation) {
+                        let reference = state
+                            .runs
+                            .iter()
+                            .find(|run| run["run"]["client_run_id"] == correlation)
+                            .map(|run| {
+                                let mut reference = run["run"].clone();
+                                reference.as_object_mut().unwrap().remove("dir");
+                                reference
+                            });
+                        send(
+                            &output,
+                            json!({"jsonrpc":"2.0","id":id,"error":{"code":-32602,"message":"client_run_id reused","data":{"reason":"client_run_id_reused","run":reference}}}),
+                        );
+                        continue;
+                    }
+                }
                 if !state.lock().unwrap().active.is_empty() {
                     reject(&output, id, -32000, "test tool is busy");
                     continue;
@@ -236,30 +265,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     continue;
                 }
                 if let Some(correlation) = params["_meta"]["table-manners/client_run_id"].as_str() {
-                    if let Err(error) = scenarios::validate(
-                        &json!({"$ref":"urn:table-manners:core:run-ref#/$defs/client_run_id"}),
-                        &json!(correlation),
-                    ) {
-                        reject(&output, id, -32602, &error);
-                        continue;
-                    }
-                    let mut state = state.lock().unwrap();
-                    if !state.claimed.insert(correlation.to_owned()) {
-                        let reference = state
-                            .runs
-                            .iter()
-                            .find(|run| run["run"]["client_run_id"] == correlation)
-                            .map(|run| {
-                                let mut reference = run["run"].clone();
-                                reference.as_object_mut().unwrap().remove("dir");
-                                reference
-                            });
-                        send(
-                            &output,
-                            json!({"jsonrpc":"2.0","id":id,"error":{"code":-32602,"message":"client_run_id reused","data":{"reason":"client_run_id_reused","run":reference}}}),
-                        );
-                        continue;
-                    }
+                    state.lock().unwrap().claimed.insert(correlation.to_owned());
                 }
                 if scenario == "refusals" {
                     let error = match params["arguments"]["label"].as_str() {
@@ -318,6 +324,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 json!({"resources":[{"uri":format!("{}://runs",fixtures::TOOL),"name":"Recent runs","mimeType":"application/json"}]}),
             ),
             "resources/read" if initialized => {
+                if scenario == "queued-resource-error"
+                    && params["uri"] == format!("{}://runs", fixtures::TOOL)
+                {
+                    reject(&output, id, -32603, "Synthetic recovery lookup failure");
+                    continue;
+                }
                 if scenario == "slow-resource" {
                     std::thread::sleep(std::time::Duration::from_millis(600));
                 }

@@ -98,7 +98,20 @@ impl<T: Transport<RoleClient, Error = io::Error>> Transport<RoleClient> for Reco
         }
     }
     async fn receive(&mut self) -> Option<RxJsonRpcMessage<RoleClient>> {
-        self.inner.receive().await
+        let message = self.inner.receive().await;
+        if let Some(rmcp::model::JsonRpcMessage::Notification(notification)) = &message
+            && let rmcp::model::ServerNotification::ProgressNotification(progress) =
+                &notification.notification
+            && let Ok(value) = serde_json::to_value(progress)
+        {
+            // rmcp moves _meta into NotificationContext and schedules handlers separately.
+            // Associate in receive order before a later response can resolve the call.
+            self.association
+                .lock()
+                .unwrap_or_else(|e| e.into_inner())
+                .observe(&value["params"]);
+        }
+        message
     }
     async fn close(&mut self) -> io::Result<()> {
         self.inner.close().await
@@ -139,6 +152,40 @@ mod tests {
         async fn close(&mut self) -> io::Result<()> {
             Ok(())
         }
+    }
+    #[tokio::test]
+    async fn progress_association_is_recorded_before_the_sdk_dispatches_the_notification() {
+        struct Incoming(Option<RxJsonRpcMessage<RoleClient>>);
+        impl Transport<RoleClient> for Incoming {
+            type Error = io::Error;
+            fn send(
+                &mut self,
+                _: TxJsonRpcMessage<RoleClient>,
+            ) -> impl Future<Output = io::Result<()>> + Send + 'static {
+                std::future::ready(Ok(()))
+            }
+            async fn receive(&mut self) -> Option<RxJsonRpcMessage<RoleClient>> {
+                self.0.take()
+            }
+            async fn close(&mut self) -> io::Result<()> {
+                Ok(())
+            }
+        }
+        let reference = json!({"id":"run","resource":"sample-lab://run/run/run.json","session_id":"bb8f5520-a822-4cdc-a9eb-f1a72018e000","client_run_id":"request"});
+        let wire = serde_json::from_value(json!({"jsonrpc":"2.0","method":"notifications/progress","params":{"progressToken":7,"progress":1,"_meta":{"table-manners/run":reference}}})).unwrap();
+        let association = Arc::new(Mutex::new(super::super::association::ProgressAssociation {
+            request: "request".into(),
+            token: Some(json!(7)),
+            ..Default::default()
+        }));
+        let mut transport = RecordedTransport {
+            inner: Incoming(Some(wire)),
+            gate: Default::default(),
+            association: association.clone(),
+            generation: Arc::new(AtomicU64::new(0)),
+        };
+        assert!(transport.receive().await.is_some());
+        assert_eq!(association.lock().unwrap().reference, Some(reference));
     }
     #[tokio::test]
     async fn database_failure_or_absent_authorization_sends_zero_bytes() {

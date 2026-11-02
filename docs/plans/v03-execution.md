@@ -399,3 +399,25 @@ tests prove released-id reuse and subsequent duplicate rejection. Negative unit 
 uncertainty for malformed/reused claims and known runs. Review found no blockers. Full matrix
 passed: 120 Rust tests (three ignored), 23 UI unit tests, two asset tests, 92 browser cases
 (four skipped), fmt, clippy, typecheck, Storybook, reproducible assets and release build.
+
+V08b's known-run RPC regression initially labeled an allocated run as rejected: rmcp moves
+notification metadata into extensions/context, so serializing only handler parameters lost it.
+The receive-boundary regression also failed before the fix. Association now uses the complete
+progress notification before the SDK schedules handlers or resolves a later response. Only
+progress is serialized at this boundary, not large result payloads. Display progress restores
+context metadata separately. RPC evidence is saved, reused references are schema- and identity-
+checked, and associated runs use bounded resource recovery. Null reuse, queued cancellation and
+disconnect remain uncertain. Independent wire coverage proves queue cancellation retains its
+claim while a fresh id may run; host submissions never replay automatically.
+
+Review found recovery lookup RPC errors could flow into no-run classification after cancellation.
+A queued-cancel regression reproduced an incorrect rejected/zero-spend outcome when the runs
+resource returned -32603. No-run classification now occurs only for the original action's RPC
+response, before recovery. The regression waits for recovery's observable outcome, not merely
+the earlier cancellation-request state. Control-read errors cannot release the original claim.
+
+V08b final verification: review approved the provenance correction. All 19 execution tests,
+seven independent wire tests, three readiness tests and the receive-boundary regression pass.
+The full matrix passed: 125 Rust tests (three ignored), 23 UI unit tests, two asset tests,
+92 browser cases (four skipped), fmt, clippy, typecheck, Storybook, asset reproducibility and
+release build. The metadata correction adds no protocol or dependency change; no replay occurs.

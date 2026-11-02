@@ -589,3 +589,104 @@ async fn a_reset_session_cannot_silently_dispatch_with_a_fresh_ledger() {
     finish_host(&c).await;
     c.assets.database.shutdown().await.unwrap();
 }
+
+#[tokio::test]
+async fn rpc_errors_with_owned_run_references_reconcile_without_another_dispatch() {
+    for scenario in ["known-run-rpc-error", "reused-run", "reused-foreign-run"] {
+        let (dir, c, request) = setup(scenario).await;
+        c.submit(request.clone()).await.unwrap();
+        let saved = tokio::time::timeout(std::time::Duration::from_secs(6), async {
+            loop {
+                let attempt = c.attempts.get(&request.id).await.unwrap();
+                if attempt.preservation["contract"] != "pending" {
+                    break attempt;
+                }
+                tokio::time::sleep(std::time::Duration::from_millis(10)).await;
+            }
+        })
+        .await
+        .unwrap();
+        let duplicate = c.submit(request).await.unwrap();
+        let count = std::fs::read_to_string(dir.path().join("runs/calls.ndjson"))
+            .unwrap()
+            .lines()
+            .count();
+        finish_host(&c).await;
+        c.assets.database.shutdown().await.unwrap();
+        if scenario == "reused-foreign-run" {
+            assert_eq!(saved.execution, "interrupted");
+            assert!(saved.result.is_none());
+            assert!(saved.observations.get("spent_usd").is_none());
+        } else {
+            assert_eq!(
+                saved.execution, "completed",
+                "{scenario}: {:?}",
+                saved.notices
+            );
+            assert_eq!(saved.preservation["contract"], "complete");
+            assert_eq!(
+                saved.observations["reconciled_from"],
+                saved.result.as_ref().unwrap()["run"]["resource"]
+            );
+        }
+        assert!(saved.raw_response.as_ref().unwrap()["error"].is_object());
+        assert_eq!(duplicate.id, saved.id);
+        assert_eq!(count, 1);
+    }
+}
+
+#[tokio::test]
+async fn null_claims_queued_cancellation_and_disconnect_never_become_no_run_refusals() {
+    for scenario in [
+        "reused-null",
+        "queued",
+        "queued-resource-error",
+        "exit-during-call",
+    ] {
+        let (dir, c, request) = setup(scenario).await;
+        c.submit(request.clone()).await.unwrap();
+        if scenario.starts_with("queued") {
+            tokio::time::timeout(std::time::Duration::from_secs(3), async {
+                while !dir.path().join("runs/queued").exists() {
+                    tokio::time::sleep(std::time::Duration::from_millis(10)).await;
+                }
+            })
+            .await
+            .unwrap();
+            c.cancel(&request.id).await.unwrap();
+        }
+        let saved = tokio::time::timeout(std::time::Duration::from_secs(7), async {
+            loop {
+                let attempt = c.attempts.get(&request.id).await.unwrap();
+                let recovery_finished = !scenario.starts_with("queued")
+                    || attempt.execution == "rejected"
+                    || attempt.notices.iter().any(|notice| {
+                        notice.contains("bounded resource lookup")
+                            || notice.contains("Synthetic recovery lookup failure")
+                    });
+                if attempt.preservation["contract"] != "pending" && recovery_finished {
+                    break attempt;
+                }
+                tokio::time::sleep(std::time::Duration::from_millis(10)).await;
+            }
+        })
+        .await
+        .unwrap();
+        let duplicate = c.submit(request.clone()).await.unwrap();
+        let mut retry = request;
+        retry.id = "another".into();
+        let blocked = c.submit(retry).await.is_err();
+        let calls = std::fs::read_to_string(dir.path().join("runs/calls.ndjson"))
+            .unwrap_or_default()
+            .lines()
+            .count();
+        finish_host(&c).await;
+        c.assets.database.shutdown().await.unwrap();
+        assert_ne!(saved.execution, "rejected", "{scenario}");
+        assert!(saved.result.is_none());
+        assert!(saved.observations.get("spent_usd").is_none());
+        assert_eq!(duplicate.id, saved.id);
+        assert!(blocked, "uncertainty or a dead session must not dispatch");
+        assert_eq!(calls, usize::from(scenario == "exit-during-call"));
+    }
+}

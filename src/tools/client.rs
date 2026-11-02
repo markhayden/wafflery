@@ -30,7 +30,6 @@ struct Handler {
     roots: Vec<Root>,
     generation: Arc<AtomicU64>,
     progress: watch::Sender<Option<Value>>,
-    association: Arc<std::sync::Mutex<super::association::ProgressAssociation>>,
 }
 impl ClientHandler for Handler {
     fn get_info(&self) -> ClientConfig {
@@ -53,18 +52,15 @@ impl ClientHandler for Handler {
     }
     async fn on_progress(
         &self,
-        params: ProgressNotificationParam,
-        _: NotificationContext<RoleClient>,
+        mut params: ProgressNotificationParam,
+        context: NotificationContext<RoleClient>,
     ) {
+        params.meta = Some(context.meta);
         // Display-only data: never scrape the message for a run identity.
         if let Ok(mut value) = serde_json::to_value(params) {
             if let Some(message) = value["message"].as_str() {
                 value["message"] = json!(message.chars().take(2048).collect::<String>());
             }
-            self.association
-                .lock()
-                .unwrap_or_else(|e| e.into_inner())
-                .observe(&value);
             self.progress.send_replace(Some(value));
         }
     }
@@ -174,7 +170,6 @@ impl ToolClient {
             roots,
             generation: self.generation.clone(),
             progress: self.progress.clone(),
-            association: self.association.clone(),
         };
         let transport =
             AsyncRwTransport::new_client(stdout, stdin).with_max_line_length(32 * 1024 * 1024);

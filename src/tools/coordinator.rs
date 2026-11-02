@@ -1,4 +1,5 @@
 mod readiness;
+mod recovery;
 mod restart;
 mod shutdown;
 use super::{
@@ -294,7 +295,10 @@ impl Coordinator {
         }.await;
         let result = match result {
             Err(Error::Mcp(rmcp::ServiceError::Cancelled { .. })) => {
-                self.recover_cancelled(&client, &request.id).await
+                self.recover_associated(&client, &request.id).await
+            }
+            Err(error @ Error::Mcp(rmcp::ServiceError::McpError(_))) => {
+                self.recover_rpc(&client, &request.id, error).await
             }
             other => other,
         };
@@ -360,7 +364,6 @@ impl Coordinator {
             }
             Err(error) => {
                 client.end_preservation();
-                let _ = self.preserve_no_run(&client, &request.id, &error).await;
                 let message = error.to_string();
                 let _ = self
                     .attempts
@@ -405,44 +408,6 @@ impl Coordinator {
             self.active.lock().await.remove(&request.id);
         }
         self.events.changed();
-    }
-    async fn recover_cancelled(&self, client: &ToolClient, id: &str) -> Result<Value> {
-        let recovery = async {
-            let mut last_error = None;
-            for _ in 0..20 {
-                self.record_reference(client, id).await?;
-                let attempt = self.attempts.get(id).await?;
-                match super::association::reconcile(client, &attempt).await {
-                    Ok(Some(result)) => {
-                        client.begin_preservation();
-                        let uri = result["run"]["resource"].clone();
-                        self.attempts
-                            .update(id, move |attempt| {
-                                attempt.observations["reconciled_from"] = uri;
-                                Ok(())
-                            })
-                            .await?;
-                        return Ok(result);
-                    }
-                    Ok(None) => {}
-                    Err(Error::Mcp(rmcp::ServiceError::McpError(ref error)))
-                        if error.code.0 == -32002 =>
-                    {
-                        last_error = Some(Error::Invalid(
-                            "Associated run resource is not available yet".into(),
-                        ));
-                    }
-                    Err(error) => return Err(error),
-                }
-                tokio::time::sleep(std::time::Duration::from_millis(200)).await;
-            }
-            Err(last_error.unwrap_or_else(|| {
-                Error::Invalid(
-                    "Cancellation outcome remains unconfirmed after bounded resource lookup".into(),
-                )
-            }))
-        };
-        tokio::time::timeout(std::time::Duration::from_secs(5), recovery).await?
     }
     async fn record_reference(&self, client: &ToolClient, id: &str) -> Result<()> {
         if let Some(reference) = client.run_reference()? {

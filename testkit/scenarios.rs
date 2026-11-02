@@ -116,6 +116,21 @@ pub fn execute(
     message: Value,
     cancelled: Arc<AtomicBool>,
 ) {
+    if scenario.starts_with("queued") {
+        fs::write(root.join("queued"), "").unwrap();
+        while !root.join("release-queue").exists() && !cancelled.load(Ordering::Acquire) {
+            std::thread::sleep(Duration::from_millis(10));
+        }
+        if cancelled.load(Ordering::Acquire) {
+            state
+                .lock()
+                .unwrap()
+                .active
+                .retain(|(id, _)| id != &message["id"]);
+            fs::write(root.join("queue-cancelled"), "").unwrap();
+            return;
+        }
+    }
     if cancelled.load(Ordering::Acquire) {
         state
             .lock()
@@ -159,6 +174,8 @@ pub fn execute(
             && !matches!(
                 scenario.as_str(),
                 "unassociated"
+                    | "reused-run"
+                    | "reused-foreign-run"
                     | "no-progress"
                     | "paged"
                     | "duplicate-pages"
@@ -324,6 +341,28 @@ pub fn execute(
             *saved = run.clone();
         }
         state.active.retain(|(id, _)| id != &message["id"]);
+    }
+    if !is_cancelled
+        && matches!(
+            scenario.as_str(),
+            "known-run-rpc-error" | "reused-run" | "reused-foreign-run"
+        )
+    {
+        let error = if scenario == "known-run-rpc-error" {
+            json!({"code":-32603,"message":"Synthetic protocol violation after allocation"})
+        } else {
+            let mut reference = run["run"].clone();
+            reference.as_object_mut().unwrap().remove("dir");
+            if scenario == "reused-foreign-run" {
+                reference["client_run_id"] = json!("another-owner");
+            }
+            json!({"code":-32602,"message":"Earlier claim","data":{"reason":"client_run_id_reused","run":reference}})
+        };
+        send(
+            &output,
+            json!({"jsonrpc":"2.0","id":message["id"],"error":error}),
+        );
+        return;
     }
     if !is_cancelled {
         let mut content = vec![json!({"type":"text","text":run.to_string()})];

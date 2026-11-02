@@ -186,3 +186,12 @@ The `refusals` scenario rejects scripted labels before allocation: `refuse plain
 `refuse structured`, and `refuse internal`. It releases the claimed client id before replying.
 Wire tests correct the request under that same id; host tests retain the refused attempt and
 submit a corrected request with a new id. No refusal creates a run or spends money.
+
+`queued` waits before allocating until `release-queue` exists, or cancels without a run while
+retaining the client-id claim. `reused-null` models an earlier claim without an allocated run.
+`reused-run` returns a reference for resource reconciliation; `reused-foreign-run` deliberately
+returns another client's id. `known-run-rpc-error` deliberately violates the contract by sending
+an RPC error after reporting and saving a run. These are host recovery probes, not conforming
+execution examples. None dispatches a provider or spends money.
+`queued-resource-error` additionally fails runs-list recovery with a plain RPC error; this must
+never be mistaken for a refusal of the original action.
