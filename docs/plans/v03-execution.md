@@ -871,3 +871,15 @@ regressions passed after correction. Final review and the shared-lock full matri
 Component/model/style/story and workspace wiring are one
 cohesive presentation slice with their tests. Rollback this UI slice before V13a; stored evidence
 and server behavior are unchanged.
+
+
+### V13c paid workflow checkpoint
+
+The [V-B record](v03-paid-checkpoint.md) covers cancellation, saved history, exported exact
+binding/cap/session evidence, and host restart without rewriting old unresolved spend. The new
+journey passed in both browsers. Full-matrix verification found an existing offscreen label
+edit that never took effect before retry; the shared helper now explicitly focuses and verifies
+edits. All 120 acknowledgement repetitions passed, followed by the complete shared-lock matrix
+(183 Rust tests, three ignored; 41 UI units; two asset tests; 164 browser cases, four skipped).
+Review passed. No production code or assets changed. V14 is split into command resolution and
+process ownership so the next execution boundary can be reviewed before it is connected.

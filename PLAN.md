@@ -771,7 +771,7 @@ Each slice includes its tests and accurate checkpoint documentation. V12a/b stre
 boundaries without opening paid dispatch; V12c opens only the authenticated prepared-call API,
 and V12d connects the reviewed browser flow. No provider call is required for verification.
 
-**V13 — Explain paid failures and retained spend.** Map `stale_estimate` to review/re-estimate,
+**V13 — Explain paid failures and retained spend. Complete.** Map `stale_estimate` to review/re-estimate,
 `credential` (provider 401/403 during a run only) to setup, `cap` to explicit cap review and
 `budget` to the session ledger. A larger
 than configured cap remains invalid/usage. Never auto-retry or restart; a new estimate requires
@@ -791,11 +791,11 @@ V13 execution slices (full matrix and review per slice; rollback in reverse orde
   from readiness changes. Commit: `feat: preserve paid outcomes and refresh readiness`.
 - **V13b: Complete.** Selected-run failure/spend presentation and focused recovery guidance, with stories,
   unit and browser coverage. Commit: `feat: explain paid outcomes in the workspace`.
-- **V13c:** Complete the fake paid journey through cancellation, history and exported evidence;
+- **V13c: Complete.** Complete the fake paid journey through cancellation, history and exported evidence;
   record checkpoint V-B. Commit: `test: verify the paid workflow checkpoint`.
 Each slice keeps its relevant tests and accurate documentation; none calls a real provider.
 
-**Checkpoint V-B:** Full matrix, review and fake paid journey from cap/estimate through run,
+**Checkpoint V-B: Complete.** [Verification](docs/plans/v03-paid-checkpoint.md). Full matrix, review and fake paid journey from cap/estimate through run,
 cancel, history and evidence export. Keep one active execution per tool: a second submission is
 busy, while two earlier estimates
 can outlive a sequential budget change when readiness stays unchanged. Test readiness-driven
@@ -822,6 +822,16 @@ Files: render module, host render API, routing, fake render executable, render b
 Verify spaces, unknown placeholders, missing/copied directories, shell metacharacters and
 attempt selection independent of the edited draft. Depends: V02/V04a.
 Commit: `feat: launch declared run renderers`.
+
+V14 execution slices (full matrix and review per slice; rollback in reverse order):
+- **V14a:** Resolve a declared render from saved attempt evidence, validate its registered
+  executable, authorized run directory, whole-argument placeholders and host framing origin.
+  Build the minimal-environment command without spawning it. Verify malformed commands, path
+  escapes, spaces and literal shell metacharacters. Commit: `feat: resolve saved run render commands`.
+- **V14b:** Own renderer children and bounded output, add the independent fake renderer and
+  authenticated host integration. Keep report content unavailable until V15/V16 establish
+  readiness and output isolation. Commit: `feat: own declared renderer processes`.
+The first slice cannot execute a render and introduces no route or browser policy change.
 
 **V15 — Manage server readiness and lifetime.** Pass the host's exact origin through the declared
 `--frame-ancestor` argv placeholder. Accept exactly one stdout URL line with http, literal
