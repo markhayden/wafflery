@@ -10,7 +10,7 @@ fn descriptor(dir: &Path, id: &str) -> Value {
     let executable = dir.join("tool with spaces");
     fs::write(&executable, "#!/bin/sh\ntouch should-never-run\n").unwrap();
     fs::set_permissions(&executable, fs::Permissions::from_mode(0o700)).unwrap();
-    json!({"id":id,"executable":executable,"args":["literal $(touch not-a-shell)"],"cwd":dir,"roots":[dir]})
+    json!({"id":id,"executable":executable,"args":["literal $(touch not-a-shell)"],"cwd":dir,"allow_dirs":[dir],"evidence_dirs":[dir]})
 }
 fn input(dir: &Path, value: Value) -> std::path::PathBuf {
     let path = dir.join("descriptors.json");
@@ -106,7 +106,7 @@ fn invalid_input_never_creates_a_library() {
 }
 
 #[tokio::test]
-async fn maximum_registered_roots_leave_room_for_host_inputs_at_startup() {
+async fn maximum_registered_input_grants_leave_room_for_host_inputs_at_startup() {
     use wafflery::{library::assets::AssetStore, tools::coordinator::Coordinator};
     assert!(
         std::process::Command::new(env!("CARGO"))
@@ -125,10 +125,10 @@ async fn maximum_registered_roots_leave_room_for_host_inputs_at_startup() {
         })
         .collect();
     let mut value = json!({"id":"sample", "executable":std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("target/debug/examples/sample-lab"),
-        "args":[dir.path().join("runs"),"normal"],"cwd":dir.path(),"roots":roots});
+        "args":[dir.path().join("runs"),"normal"],"cwd":dir.path(),"allow_dirs":roots,"evidence_dirs":[]});
     assert!(registration::register(&root, &input(dir.path(), json!([value.clone()]))).is_err());
     assert!(!root.exists());
-    value["roots"].as_array_mut().unwrap().pop();
+    value["allow_dirs"].as_array_mut().unwrap().pop();
     registration::register(&root, &input(dir.path(), json!([value]))).unwrap();
     let assets = AssetStore::open(&root.join("Library")).unwrap();
     let host = Coordinator::open(
@@ -167,7 +167,11 @@ async fn selected_config_is_passed_as_one_argument_without_reading_it() {
     assert!(client.close().await.unwrap());
     assert_eq!(
         fs::read_to_string(dir.path().join("received-args")).unwrap(),
-        format!("serve\n--config\n{}\n", config.display())
+        format!(
+            "serve\n--allow-dir\n{}\n--config\n{}\n",
+            dir.path().canonicalize().unwrap().display(),
+            config.display()
+        )
     );
     assert!(!config.exists());
     assert!(!dir.path().join("not-shell").exists());

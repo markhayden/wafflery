@@ -1,5 +1,8 @@
 # V18: real v0.3 interoperability
 
+This records the earlier V18 build. M5.02 replaces roots with explicit argv grants, so the Squint
+`54b1f41` commands here are unsupported on that intermediate build; M5.03 adopts the v0.4 peers.
+
 V18a–c automated interoperability checks are complete. Native Safari and billed-provider limits remain below.
 
 The automated offline checkpoint uses owner-approved Rascal `9ee6bc8` and Squint `54b1f41`.

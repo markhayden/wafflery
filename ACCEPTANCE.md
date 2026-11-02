@@ -238,7 +238,7 @@ Verify each drawer use with keyboard, long content, focus restoration, and real 
   effective configuration where available, prerequisites, input roles, and versions.
 - Editing the current form does not rewrite that run's copy/export. Untested draft snippets,
   if offered, are labeled separately. Never infer CLI flags from presentation labels.
-- MCP export includes the recorded call plus declared startup/roots/protocol/prerequisite data;
+- MCP export includes the recorded call plus declared startup/input-grants/protocol/prerequisite data;
   label it setup data for an MCP client, not a standalone program. Generated client programs are
   optional; if offered they must include initialization/dependencies and pass independent replay.
   CLI quoting is correct for its declared shell. Unsupported formats are identified without fake code.

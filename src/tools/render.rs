@@ -118,7 +118,7 @@ impl ResolvedRender {
         }
         let run_dir = Path::new(raw).canonicalize()?;
         if !descriptor
-            .roots
+            .evidence_dirs
             .iter()
             .any(|root| run_dir.starts_with(root))
         {

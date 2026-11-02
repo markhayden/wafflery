@@ -199,7 +199,7 @@ async fn capture_image(
 ) -> Result<crate::library::assets::Asset> {
     let bytes = if let Some(path) = output["path"].as_str() {
         let path = Path::new(path).to_owned();
-        let roots = client.descriptor.roots.clone();
+        let roots = client.descriptor.evidence_dirs.clone();
         tokio::task::spawn_blocking(move || -> Result<Vec<u8>> {
             let path = path.canonicalize()?;
             if !roots.iter().any(|root| path.starts_with(root)) {

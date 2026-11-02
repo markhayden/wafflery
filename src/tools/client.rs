@@ -1,5 +1,3 @@
-// Roots are part of our pinned 2025-11-25 protocol; upgrading requires a new file boundary.
-#![allow(deprecated)]
 use super::dispatch_transport::{Gate, RecordedTransport};
 use super::{Error, Result, registration::Descriptor, validate_contract, validator};
 use rmcp::{
@@ -27,25 +25,24 @@ use tokio::{
 const CONTROL_TIMEOUT: Duration = Duration::from_secs(5);
 #[derive(Clone)]
 struct Handler {
-    roots: Vec<Root>,
     generation: Arc<AtomicU64>,
     progress: watch::Sender<Option<Value>>,
 }
 impl ClientHandler for Handler {
     fn get_info(&self) -> ClientConfig {
-        let mut capabilities = ClientCapabilities::default();
-        capabilities.roots = Some(Default::default());
         ClientConfig::new(
-            capabilities,
+            ClientCapabilities::default(),
             Implementation::new("wafflery", crate::VERSION),
         )
         .with_protocol_version(ProtocolVersion::V_2025_11_25)
     }
+    // rmcp otherwise returns a successful empty list even when roots were not advertised.
+    #[allow(deprecated)]
     async fn list_roots(
         &self,
         _: RequestContext<RoleClient>,
     ) -> std::result::Result<ListRootsResult, rmcp::ErrorData> {
-        Ok(ListRootsResult::new(self.roots.clone()))
+        Err(rmcp::ErrorData::method_not_found::<ListRootsRequestMethod>())
     }
     async fn on_tool_list_changed(&self, _: NotificationContext<RoleClient>) {
         self.generation.fetch_add(1, Ordering::SeqCst);
@@ -107,6 +104,9 @@ impl ToolClient {
         let mut command = Command::new(&descriptor.executable);
         super::environment::apply(&mut command, requirements.unwrap_or_default());
         command.args(&descriptor.args);
+        for directory in &descriptor.allow_dirs {
+            command.arg("--allow-dir").arg(directory);
+        }
         if let Some(config) = &descriptor.config {
             command.arg("--config").arg(config);
         }
@@ -155,16 +155,6 @@ impl ToolClient {
         ))
     }
     pub async fn initialize(&mut self) -> Result<()> {
-        let roots = self
-            .descriptor
-            .roots
-            .iter()
-            .map(|path| {
-                let uri = url::Url::from_directory_path(path)
-                    .map_err(|_| Error::Invalid("Invalid root URI".into()))?;
-                Ok(Root::new(uri.to_string()))
-            })
-            .collect::<Result<Vec<_>>>()?;
         let (stdout, stdin) = self
             .pipes
             .get_mut()
@@ -172,7 +162,6 @@ impl ToolClient {
             .take()
             .ok_or_else(|| Error::Invalid("Tool already initialized".into()))?;
         let handler = Handler {
-            roots,
             generation: self.generation.clone(),
             progress: self.progress.clone(),
         };

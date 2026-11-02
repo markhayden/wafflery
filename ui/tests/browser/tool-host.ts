@@ -71,10 +71,10 @@ export const test = base.extend<{
                     : resolve("../target/debug/examples/sample-lab"),
                 args:
                   hostKind === "rascal"
-                    ? await rascalServeArgs(join(root, "Library"), toolRoot)
+                    ? rascalServeArgs(toolRoot)
                     : [toolRoot, hostScenario],
                 cwd: toolRoot,
-                roots: [toolRoot],
+                allow_dirs: [], evidence_dirs: [toolRoot],
               },
             ],
       ),

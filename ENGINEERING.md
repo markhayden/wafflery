@@ -401,13 +401,19 @@ host origin. Framing/authentication remains C3 plus the browser security specifi
 
 ## File access boundaries
 
-Tools receive explicit MCP roots for materialized inputs and agreed managed workspaces. The
-canonical asset store and unrelated home/project folders are not implicit input roots. The
-host validates returned file paths against known output roots and rejects symlink/path escapes;
-the details must avoid check-then-open races. Resource/inline results get size limits and hashes.
+Registrations separate `allow_dirs` (caller input permissions) from `evidence_dirs` (host reads of
+returned images and run/report directories). Both are required arrays of existing absolute
+canonical directories. The serving executable receives repeated literal `--allow-dir` flags from
+the input list; registration arguments cannot supply those flags themselves. Only the dedicated
+`Library/execution` materialization/import area is added automatically. The asset store, library
+parent, tool workspace and unrelated home/project folders are not implicit grants. Output paths
+are checked against `evidence_dirs`, never input permissions; exports will use this same boundary
+when their controls land. Document-render output retains its existing exact-file permission.
+Resource/inline results retain size limits and fingerprints.
 
-MCP roots express allowed paths; they do not sandbox a locally installed executable. Tool
-binaries are trusted local programs. Avoid claiming OS-level isolation that is not implemented.
+MCP roots are neither advertised nor served. Input grants are enforced by the tool, whose config
+may narrow them; they do not sandbox a locally installed executable. Tool binaries remain trusted
+local programs. Avoid claiming OS-level isolation that is not implemented.
 Host APIs use asset IDs rather than unrestricted filesystem paths. User-selected imports and
 explicit output destinations are the only ordinary filesystem entry points.
 
@@ -439,8 +445,8 @@ path, but it must not be used to bypass a live `may_spend: true` declaration in 
 Live execution accepts exactly published table-manners =0.3.0 from crates.io. Older saved records remain readable without migration or replay. Paid
 actions must declare a positive max_spend_usd and expose the reserved estimate MCP control,
 which is excluded from the Actions catalogue. Paid dispatch remains blocked. V0.3 declares
-list slots; V06 binds and verifies them, and V07 supplies list editing/restoration. MCP roots remain
-specific to 2025-11-25; a future revision requires its own path-access decision.
+list slots; V06 binds and verifies them, and V07 supplies list editing/restoration. M5.02 replaces
+MCP roots with explicit launch grants while retaining protocol 2025-11-25; M5.03 adopts v0.4 validation.
 
 First-release history records Wafflery-started attempts. Tool run resources support reading
 those attempts, not heuristic adoption of unrelated runs. Automatic import of prior CLI/agent
@@ -557,9 +563,9 @@ inputs retain their own selected tool/action and quote lifecycle.
 
 V14a resolves report commands from the selected saved attempt's description and result. It
 requires one matching action/render, matching tool/action evidence, and an existing absolute
-run directory within the serving client's canonical registered roots. A null, missing or
+run directory within the serving client's canonical `evidence_dirs`. A null, missing or
 unauthorized directory has no view; the host never guesses a replacement. An explicitly selected
-copied directory can be rendered only within those roots. Canonical registration paths may not
+copied directory can be rendered only within those directories. Canonical registration paths may not
 silently follow a replaced symlink. The resolver retains an open directory handle and rechecks
 its device/inode and canonical path immediately before building the command.
 

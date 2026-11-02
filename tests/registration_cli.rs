@@ -14,7 +14,7 @@ fn registration_is_setup_only_and_explicit_data_dir_wins() {
     fs::write(
         &descriptor,
         json!([{"id":"example","executable":env!("CARGO_BIN_EXE_wafflery"),
-        "args":["--version"],"cwd":dir.path(),"roots":[dir.path()]}])
+        "args":["--version"],"cwd":dir.path(),"allow_dirs":[dir.path()],"evidence_dirs":[dir.path()]}])
         .to_string(),
     )
     .unwrap();

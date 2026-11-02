@@ -55,7 +55,8 @@ impl Host {
                     args: vec![tool.display().to_string(), "renders".into()],
                     config: None,
                     cwd: tool.clone(),
-                    roots: vec![tool],
+                    allow_dirs: vec![tool.clone()],
+                    evidence_dirs: vec![tool],
                 }],
             )
             .await

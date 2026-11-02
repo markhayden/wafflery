@@ -255,7 +255,7 @@ pub fn execute(
                 }
             }
         }
-        let roots = state.lock().unwrap().roots.clone();
+        let roots = state.lock().unwrap().allow_dirs.clone();
         let (input_reference, output_reference, output_bytes) = mark(params, &roots)?;
         run["images"]["in"] = json!([{"slot":"source","role":"source","image":input_reference}]);
         for item in params["references"].as_array().into_iter().flatten() {
@@ -395,7 +395,7 @@ fn mark(
         }
         let path = Path::new(path).canonicalize()?;
         if !roots.iter().any(|root| path.starts_with(root)) {
-            return Err("image is outside MCP roots".into());
+            return Err("image is outside input grants".into());
         }
         let mut bytes = Vec::new();
         let file = OpenOptions::new()

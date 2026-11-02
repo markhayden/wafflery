@@ -473,7 +473,8 @@ mod tests {
                 "v03-ready".into(),
             ],
             cwd: dir.path().to_owned(),
-            roots: vec![dir.path().to_owned()],
+            allow_dirs: vec![dir.path().to_owned()],
+            evidence_dirs: vec![dir.path().to_owned()],
         })
         .unwrap();
         client.initialize().await.unwrap();

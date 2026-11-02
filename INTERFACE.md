@@ -195,7 +195,7 @@ Squint's report rather than extracting fields from its body.
 | --- | --- |
 | Tool name, actions, forms, image/location inputs | Host reads the contract description and schemas |
 | Action behavior and validation | Tool; host form validation supplements it |
-| Input selection, uploads, accessible folders | Host, with explicit MCP roots and tool-enforced restrictions |
+| Input selection, uploads, accessible folders | Host passes explicit input directory grants; tool config may narrow them. Evidence-read folders are separate |
 | Progress and stop | Host displays notifications and sends cancellation; terminal state is reconciled through run resources |
 | Cost | Host displays declared cost/estimate data; tool enforces its limits |
 | Common run facts | Host shows status, times, spend, cache, notes, errors, images, and contract locations |

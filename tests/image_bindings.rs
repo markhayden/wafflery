@@ -52,7 +52,8 @@ impl Host {
                         scenario.into(),
                     ],
                     cwd: root.path().into(),
-                    roots: vec![root.path().into()],
+                    allow_dirs: vec![root.path().into()],
+                    evidence_dirs: vec![root.path().into()],
                     config: None,
                 }],
             )

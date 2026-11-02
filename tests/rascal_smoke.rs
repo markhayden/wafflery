@@ -25,15 +25,14 @@ async fn real_rascal_offline_seam_uses_the_same_dispatch_and_evidence_guards() {
         executable: binary.clone(),
         args: vec![
             "serve".into(),
-            "--allow-dir".into(),
-            assets.root().join("execution").display().to_string(),
             "--workspace".into(),
             tool.join("workspace").display().to_string(),
             "--runs".into(),
             tool.join("runs").display().to_string(),
         ],
         cwd: tool.clone(),
-        roots: vec![tool],
+        allow_dirs: vec![],
+        evidence_dirs: vec![tool],
     };
     let c = Arc::new(Coordinator::open(assets, vec![descriptor]).await.unwrap());
     let outcome = peer::run(&c, async {
@@ -110,15 +109,14 @@ async fn real_rascal_binds_caps_and_restarts_with_a_new_config_and_ledger() {
                 config: Some(config.clone()),
                 args: vec![
                     "serve".into(),
-                    "--allow-dir".into(),
-                    assets.root().join("execution").display().to_string(),
                     "--workspace".into(),
                     tool.join("workspace").display().to_string(),
                     "--runs".into(),
                     tool.join("runs").display().to_string(),
                 ],
                 cwd: tool.clone(),
-                roots: vec![tool],
+                allow_dirs: vec![],
+                evidence_dirs: vec![tool],
             }],
         )
         .await

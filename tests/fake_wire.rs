@@ -27,7 +27,6 @@ struct Peer {
     child: Child,
     input: Option<ChildStdin>,
     messages: mpsc::Receiver<Value>,
-    root: PathBuf,
     progress: usize,
 }
 
@@ -37,6 +36,8 @@ impl Peer {
             Command::new(executable())
                 .arg(root.join("runs"))
                 .arg(scenario)
+                .arg("--allow-dir")
+                .arg(root)
                 .stdin(Stdio::piped())
                 .stdout(Stdio::piped())
                 .stderr(Stdio::inherit()),
@@ -62,7 +63,6 @@ impl Peer {
             child,
             input,
             messages,
-            root: root.canonicalize().unwrap(),
             progress: 0,
         }
     }
@@ -79,9 +79,7 @@ impl Peer {
                 .messages
                 .recv_timeout(Duration::from_secs(5))
                 .expect("bounded wire reply");
-            if value["method"] == "roots/list" {
-                self.send(json!({"jsonrpc":"2.0","id":value["id"],"result":{"roots":[{"uri":url::Url::from_directory_path(&self.root).unwrap().as_str(),"name":"Fixture inputs"}]}}));
-            } else if value["method"] == "notifications/progress" {
+            if value["method"] == "notifications/progress" {
                 self.progress += 1;
             } else if value["id"] == id {
                 return value;
@@ -91,10 +89,10 @@ impl Peer {
         }
     }
     fn initialize(&mut self) {
-        let response = self.call(1, "initialize", json!({"protocolVersion":"2025-11-25","capabilities":{"roots":{}},"clientInfo":{"name":"independent-probe","version":"1"}}));
+        let response = self.call(1, "initialize", json!({"protocolVersion":"2025-11-25","capabilities":{},"clientInfo":{"name":"independent-probe","version":"1"}}));
         assert_eq!(response["result"]["protocolVersion"], "2025-11-25");
         self.send(json!({"jsonrpc":"2.0","method":"notifications/initialized"}));
-        // Drain the roots exchange using a separate ping response.
+        // Check the initialized notification has been processed using a ping.
         self.call(2, "ping", json!({}));
     }
 }

@@ -26,7 +26,7 @@ pub struct PeerState {
     pub session: Value,
     pub estimates: std::collections::HashMap<String, Value>,
     pub claimed: std::collections::HashSet<String>,
-    pub roots: Vec<PathBuf>,
+    pub allow_dirs: Vec<PathBuf>,
     pub descriptions: usize,
     pub resource_reads: usize,
     pub runs: Vec<Value>,
@@ -54,7 +54,7 @@ impl Default for PeerState {
             "budget_usd":null,"spent_usd":0,"unresolved_usd":0,"reserved_usd":0,"remaining_usd":null}),
             estimates: Default::default(),
             claimed: Default::default(),
-            roots: vec![],
+            allow_dirs: vec![],
             descriptions: 0,
             resource_reads: 0,
             runs: vec![],
@@ -113,8 +113,20 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         return v04_peer::serve(&root, arguments.collect());
     }
 
-    let mut configuration =
-        configuration::Configuration::load(&root, &scenario, arguments.collect())?;
+    let mut allow_dirs = Vec::new();
+    let mut remaining = Vec::new();
+    while let Some(argument) = arguments.next() {
+        if argument == "--allow-dir" {
+            let path = PathBuf::from(arguments.next().ok_or("missing input directory")?);
+            if !path.is_absolute() || !path.is_dir() {
+                return Err("invalid input directory".into());
+            }
+            allow_dirs.push(path.canonicalize()?);
+        } else {
+            remaining.push(argument);
+        }
+    }
+    let mut configuration = configuration::Configuration::load(&root, &scenario, remaining)?;
     if scenario.starts_with("v03-") {
         return v03_control::serve(&scenario);
     }
@@ -123,7 +135,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         return Ok(());
     }
     let output = Arc::new(Mutex::new(io::stdout()));
-    let state = Arc::new(Mutex::new(PeerState::default()));
+    let state = Arc::new(Mutex::new(PeerState {
+        allow_dirs,
+        ..PeerState::default()
+    }));
     if scenario == "estimates" {
         let mut state = state.lock().unwrap();
         state.session["budget_usd"] = json!(0.2);
@@ -153,20 +168,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         let message: Value = serde_json::from_slice(&line)?;
         let id = &message["id"];
         let params = &message["params"];
-        if id == "root-query" && message.get("result").is_some() {
-            state.lock().unwrap().roots = message["result"]["roots"]
-                .as_array()
-                .into_iter()
-                .flatten()
-                .filter_map(|root| {
-                    url::Url::parse(root["uri"].as_str()?)
-                        .ok()?
-                        .to_file_path()
-                        .ok()?
-                        .canonicalize()
-                        .ok()
-                })
-                .collect();
+        if id == "obsolete-roots" {
+            std::fs::write(root.join("roots-reply.json"), serde_json::to_vec(&message)?)?;
             continue;
         }
         match message["method"].as_str().unwrap_or("") {
@@ -181,6 +184,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     reject(&output, id, -32602, "only protocol 2025-11-25 is supported");
                     continue;
                 }
+                std::fs::write(root.join("initialize.json"), serde_json::to_vec(params)?)?;
+                std::fs::write(
+                    root.join("allowed-dirs.json"),
+                    serde_json::to_vec(&state.lock().unwrap().allow_dirs)?,
+                )?;
                 initialized = true;
                 reply(
                     &output,
@@ -188,10 +196,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     json!({"protocolVersion": if scenario == "wrong-protocol" {"2026-07-28"} else {"2025-11-25"}, "capabilities":{"tools":{},"resources":{}}, "serverInfo":{"name":fixtures::TOOL,"version":"0.1.0"}}),
                 );
             }
-            "notifications/initialized" if initialized => send(
-                &output,
-                json!({"jsonrpc":"2.0","id":"root-query","method":"roots/list","params":{}}),
-            ),
+            "notifications/initialized" if initialized => {
+                if scenario == "unsolicited-roots" {
+                    send(
+                        &output,
+                        json!({"jsonrpc":"2.0", "id":"obsolete-roots", "method":"roots/list", "params":{}}),
+                    );
+                }
+            }
             "notifications/cancelled" => {
                 for (request, cancelled) in &state.lock().unwrap().active {
                     if request == &params["requestId"] {

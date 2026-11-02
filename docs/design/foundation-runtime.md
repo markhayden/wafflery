@@ -121,8 +121,8 @@ dispatch remain separate work. A changed session ID requires explicit reconnecti
 allowance replenishment.
 
 Explicitly select protocol `2025-11-25`; restrict negotiation to that MCP revision. Contract and
-MCP versions are separate. Roots are deprecated in a newer MCP revision (SEP-2577); retain the
-current roots boundary until an agreed replacement is specified before any protocol upgrade. The
+MCP versions are separate. M5.02 adopts the agreed explicit `--allow-dir` replacement for MCP
+roots while retaining this protocol revision; host evidence-read grants are a separate boundary. The
 installed rmcp 3.8.0 source defaults to `2026-07-28` (`src/model.rs`), so SDK defaults are not the
 contract. Test the initialization bytes with an independently implemented peer.
 

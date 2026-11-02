@@ -4,7 +4,7 @@ use wafflery::host::control::Ownership;
 
 fn descriptor(dir: &Path, id: &str, config: &str) -> Value {
     json!({"id":id,"executable":env!("CARGO_BIN_EXE_wafflery"),
-        "args":["--version"],"cwd":dir,"roots":[dir],"config":dir.join(config)})
+        "args":["--version"],"cwd":dir,"allow_dirs":[dir],"evidence_dirs":[dir],"config":dir.join(config)})
 }
 fn invoke(dir: &Path, root: &Path, records: Value, replace: bool) -> std::process::Output {
     let source = dir.join("registrations.json");

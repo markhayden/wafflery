@@ -50,7 +50,8 @@ async fn real_squint_scripted_check_preserves_zero_spend_evidence() {
                     tool.join("runs").display().to_string(),
                 ],
                 cwd: tool.clone(),
-                roots: vec![tool.clone()],
+                allow_dirs: vec![],
+                evidence_dirs: vec![tool.clone()],
             }],
         )
         .await
@@ -150,7 +151,8 @@ async fn real_squint_discovers_setup_and_prices_without_allocating_a_run() {
                         tool.join("runs").display().to_string(),
                     ],
                     cwd: tool.clone(),
-                    roots: vec![tool.clone()],
+                    allow_dirs: vec![],
+                    evidence_dirs: vec![tool.clone()],
                 }],
             )
             .await

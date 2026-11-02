@@ -42,7 +42,15 @@ impl Host {
         std::fs::create_dir(&tool).unwrap();
         std::fs::write(tool.join("scenario"), scenario).unwrap();
         let script = root.path().join("peer.sh");
-        std::fs::write(&script, "exec \"$1\" \"$2\" \"$(cat \"$2/scenario\")\"\n").unwrap();
+        std::fs::write(
+            &script,
+            r#"fixture_bin=$1
+fixture_root=$2
+shift 2
+exec "$fixture_bin" "$fixture_root" "$(cat "$fixture_root/scenario")" "$@"
+"#,
+        )
+        .unwrap();
         let assets = AssetStore::open(&root.path().join("Library")).unwrap();
         let image = root.path().join("source.png");
         std::fs::write(&image, include_bytes!("../ui/tests/fixtures/sample.png")).unwrap();
@@ -59,7 +67,8 @@ impl Host {
                         tool.display().to_string(),
                     ],
                     cwd: root.path().into(),
-                    roots: vec![tool],
+                    allow_dirs: vec![tool.clone()],
+                    evidence_dirs: vec![tool],
                     config: None,
                 }],
             )

@@ -25,7 +25,7 @@ export async function prepareOfflinePipeline(
     let args: string[];
     let config: string | undefined;
     if (id === "rascal") {
-      args = await rascalServeArgs(join(directory, "data", "Library"), cwd);
+      args = rascalServeArgs(cwd);
     } else {
       for (const name of ["config.toml", referenceCheck ? "references-held.json" : "held.json"]) {
         await copyFile(
@@ -44,7 +44,7 @@ export async function prepareOfflinePipeline(
         join(cwd, "runs"),
       ];
     }
-    entries.push({ id, executable, args, cwd, roots: [cwd], ...(config ? { config } : {}) });
+    entries.push({ id, executable, args, cwd, allow_dirs: [], evidence_dirs: [cwd], ...(config ? { config } : {}) });
   }
   return entries;
 }

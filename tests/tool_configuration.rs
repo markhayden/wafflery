@@ -48,7 +48,7 @@ impl Host {
         };
         fs::create_dir_all(config.parent().unwrap()).unwrap();
         fs::write(&config, json!({"credential":"SCRIPTED_KEY", "env":"SCRIPTED_MODEL_DIR", "extra_when_configured":extra}).to_string()).unwrap();
-        let mut descriptor = json!({"id":"sample", "executable":peer(), "args":[tool,scenario],"cwd":tool,"roots":[tool]});
+        let mut descriptor = json!({"id":"sample", "executable":peer(), "args":[tool,scenario],"cwd":tool,"allow_dirs":[tool],"evidence_dirs":[tool]});
         if mode == "explicit" {
             descriptor["config"] = json!(config);
         }

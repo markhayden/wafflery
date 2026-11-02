@@ -36,7 +36,8 @@ pub(crate) fn setup(mode: &str) -> (tempfile::TempDir, ResolvedRender) {
         args: vec![],
         config: None,
         cwd: root.clone(),
-        roots: vec![root],
+        allow_dirs: vec![root.clone()],
+        evidence_dirs: vec![root],
     }
     .validate()
     .unwrap();

@@ -35,7 +35,8 @@ async fn session_reads_are_authenticated_live_and_do_not_dispatch_or_wait_for_a_
                     "slow".into(),
                 ],
                 cwd: root.path().into(),
-                roots: vec![root.path().into()],
+                allow_dirs: vec![root.path().into()],
+                evidence_dirs: vec![root.path().into()],
             }],
         )
         .await

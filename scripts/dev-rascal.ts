@@ -39,9 +39,9 @@ await writeFile(
       {
         id: "rascal",
         executable,
-        args: await rascalServeArgs(join(data, "Library"), tool),
+        args: rascalServeArgs(tool),
         cwd: tool,
-        roots: [tool],
+        allow_dirs: [], evidence_dirs: [tool],
       },
     ],
     null,

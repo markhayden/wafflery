@@ -28,7 +28,8 @@ fn descriptor(root: &Path, scenario: &str) -> Descriptor {
         executable: binary(),
         args: vec![root.join("runs").display().to_string(), scenario.into()],
         cwd: root.to_owned(),
-        roots: vec![root.to_owned()],
+        allow_dirs: vec![root.to_owned()],
+        evidence_dirs: vec![root.to_owned()],
     }
 }
 #[tokio::test]
@@ -72,7 +73,7 @@ async fn refuses_wrong_protocol_contract_and_malformed_declarations_without_exec
     }
 }
 #[test]
-fn rejects_missing_or_relative_executable_and_relative_roots() {
+fn rejects_missing_or_relative_executable_and_relative_input_grants() {
     let dir = tempfile::tempdir().unwrap();
     let mut registration = descriptor(dir.path(), "normal");
     registration.executable = dir.path().join("missing");
@@ -80,7 +81,7 @@ fn rejects_missing_or_relative_executable_and_relative_roots() {
     registration.executable = "echo".into();
     assert!(ToolClient::spawn(registration.clone()).is_err());
     registration.executable = binary();
-    registration.roots = vec![".".into()];
+    registration.allow_dirs = vec![".".into()];
     assert!(ToolClient::spawn(registration).is_err());
 }
 

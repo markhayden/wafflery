@@ -51,7 +51,8 @@ async fn concurrent_tool_launches_do_not_inherit_sibling_pipes() {
                     "pipe-inheritance".into(),
                 ],
                 cwd: cwd.clone(),
-                roots: vec![cwd.clone()],
+                allow_dirs: vec![cwd.clone()],
+                evidence_dirs: vec![cwd.clone()],
                 config: None,
             };
             let barrier = barrier.clone();

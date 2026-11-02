@@ -1568,10 +1568,10 @@ and memory behavior must be measured before choosing a downscaled-decoding imple
 
 #### M5.02 — Separate input grants from evidence access
 
-- [ ] Replace registration roots with explicit input/evidence directory fields, validate existing
+- [x] Replace registration roots with explicit input/evidence directory fields, validate existing
   absolute canonical directories and argv ownership, and reject conflicting hand-written grant flags.
   Remove Rascal-only grant injection from development descriptors in favor of the shared launcher.
-- [ ] Child argv contains repeated `--allow-dir`; input/import staging is the only automatic grant.
+- [x] Child argv contains repeated `--allow-dir`; input/import staging is the only automatic grant.
   Preserve evidence/report read restrictions separately. No roots capability or roots/list remains.
 - [ ] Setup shows requested and effective `allowed_dirs`; no-grant, narrowed config, symlink escape,
   invalid directory, restart and unchanged old-session spend have explicit tests and migration docs.
@@ -1584,9 +1584,39 @@ and memory behavior must be measured before choosing a downscaled-decoding imple
 
 **Planned build slices** (ordered, each with its own targeted checks and matching docs):
 
-- **M5.02a: registration, argv and read-boundary cutover** — acceptance 1–2 and registration rollback;
+- **M5.02a: Complete — registration, argv and read-boundary cutover** — acceptance 1–2 and registration rollback;
   path/argv tests.
 - **M5.02b: effective-grant setup display** — acceptance 3; session/restart browser tests and stories.
+
+M5.02a is one coordinated registration cutover. Replacing the public descriptor fields requires
+updating every Rust constructor and disposable JSON registration together; retaining an alias would
+violate the no-shim decision. This slice therefore exceeds the five-authored-file limit for the
+mechanical caller updates, alongside the registration/client/read-boundary changes and regression
+tests. It stays on one branch until the full matrix and independent review pass. Production schema
+validation remains v0.3 until M5.03, while the independent old-flow fake receives grants through argv.
+No real local registration is migrated by this change; the documented backup/explicit replacement
+procedure applies before using a new binary with an existing registration. Roll back the entire
+slice together, never just the descriptor or the evidence-reader half.
+
+**M5.02a implementation checkpoint (2026-11-02, complete):**
+Registration now requires separate canonical `allow_dirs` and `evidence_dirs`, rejects old fields
+with backup/re-registration guidance, and refuses hand-written grant flags. The shared launcher
+passes only input directories and the coordinator's dedicated execution staging area. Evidence
+capture and run/report resolution use only the evidence list; the document renderer's exact-file
+boundary is unchanged. No MCP roots capability is advertised, and unsolicited roots/list returns
+method-not-found rather than rmcp's successful empty default. Development descriptors and real-peer
+smoke registrations rely on host staging, removing Rascal-only argument injection.
+Seven directory-grant tests cover literal argv, missing/invalid/legacy fields, independent permissions,
+the exact automatic grant, existing staging-symlink refusal and unsolicited roots requests. A render
+regression checks that input permission cannot authorize reports. The original field tests and both
+review regressions failed first. The full matrix also caught a test wrapper discarding appended
+argv; forwarding its arguments restores real grant checks across restart. Two independent review
+rounds found no remaining blockers. Final verification passed: fmt/clippy, 334 Rust tests (4 ignored),
+typecheck, 53 UI tests, 2 asset-tool tests, Storybook, reproducible assets, release build and 220 browser
+tests (8 skipped). Temporary port 4187 config is removed; lockfiles/prebuilt assets are unchanged.
+Real registrations were not touched. The old V18 Squint snapshot needs roots and is explicitly
+unsupported on this intermediate build; M5.03 adopts the approved v0.4 peer and validator. M5.02b
+still owns the requested/effective grant display and configuration-narrowing/session checks.
 
 #### M5.03 — Cut over live validation to v0.4
 

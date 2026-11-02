@@ -1,12 +1,9 @@
-import { mkdir, realpath } from "node:fs/promises";
 import { join } from "node:path";
 
 // Development/test descriptors only. The generic host never invents tool-specific flags.
-export async function rascalServeArgs(library: string, tool: string): Promise<string[]> {
-  const inputs = join(library, "execution");
-  await mkdir(inputs, { recursive: true, mode: 0o700 });
+export function rascalServeArgs(tool: string): string[] {
   return [
-    "serve", "--allow-dir", await realpath(inputs),
+    "serve",
     "--workspace", join(tool, "workspace"), "--runs", join(tool, "runs"),
   ];
 }

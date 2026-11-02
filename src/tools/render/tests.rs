@@ -19,7 +19,8 @@ fn setup() -> (tempfile::TempDir, Descriptor, Attempt) {
         args: vec!["serve".into()],
         config: None,
         cwd: root.clone(),
-        roots: vec![root.join("runs")],
+        allow_dirs: vec![root.join("runs")],
+        evidence_dirs: vec![root.join("runs")],
     }
     .validate()
     .unwrap();
@@ -166,14 +167,14 @@ fn missing_outside_and_symlink_escaped_run_directories_are_unavailable() {
     let (temp, descriptor, attempt) = setup();
     let outside = temp.path().join("elsewhere");
     fs::create_dir(&outside).unwrap();
-    let link = descriptor.roots[0].join("escape");
+    let link = descriptor.evidence_dirs[0].join("escape");
     symlink(&outside, &link).unwrap();
     for path in [
         serde_json::Value::Null,
         json!("relative"),
         json!(outside),
         json!(link),
-        json!(descriptor.roots[0].join("missing")),
+        json!(descriptor.evidence_dirs[0].join("missing")),
         json!(descriptor.executable),
     ] {
         let mut bad = attempt.clone();
@@ -184,7 +185,7 @@ fn missing_outside_and_symlink_escaped_run_directories_are_unavailable() {
     let run = attempt.result.as_ref().unwrap()["run"]["dir"]
         .as_str()
         .unwrap();
-    fs::rename(run, descriptor.roots[0].join("old run")).unwrap();
+    fs::rename(run, descriptor.evidence_dirs[0].join("old run")).unwrap();
     fs::create_dir(run).unwrap();
     assert!(
         render.command().is_err(),
@@ -194,7 +195,7 @@ fn missing_outside_and_symlink_escaped_run_directories_are_unavailable() {
 #[test]
 fn copied_run_directory_is_used_only_when_explicitly_selected_and_authorized() {
     let (_temp, descriptor, mut attempt) = setup();
-    let copied = descriptor.roots[0].join("copied run");
+    let copied = descriptor.evidence_dirs[0].join("copied run");
     fs::create_dir(&copied).unwrap();
     attempt.result.as_mut().unwrap()["run"]["dir"] = json!(copied);
     let render = ResolvedRender::resolve(&descriptor, &attempt, "document", origin()).unwrap();
@@ -224,7 +225,20 @@ fn canonical_registration_targets_cannot_be_redirected_after_serving() {
     fs::remove_file(&descriptor.executable).unwrap();
     fs::rename(&other, &descriptor.executable).unwrap();
     let moved = temp.path().join("moved root");
-    fs::rename(&descriptor.roots[0], &moved).unwrap();
-    symlink(&moved, &descriptor.roots[0]).unwrap();
+    fs::rename(&descriptor.evidence_dirs[0], &moved).unwrap();
+    symlink(&moved, &descriptor.evidence_dirs[0]).unwrap();
     assert!(ResolvedRender::resolve(&descriptor, &attempt, "report", origin()).is_err());
+}
+
+#[test]
+fn input_permission_does_not_authorize_report_reads() {
+    let (_temp, mut descriptor, attempt) = setup();
+    descriptor.evidence_dirs.clear();
+    let error = ResolvedRender::resolve(&descriptor, &attempt, "report", origin())
+        .err()
+        .unwrap();
+    assert!(error.to_string().contains("outside registered"));
+    descriptor.evidence_dirs = descriptor.allow_dirs.clone();
+    descriptor.allow_dirs.clear();
+    assert!(ResolvedRender::resolve(&descriptor, &attempt, "report", origin()).is_ok());
 }

@@ -40,7 +40,8 @@ async fn setup(scenario: &str) -> (tempfile::TempDir, Arc<Coordinator>, Submissi
                     scenario.into(),
                 ],
                 cwd: dir.path().to_owned(),
-                roots: vec![dir.path().to_owned()],
+                allow_dirs: vec![dir.path().to_owned()],
+                evidence_dirs: vec![dir.path().to_owned()],
             }],
         )
         .await

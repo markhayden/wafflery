@@ -24,7 +24,7 @@ fixture tests do not substitute for that execution boundary.
 
 `cargo test --locked --test fake_wire` builds the `sample-lab` example, then starts it in
 temporary directories using an independently written line-delimited client. The probe checks
-2025-11-25 initialization, roots, tool pagination, both path and inline image calls, expected
+2025-11-25 initialization, explicit input grants, tool pagination, both path and inline image calls, expected
 fingerprint refusal, output digests, multiple run resources, cancellation and EOF shutdown.
 
 The example takes `<workspace> [scenario]`. `normal` and `slow` execute the offline image
@@ -97,6 +97,11 @@ different coordinates; the test requires side-by-side viewing and a disabled wip
 alignment. With no filler this verifies mask preparation, not a repaired image or model quality.
 
 ## Optional Squint and two-tool integration
+
+**Intermediate M5.02 limitation:** the V18 Squint commands below are historical until M5.03.
+Squint `54b1f41` requires MCP roots and does not support the new explicit grant boundary. Neither
+its Rust smoke nor the two-tool browser probe is a supported live check on this intermediate build.
+M5.03 switches the harness to the approved v0.4 peers without a compatibility fallback.
 
 Use an explicitly selected, stable contract 0.3.0 Squint binary built with `--features testkit`
 at coordinator-approved revision `54b1f41` (the viewer CSP fix over `db5cf78`). The coordinator
@@ -493,3 +498,13 @@ The host still uses v0.3 until M5.03; this completes the independent v0.4 peer f
 Lifecycle clients must drain stdout through child exit or close the read pipe; keeping an unread
 pipe open can block normal output backpressure and therefore shutdown joining. Cancelled queued
 RPC IDs and admission slots remain occupied until the serial worker consumes those entries.
+
+### Explicit host directory grants (M5.02a)
+
+The old-flow peer now reads repeated `--allow-dir` arguments instead of asking for roots. Its
+synthetic `initialize.json` and `allowed-dirs.json` records expose handshake/grant evidence for
+boundary tests, without configuration or environment values. Direct wire probes pass their own
+grants; host probes prove that only input grants and the dedicated execution area reach argv.
+The production host's contract validator still accepts v0.3 until M5.03; the independent v0.4
+peer already uses the same explicit path rule. `tests/directory_grants.rs` checks registration
+rejection/canonicalization, literal argv, no roots capability and independent evidence reads.

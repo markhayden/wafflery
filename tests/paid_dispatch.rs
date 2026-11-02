@@ -38,7 +38,8 @@ async fn setup(label: &str) -> (tempfile::TempDir, Arc<Coordinator>, Submission)
                     "estimates".into(),
                 ],
                 cwd: dir.path().to_owned(),
-                roots: vec![dir.path().to_owned()],
+                allow_dirs: vec![dir.path().to_owned()],
+                evidence_dirs: vec![dir.path().to_owned()],
             }],
         )
         .await

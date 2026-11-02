@@ -6,7 +6,9 @@ Live execution uses published crates.io `table-manners =0.3.0`, source commit
 `9ac2142bf9315f4c5a0eb5935aa94da9bc95a697`. Its eleven schemas are byte-identical to the reviewed
 `e503a238ad6cc833834891c2c2cece7152b08bfc` schemas. Cargo.lock records the registry checksum.
 The temporary sibling dependency and CI checkout are removed. The host accepts only live v0.3
-and keeps older saved evidence readable.
+and keeps older saved evidence readable. M5.02 has since replaced roots with argv grants; the
+V18 Squint snapshot below is unsupported during this intermediate boundary cutover. M5.03 will
+adopt the approved v0.4 peers; the V18 results below describe the earlier verified build.
 The independent peer supplies required discovery/offline validation. V18a additionally verifies
 the approved real snapshots below; verified paths, resolved viewer issues and provider/manual limits are recorded in
 [checkpoint V18](plans/v03-real-peer-checkpoint.md). Previously tested v0.2 executables below are historical evidence, not
@@ -52,14 +54,13 @@ Actual provider 401/403 responses and billed calls remain outside this offline a
 
 ### Rascal explicit paths — 2026-11-01
 
-Coordinator-selected Rascal main `9ee6bc8` requires `serve --allow-dir <absolute-directory>`
-for caller paths, even while declaring contract 0.3.0. Current development/test descriptors
-pass only Wafflery's `Library/execution` directory, created before launch. The tool's
-`[serve] allow_dirs` configuration can narrow that grant; an unloadable config grants nothing.
-The host still copies inputs and passes the same registered executable/arguments on restart.
-Existing manually registered Rascal descriptors need this argument added explicitly while the
-host is stopped; there is no implicit fallback or directory migration. Squint's equivalent
-change is not yet on main, so its descriptors are unchanged. Full v0.3 peer acceptance remains V18.
+Coordinator-selected Rascal main `9ee6bc8` introduced `serve --allow-dir <absolute-directory>`
+for caller paths while declaring contract 0.3.0. M5.02 moves this from Rascal-only development
+arguments to the shared host launcher: every registered tool receives its explicit `allow_dirs`
+plus the dedicated `Library/execution` staging directory. Development descriptors declare separate
+`evidence_dirs` for returned image/report reads. No real registration is rewritten; back up and
+explicitly replace old `roots` registrations using the README procedure. The approved v0.4 peers
+are Rascal main `eed6397` and Squint main `6dd1e3a`; live schema validation switches in M5.03.
 
 ## Previous v0.2 integration — 2026-11-01
 

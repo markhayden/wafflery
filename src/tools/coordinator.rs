@@ -93,7 +93,7 @@ impl Coordinator {
                     "Duplicate or excessive registered tools".into(),
                 ));
             }
-            descriptor.roots.push(execution.clone());
+            descriptor.allow_dirs.push(execution.clone());
             let id = descriptor.id.clone();
             let super::probe::Started {
                 client,

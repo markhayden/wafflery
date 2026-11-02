@@ -30,7 +30,7 @@ await writeFile(
         executable: join(root, "target/debug/examples/sample-lab"),
         args: [tool, "normal"],
         cwd: tool,
-        roots: [tool],
+        allow_dirs: [], evidence_dirs: [tool],
       },
     ],
     null,

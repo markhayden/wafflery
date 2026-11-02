@@ -68,24 +68,14 @@ impl Peer {
             json!({"jsonrpc":"2.0","id":id,"method":method,"params":params})
         )
         .unwrap();
-        loop {
-            let response = self
-                .messages
-                .recv_timeout(Duration::from_secs(5))
-                .expect("bounded peer response");
-            if response["method"] == "roots/list" {
-                writeln!(
-                    self.input,
-                    "{}",
-                    json!({"jsonrpc":"2.0","id":response["id"],"result":{"roots":[]}})
-                )
-                .unwrap();
-            } else {
-                assert_eq!(response["id"], id, "{response}");
-                return response;
-            }
-        }
+        let response = self
+            .messages
+            .recv_timeout(Duration::from_secs(5))
+            .expect("bounded peer response");
+        assert_eq!(response["id"], id, "{response}");
+        response
     }
+
     fn session(&mut self, tool: &str) -> Value {
         let response = self.call(
             50,

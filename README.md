@@ -137,11 +137,16 @@ remains unconfirmed. Paid dispatch remains disabled pending provider readiness a
 ### Registration format
 
 The host accepts a JSON array of descriptors with `id`, absolute `executable`, `args` (an array,
-never a shell command), absolute `cwd`, absolute directory `roots`, and an optional absolute
+never a shell command), absolute `cwd`, required `allow_dirs` and `evidence_dirs` arrays, and an optional absolute
 `config` path. The host appends `--config` and that path as separate arguments and never reads
 the file; a conflicting `--config` in `args` is refused. Omit `config` for the tool’s default lookup. See the real-tool helper
 for a concrete Rascal descriptor. These records select programs that will execute when the host
-starts; only register executables you intend to run. The host supplies its own input staging root
+starts; only register executables you intend to run. Both directory arrays contain existing absolute
+directories, resolved canonically during validation. `allow_dirs` authorizes caller inputs; the host
+passes each as a literal `--allow-dir` argument. Hand-written `--allow-dir` flags in `args` are refused.
+`evidence_dirs` authorizes Wafflery to read returned image paths and run/report directories; it is
+never passed to the child. Neither list grants the other permission. Empty lists are allowed.
+The host supplies only its own `Library/execution` input staging directory automatically
 and starts the tool with a minimal environment for default configuration lookup and locale,
 plus a fixed system PATH. See the [environment policy](ENGINEERING.md#child-process-environment).
 The host first probes the tool over MCP with that base environment, closes the probe, then starts
@@ -149,6 +154,18 @@ one serving session with only its declared credential and non-secret environment
 Missing variables remain absent; the tool reports its readiness. If serving adds requirement
 names absent from the probe, setup is marked incomplete without restarting automatically.
 Configuration contents and environment values are never copied into the host library.
+
+The former `roots` registration field is rejected. Before adopting this build, quit the old host,
+save the old binary and move its `tools.json` to a separate backup (do not overwrite an existing
+backup). Prepare a new descriptor file with both explicit arrays, selecting input and evidence
+permissions separately, then register it with the command below. Remove old hand-written
+`--allow-dir` arguments. No real registrations or stored history are migrated automatically.
+Rollback requires the old binary, matching peers and the original backed-up registration together;
+do not restore old grants under the new binary. Production contract validation remains 0.3.0 until
+M5.03, so this intermediate build needs peers that accept the explicit grant flags. The earlier
+Squint snapshot `54b1f41` uses MCP roots and is unsupported by this intermediate build; use the
+approved v0.4 Squint `6dd1e3a` only after the M5.03 validator cutover. The prior V18 interoperability
+results remain historical evidence, not a claim that those snapshots pass this registration format.
 
 While the host is stopped:
 
