@@ -1242,6 +1242,15 @@ progress, held-run controls, cancellation/salvage and EOF ownership over stdio. 
 its own documented synthetic image/frame, not real image-repair algorithms: unsupported input
 bytes/frames fail explicitly rather than silently substituting an example. Each slice owns its
 behavioral tests and stays within five authored files; split b3c again if its wiring exceeds that.
+M5.01b3c is split before implementation into **c1 (run records and claims)**,
+**c2 (callable schemas and wire execution)** and **c3 (held-run cancellation and EOF ownership)**.
+c1 persists allocation references before work, pages runs by position, exposes journals/final
+results, atomically claims correlation IDs and releases only unallocated refused calls. Direct
+concurrency/restart/paging tests precede wiring. c2 exposes the action schemas and executes calls
+through those records, using the stdio default of path previews. c3 keeps controls responsive
+while a run is held, journals progress/heartbeats, and proves cancel-before/after-allocation and
+EOF cleanup. Each part stays within five authored files; its docs distinguish direct state tests
+from completed wire behavior.
 Each slice includes testkit documentation, targeted tests, the full matrix and review.
 
 **M5.01a implementation checkpoint (2026-11-02, complete):**
@@ -1366,6 +1375,23 @@ review approved the corrected slice. The full matrix passed: fmt/clippy, 287 Rus
 typecheck, 53 UI tests, 2 asset-tool tests, Storybook, reproducible assets, release build and
 220 Chromium/WebKit tests (8 skipped). The temporary local 4187 override was removed; lockfile
 and prebuilt assets are unchanged. Wire allocation, claims, progress and persistence remain b3c.
+
+**M5.01b3c1 implementation checkpoint (2026-11-02, complete):**
+The independent run store persists allocation references/action and readable journals before
+work, then writes immutable terminal results last. Two-entry pages use numeric start time plus
+ID, including equivalent RFC3339 spellings. Session correlation claims are atomic and return
+private ownership handles: refused duplicates and stale owners cannot release or allocate a
+current claim. Restart preserves run evidence but resets claims; relocation changes only the
+read response's local `run.dir`, leaving stored evidence and identity unchanged. Eight direct
+tests cover contention, refusal release, failed allocation, paging, unpublished records,
+immutable results and reference integrity. Missing implementation and forged reference tests
+failed first. Review found claim-ownership and invalid-fixture gaps; mutations removing ownership
+and publication guards failed their corrected regressions. Final review approved. The full
+matrix passed: fmt/clippy, 295 Rust tests (4 ignored), typecheck, 53 UI tests, 2 asset-tool tests,
+Storybook, reproducible assets, release build and 220 browser tests (8 skipped). Local browser
+checks used the temporary 4187 override; lockfile/prebuilt assets are unchanged. Wire dispatch,
+progress and cancellation remain c2/c3. The fake does not claim crash recovery; a failed terminal
+publication may repeat its private journal event, and only `run.json` establishes completion.
 
 #### V20 — Image import feedback (M5-adjacent; coordinator-approved 2026-11-02)
 

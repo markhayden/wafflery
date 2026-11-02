@@ -380,3 +380,23 @@ monotonic elapsed time; invalid-input identities also exclude delivery options. 
 keep completed outputs, while unresolved invalid inputs have null invocation and empty artifacts.
 These are direct executor tests in `tests/v04_results.rs`, not a wire cancellation claim: b3c
 still owns correlation claims, run persistence, progress, active workers and final elapsed timing.
+
+### Run records and claims (M5.01b3c1)
+
+`v04_runs.rs` owns a session's atomic correlation claims and the independent peer's run files.
+Allocation writes the reference/action and journal before publishing a running entry. Final
+results are immutable and atomically written last; their original session reference remains
+readable after a workspace move or restart. A new session starts with no claimed client IDs.
+Only pre-run refusals release claims through a private ownership handle; refused duplicates
+receive no handle, and stale handles cannot release or allocate another call's claim.
+Cancellation while queued keeps its claim without a run. Read resources require a published
+allocation. After relocation, reads update only `run.dir` to its current local path; stored
+results and all four reference identity fields remain unchanged. A failed final write can leave
+a repeated terminal publication attempt in the private journal; only `run.json` establishes
+terminal status. This fixture does not implement crash recovery.
+Two-entry pages encode a `(started, id)` position, so new runs cannot shift later pages.
+
+Direct state tests in `tests/v04_runs.rs` cover concurrent claims, refusal release, failed
+allocation, running/final reads, immutable completion, mismatched references, relocation and
+paging across equivalent timestamps with different RFC3339 spellings. This slice adds no wire
+calls or worker threads: b3c2/b3c3 still own dispatch, progress, cancellation notifications and EOF.
