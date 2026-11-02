@@ -131,6 +131,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
         match message["method"].as_str().unwrap_or("") {
             "initialize" => {
+                if scenario == "initialize-held" {
+                    std::fs::write(root.join("initializing"), "")?;
+                    while !root.join("release-initialize").exists() {
+                        std::thread::sleep(std::time::Duration::from_millis(10));
+                    }
+                }
                 if params["protocolVersion"] != "2025-11-25" {
                     reject(&output, id, -32602, "only protocol 2025-11-25 is supported");
                     continue;

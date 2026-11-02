@@ -24,7 +24,11 @@ test("setup shows reported allowances and never promotes a credential name to re
 
 test("live setup refresh preserves drafts and clears an unavailable allowance without running anything", async ({ page, host }) => {
   await host.open(page);
-  await page.getByLabel("Label *", { exact: true }).fill("Keep this draft");
+  const label = page.getByLabel("Label *", { exact: true });
+  await label.click();
+  await expect(label).toBeFocused();
+  await label.fill("Keep this draft");
+  await expect(label).toHaveValue("Keep this draft");
   let dispatched = 0;
   page.on("request", request => { if (request.method() === "POST" && new URL(request.url()).pathname === "/api/attempts") dispatched++; });
   await page.getByRole("button", { name: "Tool setup", exact: true }).click();

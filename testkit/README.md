@@ -167,3 +167,7 @@ The fixture's startup journal records process/session boundaries and present var
 never values. Tests confirm probe exit precedes serving startup, only the serving session is
 published, and neither process executes an action. The existing `ignore-eof` scenario verifies
 that an unresponsive probe stays owned and requires deliberate force authorization.
+
+The `initialize-held` scenario writes an `initializing` marker and waits for
+`release-initialize` before answering initialize. It exercises abandoning a restart requester
+while the host still owns replacement startup; it makes no provider calls.

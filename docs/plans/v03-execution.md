@@ -199,3 +199,38 @@ The full matrix passed under the shared lock: formatting, clippy, 98 Rust tests 
 ignores), typecheck, 18 UI unit tests, two asset tests, Storybook, byte-identical UI builds,
 release build and 78 browser cases (four real-tool skips). Assets and lockfiles stayed unchanged.
 No provider calls, sibling edits, push or tags.
+
+## V05a execution boundary
+
+Keep each entry's owned client and declaration in one swappable state, retaining its registration
+for repeated probing. Active attempts retain their original client; cancellation and reaping never
+look up a newer generation. Serialize replacement with submission and discovery, reserve the tool,
+close the previous child before probing, and publish the replacement atomically. A rejected or
+failed restart never silently forces a child. A session-specific revision rejects stale drafts.
+
+Tests cover authenticated confirmation, submit/restart ordering, active/stuck children, failed
+startup and explicit recovery, and unchanged historical evidence after an exited unknown run.
+The execution worker must finish cleanup before a reaper releases its reservation. Files include
+coordinator/readiness/shutdown wiring, a restart helper, revision binding, API route and tests;
+this lifecycle change necessarily spans those entry points. Rollback: revert V05b first if landed,
+then V05a; existing registrations and saved attempts remain readable.
+
+V05a's initial five tests failed at the absent restart endpoint, then passed. Review found that
+cancelling a requester could abandon a replacement before publication. An initialization gate
+reproduced the abandoned replacement; the coordinator-owned lifecycle now survives cancellation,
+and the regression passes. Follow-up review approved the fix. Edited-config coverage verifies
+the old serving process exits before a fresh probe and that the new serving environment follows
+the edited requirements. Twenty repeated submit/restart races passed without retries.
+
+The first full browser pass failed one existing WebKit setup test: the label was empty after
+refresh. Its trace shows the fill never established a value before opening setup; all observed
+state responses had the same revision. Forty diagnostic repeats passed. The exact WebKit
+insertion mechanism remains unconfirmed; no application reset was demonstrated. The test now
+clicks the field, checks focus, fills once and verifies the value before testing preservation.
+There are no refills, retries or longer timeouts; temporary diagnostics were removed. This
+observable-precondition adjustment passed review.
+
+The final matrix passed under the shared lock: formatting, clippy, 105 Rust tests (three ignored),
+typecheck, 18 UI unit tests, two asset tests, Storybook, byte-identical UI builds, release build
+and 78 browser cases (four real-tool skips). The focused setup test also passed 40 repeats
+with the observable input precondition. Lockfiles and embedded assets were unchanged.

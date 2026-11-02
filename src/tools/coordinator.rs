@@ -1,4 +1,5 @@
 mod readiness;
+mod restart;
 mod shutdown;
 use super::{
     Error, Result,
@@ -18,16 +19,28 @@ use std::{collections::BTreeMap, os::unix::fs::DirBuilderExt, sync::Arc};
 use tokio::sync::{Mutex, OwnedSemaphorePermit, Semaphore};
 
 struct Entry {
-    client: Option<Arc<ToolClient>>,
+    descriptor: Descriptor,
     state: std::sync::RwLock<DeclarationState>,
     reservation: Arc<Semaphore>,
     discovery: Arc<Mutex<()>>,
 }
+impl Entry {
+    fn client(&self) -> Option<Arc<ToolClient>> {
+        self.state
+            .read()
+            .unwrap_or_else(|e| e.into_inner())
+            .client
+            .clone()
+    }
+}
 struct DeclarationState {
+    client: Option<Arc<ToolClient>>,
     declaration: Option<Declaration>,
     error: Option<String>,
 }
 struct Active {
+    client: Arc<ToolClient>,
+    finished: Arc<AtomicBool>,
     _permit: OwnedSemaphorePermit,
     written: tokio::sync::watch::Receiver<bool>,
     cancel_requested: bool,
@@ -78,12 +91,16 @@ impl Coordinator {
                 client,
                 declaration,
                 error,
-            } = super::probe::start(descriptor).await;
+            } = super::probe::start(descriptor.clone()).await;
             tools.insert(
                 id,
                 Entry {
-                    client,
-                    state: std::sync::RwLock::new(DeclarationState { declaration, error }),
+                    descriptor,
+                    state: std::sync::RwLock::new(DeclarationState {
+                        client,
+                        declaration,
+                        error,
+                    }),
                     reservation: Arc::new(Semaphore::new(1)),
                     discovery: Arc::new(Mutex::new(())),
                 },
@@ -113,13 +130,15 @@ impl Coordinator {
             .ok_or_else(|| Error::Invalid("This tool has no supported declaration".into()))
     }
     pub async fn session(&self, id: &str) -> Result<Value> {
-        let declaration = self.description(id).await?;
-        let client = self
+        let entry = self
             .tools
             .get(id)
-            .and_then(|entry| entry.client.as_ref())
+            .ok_or(Error::Missing("Tool not registered"))?;
+        let _discovery = entry.discovery.lock().await;
+        let declaration = self.description(id).await?;
+        let client = entry
+            .client()
             .ok_or(Error::Missing("Tool is unavailable"))?;
-        // A resource read needs no execution permit and must not restart a busy server.
         client.observe_session(&declaration.document["tool"]).await
     }
     pub async fn snapshot(&self) -> Result<Value> {
@@ -128,7 +147,7 @@ impl Coordinator {
             let state = entry.state.read().unwrap_or_else(|e| e.into_inner());
             json!({"id":id,"declaration":state.declaration,"error":state.error,
                 "busy":entry.reservation.available_permits()==0,
-                "progress":entry.client.as_ref().and_then(|client|client.progress().borrow().clone())})
+                "progress":state.client.as_ref().and_then(|client|client.progress().borrow().clone())})
         }).collect();
         Ok(
             json!({"tools":tools,"attempts":self.attempts.history(None,50,None,None).await?,"event_session":self.events.session()}),
@@ -160,8 +179,7 @@ impl Coordinator {
             Error::Conflict("This tool is busy. Wait for its current attempt to finish.")
         })?;
         let client = entry
-            .client
-            .clone()
+            .client()
             .ok_or(Error::Missing("Tool is unavailable"))?;
         // Serialize discovery through preflight and the actual wire write, not execution.
         let discovery = entry.discovery.clone().lock_owned().await;
@@ -279,9 +297,12 @@ impl Coordinator {
             generation: current.generation,
             written,
         });
+        let finished = Arc::new(AtomicBool::new(false));
         self.active.lock().await.insert(
             request.id.clone(),
             Active {
+                client: client.clone(),
+                finished: finished.clone(),
                 _permit: permit,
                 written: dispatched,
                 cancel_requested: false,
@@ -290,6 +311,8 @@ impl Coordinator {
         let coordinator = self.clone();
         let worker = tokio::spawn(async move {
             coordinator.execute(client, request, arguments).await;
+            finished.store(true, Ordering::Release);
+            coordinator.events.changed();
         });
         self.workers.lock().await.push(worker);
         self.events.changed();
@@ -501,11 +524,7 @@ impl Coordinator {
         running.cancel_requested = true;
         let mut written = running.written.clone();
         if attempt.execution == "unconfirmed" {
-            let client = self
-                .tools
-                .get(&attempt.request.tool)
-                .and_then(|e| e.client.clone())
-                .ok_or(Error::Missing("Tool is unavailable"))?;
+            let client = running.client.clone();
             let request_id = attempt
                 .wire
                 .as_ref()
@@ -534,12 +553,16 @@ impl Coordinator {
             let Ok(attempt) = self.attempts.get(&id).await else {
                 continue;
             };
-            let Some(client) = self
-                .tools
-                .get(&attempt.request.tool)
-                .and_then(|entry| entry.client.as_ref())
-            else {
-                continue;
+            let client = {
+                let active = self.active.lock().await;
+                let Some(active) = active.get(&id) else {
+                    continue;
+                };
+                // The worker owns cleanup until it returns, even after the child exits.
+                if !active.finished.load(Ordering::Acquire) {
+                    continue;
+                }
+                active.client.clone()
             };
             if !client.has_exited().await.unwrap_or(false) {
                 continue;
@@ -594,13 +617,14 @@ impl Coordinator {
         Ok(result)
     }
     pub async fn close(&self) -> bool {
+        let _submission = self.submission.lock().await;
         let preserving = self.preserving_tools().await;
         let mut stopped = preserving.is_empty();
         for (id, entry) in &self.tools {
             if preserving.contains(id) {
                 continue;
             }
-            if let Some(client) = &entry.client {
+            if let Some(client) = entry.client() {
                 stopped &= client.close().await.unwrap_or(false);
             }
         }
@@ -634,7 +658,7 @@ impl Coordinator {
         let mut preserving = std::collections::BTreeSet::new();
         for (id, entry) in &self.tools {
             if entry
-                .client
+                .client()
                 .as_ref()
                 .is_some_and(|client| client.is_preserving())
             {

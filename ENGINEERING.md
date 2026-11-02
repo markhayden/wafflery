@@ -254,6 +254,17 @@ for that slot. The former Squint behavior that created estimate runs describes v
 history only: v0.3 prohibits it. Until the approved paid slice lands, dispatch stays offline-only.
 Changing config or restarting a tool invalidates estimates and ends its old budget session.
 Show new session boundaries explicitly; never restart automatically to replenish an allowance.
+The authenticated restart control requires explicit confirmation and an idle execution slot.
+The restart lifecycle remains owned if its HTTP requester disconnects or cancels.
+It serializes with submission, discovery and shutdown, closes the owned child, then repeats the
+config probe before atomically publishing the new client and declaration. A failed close retains
+ownership and starts nothing; failed startup leaves a disconnected state for deliberate recovery.
+Active attempts retain their original client for cancellation and reaping. Reaping cannot release
+a reservation while its execution worker is still saving evidence or cleaning inputs. Saved
+unknown outcomes remain unknown after a new session starts; they do not permanently block it once
+the previous child has exited. Description revisions include a process identity so old drafts
+cannot dispatch against a replacement. Restart changes notify all attached tabs.
+
 Recheck may refresh discovery without restarting a live session. If applying configuration needs
 a restart, label that action "Restart tool session" with its budget effect and require it to be
 idle (or explicitly stopped). The ordinary recheck action must not reset the session silently.

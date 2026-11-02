@@ -22,8 +22,7 @@ impl Coordinator {
             .get(id)
             .ok_or(Error::Missing("Tool not registered"))?;
         let client = entry
-            .client
-            .as_ref()
+            .client()
             .ok_or(Error::Missing("Tool is unavailable"))?;
         let refreshed = client.describe().await;
         {

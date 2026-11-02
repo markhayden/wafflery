@@ -60,7 +60,7 @@ impl Coordinator {
         let coordinator = self.clone();
         tokio::spawn(async move {
             for entry in coordinator.tools.values() {
-                if let Some(client) = &entry.client {
+                if let Some(client) = entry.client() {
                     let _ = client.force_stop().await;
                 }
             }
@@ -85,7 +85,7 @@ impl Coordinator {
                 }
                 let mut all_exited = true;
                 for entry in self.tools.values() {
-                    if let Some(client) = &entry.client {
+                    if let Some(client) = entry.client() {
                         all_exited &= client.has_exited().await.unwrap_or(false);
                     }
                 }
@@ -93,7 +93,7 @@ impl Coordinator {
                 let ready_to_close = self.tools.iter().any(|(id, entry)| {
                     !preserving.contains(id)
                         && entry
-                            .client
+                            .client()
                             .as_ref()
                             .is_some_and(|client| client.peer().is_ok())
                 });

@@ -260,3 +260,35 @@ fn missing_inherited_credentials_remain_missing_without_preventing_discovery() {
     );
     assert_eq!(state["attempts"], json!([]));
 }
+
+#[test]
+fn explicit_restart_reprobes_edited_config_before_selecting_environment() {
+    let mut host = Host::start("explicit", "configuration", false);
+    let before = host.http("GET", "/api/state", Value::Null);
+    fs::write(
+        host._temporary.path().join("selected config.json"),
+        json!({"credential":"SCRIPTED_EXTRA_KEY", "env":"SCRIPTED_UNRELATED"}).to_string(),
+    )
+    .unwrap();
+    let restarted = host.http(
+        "POST",
+        "/api/tools/sample/restart",
+        json!({"confirmed":true}),
+    );
+    let events = host.events();
+    host.stop();
+    assert_eq!(events.len(), 7);
+    assert_eq!(events[3]["event"], "exit");
+    assert_eq!(
+        events[3]["session"],
+        before["tools"][0]["declaration"]["tool_session"]["id"]
+    );
+    assert_eq!(events[4]["present"], json!([]));
+    assert_eq!(events[5]["event"], "exit");
+    assert_eq!(
+        events[6]["present"],
+        json!(["SCRIPTED_EXTRA_KEY", "SCRIPTED_UNRELATED"])
+    );
+    assert_eq!(events[6]["session"], restarted["tool_session"]["id"]);
+    assert!(!host.tool.join("calls.ndjson").exists());
+}

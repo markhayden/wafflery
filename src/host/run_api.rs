@@ -17,6 +17,7 @@ pub fn router(coordinator: Arc<Coordinator>) -> Router {
         .route("/api/tools/{id}/description", get(description))
         .route("/api/tools/{id}/session", get(session))
         .route("/api/tools/{id}/refresh", post(refresh))
+        .route("/api/tools/{id}/restart", post(restart))
         .route("/api/attempts", get(list).post(submit))
         .route("/api/attempts/{id}", get(attempt))
         .route("/api/attempts/{id}/cancel", post(cancel))
@@ -65,6 +66,18 @@ async fn refresh(
     Json(_): Json<Empty>,
 ) -> Result<Json<crate::tools::client::Declaration>, ApiError> {
     Ok(Json(c.refresh(&id).await?))
+}
+#[derive(serde::Deserialize)]
+#[serde(deny_unknown_fields)]
+struct Restart {
+    confirmed: bool,
+}
+async fn restart(
+    State(c): State<Arc<Coordinator>>,
+    Path(id): Path<String>,
+    Json(input): Json<Restart>,
+) -> Result<Json<crate::tools::client::Declaration>, ApiError> {
+    Ok(Json(c.restart(&id, input.confirmed).await?))
 }
 async fn submit(
     State(c): State<Arc<Coordinator>>,

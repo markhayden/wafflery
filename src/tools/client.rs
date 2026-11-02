@@ -318,10 +318,15 @@ impl ToolClient {
                 "Tool declarations changed while reading".into(),
             ));
         }
-        let revision = Sha256::digest(serde_json::to_vec(&json!([document, schemas, generation]))?)
-            .iter()
-            .map(|b| format!("{b:02x}"))
-            .collect();
+        let revision = Sha256::digest(serde_json::to_vec(&json!([
+            document,
+            schemas,
+            generation,
+            self.session
+        ]))?)
+        .iter()
+        .map(|b| format!("{b:02x}"))
+        .collect();
         let tool_session = self.observe_session(&document["tool"]).await?;
         Ok(Declaration {
             document,

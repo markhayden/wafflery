@@ -509,7 +509,7 @@ Verify paths with spaces, default lookup, replace refusal while host runs, probe
 config-dependent requirement names and no paid work in either startup. Depends: V04a.
 Commit: `feat: configure and probe tool registrations`.
 
-**V05a — Replace idle tool sessions atomically.** Give the coordinator a swappable owned-client
+**V05a — Replace idle tool sessions atomically. Complete.** Give the coordinator a swappable owned-client
 slot; submit, cancel, reap, close, preserving-tools, session and snapshot use one consistent
 client generation. Reject replacement during active or uncertain execution; use the existing
 cancel/stop flow first. Confirmed child exit permits a new session without pretending that old
