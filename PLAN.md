@@ -1201,9 +1201,9 @@ intent; named sub-slices use scope-specific subjects and types. No unnumbered to
 
 - [x] Add schema-validated core/operations fixtures from the pinned contract, plus independently
   authored fake actions with unrelated names, scalar/many ports, task outputs and all three kinds.
-- [ ] Fake scenarios cover preview/no-preview, portable/opaque types, indexed binding refusal,
+- [x] Fake scenarios cover preview/no-preview, portable/opaque types, indexed binding refusal,
   invocation on all outcomes, artifact resources and export/import controls without provider calls.
-- [ ] Keep fake behavior independent of real peer implementation and host types; document each
+- [x] Keep fake behavior independent of real peer implementation and host types; document each
   fixture's source. Contract semantics have assertions beyond schema validity.
 
 **Depends:** owner approval. **Areas:** `testkit/`, contract fixture tests, Cargo manifest/lock.
@@ -1212,7 +1212,7 @@ intent; named sub-slices use scope-specific subjects and types. No unnumbered to
 **Planned build slices** (ordered, each with its own targeted checks and matching docs):
 
 - **M5.01a: Complete — schema fixtures and negative cases** — acceptance 1 and schema portion of 3; fixture tests.
-- **M5.01b: independent fake scenarios** — acceptance 2 and wire independence in 3; fake protocol tests.
+- **M5.01b: Complete — independent fake scenarios** — acceptance 2 and wire independence in 3; fake protocol tests.
 
 M5.01b is split before implementation to keep the wire peer reviewable:
 
@@ -1220,11 +1220,11 @@ M5.01b is split before implementation to keep the wire peer reviewable:
   canonical `--allow-dir`, no roots request, fresh session on restart, bounded input and EOF shutdown.
   Verify renamed tool identity and invalid-directory exits using a line-delimited client. Commit:
   `test: add the v0.4 discovery wire peer`. This remains a control-only probe until b3.
-- **M5.01b2 — Artifact controls:** artifact/preview resources and verified idempotent export/import
+- **M5.01b2: Complete — Artifact controls:** artifact/preview resources and verified idempotent export/import
   of native and shared-location bytes, including structured refusals. Controls create no runs/spend.
   Verify restart, corrupt bytes, missing identity and refused paths. Commit:
   `test: add v0.4 artifact control scenarios`.
-- **M5.01b3 — Operation execution:** scalar/list binding, independent-piece runs, resolved invocations,
+- **M5.01b3: Complete — Operation execution:** scalar/list binding, independent-piece runs, resolved invocations,
   progress/cancellation and salvaged outputs, using actual request data and no providers. Verify a
   chain, indexed pre-run refusals with released IDs, and controls during a held run. Commit:
   `test: execute independent v0.4 operations over stdio`.
@@ -1494,10 +1494,11 @@ progress, held-run controls, cancellation and EOF worker ownership are not yet i
 **M5.01b3c3a implementation checkpoint (2026-11-02, complete):**
 Dispatch acceptance claims/validates without allocating, then executes through a per-request
 cancellation guard. The guard serializes cancellation with allocation and terminal publication.
-Queued cancellation retains its ID with no run; allocated cancellation retains invocation and
-completed outputs, saves cancelled and returns no reply. Publication is the cutoff: an earlier
-execution failure remains in notes if cancellation arrives before publication, while a later
-cancel cannot rewrite saved evidence. Even a failed final save produces no cancelled-request
+Queued cancellation retains its ID with no run; allocated cancellation after invocation resolution
+retains invocation and completed outputs, saves cancelled and returns no reply. An unresolved input
+rejection remains invalid with null invocation and no reply, as clarified and tested in c3b2.
+Publication is the cutoff: an earlier resolved execution failure remains in notes if cancellation
+arrives before publication, while a later cancel cannot rewrite saved evidence. Even a failed final save produces no cancelled-request
 reply; it logs a stderr diagnostic and retains the claim. Seven direct dispatch tests cover these
 boundaries and previous storage faults; the missing API and cancelled-save error tests failed
 first. Two review rounds found no remaining blockers after clarifying the cutoff and moving
@@ -1522,6 +1523,23 @@ blockers. The full matrix passed: fmt/clippy, 320 Rust tests (4 ignored), typech
 2 asset-tool tests, Storybook, reproducible assets, release build and 220 browser tests (8 skipped).
 Temporary port 4187 config is removed; lockfiles/prebuilt assets are unchanged. This worker module
 remains test-only until c3b2 connects the stdio reader, notifications and EOF lifecycle.
+
+**M5.01b3c3b2 implementation checkpoint (2026-11-02, complete):**
+The stdio reader now owns the worker and serializes complete output messages while continuing to
+serve describe, session, artifact controls and resources during execution. Cancellation notifications
+use the accepted request ID; stdin EOF and malformed-input exits cancel and join owned work.
+Six additional child-process tests cover responsive controls, queued progress without a run,
+queued/allocated cancellation without replies, EOF/error cleanup, and cancellation after rejection.
+The last regression failed first with a cancelled/null-invocation result. Per the coordinator's
+ruling, a rejection before invocation resolution now remains invalid with its input error and null
+invocation; the cancelled request receives no MCP reply. Cancellation becomes the saved outcome
+only after invocation resolves. Existing resolved-failure diagnostics and salvaged outputs remain.
+All twenty repetitions of the six lifecycle cases passed, and both review rounds found no blockers.
+The final full matrix passed: fmt/clippy, 326 Rust tests (4 ignored), typecheck, 53 UI tests,
+2 asset-tool tests, Storybook, reproducible assets, release build and 220 browser tests (8 skipped).
+Temporary port 4187 config is removed; lockfiles and prebuilt assets are unchanged. M5.01 is complete:
+the independent peer exercises v0.4 operations, controls and lifecycle without host types, real-peer
+code or paid calls. Production adoption remains in M5.03 after the M5.02 directory-grant cutover.
 
 #### V20 — Image import feedback (M5-adjacent; coordinator-approved 2026-11-02)
 
