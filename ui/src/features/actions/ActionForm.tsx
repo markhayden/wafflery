@@ -1,6 +1,7 @@
 import { useId, useState } from "react";
 import { ImageInput } from "../../components/ImageInput";
 import type { Asset } from "../../api/assets";
+import type { ImageSelection, SelectedImage } from "./selection";
 import {
   fieldMode,
   object,
@@ -13,13 +14,11 @@ type Props = {
   action: Action;
   params: Schema;
   onChange: (params: Schema) => void;
-  images: Record<string, Asset[]>;
-  onImages: (slot: string, images: Asset[]) => void;
+  images: ImageSelection;
+  onImages: (slot: string, images: SelectedImage[]) => void;
   upload: (file: File) => Promise<Asset>;
   preview: (asset: Asset) => Promise<Blob>;
   disabled?: boolean;
-  projections?: Record<string, "flat" | "equirectangular">;
-  onProjection?: (slot: string, value: "flat" | "equirectangular") => void;
 };
 function JsonField({
   label,
@@ -80,8 +79,6 @@ export function ActionForm({
   upload,
   preview,
   disabled = false,
-  projections,
-  onProjection,
 }: Props) {
   const id = useId();
   const schema = action.params_schema;
@@ -114,34 +111,31 @@ export function ActionForm({
             }
             value={images[slot.slot] ?? []}
             min={slot.required ? 1 : 0}
-            max={1}
+            max={slot.many ? 32 : 1}
             onChange={(value) => onImages(slot.slot, value)}
             upload={upload}
             preview={preview}
             disabled={disabled}
+            renderDetails={(index, locked) => {
+              const selected = images[slot.slot]?.[index];
+              const coordinates = selected?.coordinates;
+              const value = coordinates?.projection === "equirectangular" ? "equirectangular"
+                : coordinates?.topology === "wrap" ? "flat-wrap" : "flat";
+              return <label className={styles.field}>
+                {slot.many ? `${slot.slot} image ${index + 1} coordinates` : `${slot.slot} coordinates`}
+                <select value={value} disabled={locked} onChange={event => {
+                  const projection = event.target.value === "equirectangular" ? "equirectangular" : "flat";
+                  const topology = event.target.value === "flat" ? "bounded" : "wrap";
+                  onImages(slot.slot, (images[slot.slot] ?? []).map((image, position) => position === index
+                    ? {...image, coordinates: {projection, topology}} : image));
+                }}>
+                  <option value="flat">Flat image · bounded edges</option>
+                  <option value="flat-wrap">Flat image · horizontal wrap</option>
+                  <option value="equirectangular">Panorama · equirectangular, horizontal wrap</option>
+                </select>
+              </label>;
+            }}
           />
-          {onProjection && (
-            <label className={styles.field}>
-              {slot.slot} coordinates
-              <select
-                value={projections?.[slot.slot] ?? "flat"}
-                disabled={disabled}
-                onChange={(event) =>
-                  onProjection(
-                    slot.slot,
-                    event.target.value === "equirectangular"
-                      ? "equirectangular"
-                      : "flat",
-                  )
-                }
-              >
-                <option value="flat">Flat image · bounded edges</option>
-                <option value="equirectangular">
-                  Panorama · equirectangular, horizontal wrap
-                </option>
-              </select>
-            </label>
-          )}
         </section>
       ))}
       {simple ? (

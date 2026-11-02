@@ -165,6 +165,13 @@ ordered subsequence; missing occurrences produce preservation notices while reta
 outcome. Duplicate identities are counted without inferring which indistinguishable occurrence
 was reported. Images-profile results always require images and locations containers.
 
+The list editor carries coordinates on each selected occurrence, including repeated asset IDs.
+Reordering/removal moves the entire selection; examples and history restore saved inputs in order.
+A pending import appends to the current selection after checking capacity again. Replacing the
+editor/draft invalidates that import's UI callback; already imported assets remain in the library.
+The input pane keeps its own scrolling and fixed Run footer on desktop. Optional empty slots are
+omitted from both image bindings and coordinate arrays before submission.
+
 Once execution is confirmed terminal and preservation/export no longer needs materialized
 inputs, remove those disposable copies. Keep references to immutable assets in retained records.
 After a crash, do not sweep execution directories that a surviving child may still use; first

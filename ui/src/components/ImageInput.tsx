@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useId, useRef, useState, type ReactNode } from "react";
 import { cardinalityError, moveImage, type Asset } from "../api/assets";
 import { Button } from "./Button";
 import styles from "./ImageInput.module.css";
@@ -12,6 +12,7 @@ type Props = {
   upload: (file: File) => Promise<Asset>;
   preview: (asset: Asset) => Promise<Blob>;
   disabled?: boolean;
+  renderDetails?: (index: number, disabled: boolean) => ReactNode;
 };
 
 function Preview({ asset, load, position }: { asset: Asset; load: Props["preview"]; position: number }) {
@@ -31,29 +32,45 @@ function Preview({ asset, load, position }: { asset: Asset; load: Props["preview
     : <div className={styles.preview}>{error ? "Preview unavailable" : "Loading image…"}</div>;
 }
 
-export function ImageInput({ label, value, min, max, onChange, upload, preview, disabled = false }: Props) {
+export function ImageInput({ label, value, min, max, onChange, upload, preview, disabled = false, renderDetails }: Props) {
   const inputId = useId();
   const fileInput = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string>();
   const locked = busy || disabled;
+  const alive = useRef(true);
+  const importing = useRef(false);
+  const current = useRef({ value, max, onChange });
+  useLayoutEffect(() => { current.current = { value, max, onChange }; });
+  useLayoutEffect(() => { alive.current = true; return () => { alive.current = false; }; }, []);
   async function add(files: File[]) {
-    if (locked || files.length === 0) return;
+    if (locked || importing.current || files.length === 0) return;
     const countError = cardinalityError(value.length + files.length, 0, max);
     if (countError) { setError(countError); return; }
+    importing.current = true;
     setBusy(true);
     setError(undefined);
-    const next = [...value];
+    const imported: Asset[] = [];
     try {
       for (const file of files) {
         if (file.size > 128 * 1024 * 1024) throw new Error("Images must be no larger than 128 MiB.");
-        next.push(await upload(file));
+        const asset = await upload(file);
+        if (!alive.current) return;
+        imported.push(asset);
       }
     } catch (failure) {
-      setError(failure instanceof Error ? failure.message : "The image could not be imported.");
+      if (alive.current) setError(failure instanceof Error ? failure.message : "The image could not be imported.");
     } finally {
-      if (next.length !== value.length) onChange(next);
-      setBusy(false);
+      importing.current = false;
+      if (alive.current) {
+        if (imported.length > 0) {
+          const latest = current.current;
+          const countError = cardinalityError(latest.value.length + imported.length, 0, latest.max);
+          if (countError) setError(`${countError} Imported images remain in Saved images.`);
+          else latest.onChange([...latest.value, ...imported]);
+        }
+        setBusy(false);
+      }
     }
   }
   return <section className={styles.input} aria-labelledby={`${inputId}-label`} aria-busy={busy}>
@@ -69,6 +86,7 @@ export function ImageInput({ label, value, min, max, onChange, upload, preview, 
       {value.map((asset, index) => <li className={styles.image} key={`${asset.id}-${index}`}>
         <Preview asset={asset} load={preview} position={index + 1} />
         <div className={styles.details}><strong>Image {index + 1}</strong><span>{asset.width} × {asset.height} · {Math.max(1, Math.round(asset.size / 1024))} KB</span>
+          {renderDetails?.(index, locked)}
           <div className={styles.actions}>
             {max > 1 && <><Button disabled={locked || index === 0} onClick={() => onChange(moveImage(value, index, index - 1))} aria-label={`Move image ${index + 1} earlier`}>Earlier</Button>
               <Button disabled={locked || index === value.length - 1} onClick={() => onChange(moveImage(value, index, index + 1))} aria-label={`Move image ${index + 1} later`}>Later</Button></>}

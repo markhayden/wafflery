@@ -27,3 +27,8 @@
   color: var(--color-muted);
   font-size: 0.8125rem;
 }
+
+.field select {
+  height: 2.75rem;
+  min-height: 2.75rem;
+}

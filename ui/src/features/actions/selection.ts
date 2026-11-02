@@ -9,9 +9,16 @@ export type SelectedImage = Asset & { coordinates?: ImageFrame };
 export type ImageSelection = Record<string, SelectedImage[]>;
 const flat: ImageFrame = { projection: "flat", topology: "bounded" };
 
-export function restoreSelection(inputs: Record<string, {asset: Asset; image: ImageFrame}[]>): ImageSelection {
+export function restoreSelection(inputs: Record<string, {asset: Asset; image: {projection:string;topology:string}}[]>): ImageSelection {
   return Object.fromEntries(Object.entries(inputs).map(([slot, entries]) => [slot,
-    entries.map(({asset, image}) => ({...asset, coordinates: {projection: image.projection, topology: image.topology}})),
+    entries.map(({asset, image}) => {
+      const {projection, topology} = image;
+      if ((projection !== "flat" && projection !== "equirectangular")
+        || (topology !== "bounded" && topology !== "wrap")
+        || (projection === "equirectangular" && topology !== "wrap"))
+        throw new Error("Saved image coordinates are not supported.");
+      return {...asset, coordinates: {projection, topology}};
+    }),
   ]));
 }
 

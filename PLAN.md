@@ -560,7 +560,7 @@ Verify duplicate identities with different frames, reorder/remove, optional omis
 empty refusal, aggregate limits and saved-input restoration. Depends: V06a/V06b.
 Commit: `feat: preserve ordered image selections`.
 
-**V07b — Edit and restore image lists in the workspace.** Wire list-capable ImageInput into
+**V07b — Edit and restore image lists in the workspace. Complete.** Wire list-capable ImageInput into
 ActionForm and Workspace with per-image coordinate controls. Saved examples and history drafts
 retain order and coordinates; saved-image insertion appends to lists. No tool-specific slot logic.
 Keep input scrolling and the Run footer stable. This cohesive UI slice includes component/form/

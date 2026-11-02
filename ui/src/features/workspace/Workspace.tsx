@@ -18,9 +18,9 @@ import {
 import {
   initialParameters,
   object,
-  encodeBindings,
   type Schema,
 } from "../actions/model";
+import { encodeSelection, restoreSelection, type ImageSelection } from "../actions/selection";
 import { ActionForm } from "../actions/ActionForm";
 import { Button } from "../../components/Button";
 import { Picker } from "../../components/Picker";
@@ -88,10 +88,7 @@ export function Workspace({
   const [params, setParams] = useState<Schema>(() =>
     initialParameters(action?.params_schema ?? {}),
   );
-  const [projections, setProjections] = useState<
-    Record<string, "flat" | "equirectangular">
-  >({});
-  const [images, setImages] = useState<Record<string, Asset[]>>({});
+  const [images, setImages] = useState<ImageSelection>({});
   const [savedImages, setSavedImages] = useState<Asset[]>([]);
   const [selected, setSelected] = useState<Attempt | undefined>();
   const recent = snapshot.attempts;
@@ -157,18 +154,14 @@ export function Workspace({
     void client
       .attempt(id)
       .then((attempt) => {
-        const action = snapshot.tools
-          .find((t) => t.id === attempt.request.tool)
-          ?.declaration?.document.actions.find(
-            (a) => a.name === attempt.request.action,
-          );
+        const restored = restoreSelection(attempt.inputs);
         setDraftRevision((value) => value + 1);
         setDraftExample(undefined);
         setToolId(attempt.request.tool);
         setActionId(attempt.request.action);
-        setParams(initialParameters(action?.params_schema ?? {}));
-        setImages({});
-        setProjections({});
+        setParams(structuredClone(attempt.request.params));
+        setImages(restored);
+        submitted.current = null;
         setSelectedId(id);
         setSelected(attempt);
         setDrawer(null);
@@ -188,25 +181,11 @@ export function Workspace({
       throw new Error(
         "This example needs a tool action that is not currently available.",
       );
+    const restored = restoreSelection(example.inputs);
     setToolId(example.request.tool);
     setActionId(example.request.action);
     setParams(structuredClone(example.request.params));
-    setImages(
-      Object.fromEntries(
-        Object.entries(example.inputs).map(([slot, values]) => [
-          slot,
-          values.map((value) => value.asset),
-        ]),
-      ),
-    );
-    setProjections(
-      Object.fromEntries(
-        Object.entries(example.request.frames ?? {}).map(([slot, values]) => [
-          slot,
-          values[0]?.projection ?? "flat",
-        ]),
-      ),
-    );
+    setImages(restored);
     setSelectedId(null);
     setSelected(undefined);
     setDraftExample(example);
@@ -223,7 +202,6 @@ export function Workspace({
     setActionId(action?.name ?? "");
     setParams(initialParameters(action?.params_schema ?? {}));
     setImages({});
-    setProjections({});
     setSelectedId(undefined);
     setSelected(undefined);
     setError(undefined);
@@ -240,7 +218,6 @@ export function Workspace({
       ),
     );
     setImages({});
-    setProjections({});
     setSelectedId(undefined);
     setSelected(undefined);
     setError(undefined);
@@ -251,27 +228,8 @@ export function Workspace({
     setError(undefined);
     setBusy(true);
     try {
-      const bindings = encodeBindings(
-        declaration.document.contract,
-        action.images ?? [],
-        Object.fromEntries(
-          Object.entries(images).map(([slot, values]) => [
-            slot,
-            values.map((a) => a.id),
-          ]),
-        ),
-      );
-      const frames = Object.fromEntries(
-        Object.entries(bindings).map(([slot, values]) => [
-          slot,
-          values.map(() => ({
-            projection: projections[slot] ?? "flat",
-            topology:
-              projections[slot] === "equirectangular"
-                ? ("wrap" as const)
-                : ("bounded" as const),
-          })),
-        ]),
+      const {images: bindings, frames} = encodeSelection(
+        declaration.document.contract, action.images ?? [], images,
       );
       const body = JSON.stringify({
         tool: toolId,
@@ -412,10 +370,6 @@ export function Workspace({
                 action={action}
                 params={params}
                 onChange={setParams}
-                projections={projections}
-                onProjection={(slot, value) =>
-                  setProjections((values) => ({ ...values, [slot]: value }))
-                }
                 images={images}
                 onImages={(slot, value) =>
                   setImages((values) => ({ ...values, [slot]: value }))
@@ -440,10 +394,11 @@ export function Workspace({
                       {savedImages.slice(0, 12).map((asset, index) => (
                         <Button
                           key={asset.id}
+                          disabled={slot.many && (images[slot.slot]?.length ?? 0) >= 32}
                           onClick={() =>
                             setImages((values) => ({
                               ...values,
-                              [slot.slot]: [asset],
+                              [slot.slot]: slot.many ? [...(values[slot.slot] ?? []), asset] : [asset],
                             }))
                           }
                         >

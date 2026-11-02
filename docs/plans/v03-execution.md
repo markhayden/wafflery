@@ -356,3 +356,28 @@ passed. Review corrected README's remaining sibling-checkout instruction; final 
 blockers. Full matrix passed against the published crate: 117 Rust tests (three ignored), 22 UI
 unit tests, two asset tests and 86 browser cases (four skipped), plus fmt, clippy, typecheck,
 Storybook, asset reproducibility and release build. No other dependency or generated asset drift.
+
+## V07b editor verification boundary
+
+ImageInput exposes per-item details for coordinate controls; ActionForm derives scalar/list
+limits from the declaration. Coordinates travel on selected occurrences. Workspace uses the
+selection encoder, restores saved inputs from history/examples, and appends saved assets to lists.
+Unknown saved coordinate systems are refused rather than silently reinterpreted. The input pane
+and Run footer retain their existing layout. A list story and browser journeys cover reorder,
+removal, optional omission, history and example restoration, duplicates with distinct frames,
+and 320/768/1024/1440 layouts.
+
+Review found pending imports could overwrite newer insertions or a restored draft. A delayed
+upload reproduced the restored list growing from one item to two. Imports now retain their
+editor ownership, append to the latest committed selection, and recheck capacity. The browser
+regression holds a synthetic upload response, changes/restores the selection, then releases it.
+Explicit fixture bytes make the intercepted upload equivalent in both browser engines. Visual
+inspection found WebKit coordinate selects at 21px; an explicit height now matches the existing
+control scale and is checked in the browser. No storage, contract or dependency changes.
+
+V07b verification: six image-list browser cases pass across Chromium and WebKit, including
+delayed import ownership and concurrent insertion. That race regression passed 40 repetitions.
+Review approved the corrected implementation. Full matrix passed: 117 Rust tests (three ignored),
+23 UI unit tests, two asset tests and 92 browser cases (four skipped), plus fmt, clippy, typecheck,
+Storybook, reproducible assets and release build. Responsive screenshots were inspected; native
+Safari was not rerun for this slice.

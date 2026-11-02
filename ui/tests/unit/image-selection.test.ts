@@ -29,3 +29,8 @@ test("duplicate occurrences count toward the aggregate byte limit", () => {
   expect(() => encodeSelection("0.3.0", slots, {references:[{...large,size:large.size+1}]})).toThrow("128 MiB");
   expect(encodeSelection("0.3.0", slots, {references:Array(4).fill(large)}).images.references).toHaveLength(4);
 });
+
+test("unsupported saved coordinates are refused rather than silently reinterpreted", () => {
+  expect(() => restoreSelection({references:[{asset,image:{projection:"cylindrical",topology:"wrap"} as never}]})).toThrow("Saved image coordinates");
+  expect(() => restoreSelection({references:[{asset,image:{projection:"equirectangular",topology:"bounded"}}]})).toThrow("Saved image coordinates");
+});
