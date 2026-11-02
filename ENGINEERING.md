@@ -573,14 +573,14 @@ V14b1 adds an owned render worker beneath that boundary. It retains the child wh
 and stderr are drained concurrently, capped at 8 KiB and 64 KiB respectively. Overflow/read
 errors request graceful stdin closure; truncation is explicit in the observation. The worker
 preserves exit codes and bounded diagnostics. Closing or dropping the last request handle
-closes stdin; a child that ignores EOF remains owned in `NeedsForce`, and force-stop uses only
-the retained child handle after graceful closure has timed out. Force acknowledgement is a
+closes stdin. V15c2 extends this to a two-second EOF grace followed by SIGTERM to the owned
+group and another two-second grace. A group that still runs remains owned in `NeedsForce`;
+only confirmed force sends SIGKILL to that pinned group. Force acknowledgement is a
 separate control reply, not an inferred transient status. A wait error never proves exit.
 
-This low-level slice has no host route. V14b2 must retain handles in the coordinator through
-request cancellation and shutdown; V15 adds server readiness, owned process groups/SIGTERM,
-idle expiry and descendant handling before report content becomes available. The synthetic
-renderer tests process behavior without providing a real report or calling a provider.
+The low-level process layer has no host route. V14b2 retains handles in the coordinator through
+request cancellation and shutdown. Report content remains gated on idle expiry and isolation.
+Synthetic renderer fixtures exercise process behavior without calling a provider.
 
 V14b2 retains report handles in the coordinator before replying to an open request. Each saved
 attempt has at most one live view; reopening the same running view returns its existing ID,
@@ -608,10 +608,9 @@ and closes stdin on failure. Process state retains explicit close intent so norm
 cannot become a startup error when notifications coalesce. Failed supervision preserves its
 diagnostic even after the child exits; saved run evidence is untouched. Independent HTTP
 fixtures exercise actual listening, exact frame-ancestor response policy and EOF shutdown.
-Report addresses and content remain unavailable to the browser; process groups and escalation
-remain V15c, and idle expiry remains V15d.
+Report addresses and content remain unavailable to the browser; idle expiry remains V15d.
 
-V15c1 introduces a macOS group owner beneath the future lifecycle integration. Each child is
+V15c1 introduces the macOS group owner used by V15c2's lifecycle worker. Each child is
 started in its own process group. The owner observes leader exit with kqueue without reaping
 it, then checks bounded `/bin/ps` output for that exact group. It requires the pinned leader
 to be present and every member to be a zombie before reaping; stopped or unknown members are
@@ -621,6 +620,9 @@ environment, bounded output and timeout; an independent worker kills/reaps the h
 if the caller cancels its wait. This uses the existing pinned nix crate's event/signal features.
 
 These process groups manage cooperative descendants; they are not an OS sandbox and cannot
-contain a program that deliberately changes its process group or session. The existing report
-worker is unchanged until V15c2 connects this owner to EOF, SIGTERM and explicit force.
-V15 still owns idle expiry, server readiness and process-group/descendant shutdown.
+contain a program that deliberately changes its process group or session. V15c2 polls the
+nonblocking exit event every 100 ms; only exited/unwatchable leaders need a membership helper.
+An early leader exit with surviving descendants starts SIGTERM cleanup and keeps the slot
+until the group drains, including after explicit force. Failed observations retain the group.
+Report processes currently require macOS; unsupported platforms refuse before spawning.
+V15d still owns idle expiry.

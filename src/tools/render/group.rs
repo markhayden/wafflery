@@ -38,6 +38,19 @@ pub struct OwnedGroup {
     observer: PathBuf,
 }
 impl OwnedGroup {
+    pub(crate) fn take_stdio(
+        &mut self,
+    ) -> (
+        tokio::process::ChildStdin,
+        tokio::process::ChildStdout,
+        tokio::process::ChildStderr,
+    ) {
+        (
+            self.child.stdin.take().expect("piped render stdin"),
+            self.child.stdout.take().expect("piped render stdout"),
+            self.child.stderr.take().expect("piped render stderr"),
+        )
+    }
     pub fn spawn(command: &mut Command) -> Result<Self> {
         let mut group = Self::spawn_unwatched(command)?;
         group.register();

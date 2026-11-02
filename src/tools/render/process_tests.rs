@@ -139,3 +139,49 @@ async fn stuck_renderer_remains_owned_until_an_explicit_force_stop() {
     assert_eq!(process.snapshot().phase, ProcessPhase::Exited);
     assert_ne!(process.snapshot().exit_code, Some(0));
 }
+
+#[tokio::test]
+async fn stdin_ignoring_renderer_exits_cleanly_on_graceful_sigterm() {
+    let (_temp, plan) = setup("term");
+    let process = RenderProcess::spawn(&plan).unwrap();
+    wait(&process, |s| !s.stdout.bytes.is_empty()).await;
+    assert!(process.close().await.unwrap());
+    assert_eq!(process.snapshot().exit_code, Some(0));
+}
+
+#[tokio::test]
+async fn surviving_descendants_hold_the_group_until_graceful_or_explicit_force_cleanup() {
+    for mode in ["descendant", "orphan"] {
+        let (temp, plan) = setup(mode);
+        let process = RenderProcess::spawn(&plan).unwrap();
+        wait(&process, |s| !s.stdout.bytes.is_empty()).await;
+        let child: i32 = std::fs::read_to_string(temp.path().join("descendant-ready"))
+            .unwrap()
+            .parse()
+            .unwrap();
+        if mode == "descendant" {
+            assert!(process.close().await.unwrap());
+        } else {
+            // The leader exited, but its SIGTERM-ignoring descendant must retain the slot.
+            wait(&process, |s| s.phase == ProcessPhase::NeedsForce).await;
+            assert!(process.force_stop().await.unwrap());
+        }
+        assert_eq!(process.snapshot().phase, ProcessPhase::Exited);
+        assert_eq!(process.snapshot().exit_code, Some(0));
+        let observed = std::process::Command::new("/bin/ps")
+            .args(["-p", &child.to_string(), "-o", "stat="])
+            .output()
+            .unwrap();
+        assert!(
+            observed.stdout.is_empty()
+                || String::from_utf8_lossy(&observed.stdout)
+                    .trim()
+                    .starts_with('Z'),
+            "descendant is still executing"
+        );
+        assert_eq!(
+            std::fs::read_to_string(plan.run_dir().join("untouched")).unwrap(),
+            "saved evidence"
+        );
+    }
+}

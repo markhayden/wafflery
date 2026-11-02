@@ -983,3 +983,22 @@ full matrix passed: 207 Rust tests (three ignored), 41 UI unit tests, two asset 
 cases (four opt-in skips), fmt, clippy, typecheck, Storybook, reproducible assets and release build.
 The current report worker remains unchanged until V15c2. Module wiring, dependency features,
 owner, tests and design notes stay together despite exceeding the usual five-file budget.
+
+### V15c2 group lifetime integration
+
+Report workers now use the retained group owner. Close gives EOF two seconds, then sends
+SIGTERM to the same owned group and waits another two seconds. Only explicit force sends
+SIGKILL. Early leader exit with a surviving descendant starts graceful group cleanup and
+keeps the view slot until all members stop. Membership failures retain ownership. The worker
+completes each bounded observer call before it can finish, and report launch refuses unsupported
+platforms before spawning.
+
+Two new process tests failed against the previous worker, then all six passed. They cover
+EOF-ignoring/clean-SIGTERM exit, graceful descendant termination, and an early leader exit with
+a SIGTERM-ignoring descendant that requires explicit force. The tests verify the descendant
+stopped and the saved directory stayed unchanged. Synthetic orphan fixtures expire after 30
+seconds as a red-test cleanup guard; assertions finish well before that deadline. Review and
+the shared-lock full matrix passed: 209 Rust tests (three ignored), 41 UI unit tests, two asset
+tests, 164 browser cases (four opt-in skips), fmt, clippy, typecheck, Storybook, reproducible
+assets and release build. The lifecycle worker, group stdio transfer, independent descendant
+fixture, tests and docs form one cohesive slice beyond the usual five-file budget.

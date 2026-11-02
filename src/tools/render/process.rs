@@ -4,13 +4,13 @@ use crate::tools::{Error, Result};
 use std::{process::Stdio, time::Duration};
 use tokio::{
     io::{AsyncRead, AsyncReadExt},
-    process::{Child, ChildStdin},
     sync::{mpsc, oneshot, watch},
-    time::Instant,
 };
 
 pub const STDOUT_LIMIT: usize = 8 * 1024;
 pub const STDERR_LIMIT: usize = 64 * 1024;
+#[cfg(target_os = "macos")]
+mod owner;
 const CLOSE_GRACE: Duration = Duration::from_secs(2);
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum ProcessPhase {
@@ -47,33 +47,38 @@ pub struct RenderProcess {
 }
 impl RenderProcess {
     pub fn spawn(plan: &ResolvedRender) -> Result<Self> {
-        let mut child = plan
-            .command()?
-            .stdin(Stdio::piped())
-            .stdout(Stdio::piped())
-            .stderr(Stdio::piped())
-            .spawn()?;
-        let stdin = child.stdin.take().expect("piped render stdin");
-        let stdout = child.stdout.take().expect("piped render stdout");
-        let stderr = child.stderr.take().expect("piped render stderr");
-        let (state, observed) = watch::channel(ProcessState {
-            phase: ProcessPhase::Running,
-            close_requested: false,
-            exit_code: None,
-            stdout: Output::default(),
-            stderr: Output::default(),
-            error: None,
-        });
-        let (control, receiver) = mpsc::unbounded_channel();
-        let readers = [
-            tokio::spawn(drain(stdout, state.clone(), true)),
-            tokio::spawn(drain(stderr, state.clone(), false)),
-        ];
-        tokio::spawn(own(child, Some(stdin), receiver, state, readers));
-        Ok(Self {
-            control,
-            state: observed,
-        })
+        #[cfg(not(target_os = "macos"))]
+        return Err(Error::Invalid(
+            "Report process groups currently require macOS".into(),
+        ));
+        #[cfg(target_os = "macos")]
+        {
+            let mut command = plan.command()?;
+            command
+                .stdin(Stdio::piped())
+                .stdout(Stdio::piped())
+                .stderr(Stdio::piped());
+            let mut group = super::group::OwnedGroup::spawn(&mut command)?;
+            let (stdin, stdout, stderr) = group.take_stdio();
+            let (state, observed) = watch::channel(ProcessState {
+                phase: ProcessPhase::Running,
+                close_requested: false,
+                exit_code: None,
+                stdout: Output::default(),
+                stderr: Output::default(),
+                error: None,
+            });
+            let (control, receiver) = mpsc::unbounded_channel();
+            let readers = [
+                tokio::spawn(drain(stdout, state.clone(), true)),
+                tokio::spawn(drain(stderr, state.clone(), false)),
+            ];
+            tokio::spawn(owner::own(group, Some(stdin), receiver, state, readers));
+            Ok(Self {
+                control,
+                state: observed,
+            })
+        }
     }
     pub fn snapshot(&self) -> ProcessState {
         self.state.borrow().clone()
@@ -163,87 +168,6 @@ async fn drain(
         });
         if output.finished {
             break;
-        }
-    }
-}
-async fn own(
-    mut child: Child,
-    mut stdin: Option<ChildStdin>,
-    mut control: mpsc::UnboundedReceiver<Control>,
-    state: watch::Sender<ProcessState>,
-    mut readers: [tokio::task::JoinHandle<()>; 2],
-) {
-    let mut changes = state.subscribe();
-    let mut open = true;
-    let mut deadline = None;
-    let mut can_wait = true;
-    loop {
-        tokio::select! {
-            result = child.wait(), if can_wait => {
-                let status = match result {
-                    Ok(status) => status,
-                    Err(error) => {
-                        can_wait = false;
-                        deadline = None;
-                        stdin.take();
-                        state.send_modify(|s| { s.phase = ProcessPhase::NeedsForce; s.error = Some(error.to_string()); });
-                        continue;
-                    }
-                };
-                // A descendant keeping a pipe open must not hold result inspection indefinitely.
-                for reader in &mut readers {
-                    if tokio::time::timeout(CLOSE_GRACE, &mut *reader).await.is_err() { reader.abort(); let _ = reader.await; }
-                }
-                state.send_modify(|s| {
-                    s.phase = ProcessPhase::Exited;
-                    s.exit_code = status.code();
-                    for output in [&mut s.stdout,&mut s.stderr] {
-                        if !output.finished { output.error = Some("Renderer output remained open after exit".into()); output.finished = true; }
-                    }
-                });
-                return;
-            },
-            request = control.recv(), if open => {
-                match request {
-                    Some(Control::Force(accepted)) => {
-                        let result = if state.borrow().phase == ProcessPhase::NeedsForce {
-                            match child.start_kill() {
-                                Ok(()) => {
-                                    can_wait = true;
-                                    deadline = Some(Instant::now() + CLOSE_GRACE);
-                                    state.send_modify(|s| {s.phase = ProcessPhase::Stopping; s.error = None;});
-                                    Ok(())
-                                },
-                                Err(error) => {
-                                    let message = error.to_string();
-                                    state.send_modify(|s| s.error = Some(message.clone()));
-                                    Err(message)
-                                },
-                            }
-                        } else { Ok(()) };
-                        let _ = accepted.send(result);
-                    },
-                    request => {
-                        if request.is_none() { open = false; }
-                        state.send_modify(|s|s.close_requested = true);
-                        if state.borrow().phase == ProcessPhase::Running {
-                            stdin.take(); deadline = Some(Instant::now() + CLOSE_GRACE);
-                            state.send_modify(|s|s.phase = ProcessPhase::Stopping);
-                        }
-                    },
-                }
-            },
-            _ = changes.changed() => {
-                let bad_output = { let s = changes.borrow_and_update(); s.stdout.overflow || s.stderr.overflow || s.stdout.error.is_some() || s.stderr.error.is_some() };
-                if bad_output && state.borrow().phase == ProcessPhase::Running {
-                    stdin.take(); deadline = Some(Instant::now() + CLOSE_GRACE);
-                    state.send_modify(|s|s.phase = ProcessPhase::Stopping);
-                }
-            },
-            _ = async { if let Some(at) = deadline { tokio::time::sleep_until(at).await; } else { std::future::pending::<()>().await; } } => {
-                deadline = None;
-                state.send_modify(|s|s.phase = ProcessPhase::NeedsForce);
-            },
         }
     }
 }
