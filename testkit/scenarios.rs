@@ -336,7 +336,7 @@ pub fn execute(
     }
     run["finished"] = json!(timestamp());
     run["duration_ms"] = json!(started.elapsed().as_millis() as u64);
-    if let Err(error) = fs::write(directory.join("run.json"), run.to_string()) {
+    if let Err(error) = super::result_file::publish(&directory.join("run.json"), &run) {
         run["status"] = json!(if inputs_resolved { "error" } else { "invalid" });
         run["error"] = json!({"code":"io","retryable":false,"reason":error.to_string()});
     }

@@ -6,6 +6,7 @@ mod paid;
 mod paid_scenarios;
 mod readiness;
 mod render;
+mod result_file;
 mod scenarios;
 mod v03_control;
 mod v03_fixtures;

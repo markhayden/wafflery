@@ -1784,6 +1784,20 @@ before being stopped to apply that same correction. Final review approved; the f
 fmt, clippy, 358 Rust tests (4 opt-in ignored), 55 UI unit tests, 2 asset tests, Storybook,
 byte-identical check-ui builds, release build and 226 Chromium/WebKit tests (8 opt-in skipped).
 
+**Result publication repair (before paid preparation merges):** the full matrix reproduced a
+reader opening the free fake's `run.json` between file creation/truncation and its completed write,
+leaving cancellation recovery unconfirmed with an EOF parse error. Replace direct result writes
+with same-directory atomic publication. Slice files: `testkit/result_file.rs`,
+`testkit/main.rs`, `testkit/scenarios.rs`, `tests/result_file.rs`, and this plan. A concurrent reader
+must see an entire old or new document, never a partial one. The subsequent paid slice adopts the
+same writer for its running and terminal snapshots. No retry/timeout increase or host workaround.
+
+**Atomic publication checkpoint (2026-11-02):** the concurrent-reader regression failed with
+the original direct write and passes with atomic publication; staging cleanup also passes.
+Twenty repetitions each of that pair and host cancellation recovery passed under the shared lock.
+Review approved. Full matrix passed: fmt, clippy, 360 Rust tests (4 opt-in ignored), 55 UI unit
+and 2 asset tests, Storybook, check-ui, release build and 226 browser tests (8 opt-in skipped).
+
 **Following preparation slice — paid input resolution:** `testkit/paid.rs`, `tests/fake_wire.rs`,
 and this plan. Share actual grant, image/frame and fingerprint checks before any synthetic provider
 reservation. The regression already demonstrated that a mismatched fingerprint was accepted;
