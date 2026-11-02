@@ -251,7 +251,14 @@ test.describe("restart during work", () => {
   test("setup explains why an active session cannot restart", async ({ page, host }) => {
     await host.open(page);
     await page.locator("input[type=file]").setInputFiles("tests/fixtures/sample.png");
-    await page.getByLabel("Label *", { exact: true }).fill("Held run");
+    const source = page.getByRole("region", { name: "source", exact: true });
+    await expect(source).toHaveAttribute("aria-busy", "false");
+    await expect(source.getByRole("img", { name: "Selected image 1" })).toBeVisible();
+    const label = page.getByLabel("Label *", { exact: true });
+    await label.click();
+    await expect(label).toBeFocused();
+    await label.fill("Held run");
+    await expect(label).toHaveValue("Held run");
     await page.getByRole("button", { name: "Run", exact: true }).click();
     await expect(page.getByRole("button", { name: "Cancel run", exact: true })).toBeVisible();
     await page.getByRole("button", { name: "Tool setup", exact: true }).click();
