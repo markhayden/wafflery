@@ -4,11 +4,14 @@ import { mkdtemp, readFile, realpath, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { createConnection } from "node:net";
+import { HostLifetime, shutdownControls, type ShutdownControls } from "./host-lifetime";
 
 let child: ChildProcess;
 let temporary: string;
 let root: string;
 let origin: string;
+let lifetime: HostLifetime | undefined;
+let teardown: ShutdownControls | undefined;
 
 // Test-only private IPC client; production browser code never accesses host discovery.
 async function control(operation: string): Promise<{ bootstrap: string }> {
@@ -43,6 +46,9 @@ async function startHost() {
     ["--foreground", "--no-open", "--data-dir", root],
     { stdio: ["ignore", "pipe", "pipe"] },
   );
+  lifetime = new HostLifetime(child);
+  teardown = undefined;
+  child.stderr?.resume();
   origin = await new Promise<string>((resolveOrigin, reject) => {
     child.once("error", reject);
     child.once("exit", () => reject(new Error("host exited before readiness")));
@@ -58,16 +64,12 @@ async function startHost() {
       }
     })
     .toBe(true);
+  const { bootstrap } = await control("bootstrap");
+  teardown = await shutdownControls(origin, bootstrap);
 }
 
 async function stopHost() {
-  if (child && child.exitCode === null) {
-    const exited = new Promise<void>((resolveExit) =>
-      child.once("exit", () => resolveExit()),
-    );
-    child.kill("SIGTERM");
-    await exited;
-  }
+  await lifetime?.stop(teardown);
 }
 
 test.beforeAll(async () => {

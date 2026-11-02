@@ -11,6 +11,7 @@ import {
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { createConnection } from "node:net";
+import { HostLifetime, shutdownControls, type ShutdownControls } from "./host-lifetime";
 import { prepareOfflinePipeline } from "./offline-pipeline";
 export type Host = {
   root: string;
@@ -82,6 +83,8 @@ export const test = base.extend<{
     if (registered.status !== 0) throw registered.error ?? new Error(registered.stderr);
     let child: ChildProcess;
     let origin = "";
+    let lifetime: HostLifetime | undefined;
+    let teardown: ShutdownControls | undefined;
     async function control(operation: string): Promise<{ bootstrap: string }> {
       const canonical = await realpath(root);
       const discovery = JSON.parse(
@@ -122,6 +125,9 @@ export const test = base.extend<{
           ["--foreground", "--no-open", "--data-dir", root],
           { stdio: ["ignore", "pipe", "pipe"] },
         );
+        lifetime = new HostLifetime(child);
+        teardown = undefined;
+        child.stderr?.resume();
         origin = await new Promise((resolveOrigin, reject) => {
           child.once("error", reject);
           child.once("exit", () =>
@@ -141,59 +147,11 @@ export const test = base.extend<{
             }
           })
           .toBe(true);
+        const { bootstrap } = await control("bootstrap");
+        teardown = await shutdownControls(origin, bootstrap);
       },
       async stop() {
-        if (child && child.exitCode === null) {
-          const exited = new Promise<void>((resolveExit) =>
-            child.once("exit", () => resolveExit()),
-          );
-          child.kill("SIGTERM");
-          await Promise.race([
-            exited,
-            new Promise((resolve) => setTimeout(resolve, 250)),
-          ]);
-          if (child.exitCode === null) {
-            try {
-              const { bootstrap } = await control("bootstrap");
-              const session = (await (
-                await fetch(`${origin}/api/session`, {
-                  method: "POST",
-                  headers: {
-                    Origin: origin,
-                    "Content-Type": "application/json",
-                  },
-                  body: JSON.stringify({ bootstrap }),
-                })
-              ).json()) as { token: string };
-              const headers = {
-                Origin: origin,
-                Authorization: `Bearer ${session.token}`,
-                "Content-Type": "application/json",
-              };
-              for (
-                let tries = 0;
-                tries < 30 && child.exitCode === null;
-                tries++
-              ) {
-                const state = (await (
-                  await fetch(`${origin}/api/host/shutdown`, { headers })
-                ).json()) as { phase: string };
-                if (state.phase === "waiting") {
-                  await fetch(`${origin}/api/host/force-quit`, {
-                    method: "POST",
-                    headers,
-                    body: "{}",
-                  });
-                  break;
-                }
-                await new Promise((resolve) => setTimeout(resolve, 100));
-              }
-            } catch (error) {
-              if (child.exitCode === null) throw error;
-            }
-          }
-          await exited;
-        }
+        await lifetime?.stop(teardown);
       },
       async open(page) {
         const { bootstrap } = await control("bootstrap");

@@ -376,6 +376,13 @@ history is deferred; a later explicit import must label unavailable dependencies
 
 ## Verification before claiming these behaviors
 
+Browser host fixtures capture process closure when spawning, establish their teardown credential
+while the readiness handshake is valid, and share one idempotent stop lifecycle. Shutdown must
+not bootstrap through disappearing IPC or infer exit from a missing socket. Transport failure
+during teardown is accepted only after a clean process close; force still requires the host's
+waiting phase. Remove temporary roots only after closure. Assertion timeouts and retries are
+unchanged; see `docs/reviews/2026-11-01-host-lifetime-ci.md` for the hosted trace and regression.
+
 Use offline fake-tool fixtures for duplicate clicks/tabs, shared serial limits, changed estimates,
 cancelled requests without MCP results, missing terminal resources, malformed paths/symlinks,
 oversized outputs, and a server dying after dispatch. No paid calls are needed.
