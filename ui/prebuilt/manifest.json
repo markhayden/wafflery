@@ -16,8 +16,8 @@
     "ui/src/api/examples.ts": "ac29ab8bd91da377bd783d7e118b1791c1599784ad0ab92874293c31b0a0bac4",
     "ui/src/api/reports.ts": "5241156e5e9c94f7a20b77310c2430a3e04c9294e98f6b3e1ae6ff0412c69083",
     "ui/src/api/session.ts": "216dfa6b5e809fcb0c1f97f1cf47850455646b1382826a2eb83c5fad475f96fb",
-    "ui/src/api/tool-session.ts": "1d42b42432ff0d93150359bdc52d45b88c2a7d85f02a2f526e3598f160498932",
-    "ui/src/api/workspace.ts": "01b3e10cc7f1e0b1e7f730f834f624ff11e77cdb52a92259a2393b4f95cfb122",
+    "ui/src/api/tool-session.ts": "4775876e0c7e83e4ad25bde42f96214f7a49e96d83a754c36b6f93283229e32b",
+    "ui/src/api/workspace.ts": "5a3fdebde88f280432ec09e4394c9e898b84dc29278f063ba24a0694425c86f3",
     "ui/src/assets/wafflery-mark.svg": "51bc8a040e26b897a948238598b8cabdf69bf4687c2b1a70613b542de1c99f1f",
     "ui/src/components/Button.module.css": "ab2357148b3b415f5fbb33988a2aa3a97162ca357a119775a31d8dd390aef44e",
     "ui/src/components/Button.stories.tsx": "489b0b293bbeb9f5813829a79bc9e78c5ddffa0116d71b0582985750716136fa",
@@ -42,17 +42,17 @@
     "ui/src/features/actions/ActionForm.module.css": "b45188479ee92fc3b277e6c3fdafc45ba7c5011d87b0e552101e73ff901ee702",
     "ui/src/features/actions/ActionForm.stories.tsx": "094f8662f7e2a7e31f73db06fd836ddb84a2cb50d0807f9ef3465301a9d2ee8f",
     "ui/src/features/actions/ActionForm.tsx": "5772471320f651f4105f53f8908caa59db07a8ec2b746661f757ee0c89fba3a1",
-    "ui/src/features/actions/model.ts": "aae9c18b72799fb5c9e056356ee9de69d9bbfcf2d328d519a0e75983a71d622a",
+    "ui/src/features/actions/model.ts": "6e2e88d51793e36384272329ceb6c09445abbe32dd2a0f06fba83046ee5bf11d",
     "ui/src/features/actions/selection.ts": "37d0b5e88c9f38c9412abf8e6b3ee94206753f615ad045016a67b73822482ace",
     "ui/src/features/workspace/Cleanup.tsx": "a6b9f98d531d5dddf1aea317ddb8a3e16298a71e1f0c15c0392ed60e860b6b4c",
     "ui/src/features/workspace/CostReview.module.css": "a3552db3ef934d51790ba75b8cd473aaa1a4cf3d7e7537b3d4d2dfe662c57acb",
-    "ui/src/features/workspace/CostReview.stories.tsx": "3e1416bc22c153ee966147704c96c49624255ee60c77b2801b22237b296b74ac",
+    "ui/src/features/workspace/CostReview.stories.tsx": "e676db34d2bb835c63cc2af14ac6681cc1f706cf74648b257c0db7019182cbde",
     "ui/src/features/workspace/CostReview.tsx": "19ad02be306c4b9ace0c92ee91bc5fcf44b0cd2af78c04dfde459af63e9adbb9",
     "ui/src/features/workspace/DirectoryAccess.module.css": "bc156decd8538c047f9239d354c4b462e2a84bf55d81ae9a3fea013f9070fedf",
     "ui/src/features/workspace/DirectoryAccess.stories.tsx": "dd941a39928a0497bc0d6dd62198abe0c2ea2a441ced27fa28fb072be5442ce1",
     "ui/src/features/workspace/DirectoryAccess.tsx": "26f2392b8622528610d92ba1e922508436718416fb7b542312af9a722b99a3df",
     "ui/src/features/workspace/Evidence.module.css": "5cd3657dc000a9d8a705f31f6d1b6a396243926b6ef1d76c58c09067c76c5bef",
-    "ui/src/features/workspace/Evidence.stories.tsx": "636512005e80482611d25e83c92588ec8935e85817a4202581bbe3d5da6fdfbf",
+    "ui/src/features/workspace/Evidence.stories.tsx": "4166497db31166006c54f2f76a8dfc62ffdbc6f5c6ddaf06a46be142e87644a4",
     "ui/src/features/workspace/Examples.stories.tsx": "5f2b2faeb7708ef7509ababc33ab5b144b26626c923c7eb7f1801ba37619f05c",
     "ui/src/features/workspace/Examples.tsx": "95212cec1ef943ce92bc14fbe9dc37b0fba4353a3c9999a2f079ccc0e9581546",
     "ui/src/features/workspace/History.tsx": "020455e1cf9685dc9bba7d3489169fd4f2c95d05e2a84a2e8eacefdd7e6e123d",
@@ -70,7 +70,7 @@
     "ui/src/features/workspace/RunOutcome.tsx": "61d7f9e6df0c658f68ca3e0f142af8841c2fbf4c28e38af29c965d2ce191bb67",
     "ui/src/features/workspace/SavedComparison.tsx": "8a02acee808c1f7df4de346272875c90a65719c132286f3b394bfeb017e007c0",
     "ui/src/features/workspace/ToolSetup.module.css": "8bbcd85b8be8a7ca0765b8cfac3bc386f2f8ded0c852cfb08dfa297cfe434ae9",
-    "ui/src/features/workspace/ToolSetup.stories.tsx": "7c59a58dadaa4df7ae67093510199b64d8e59717ded0e783a2f2cff29969696f",
+    "ui/src/features/workspace/ToolSetup.stories.tsx": "b65a8ad0dac38a29c824e0d8ce49aa7437c57b873e8480e7c0f21c3b55dd2a1d",
     "ui/src/features/workspace/ToolSetup.tsx": "ddd95f231509bea2c6a799f3136d586e3cc05e4b94d70302846e012f49ff9a38",
     "ui/src/features/workspace/Workspace.module.css": "31a95af1a46b2d19a9aa6120da64ec023f3834e675e26351f8449a14062e6545",
     "ui/src/features/workspace/Workspace.tsx": "e96aa4fa0a332d0933fdaa4aaf6cb1b3b730bdf3ced3fc49bd0911772260f1e8",
@@ -83,9 +83,9 @@
     "ui/vite.config.ts": "3aec7d6174ffca99d4d5288bea2f837d5e91335cbd7135a9682e6d18a40476b4"
   },
   "outputs": {
-    "assets/index--d72wJxw.js": "bb7a487f50b50d1f06a1b5e95cb3c3aba5b04d43aa280c1d97156f3859e42edc",
+    "assets/index-B-OE7oAy.js": "ab0d67f648694f6f690e26f8f684e3dca3544ac322f273b8e8a3feec97a4d589",
     "assets/index-CMr7uhzP.css": "ed5dea8d80c96048c6d655212ff283f085f8f1d5608faa125556060fbeb34034",
     "assets/wafflery-mark-CML0EpfM.svg": "51bc8a040e26b897a948238598b8cabdf69bf4687c2b1a70613b542de1c99f1f",
-    "index.html": "069ef938667ad815f774290cc57e4b13faaae5c8af6e5eb0a23845e3487e6d9d"
+    "index.html": "b4004827ab1245b870af2d0066f98528fcf2451879a8a35d6bd35b5131bd7068"
   }
 }
