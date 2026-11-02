@@ -3,6 +3,7 @@ import { defineConfig, devices } from "@playwright/test";
 // https://playwright.dev/docs/test-webserver
 export default defineConfig({
   testDir: "./tests/browser",
+  globalSetup: "./tests/browser/binaries.ts",
   forbidOnly: true,
   retries: 0,
   workers: 2,

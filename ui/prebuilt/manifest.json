@@ -6,7 +6,7 @@
     "scripts/ui-manifest.ts": "7d1f54ac5a1cd4164cbc61b5385b59c6138c01eda8e72ca18b2aa4f319284e89",
     "ui/bun.lock": "d5cc1b7dc5b656221db9b406e184c0824d2e6f5e489a32f8998bb282bc422351",
     "ui/index.html": "5c02ac5dea8f0cad33ab10f0c11d20cdc3152948d4d9fcf69f46c5472ca092b3",
-    "ui/package.json": "f4892ac381bcf281370cddae82a9758be19625dd4807b59da9600530df06246d",
+    "ui/package.json": "3aae554e483ff6d81698b993fd0ea98818d134da3d10d2056ad19e7e40388fa7",
     "ui/src/App.tsx": "46a420c040fefd229b7bc4e4478741cbd8d0a1d4fd2ff6081de0eab8ceb2fc0c",
     "ui/src/api/assets.ts": "7a6ad972558a4b9761d0a6ef791ef9f00c340eb0bbc1f65ec29721532d127aff",
     "ui/src/api/client.ts": "df6d1259c266ef3c3e8d9e5a3a9b791bd9831bec458674d1e969d82474ca3b88",

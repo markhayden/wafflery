@@ -27,12 +27,6 @@ export const test = base.extend<{
   hostScenario: ["normal", { option: true }],
   hostKind: ["sample", { option: true }],
   host: async ({ hostScenario, hostKind }, use, testInfo) => {
-    const build = spawnSync(
-      "cargo",
-      ["build", "--locked", "--example", "sample-lab", "--bin", "wafflery"],
-      { cwd: resolve(".."), encoding: "utf8" },
-    );
-    if (build.status !== 0) throw new Error(build.stderr);
     const temporary = await mkdtemp(join(tmpdir(), "wafflery-workflow-"));
     const root = join(temporary, "data"),
       toolRoot = join(temporary, "tool");
@@ -85,7 +79,7 @@ export const test = base.extend<{
       ["--register", source, "--data-dir", root],
       { encoding: "utf8" },
     );
-    if (registered.status !== 0) throw new Error(registered.stderr);
+    if (registered.status !== 0) throw registered.error ?? new Error(registered.stderr);
     let child: ChildProcess;
     let origin = "";
     async function control(operation: string): Promise<{ bootstrap: string }> {

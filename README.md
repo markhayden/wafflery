@@ -171,6 +171,11 @@ For browser checks, first install the matching Chromium/WebKit builds with
 They use disposable libraries, actual MCP processes, and no paid providers. Native Safari is a
 separate manual check, not an assertion based on automated WebKit.
 
+`test:browser` builds the debug host and independent peer once before Playwright starts its
+parallel workers. Fixtures never invoke Cargo. Playwright checks both executables before tests
+and reports the build command if either is missing or unusable; direct `playwright test` runs
+require those binaries to have been built already.
+
 See the [M0](docs/reviews/2026-10-31-m0-checkpoint.md),
 [M1](docs/reviews/2026-10-31-m1-checkpoint.md),
 [M2](docs/reviews/2026-10-31-m2-checkpoint.md), and

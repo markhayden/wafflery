@@ -14,7 +14,7 @@
     "storybook": "storybook dev --host 127.0.0.1 -p 6006 --ci --disable-telemetry",
     "build:storybook": "storybook build --disable-telemetry",
     "test:unit": "bun test tests/unit",
-    "test:browser": "bun ../scripts/build-ui.ts && cargo build --manifest-path ../Cargo.toml --locked && playwright test",
+    "test:browser": "bun ../scripts/build-ui.ts && cargo build --manifest-path ../Cargo.toml --locked --bin wafflery --example sample-lab && playwright test",
     "preview": "vite preview --host 127.0.0.1 --strictPort"
   },
   "dependencies": {
