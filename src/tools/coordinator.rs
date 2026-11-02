@@ -201,65 +201,11 @@ impl Coordinator {
         validator(&action["params_schema"])?
             .validate(&request.params)
             .map_err(|e| Error::Invalid(format!("Invalid parameters: {e}")))?;
-        let mut arguments = request
-            .params
-            .as_object()
-            .cloned()
-            .ok_or_else(|| Error::Invalid("Parameters must be an object".into()))?;
-        if action["locations"]
-            .as_array()
-            .is_some_and(|slots| slots.iter().any(|s| s["required"] == true))
-        {
-            return Err(Error::Invalid(
-                "Required location bindings need the operations interface".into(),
-            ));
-        }
-        let slots = action["images"].as_array().cloned().unwrap_or_default();
-        if request
-            .images
-            .keys()
-            .any(|name| !slots.iter().any(|s| s["slot"] == *name))
-        {
-            return Err(Error::Invalid("Undeclared image slot".into()));
-        }
-        if request.frames.iter().any(|(slot, frames)| {
-            request
-                .images
-                .get(slot)
-                .is_none_or(|images| images.len() != frames.len())
-        }) {
-            return Err(Error::Invalid(
-                "Image coordinate metadata must match its image bindings".into(),
-            ));
-        }
         let directory = self.assets.root().join("execution").join(&request.id);
         std::fs::DirBuilder::new().mode(0o700).create(&directory)?;
-        let materialized=async {
-            let mut inputs=serde_json::Map::new();
-            for (index,slot) in slots.iter().enumerate() {
-                let name=slot["slot"].as_str().ok_or_else(||Error::Invalid("Invalid image slot".into()))?;
-                if arguments.contains_key(name) {return Err(Error::Invalid("Image slots cannot be supplied as raw parameters".into()));}
-                let ids=request.images.get(name).cloned().unwrap_or_default();
-                if ids.len()>1 || (slot["required"]==true && ids.len()!=1) {return Err(Error::Invalid(format!("Image slot {name} requires {} image",if slot["required"]==true {"one"}else{"at most one"})));}
-                if let Some(id)=ids.first() {
-                    let (asset,bytes)=self.assets.read(id).await?;
-                    let path=directory.join(format!("input-{index}.{}",if asset.media_type=="image/png"{"png"}else{"jpg"}));
-                    tokio::fs::write(&path,bytes).await?;
-                    let frame=request.frames.get(name).and_then(|frames|frames.first()).cloned().unwrap_or_default();
-                    let reference=json!({"file_sha256":asset.sha256,"width":asset.width,"height":asset.height,"projection":frame.projection,"topology":frame.topology});
-                    validator(&json!({"$ref":"urn:table-manners:images:image-reference"}))?.validate(&reference).map_err(|e|Error::Invalid(format!("Invalid image coordinates: {e}")))?;
-                    arguments.insert(name.into(),json!({"path":path,"expect":reference}));
-                    inputs.insert(name.into(),json!([{ "asset":asset,"image":reference,"role":slot["role"] }]));
-                }
-            }
-            if current.document["profiles"].as_array().is_some_and(|profiles|profiles.iter().any(|profile|profile=="images")) {
-                arguments.insert("return_images".into(),json!("path"));arguments.insert("image_blocks".into(),json!(false));
-            }
-            let arguments=Value::Object(arguments);
-            let schema=current.schemas.get(&request.action).ok_or(Error::Missing("No MCP action schema"))?;
-            validator(schema)?.validate(&arguments).map_err(|e|Error::Invalid(format!("Invalid action inputs: {e}")))?;
-            Ok::<_,Error>((arguments,Value::Object(inputs)))
-        }.await;
+        let materialized =
+            super::bindings::materialize(&self.assets, &request, action, &current, &directory)
+                .await;
         let (arguments, inputs) = match materialized {
             Ok(value) => value,
             Err(error) => {

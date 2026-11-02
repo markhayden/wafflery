@@ -26,6 +26,11 @@ pub fn description(scenario: &str) -> Value {
         document["actions"][0]["params_schema"]["properties"]["max_spend_usd"] =
             json!({"type":"number","exclusiveMinimum":0});
     }
+    if scenario.starts_with("image-list") {
+        document["actions"][0]["images"].as_array_mut().unwrap().push(json!({
+            "slot":"references", "role":"reference", "required":scenario == "image-list-required", "many":true
+        }));
+    }
     if scenario == "data-only" {
         document["actions"][0]["outputs"]["images"] = json!([]);
     }
@@ -236,6 +241,13 @@ pub fn execute(
         let roots = state.lock().unwrap().roots.clone();
         let (input_reference, output_reference, output_bytes) = mark(params, &roots)?;
         run["images"]["in"] = json!([{"slot":"source","role":"source","image":input_reference}]);
+        for item in params["references"].as_array().into_iter().flatten() {
+            let (reference, _, _) = mark(&json!({"source":item}), &roots)?;
+            run["images"]["in"]
+                .as_array_mut()
+                .unwrap()
+                .push(json!({"slot":"references","role":"reference","image":reference}));
+        }
         if scenario == "data-only" {
             run["images"]["out"] = json!([]);
             run["body"] =

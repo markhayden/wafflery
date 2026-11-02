@@ -274,3 +274,33 @@ formatting, clippy, typecheck, Storybook, asset reproducibility and release buil
 [Evidence and diagnosis](../reviews/2026-11-01-setup-refresh-ci.md). No production change was
 needed for this failure. V05b was already locally merged before the hosted V05a failure arrived;
 its full matrix passed separately. Resume V06 after the hosted gate is green.
+
+## V06a execution boundary
+
+Bind `many: true` slots as non-empty ordered arrays; scalar slots remain objects on the wire.
+An absent optional slot is omitted; an explicitly supplied empty list is refused. Preserve
+duplicate identities as separate items/copies and retain each item's frame and role.
+
+Before copying any input, check all slot/cardinality/frame bindings and metadata: at most 32
+images and 512 MiB per attempt, with the existing 128 MiB per-file limit. Repeated identities
+count per occurrence because each is materialized separately. Byte reads still verify immutable
+fingerprints; metadata checks do not replace that verification. Extract binding into a helper
+and metadata lookup from asset reads so preflight does not load all bytes into memory.
+
+Tests exercise wire shape/order, duplicates, optional omission/empty-list refusal, invalid scalar
+and frame counts, aggregate limits, corrupt stored bytes and cleanup. Cleanup validates every
+path before deleting anything, including array elements, and leaves unrelated files untouched.
+The independent peer declares and consumes a list slot; V06b owns complete result-list evidence
+association, so V06a does not claim that later checkpoint. Files include binding/coordinator
+wiring, asset metadata lookup, cleanup, peer fixtures and tests. Rollback V06a after V06b/V07 if
+those have landed; existing scalar evidence and library records remain readable.
+
+V06a verification: the binding regressions failed first on scalar-only handling, empty-list
+acceptance and missing aggregate preflight. Cleanup regressions then exposed remaining array
+copies. Six binding tests and two cleanup tests now pass. Review found no implementation defect
+and requested explicit per-occurrence frame coverage; that test and mismatched list-frame
+counts were added and pass. The full matrix passed with 112 Rust tests (three ignored), 18 UI
+unit tests, two asset tests and 86 browser cases (four skipped), plus fmt, clippy, typecheck,
+Storybook, asset reproducibility and release build. The additional frame test passed afterward
+alongside all six binding tests, formatting and all-target clippy, bringing Rust coverage to 113.
+No UI assets, dependencies or contract changes. Result-list evidence remains V06b.

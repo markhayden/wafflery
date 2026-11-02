@@ -153,6 +153,14 @@ preserved while native dependencies/report data are unsupported or unknown. C2/C
 those sets before Q15's full preservation target can be verified. Raw journals/results follow
 the non-secret data boundary above; undeclared secret-bearing fields cannot safely be exported.
 
+Image binding follows each declared slot's cardinality: scalar slots become objects and
+`many: true` slots become ordered, non-empty arrays. Omitted optional slots stay absent.
+Each occurrence gets a separate execution copy and its own fingerprint, coordinates and role,
+including repeated asset IDs. Before copying, the host checks every binding and metadata size:
+at most 32 images, 128 MiB per file and 512 MiB total per attempt. Byte reads still verify the
+stored fingerprint. Cleanup validates all scalar/array paths before removing owned copies and
+never recursively removes unrelated tool files. Full list-result association is tracked in V06b.
+
 Once execution is confirmed terminal and preservation/export no longer needs materialized
 inputs, remove those disposable copies. Keep references to immutable assets in retained records.
 After a crash, do not sweep execution directories that a surviving child may still use; first

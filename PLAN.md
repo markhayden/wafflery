@@ -530,7 +530,7 @@ Files: ToolSetup, API client, story, browser tests, README.
 Verify confirmation/cancel, active-work refusal, disconnected state and new session identity.
 Depends: V03/V05a. Commit: `feat: present deliberate session restart`.
 
-**V06a — Bind list-valued image inputs.** Generalize materialization, schema validation and cleanup
+**V06a — Bind list-valued image inputs. Complete.** Generalize materialization, schema validation and cleanup
 to ordered arrays for `many: true`, preserving scalar behavior otherwise. Every item carries its
 own immutable bytes, fingerprint and coordinate reference. Enforce existing per-file limits and
 bounded aggregate request limits before copying; cleanup handles all array paths and only owned files.

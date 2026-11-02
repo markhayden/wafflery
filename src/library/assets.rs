@@ -97,13 +97,12 @@ impl AssetStore {
         }).await
     }
 
-    pub async fn read(&self, id: &str) -> Result<(Asset, Vec<u8>)> {
+    pub async fn metadata(&self, id: &str) -> Result<Asset> {
         if id.len() != 32 || !id.bytes().all(|byte| byte.is_ascii_hexdigit()) {
             return Err(Error::InvalidAsset("unknown image"));
         }
         let id = id.to_owned();
-        let asset = self
-            .database
+        self.database
             .call(move |connection| {
                 Ok(connection.query_row(
                     "SELECT id, sha256, size, width, height, media_type FROM assets WHERE id=?1",
@@ -111,7 +110,11 @@ impl AssetStore {
                     from_row,
                 )?)
             })
-            .await?;
+            .await
+    }
+
+    pub async fn read(&self, id: &str) -> Result<(Asset, Vec<u8>)> {
+        let asset = self.metadata(id).await?;
         let root = self.root.clone();
         tokio::task::spawn_blocking(move || {
             let bytes = verified_bytes(&owned_path(&root, &asset.sha256)?, &asset.sha256)?;

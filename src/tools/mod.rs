@@ -1,4 +1,5 @@
 mod association;
+mod bindings;
 pub mod client;
 pub mod coordinator;
 mod environment;
