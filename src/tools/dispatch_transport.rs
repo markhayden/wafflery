@@ -25,6 +25,15 @@ pub(crate) struct Permit {
     pub written: tokio::sync::watch::Sender<bool>,
 }
 pub(crate) type Gate = Arc<Mutex<Option<Permit>>>;
+
+/// Completion may race a replacement authorized after the old child was reaped.
+pub(super) fn revoke(gate: &Gate, id: &str) {
+    let mut gate = gate.lock().unwrap_or_else(|e| e.into_inner());
+    if gate.as_ref().is_some_and(|permit| permit.id == id) {
+        gate.take();
+    }
+}
+
 pub(crate) struct RecordedTransport<T> {
     pub inner: T,
     pub gate: Gate,
@@ -240,6 +249,66 @@ mod tests {
         assert!(
             released_after_write,
             "refresh remained blocked during execution"
+        );
+    }
+    #[tokio::test]
+    async fn old_completion_cannot_revoke_the_next_requests_authorization() {
+        let dir = tempfile::tempdir().unwrap();
+        let assets = AssetStore::open(&dir.path().join("Library")).unwrap();
+        let store = AttemptStore::new(assets.database.clone());
+        let request: Submission = serde_json::from_value(json!({"id":"next","tool":"fixture","action":"op","revision":"r","params":{},"images":{}})).unwrap();
+        store
+            .create(request, json!({}), json!({}), json!({}))
+            .await
+            .unwrap();
+        let gate = Gate::default();
+        let discovery = Arc::new(tokio::sync::Mutex::new(())).lock_owned().await;
+        *gate.lock().unwrap() = Some(Permit {
+            discovery,
+            id: "next".into(),
+            store: store.clone(),
+            action: "op".into(),
+            arguments: json!({}),
+            generation: 0,
+            written: tokio::sync::watch::channel(false).0,
+        });
+        // Model the exact interleaving: a replacement is authorized while old cleanup is paused.
+        revoke(&gate, "previous");
+        let wire = Wire::default();
+        let sent = wire.0.clone();
+        let mut transport = RecordedTransport {
+            inner: wire,
+            gate: gate.clone(),
+            association: Default::default(),
+            generation: Arc::new(AtomicU64::new(0)),
+        };
+        let message = json!({"jsonrpc":"2.0","id":8,"method":"tools/call","params":{"name":"op","arguments":{},"_meta":{"table-manners/client_run_id":"next"}}});
+        let result = transport
+            .send(serde_json::from_value(message.clone()).unwrap())
+            .await;
+        let saved = store.get("next").await.unwrap();
+        assets.database.shutdown().await.unwrap();
+        assert!(
+            result.is_ok(),
+            "old cleanup removed the next call's authorization: {result:?}"
+        );
+        assert_eq!(saved.wire, Some(message.clone()));
+        assert_eq!(*sent.lock().unwrap(), vec![message]);
+
+        let discovery = Arc::new(tokio::sync::Mutex::new(())).lock_owned().await;
+        *gate.lock().unwrap() = Some(Permit {
+            discovery,
+            id: "abandoned".into(),
+            store,
+            action: "op".into(),
+            arguments: json!({}),
+            generation: 0,
+            written: tokio::sync::watch::channel(false).0,
+        });
+        revoke(&gate, "abandoned");
+        assert!(
+            gate.lock().unwrap().is_none(),
+            "own unused authorization must be revoked"
         );
     }
 }

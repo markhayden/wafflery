@@ -116,6 +116,7 @@ impl Harness {
                 let attempt = self.coordinator.attempts.get(id).await.unwrap();
                 if !matches!(attempt.execution.as_str(), "submitted" | "running")
                     && attempt.preservation["contract"] != "pending"
+                    && self.coordinator.snapshot().await.unwrap()["tools"][0]["busy"] == false
                 {
                     return attempt;
                 }

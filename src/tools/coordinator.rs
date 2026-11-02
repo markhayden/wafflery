@@ -339,6 +339,7 @@ impl Coordinator {
             }
             other => other,
         };
+        let mut preserved = false;
         match result {
             Ok(result) => {
                 let saved = async {
@@ -380,10 +381,7 @@ impl Coordinator {
                 .await;
                 client.end_preservation();
                 match saved {
-                    Ok(()) => {
-                        self.discard_materialized(&request.id).await;
-                        self.active.lock().await.remove(&request.id);
-                    }
+                    Ok(()) => preserved = true,
                     Err(error) => {
                         let message = error.to_string();
                         let _ = self
@@ -420,9 +418,10 @@ impl Coordinator {
                     .await;
             }
         }
-        client.gate.lock().unwrap_or_else(|e| e.into_inner()).take();
+        super::dispatch_transport::revoke(&client.gate, &request.id);
         let child_exited = client.confirm_exit().await.unwrap_or(false);
-        if child_exited
+        if preserved
+            || child_exited
             || self
                 .attempts
                 .get(&request.id)
@@ -442,6 +441,7 @@ impl Coordinator {
                     .await;
             }
             self.discard_materialized(&request.id).await;
+            // Publish availability only after all old-worker cleanup has finished.
             self.active.lock().await.remove(&request.id);
         }
         self.events.changed();

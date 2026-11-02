@@ -53,6 +53,21 @@ async fn setup(scenario: &str) -> (tempfile::TempDir, Arc<Coordinator>, Submissi
     let request=serde_json::from_value(json!({"id":"attempt-1","tool":"example","action":"mark_band","revision":revision,"params":{"label":"original"},"images":{"source":[asset.id]}})).unwrap();
     (dir, c, request)
 }
+// close() is one bounded shutdown step and may defer during evidence preservation.
+// Ordinary teardown uses the same observable completion signal as the host, without forcing.
+async fn finish_host(c: &Arc<Coordinator>) {
+    let (quit, mut stopped) = tokio::sync::watch::channel(false);
+    c.begin_shutdown(true, quit).await.unwrap();
+    tokio::time::timeout(
+        std::time::Duration::from_secs(8),
+        stopped.wait_for(|value| *value),
+    )
+    .await
+    .expect("graceful host shutdown did not complete")
+    .unwrap();
+    assert_eq!(c.shutdown_status().await.phase, "stopped");
+}
+
 #[tokio::test]
 async fn duplicate_submissions_dispatch_once_and_mutable_originals_are_not_inputs() {
     let (dir, c, request) = setup("normal").await;
@@ -81,7 +96,7 @@ async fn duplicate_submissions_dispatch_once_and_mutable_originals_are_not_input
             .count(),
         1
     );
-    assert!(c.close().await);
+    finish_host(&c).await;
     assert!(!std::path::Path::new(path).exists());
     assert!(dir.path().join("original.png").exists());
     c.assets.database.shutdown().await.unwrap();
@@ -102,7 +117,7 @@ async fn paid_missing_malformed_and_stale_cost_declarations_cannot_dispatch() {
         }
         assert!(c.submit(request).await.is_err(), "{scenario}");
         assert!(!dir.path().join("runs/calls.ndjson").exists(), "{scenario}");
-        assert!(c.close().await);
+        finish_host(&c).await;
         c.assets.database.shutdown().await.unwrap();
     }
 }
@@ -116,7 +131,7 @@ async fn invalid_parameters_and_busy_tool_are_refused() {
     c.submit(request.clone()).await.unwrap();
     request.id = "attempt-2".into();
     assert!(c.submit(request).await.is_err());
-    assert!(c.close().await);
+    finish_host(&c).await;
     c.assets.database.shutdown().await.unwrap();
 }
 #[tokio::test]
@@ -157,7 +172,7 @@ async fn direct_browser_api_cannot_bypass_no_paid_guard() {
         .unwrap();
     assert_eq!(response.status(), StatusCode::CONFLICT);
     assert!(!dir.path().join("runs/calls.ndjson").exists());
-    assert!(c.close().await);
+    finish_host(&c).await;
     c.assets.database.shutdown().await.unwrap();
 }
 #[tokio::test]
@@ -201,7 +216,7 @@ async fn terminal_evidence_is_verified_and_save_failure_does_not_change_tool_out
             }
         }
         assert!(saved.raw_response.as_ref().unwrap()["structuredContent"].is_object());
-        assert!(c.close().await);
+        finish_host(&c).await;
         c.assets.database.shutdown().await.unwrap();
     }
 }
@@ -243,7 +258,7 @@ async fn cancellation_without_a_run_reference_stays_unconfirmed_and_reserved() {
     assert!(!c.try_quit().await);
     assert!(c.cleanup(Default::default(), String::new()).await.is_err());
     assert_eq!(result["status"], "cancelled");
-    assert!(c.close().await);
+    finish_host(&c).await;
     assert_eq!(
         c.attempts.get("attempt-1").await.unwrap().execution,
         "interrupted"
@@ -259,7 +274,7 @@ async fn impossible_image_coordinate_metadata_is_rejected_before_dispatch() {
     .unwrap();
     assert!(c.submit(request).await.is_err());
     assert!(!dir.path().join("runs/calls.ndjson").exists());
-    assert!(c.close().await);
+    finish_host(&c).await;
     c.assets.database.shutdown().await.unwrap();
 }
 
@@ -276,7 +291,7 @@ async fn refreshed_declarations_replace_the_browser_snapshot_without_dispatch() 
         current.revision
     );
     assert!(!dir.path().join("runs/calls.ndjson").exists());
-    assert!(c.close().await);
+    finish_host(&c).await;
     c.assets.database.shutdown().await.unwrap();
 }
 
@@ -297,7 +312,7 @@ async fn child_exit_releases_the_reservation_without_claiming_a_tool_outcome() {
     .await
     .expect("dead child must not block quit");
     assert!(c.attempts.get("attempt-1").await.unwrap().result.is_none());
-    assert!(c.close().await);
+    finish_host(&c).await;
     c.assets.database.shutdown().await.unwrap();
 }
 
@@ -327,7 +342,7 @@ async fn a_cancelled_child_that_exits_later_does_not_hold_the_reservation() {
         assert_eq!(saved.execution, "interrupted");
         assert!(saved.result.is_none());
     }
-    assert!(c.close().await);
+    finish_host(&c).await;
     c.assets.database.shutdown().await.unwrap();
 }
 
@@ -473,7 +488,7 @@ async fn cancelled_runs_are_recovered_from_progress_or_the_runs_list() {
         .await
         .unwrap();
         c.submit(next).await.unwrap();
-        assert!(c.close().await);
+        finish_host(&c).await;
         c.assets.database.shutdown().await.unwrap();
     }
 }
@@ -497,7 +512,7 @@ async fn mismatched_correlation_and_session_never_attach_a_result() {
         assert!(saved.result.is_none());
         assert!(!saved.notices.is_empty());
         assert_eq!(c.snapshot().await.unwrap()["tools"][0]["busy"], true);
-        assert!(c.close().await);
+        finish_host(&c).await;
         c.assets.database.shutdown().await.unwrap();
     }
 }
@@ -542,7 +557,7 @@ async fn cancellation_conflicts_or_incomplete_pagination_never_release_the_reser
         );
         assert!(saved.result.is_none());
         assert_eq!(c.snapshot().await.unwrap()["tools"][0]["busy"], true);
-        assert!(c.close().await);
+        finish_host(&c).await;
         c.assets.database.shutdown().await.unwrap();
     }
 }
@@ -553,6 +568,6 @@ async fn a_reset_session_cannot_silently_dispatch_with_a_fresh_ledger() {
     let error = c.submit(request).await.unwrap_err().to_string();
     assert!(error.contains("session changed"), "{error}");
     assert!(!dir.path().join("runs/calls.ndjson").exists());
-    assert!(c.close().await);
+    finish_host(&c).await;
     c.assets.database.shutdown().await.unwrap();
 }
