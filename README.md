@@ -135,7 +135,10 @@ target/debug/wafflery --register /absolute/path/to/tools.json
 ```
 
 Registration validates and atomically appends records without executing them. Repeating an
-identical record is harmless; conflicting IDs are refused. It cannot change a live host's
+identical record is harmless; conflicting IDs are refused. To change an existing tool's config
+path or other registration fields, quit the host and run
+`wafflery --register <file> --replace-registration`. Replacement only accepts existing IDs and applies the entire file
+atomically; an unknown ID leaves all registrations unchanged. It cannot change a live host's
 configuration. `--data-dir <path>` selects a separate library parent. Alternatively,
 `WAFFLERY_DATA_DIR=/absolute/path` selects that same parent for both `wafflery` and
 `rascal playground`; an explicit `--data-dir` takes precedence. The environment selection does

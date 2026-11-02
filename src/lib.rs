@@ -8,7 +8,7 @@ pub const HELP: &str = "Wafflery — local visual pipeline workshop
 
 Usage: wafflery [--tool <id>] [--no-open] [--data-dir <path>]
        wafflery --foreground --no-open [--data-dir <path>]
-       wafflery --register <descriptors.json> [--data-dir <path>]
+       wafflery --register <descriptors.json> [--replace-registration] [--data-dir <path>]
 
   -h, --help     Show this help
   -V, --version  Show the version
@@ -17,6 +17,7 @@ Usage: wafflery [--tool <id>] [--no-open] [--data-dir <path>]
       --data-dir Use a separate local data directory for development
       --foreground  Keep the host in this terminal (Ctrl-C to quit)
       --register Register local tools while the host is stopped; do not launch them
+      --replace-registration Explicitly replace existing registered IDs while stopped
 
 The default launcher starts or attaches to a detached local host.
 WAFFLERY_DATA_DIR selects an absolute library parent for every entry point;

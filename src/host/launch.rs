@@ -16,6 +16,7 @@ pub struct Options {
     pub root: PathBuf,
     pub tool: Option<String>,
     pub registration: Option<PathBuf>,
+    pub replace_registration: bool,
 }
 
 impl Options {
@@ -31,6 +32,9 @@ impl Options {
                     options.internal = true
                 }
                 Some("--no-open") if !options.no_open => options.no_open = true,
+                Some("--replace-registration") if !options.replace_registration => {
+                    options.replace_registration = true;
+                }
                 Some("--register") if options.registration.is_none() => {
                     options.registration = Some(
                         arguments
@@ -67,10 +71,15 @@ impl Options {
                 _ => return Err("unknown, duplicate or incompatible arguments"),
             }
         }
+        if options.replace_registration && options.registration.is_none() {
+            return Err("--replace-registration requires --register");
+        }
         if options.registration.is_some()
             && (options.foreground || options.internal || options.no_open || options.tool.is_some())
         {
-            return Err("--register accepts only --data-dir; it does not launch a workspace");
+            return Err(
+                "--register accepts only --data-dir and --replace-registration; it does not launch a workspace",
+            );
         }
         if options.root.as_os_str().is_empty() {
             options.root = if let Some(root) = std::env::var_os("WAFFLERY_DATA_DIR") {

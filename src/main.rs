@@ -19,9 +19,16 @@ fn main() -> ExitCode {
         }
     };
     if let Some(source) = &options.registration {
-        return match wafflery::tools::registration::register(&options.root, source) {
-            Ok(added) => {
-                println!("Registered {added} new tool(s). Launch wafflery to open this workspace.");
+        let result = if options.replace_registration {
+            wafflery::tools::registration::replace(&options.root, source)
+        } else {
+            wafflery::tools::registration::register(&options.root, source)
+        };
+        return match result {
+            Ok(changed) => {
+                println!(
+                    "Saved {changed} tool registration(s). Launch wafflery to open this workspace."
+                );
                 ExitCode::SUCCESS
             }
             Err(error) => {

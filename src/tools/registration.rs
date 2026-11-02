@@ -100,6 +100,19 @@ impl Descriptor {
 
 /// Append validated records while the host is stopped. Never execute or replace a registered tool.
 pub fn register(root: &std::path::Path, source: &std::path::Path) -> std::io::Result<usize> {
+    write_registration(root, source, false)
+}
+
+/// Explicitly replace existing IDs while stopped; never add unknown IDs in replacement mode.
+pub fn replace(root: &std::path::Path, source: &std::path::Path) -> std::io::Result<usize> {
+    write_registration(root, source, true)
+}
+
+fn write_registration(
+    root: &std::path::Path,
+    source: &std::path::Path,
+    replace: bool,
+) -> std::io::Result<usize> {
     use std::{collections::HashSet, io};
     let incoming = load(source)?;
     if incoming.is_empty() || incoming.len() > 32 {
@@ -130,24 +143,34 @@ pub fn register(root: &std::path::Path, source: &std::path::Path) -> std::io::Re
             "Existing registration has duplicate or excessive tools",
         ));
     }
-    let mut added = 0;
+    let mut changed = 0;
     for tool in incoming {
-        if let Some(existing) = current.iter().find(|existing| existing.id == tool.id) {
+        if let Some(existing) = current.iter_mut().find(|existing| existing.id == tool.id) {
             if existing != &tool {
+                if !replace {
+                    return Err(io::Error::other(format!(
+                        "Tool ID '{}' already has a different registration; use --replace-registration while stopped; no changes were written",
+                        tool.id
+                    )));
+                }
+                *existing = tool;
+                changed += 1;
+            }
+        } else {
+            if replace {
                 return Err(io::Error::other(format!(
-                    "Tool ID '{}' already has a different registration; no changes were written",
+                    "Tool ID '{}' is not registered; replacement cannot add it; no changes were written",
                     tool.id
                 )));
             }
-        } else {
             current.push(tool);
-            added += 1;
+            changed += 1;
         }
     }
     if current.len() > 32 {
         return Err(io::Error::other("At most 32 tools may be registered"));
     }
-    if added == 0 {
+    if changed == 0 {
         return Ok(0);
     }
     let bytes = serde_json::to_vec_pretty(&current)?;
@@ -161,5 +184,5 @@ pub fn register(root: &std::path::Path, source: &std::path::Path) -> std::io::Re
         .persist(destination)
         .map_err(|error| error.error)?;
     std::fs::File::open(&owner.root)?.sync_all()?;
-    Ok(added)
+    Ok(changed)
 }
