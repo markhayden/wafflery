@@ -922,7 +922,7 @@ Commit: `feat: isolate report frames by exact origin`.
 V17a execution slices (review and full matrix per slice; rollback in reverse order):
 - **V17a1: Complete.** Bounded, sixty-second, single-use frame grants scoped to one existing view identity.
   Keep them private to the host lifetime. Commit: `feat: scope one-use report frame grants`.
-- **V17a2:** Revalidate current view targets, issue/consume grants through authenticated controls
+- **V17a2: Complete.** Revalidate current view targets, issue/consume grants through authenticated controls
   and a trusted wrapper, and apply route-specific frame headers. Verify the real nested frame
   in both browsers before exposing drawer controls. Commit: `feat: isolate report frames by exact origin`.
 - **V17a3:** Extend independent malicious-report fixtures and browser checks for parent/API access,

@@ -12,6 +12,8 @@ use std::{
 use tower::ServiceExt;
 #[path = "render_controls/documents.rs"]
 mod documents;
+#[path = "render_controls/frames.rs"]
+mod frames;
 use wafflery::{
     host::{api, auth::Auth},
     library::{assets::AssetStore, attempts::Submission},

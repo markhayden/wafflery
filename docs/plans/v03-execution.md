@@ -1116,3 +1116,26 @@ approved. Full shared-lock matrix passed: 237 Rust tests (three ignored), 41 UI 
 two asset tests, 164 browser cases (four skips), fmt, clippy, typecheck, Storybook, reproducible
 assets and release build. The store, tests, host module and matching engineering/plan/execution
 docs form one cohesive slice beyond the usual file budget.
+
+
+### V17a2 exact-origin report wrappers
+
+Authenticated controls issue a one-use grant after checking the active view. Consumption removes
+it before a second current-target check. Server output/process state and document content state
+are rechecked, including close and idle expiry. The wrapper contains only trusted markup and
+permits exactly the selected separate report origin, with a sandboxed inner iframe and no API
+credential/referrer propagation. Other routes retain their normal frame-denial policy.
+
+The HTTP tests failed before implementation, then passed, covering private issuance, strict
+requests, replay, inactive views, exact policies and unchanged saved evidence. The cached-target
+regression also failed before the fresh checks existed. Both browsers load server and document
+reports. WebKit exposed a real integration mismatch: its no-referrer CSP report POST carries
+Origin:null, which the document endpoint rejected. The focused regression failed first; accepting
+null only at that capability-scoped endpoint fixed it, retaining foreign-origin/body checks and
+unchanged workspace authentication. Forty repeated browser cases passed without retries.
+
+Review approved. Full shared-lock matrix passed: 240 Rust tests (three ignored), 41 UI unit
+tests, two asset tests, 168 browser cases (four skips), fmt, clippy, typecheck, Storybook,
+reproducible assets and release build. The routes, current-target checks, browser proof and matching
+docs form one cohesive boundary change beyond the usual file budget. V17a3 owns adversarial
+fixtures/navigation checks; V17b still owns visible drawer controls.

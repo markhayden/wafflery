@@ -167,10 +167,15 @@ impl Content {
         self.response(StatusCode::NOT_FOUND, Body::empty(), "text/plain")
     }
     async fn violation(&self, request: Request<Incoming>) -> Response<Body> {
-        if request
-            .headers()
-            .get("origin")
-            .is_some_and(|v| v.as_bytes() != self.url.origin().ascii_serialization().as_bytes())
+        // A no-referrer report POST can carry Origin: null (WebKit). The private
+        // document capability and matching document-uri scope this notification;
+        // this endpoint grants no CORS access or authenticated workspace operation.
+        // https://fetch.spec.whatwg.org/#append-a-request-origin-header
+        if request.headers().get_all("origin").iter().count() > 1
+            || request.headers().get("origin").is_some_and(|v| {
+                v.as_bytes() != b"null"
+                    && v.as_bytes() != self.url.origin().ascii_serialization().as_bytes()
+            })
         {
             return self.response(StatusCode::FORBIDDEN, Body::empty(), "text/plain");
         }

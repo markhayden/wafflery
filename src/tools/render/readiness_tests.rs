@@ -17,6 +17,19 @@ fn monitor() -> ServerReadiness {
     ServerReadiness::new("http://127.0.0.1:4801", Duration::from_secs(2)).unwrap()
 }
 #[test]
+fn a_cached_ready_url_does_not_authorize_changed_or_stopped_output() {
+    let expected = Url::parse("http://127.0.0.1:4802/report").unwrap();
+    let mut state = output(b"http://127.0.0.1:4802/report\n");
+    assert!(confirm_ready(&state, "http://127.0.0.1:4801", &expected));
+    state.stdout.bytes.extend_from_slice(b"extra\n");
+    assert!(!confirm_ready(&state, "http://127.0.0.1:4801", &expected));
+    state = output(b"http://127.0.0.1:4803/report\n");
+    assert!(!confirm_ready(&state, "http://127.0.0.1:4801", &expected));
+    state = output(b"http://127.0.0.1:4802/report\n");
+    state.phase = ProcessPhase::Exited;
+    assert!(!confirm_ready(&state, "http://127.0.0.1:4801", &expected));
+}
+#[test]
 fn url_requires_one_complete_line_and_deadline_stops_startup() {
     let mut m = monitor();
     let now = m.started;

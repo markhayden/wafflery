@@ -58,48 +58,51 @@ impl ServerReadiness {
     }
 
     fn check(&self, state: &ProcessState, now: Instant) -> Readiness {
-        if state.phase != ProcessPhase::Running || state.error.is_some() {
-            return Readiness::Failed("Report process is not running");
-        }
-        if state.stdout.overflow
-            || state.stderr.overflow
-            || state.stdout.error.is_some()
-            || state.stderr.error.is_some()
-        {
-            return Readiness::Failed("Report output exceeded its limit or could not be read");
-        }
         if self.accepted.is_none() && now.duration_since(self.started) >= self.timeout {
             return Readiness::Failed("Report did not become ready before its deadline");
         }
-        let bytes = &state.stdout.bytes;
-        let Some(end) = bytes.iter().position(|&b| b == b'\n') else {
-            return if state.stdout.finished || self.accepted.is_some() {
-                Readiness::Failed("Report did not provide one complete URL line")
-            } else {
-                Readiness::Waiting
-            };
-        };
-        if end + 1 != bytes.len() {
-            return Readiness::Failed("Report wrote extra stdout after its URL");
-        }
-        let line = bytes[..end].strip_suffix(b"\r").unwrap_or(&bytes[..end]);
-        let Some(url) = std::str::from_utf8(line).ok().and_then(ready_url) else {
-            return Readiness::Failed(
-                "Report URL must use HTTP on literal loopback with an explicit port",
-            );
-        };
-        if url.origin().ascii_serialization() == self.host_origin {
-            return Readiness::Failed("Report must use a separate origin from the workspace");
-        }
-        if self
-            .accepted
-            .as_ref()
-            .is_some_and(|accepted| accepted != &url)
-        {
-            return Readiness::Failed("Report changed its ready URL");
-        }
-        Readiness::Ready(url)
+        check_output(state, &self.host_origin, self.accepted.as_ref())
     }
+}
+/// Recheck a previously accepted target without resetting or extending its startup deadline.
+pub fn confirm_ready(state: &ProcessState, host_origin: &str, expected: &Url) -> bool {
+    check_output(state, host_origin, Some(expected)) == Readiness::Ready(expected.clone())
+}
+fn check_output(state: &ProcessState, host_origin: &str, accepted: Option<&Url>) -> Readiness {
+    if state.phase != ProcessPhase::Running || state.close_requested || state.error.is_some() {
+        return Readiness::Failed("Report process is not running");
+    }
+    if state.stdout.overflow
+        || state.stderr.overflow
+        || state.stdout.error.is_some()
+        || state.stderr.error.is_some()
+    {
+        return Readiness::Failed("Report output exceeded its limit or could not be read");
+    }
+    let bytes = &state.stdout.bytes;
+    let Some(end) = bytes.iter().position(|&b| b == b'\n') else {
+        return if state.stdout.finished || accepted.is_some() {
+            Readiness::Failed("Report did not provide one complete URL line")
+        } else {
+            Readiness::Waiting
+        };
+    };
+    if end + 1 != bytes.len() {
+        return Readiness::Failed("Report wrote extra stdout after its URL");
+    }
+    let line = bytes[..end].strip_suffix(b"\r").unwrap_or(&bytes[..end]);
+    let Some(url) = std::str::from_utf8(line).ok().and_then(ready_url) else {
+        return Readiness::Failed(
+            "Report URL must use HTTP on literal loopback with an explicit port",
+        );
+    };
+    if url.origin().ascii_serialization() == host_origin {
+        return Readiness::Failed("Report must use a separate origin from the workspace");
+    }
+    if accepted.is_some_and(|accepted| accepted != &url) {
+        return Readiness::Failed("Report changed its ready URL");
+    }
+    Readiness::Ready(url)
 }
 
 fn ready_url(line: &str) -> Option<Url> {

@@ -187,6 +187,29 @@ impl Coordinator {
         views.insert(attempt_id.into(), view);
         Ok(observation)
     }
+    pub async fn frame_target(&self, id: &str, origin: &str) -> Result<url::Url> {
+        if self.stopping.load(Ordering::Acquire) {
+            return Err(Error::Conflict("Workspace is stopping"));
+        }
+        let views = self.renders.lock().await;
+        let view = views
+            .values()
+            .find(|view| view.id == id)
+            .ok_or(Error::Missing("Report view is no longer available"))?;
+        if !view.accepts_activity() {
+            return Err(Error::Conflict("Report is closing or expired"));
+        }
+        if let Some(document) = &view.document {
+            return document.current_url();
+        }
+        let Some(Readiness::Ready(url)) = view.server.as_ref().map(ServerMonitor::snapshot) else {
+            return Err(Error::Conflict("Report is not ready"));
+        };
+        if !crate::tools::render::readiness::confirm_ready(&view.process.snapshot(), origin, &url) {
+            return Err(Error::Conflict("Report is no longer ready"));
+        }
+        Ok(url)
+    }
     pub async fn render_state(&self, id: &str) -> Result<Value> {
         self.renders
             .lock()

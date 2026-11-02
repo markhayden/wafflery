@@ -36,6 +36,7 @@ pub fn router_with_tools(
     let routes = if let Some(coordinator) = &tools {
         super::run_api::router(coordinator.clone())
             .merge(super::render_api::router(coordinator.clone(), origin))
+            .merge(super::frame_api::router(coordinator.clone(), origin))
     } else {
         Router::new().route(
             "/api/state",
@@ -106,6 +107,9 @@ async fn boundary(State(state): State<HostState>, request: Request, next: Next) 
     } else {
         next.run(request).await
     };
+    let frame_policy = response
+        .extensions_mut()
+        .remove::<super::frame_api::FramePolicy>();
     let headers = response.headers_mut();
     for (name, value) in [
         ("cache-control", "no-store"),
@@ -116,10 +120,21 @@ async fn boundary(State(state): State<HostState>, request: Request, next: Next) 
         ("referrer-policy", "same-origin"),
         (
             "content-security-policy",
-            "default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' blob:; connect-src 'self'; font-src 'self'; object-src 'none'; base-uri 'none'; frame-src 'none'; frame-ancestors 'none'; form-action 'none'",
+            "default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' blob:; connect-src 'self'; font-src 'self'; object-src 'none'; base-uri 'none'; frame-src 'self'; frame-ancestors 'none'; form-action 'none'",
         ),
     ] {
         headers.insert(name, HeaderValue::from_static(value));
+    }
+    if let Some(policy) = frame_policy {
+        headers.insert("content-security-policy", policy.0);
+        headers.insert("x-frame-options", HeaderValue::from_static("SAMEORIGIN"));
+        headers.insert("referrer-policy", HeaderValue::from_static("no-referrer"));
+        headers.insert(
+            "permissions-policy",
+            HeaderValue::from_static(
+                "camera=(), microphone=(), geolocation=(), display-capture=(), payment=()",
+            ),
+        );
     }
     response
 }

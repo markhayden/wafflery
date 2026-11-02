@@ -1,6 +1,6 @@
 //! Own document generation, immutable reading and the content server as one view.
 use super::{
-    content::DocumentServer,
+    content::{ContentState, DocumentServer},
     document::DocumentGrant,
     idle::IdleLease,
     process::{ProcessPhase, RenderProcess},
@@ -16,6 +16,7 @@ pub struct DocumentState {
     pub readiness: Readiness,
     pub closing: bool,
     pub closed: bool,
+    content: Option<watch::Receiver<ContentState>>,
 }
 #[derive(Clone)]
 pub struct DocumentMonitor {
@@ -43,6 +44,7 @@ impl DocumentMonitor {
             readiness: Readiness::Waiting,
             closing: false,
             closed: false,
+            content: None,
         });
         let (stop, receiver) = watch::channel(false);
         tokio::spawn(own(
@@ -64,6 +66,23 @@ impl DocumentMonitor {
         let mut state = self.state.borrow().clone();
         state.closing |= *self.stop.borrow();
         state
+    }
+    pub fn current_url(&self) -> Result<url::Url> {
+        let state = self.snapshot();
+        if state.closing || state.closed {
+            return Err(Error::Conflict("Document view is closing"));
+        }
+        let Readiness::Ready(url) = state.readiness else {
+            return Err(Error::Conflict("Document view is not ready"));
+        };
+        let Some(content) = state.content else {
+            return Err(Error::Conflict("Document content is unavailable"));
+        };
+        let content = content.borrow();
+        if content.closed || content.error.is_some() {
+            return Err(Error::Conflict("Document content is unavailable"));
+        }
+        Ok(url)
     }
     pub fn subscribe(&self) -> watch::Receiver<DocumentState> {
         self.state.clone()
@@ -117,7 +136,10 @@ async fn own(
                 let closing = stop.borrow();
                 if !*closing && !idle.expired() {
                     match server.url() {
-                        Ok(url) => state.send_modify(|s| s.readiness = Readiness::Ready(url)),
+                        Ok(url) => state.send_modify(|s| {
+                            s.content = Some(server.subscribe());
+                            s.readiness = Readiness::Ready(url);
+                        }),
                         Err(_) => state.send_modify(|s| {
                             s.readiness =
                                 Readiness::Failed("Document content server is unavailable")

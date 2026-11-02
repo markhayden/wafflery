@@ -39,6 +39,7 @@ async fn ready(monitor: &DocumentMonitor) -> url::Url {
 async fn finished_renderer_keeps_its_document_live_until_close() {
     let (root, process, _, monitor) = start("document");
     let url = ready(&monitor).await;
+    assert_eq!(monitor.current_url().unwrap(), url);
     assert_eq!(process.snapshot().phase, ProcessPhase::Exited);
     assert!(!monitor.snapshot().closed);
     assert!(!monitor.snapshot().closing);
@@ -71,6 +72,7 @@ async fn finished_renderer_keeps_its_document_live_until_close() {
     );
     assert!(monitor.close(false).await.unwrap());
     assert!(monitor.snapshot().closed);
+    assert!(monitor.current_url().is_err());
     assert!(!matches!(monitor.snapshot().readiness, Readiness::Ready(_)));
     assert!(
         tokio::net::TcpStream::connect(("127.0.0.1", url.port().unwrap()))

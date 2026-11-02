@@ -7,6 +7,7 @@ pub mod control;
 mod event_api;
 mod example_api;
 mod export_api;
+mod frame_api;
 pub mod frame_grants;
 pub mod launch;
 mod render_api;

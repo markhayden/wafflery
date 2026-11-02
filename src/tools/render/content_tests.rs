@@ -149,7 +149,14 @@ async fn csp_reports_mark_nonconforming_content_without_retaining_report_details
     .await;
     assert!(wrong_origin.starts_with("HTTP/1.1 403"));
     assert_eq!(server.snapshot().error, None);
-    let response = request(&url, "POST", &path, headers, &report).await;
+    let response = request(
+        &url,
+        "POST",
+        &path,
+        &format!("{headers}Origin: null\r\n"),
+        &report,
+    )
+    .await;
     assert!(response.starts_with("HTTP/1.1 204"));
     assert_eq!(
         server.snapshot().error,

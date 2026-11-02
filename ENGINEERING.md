@@ -689,11 +689,30 @@ for confirmed closure. Activity, close, force-close and workspace shutdown use t
 lifetime. Public observations expose status and bounded diagnostics, never output paths or URLs.
 Output failures preserve the saved run. Deadline checks consult the clock even before the expiry
 worker runs, so activity or later viewer grants cannot revive a deadline that already passed.
-Reports are ready for V17 framing; the workspace still does not embed content.
+Reports support V17 framing; visible drawer controls remain V17b.
 
 V17a1 adds host-lifetime frame grants separate from browser API credentials. Each 256-bit random
 token names one view identity, lasts sixty seconds and is removed atomically on first use.
 At most sixty-four unconsumed grants exist; consumption or expiry releases capacity. Nothing is
 persisted or logged. The issuing handler must first validate the active view, and the consuming
 wrapper must revalidate it after consuming the grant, even if loading then fails. Grant storage
-alone does not authorize content or relax any frame headers; V17a2 owns those routes/checks.
+alone does not authorize content or relax frame headers.
+
+
+V17a2 issues grants only through authenticated view controls. The wrapper consumes a grant
+before revalidating the current view, rejects HEAD/query requests, and never revives a closing,
+expired or replaced view. Server output/process state and document content state are checked
+again rather than trusting a cached ready observation. Reading a frame does not renew the lease.
+
+The app permits frames only from its own origin. A trusted wrapper contains only host markup,
+uses a per-response CSP allowing the selected report's exact separate origin, and frames it with
+`allow-scripts allow-same-origin` only. Both ancestors retain the workspace origin. The wrapper
+uses no-referrer, no-store and SAMEORIGIN framing; failed wrapper requests retain the ordinary
+DENY policy. No API bearer or bootstrap credential enters a frame URL or report request.
+
+Chromium and WebKit load both renderer kinds through this nested boundary. A document's
+blocked-resource report closes its view without changing saved evidence. WebKit sends that
+no-referrer report POST with `Origin: null`; only the private document-capability endpoint
+accepts it, still validating the exact document URI, content type and bounded body. Foreign
+and duplicate origins remain refused. Workspace API origin rules are unchanged. V17a3 adds
+adversarial navigation/API checks before V17b exposes the drawer controls.
