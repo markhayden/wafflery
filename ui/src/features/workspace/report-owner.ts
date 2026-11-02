@@ -70,8 +70,12 @@ export class ReportOwner {
       if (generation !== this.generation) await this.release();
     });
   }
+  inspect() { this.inspecting = true; }
   dismiss() {
     this.inspecting = false;
+    return this.close();
+  }
+  close() {
     return this.mutate(async () => {
       if (this.uncertainty === "open") throw new Error("An open request is unresolved. Quit and reopen Wafflery before opening another report.");
       await this.release();

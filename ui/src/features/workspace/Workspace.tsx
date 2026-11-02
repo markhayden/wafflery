@@ -1,3 +1,5 @@
+import { reportClient } from "../../api/reports";
+import { ReportOwner } from "./report-owner";
 import { RunOutcome } from "./RunOutcome";
 import { CostReview } from "./CostReview";
 import { useEstimateDraft } from "./useEstimateDraft";
@@ -45,6 +47,7 @@ export function Workspace({
   const [connection, setConnection] = useState("");
   const client = useMemo(() => workspaceClient(api), [api]),
     assets = useMemo(() => assetClient(api), [api]);
+  const reports = useMemo(() => new ReportOwner(reportClient(api)), [api]);
   const examples = useMemo(() => exampleClient(api), [api]);
   const [draftExample, setDraftExample] = useState<Example>();
   const preferred = new URLSearchParams(window.location.search).get("tool");
@@ -678,7 +681,7 @@ export function Workspace({
             }}
           />
         ) : (
-          selected && <Inspector key={selected.id} attempt={selected} />
+          drawer?.view === "inspect" && selected && <Inspector key={selected.id} attempt={selected} reports={reports} />
         )}
       </Drawer>
     </div>

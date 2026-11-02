@@ -737,5 +737,15 @@ observes only: it neither starts a renderer nor renews its lease. Lost opens rem
 until host restart because even a current-view lookup cannot prove a pending POST settled;
 lost closes recover only through their retained view identity. Definite pre-spawn refusals permit
 a later explicit open, with no automatic retry. Force remains an explicit confirmed action for
-a positively observed needs-force state. The visible drawer and document-visibility activity
-wiring follow in V17b2; this ownership layer alone does not expose new UI controls.
+a positively observed needs-force state.
+
+V17b2 exposes Reports beside the saved evidence in the shared drawer. The saved declaration
+supplies report names/kinds; choosing one does not start it. Open is explicit. The frame uses
+only V17a's validated host wrapper, with readiness, diagnostics, inactivity and uncertainty
+states kept outside tool content. Force stop requires a separate confirmation focused on Keep.
+Switching to evidence, changing reports or closing the drawer unmounts inspection and releases
+the owned viewer. While that report tab is visible, status polls every 500 ms and ready-frame
+activity renews every 30 seconds; hidden pages send neither. Exited views stop automatic status
+polling. Remount resumes observation without opening a renderer; explicit Close keeps observing
+the retained view until closure or a force-required state. Startup failures preserve the saved run and its evidence tabs. Storybook covers ready,
+starting, failed, expired, uncertain, force-required and unavailable views at shared drawer sizes.

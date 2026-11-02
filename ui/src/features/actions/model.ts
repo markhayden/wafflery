@@ -24,6 +24,7 @@ export type Action = {
   params_schema: Schema;
   images?: ImageSlot[];
   locations?: { slot: string; required: boolean }[];
+  renders?: { name: string; kind: "server" | "document" }[];
   cost: { may_spend: boolean };
   readiness: Readiness;
 };

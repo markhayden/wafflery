@@ -9,7 +9,7 @@ Squint independently. Pixel, cross-tool workflows, and batch evaluations follow 
 This directory contains the Rust/React development application, its reviewed plans, and an earlier
 interactive mock. The application runs real offline MCP actions, preserves evidence, reopens
 history, compares baselines, saves examples and exports recorded calls/evidence. Production tool
-installation, native replay and tool-owned reports remain later integration work.
+installation and native replay remain later integration work; saved runs can open declared tool reports.
 The authenticated prepared-call API can execute paid actions only from a current owned estimate;
 its automated verification uses synthetic spend, without provider charges.
 
@@ -34,6 +34,13 @@ example fills a new draft without executing it. History and examples are separat
 drawer copies the saved request/setup and downloads a `.tar.gz` evidence package, optionally
 including image bytes. It does not claim a portable native replay bundle or generate unverified CLI
 flags. Editing the draft never changes a saved run.
+
+**Inspect run → Reports** lists the views declared for that saved run. Choose a view and use
+**Open report** to start it; selecting one alone does not run anything. Server viewers and
+standalone documents share the drawer, with diagnostics available if loading fails. Switching
+back to evidence or closing inspection releases the viewer. Inactive viewers expire; a process
+that will not close offers a separately confirmed **Force stop report**. Reports do not change
+the saved run's outcome or become part of its evidence archive.
 
 **Tool setup** opens the shared drawer with the selected action's declared credential requirements
 and live session spending: limit, remaining allowance, reported spend and active reservations.

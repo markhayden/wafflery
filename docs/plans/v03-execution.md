@@ -1212,7 +1212,7 @@ Rollback this slice before removing the V17a frame endpoints; no stored evidence
 
 Verification: focused tests, independent review and the full matrix passed: 242 Rust tests
 (three ignored), 51 UI unit tests, two asset tests and 180 browser cases (four skips), plus fmt,
-clippy, typecheck, Storybook, reproducible UI and release build. Hold merge until hosted run 41419440339 confirms the preceding spawn-isolation correction.
+clippy, typecheck, Storybook, reproducible UI and release build. Hosted run 41419440339 passed; the ownership slice is merged locally at 2c0dcbd.
 
 ### Document closure test correction
 
@@ -1226,3 +1226,29 @@ Thirty full-library stress rounds (2,970 tests), the leaked-listener negative ch
 review and the full shared-lock matrix passed: 243 Rust tests (three ignored), 51 UI unit tests,
 two asset tests, 180 browser cases (four skips), fmt, clippy, typecheck, Storybook, reproducible
 assets and release build.
+
+## V17b2: reports in the shared drawer
+
+Add the saved declaration's report picker, explicit open/close, nested trusted wrapper,
+loading/error/diagnostic states and confirmed force stop. Keep the owner above drawer mounts;
+only the open Reports tab polls and renews activity, and only while the page is visible.
+Switching back to evidence releases the viewer without changing the saved run. Exited or
+unrelated old diagnostics do not obscure a new selection.
+
+The browser test was observed red without the Reports tab. Both real document and server
+frames now open from saved evidence even after the draft changes; leaving Reports closes the
+owned view. A failed renderer retains diagnostics and raw evidence. Stories cover eight states;
+keyboard confirmation and 320/768/1440 px layouts passed in Chromium and WebKit. Screenshots
+were visually inspected against the shared drawer treatment in work/drawer-ui.html; existing
+width/tokens are retained, with broader mock fidelity reserved for V19. Independent review
+approved. This cohesive UI slice uses twelve authored component/adapter/test files plus docs and
+generated assets. Rollback removes the visible controls while retaining V17b1's private client.
+
+Lifecycle review additionally found that remount did not resume observation of a closing view.
+A failing ownership test now covers resuming without opening or renewing; explicit Close keeps
+observation active, while unmount disables it. Both cases pass alongside the browser tests.
+Verification: full matrix passed, including the final UI rerun after the lifecycle correction:
+243 Rust tests (three ignored), 53 UI unit tests, two asset tests and 190 Chromium/WebKit cases
+(four opt-in skips), fmt, clippy, typecheck, Storybook, reproducible assets and release build.
+Independent review approved the correction. Rust was unchanged after its passing matrix.
+

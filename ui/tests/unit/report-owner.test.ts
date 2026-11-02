@@ -178,3 +178,35 @@ test("server and authentication failures do not prove an open request was refuse
     expect(owner.snapshot().uncertain).toBe(true);
   }
 });
+
+test("reopened inspection observes a retained closing view without opening or renewing it", async () => {
+  const { port, calls } = fixture(), owner = new ReportOwner(port);
+  await owner.open("first", "document");
+  port.close = async () => view("first", "document", "stopping");
+  await owner.dismiss();
+  port.read = async () => view("first", "document", "needs_force");
+  await owner.refresh();
+  expect(owner.snapshot().view?.phase).toBe("stopping");
+  // Reopening the report tab must resume observation, not open another renderer.
+  owner.inspect();
+  await owner.refresh();
+  expect(owner.snapshot().view?.phase).toBe("needs_force");
+  await owner.activity();
+  expect(calls).toEqual(["open:first"]);
+  expect(owner.snapshot().url).toBeNull();
+});
+
+
+test("closing from the report tab keeps observation active without renewing the viewer", async () => {
+  const { port, calls } = fixture(), owner = new ReportOwner(port);
+  await owner.open("first", "document");
+  await owner.refresh();
+  port.close = async () => view("first", "document", "stopping");
+  await owner.close();
+  port.read = async () => view("first", "document", "exited");
+  await owner.refresh();
+  await owner.activity();
+  expect(owner.snapshot().view?.phase).toBe("exited");
+  expect(owner.snapshot().url).toBeNull();
+  expect(calls).toEqual(["open:first"]);
+});

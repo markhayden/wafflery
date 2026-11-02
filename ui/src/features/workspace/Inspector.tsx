@@ -1,8 +1,10 @@
+import { ReportInspection } from "./ReportInspection";
+import type { ReportOwner } from "./report-owner";
 import { useState } from "react";
 import type { Attempt } from "../../api/workspace";
 import { Button } from "../../components/Button";
-export function Inspector({ attempt }: { attempt: Attempt }) {
-  const [view, setView] = useState<"inputs" | "result" | "call" | "journal" | "session">(
+export function Inspector({ attempt, reports }: { attempt: Attempt; reports: ReportOwner }) {
+  const [view, setView] = useState<"inputs" | "result" | "call" | "journal" | "session" | "reports">(
     "inputs",
   );
   const data =
@@ -42,7 +44,9 @@ export function Inspector({ attempt }: { attempt: Attempt }) {
         <Button aria-pressed={view === "session"} onClick={() => setView("session")}>
           Session
         </Button>
+        <Button aria-pressed={view === "reports"} onClick={() => setView("reports")}>Reports</Button>
       </nav>
+      {view === "reports" ? <ReportInspection attempt={attempt} owner={reports} /> : <>
       <p>
         Tool outcome: {attempt.execution}. Contract evidence:{" "}
         {attempt.preservation.contract}.
@@ -51,9 +55,9 @@ export function Inspector({ attempt }: { attempt: Attempt }) {
         {JSON.stringify(data, null, 2) ?? "No evidence available yet."}
       </pre>
       <p>
-        Native dependencies and tool reports are not preserved by this
-        foundation.
+        Native dependencies and tool reports are not included in the saved evidence.
       </p>
+      </>}
       {attempt.notices.map((notice, index) => (
         <p key={index}>{notice}</p>
       ))}

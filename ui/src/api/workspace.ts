@@ -95,7 +95,10 @@ function declaration(value: unknown): value is Declaration {
       record(action.params_schema) &&
       record(action.cost) &&
       typeof action.cost.may_spend === "boolean" &&
-      isReadiness(action.readiness),
+      isReadiness(action.readiness) &&
+      (action.renders === undefined || (Array.isArray(action.renders) && action.renders.every((render: unknown) =>
+        record(render) && typeof render.name === "string" && render.name.length > 0 &&
+        (render.kind === "server" || render.kind === "document")))),
   );
 }
 function savedImage(value: unknown): value is SavedImage {
