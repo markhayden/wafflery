@@ -5,7 +5,7 @@ published main and manages subsequent pushes. The [CI gate](docs/plans/ci.md) ru
 full matrix on `macos-15`; its [checkpoint](docs/reviews/2026-11-01-ci.md) separates local checks
 from the first hosted run. Local merges remain subject to review; no automatic pushes or tags.
 
-Status: M0–M3 approved by the owner on 2026-10-31; implementation started.
+Status: M0–M3 and V01–V19 complete; M5 v0.4 plan awaiting owner approval.
 Current implementation evidence: [M0 checkpoint](docs/reviews/2026-10-31-m0-checkpoint.md) and
 [M1 checkpoint](docs/reviews/2026-10-31-m1-checkpoint.md), and
 [M2 checkpoint](docs/reviews/2026-10-31-m2-checkpoint.md), and
@@ -15,8 +15,9 @@ M4's explicit real-Rascal entry slice is merged on main, including registration 
 launcher/browser journey. See its [checkpoint](docs/reviews/2026-10-31-m4-entry-checkpoint.md).
 The Squint offline entry and published v0.2 integration are also merged, as is the shared
 Tool setup drawer with live session spending. M4 remains incomplete: automatic installed-tool
-discovery, production installer/registration, unconfigured tool readiness and provider setup,
-and the complete first-install journeys from all three entry points still need delivery.
+discovery, production installer/registration, and the complete first-install journeys from all
+three entry points still need delivery. V01–V19 delivered declared readiness/provider setup,
+bound paid execution, reports and the UI fidelity pass.
 The [current review disposition](docs/reviews/2026-10-31-plan-review-disposition.md) records
 changes and validation limits; it is not implementation verification.
 The owner agreed to proceed with foundation planning independently of later tool interfaces.
@@ -25,12 +26,14 @@ slices are in [M4: real tool entry](docs/plans/m4-real-tool-entry.md). Paid runs
 through owned preparation, bound estimate and cap/session checks. Browser paid Run uses the same owned preparation and estimate.
 Publishing and production installation are not authorized by this continuation.
 
-Current integration update (2026-11-01): published v0.2.0 and both tools are adopted on main.
+Prior integration checkpoint (2026-11-01): published v0.2.0 and both tools were adopted on main.
 See [the v0.2 integration plan](docs/plans/table-manners-v02.md) and [verified checkpoint](docs/reviews/2026-11-01-table-manners-v02.md). The initial v0.1 fixture/version
 requirements below describe the completed foundation checkpoint, not the current live allowlist.
-The [v0.3 client task list](#v03-client--proposed-task-list) below is approved. V01–V11 are
-merged locally; the live client requires exactly v0.3. V12 enforces paid dispatch through
-owned preparations and validated estimates, including explicit browser Run. See [execution checkpoints](docs/plans/v03-execution.md).
+The [v0.3 client task list](#v03-client--proposed-task-list) is complete through V19 at `851b850`;
+hosted CI run `41438647360` passed on 2026-11-02. The live client requires exactly v0.3 and
+enforces paid dispatch through owned preparations, bound estimates and explicit browser Run.
+See [execution checkpoints](docs/plans/v03-execution.md). The M5 proposal below is plan-only,
+awaiting owner approval.
 
 ## Outcome
 
@@ -378,16 +381,17 @@ These preserve the acceptance criteria above; no dispatch is exposed before F11a
 | Milestone | Work | Gate that applies only here |
 |---|---|---|
 | M4 — Real tool entry/setup | Discovery, Rascal first, Squint next, three launch paths | Implement the early H1 agreement; production installer/registration subgates, C1 unconfigured discovery, R1/S1 evidence |
-| M5 — Full tasks and operations | Metadata-driven grouping/readiness, native dependencies, supported CLI/bundle replay | C1/C2/R3; R3 is scheduled in Rascal M10 but not implemented; actual action coverage, no private-layout parsing |
-| M6 — Paid runs and reports | Estimate/cap sessions, known-run cancellation, embedded tool pages | C1/C4 spending + association; C3 report readiness/isolation/preservation |
+| M5 — Full tasks and operations | v0.4 ports, artifact chaining, invocation/CLI/bundle replay; proposed M5.01–22 below | Owner plan approval; published v0.4 and approved Rascal M10/Squint M10 peer verification; no private-layout parsing |
+| M6 — Paid runs and reports | Delivered by V01–V19: estimate/cap sessions, association, embedded pages/documents | Completed v0.3 peer/browser evidence; retained as regression coverage in M5 |
 | M7 — Distribution and full acceptance | Library relocation, packaged macOS support matrix, signed/checksummed install path, release verification | Tool relocation dependencies, release source/signing decision, all applicable AC01–AC22 |
 
 M5/M6 are independently gated feature groups; one does not automatically block the other.
 
 ## v0.3 client — proposed task list
 
-**Status: approved for implementation, 2026-11-01.** This section specifies the next M4 setup and M6
-paid/report slices; it does not mark those milestones complete or replace M5's operations work.
+**Status: complete through V19, 2026-11-02 (`851b850`, hosted CI green).** Originally approved
+2026-11-01, this section records the M4 setup and M6 paid/report slices; it does not complete
+M4 distribution/discovery or replace M5's operations work.
 The coordinator owns the contract and sibling changes. Source reviewed: table-manners branch
 `v0.3`, commit `e503a238ad6cc833834891c2c2cece7152b08bfc` (coordinator rulings applied after
 two review rounds against `61001dd`): CONTRACT.md 3.1, 3.2,
@@ -1098,6 +1102,545 @@ Batch evaluations remain after this individual-run release; Pixel/chains/Linux s
 Installer/download ownership remains H1. Do not use an unsigned fictional release URL in tests
 or publish a release as a side effect of completing the foundation.
 
+## M5 — v0.4 operations and portable pipeline experiments
+
+**Status: proposed, plan only; owner approval required before implementation.** Goal 1
+(V01–V19) is complete at `851b850`, with hosted CI run `41438647360` green. This milestone
+adopts v0.4; it does not reopen the completed v0.3 client or authorize distribution work.
+
+### Sources and completion boundary
+
+Normative source: table-manners main `d1c49a7`, `CONTRACT.md` 2.3, 3–3.4, 4.5, 4.7–4.9,
+5–5.2 and 10; `schemas/core/{description,result,session,refusal,invocation-bundle}.json`,
+`schemas/operations/*`, and MAPPING's v0.4 table. Peer integration targets are Rascal
+`m10-operations` at `b5cae39` and Squint `m10-v0.4` at `f2f2e3e`. Read those revisions without
+changing sibling worktrees. The coordinator must approve replacement revisions. Hub research
+in `../wafflemaker/docs/v04-design.md` explains intent; the final contract takes precedence
+where its earlier examples differ. Publication and peer release status must be checked at
+implementation time, not inferred from a branch name.
+
+Completion means a person can run Line, inspect its Location, send it to Rasterize, save the
+native Mask, and run Feather with changed parameters without rerunning a finder, filler or
+any upstream operation. They can inspect the exact resolved invocation and export a portable
+single run or selected chain for another directory and a fresh tool store. Squint remains a
+task-based tool; no private operations are fabricated. Ordinary tasks, estimates, paid caps,
+progress, cancellation, reports and saved evidence retain the v0.3 behavior.
+
+### Host decisions and UI
+
+- Cut over live dispatch to exactly contract `0.4.0`; retain MCP `2025-11-25` and the current
+  owned-child/session machinery. No v0.3 adapter, private Rascal envelope, workspace-id lookup
+  or action-name heuristic. Older saved evidence remains readable but cannot acquire invented
+  invocations, artifacts or replay guarantees.
+- Start from [activity hierarchy](work/activity-hierarchy.html) and
+  [journey](work/journey-ui.html): compact tool selection in the header; Playground for tasks,
+  Operations for independent pieces, Utilities only when declared. Use the same focused action
+  picker in each, grouped by declared `group` with labels from `vocabulary.group`. Groups stay
+  inside the searchable picker, never a growing category strip. Hide absent kinds rather than
+  invent actions. Inspection, examples, setup and pipeline export use the existing shared drawer.
+- Keep bounded desktop Input/Result panes, a visible Run footer and normal page flow on narrow
+  screens. Input ports precede ordinary parameters. An image port accepts an owned image or
+  saved image artifact; a location port accepts a shared location value or artifact; native
+  ports select typed artifacts. Scalar/list/optional states come from metadata. Constants and
+  choices remain schema-driven parameters, not tool-specific controls.
+- Result shows one card per declared output occurrence: port, type, preview when supplied,
+  origin run, preservation state, Inspect and Send to. A Location can use its tool preview or
+  the shared location display; a native record remains opaque JSON. No fabricated image,
+  forced before/after comparison, or PNG standing in for a Mask. Salvaged outputs on failed or
+  cancelled runs remain usable when the contract supplies them.
+- Send to fills a new draft and records the source attempt/output occurrence. It never runs
+  the receiver, imports silently, or reruns provenance. Filter suggestions by declared type,
+  version and known `on` file digest; unknown `on` is not a compatibility guarantee. The tool
+  decides frame compatibility. Native types stay with their named tool; shared image/location
+  transfers still require the receiving tool to accept or import the input.
+- Store each result's `invocation` immutably beside original wire evidence. Require it on every
+  result, permitting null only for an invalid run whose arguments did not resolve. Store typed
+  artifact references and their source occurrence separately from previews and opaque records.
+  Keep frame and identity opaque. Never recover native artifacts by searching tool directories.
+- Preserve portable non-image artifact inputs/outputs through the tool's export control, deduplicated by
+  artifact and export-byte identities. Preservation is bounded background work, separate from
+  run outcome: failure leaves a visible workspace dependency and explicit retry. Save Example
+  and bundle export must report incomplete preservation, never claim portability prematurely.
+  Portable images remain original owned bytes; `portable: none` stays workspace-dependent.
+- Every non-image artifact reference follows the same preservation, export/import and chain-edge
+  rules, including shared `location` with portable:json as well as namespaced tool-native types.
+  A location passed by value stays in invocation.arguments as a value: it has no replay edge, even
+  if the user copied it from an earlier result. Image references use original owned image bytes.
+- An invocation bundle is an explicit export, not an automatic archive of every run. Save its
+  immutable manifest, digest, member references and selected-attempt links in the local library.
+  Keep it distinct from the existing gzip evidence archive. Included input bytes are the default;
+  omissions are explicit and labelled. Requirements show names only, never credential values.
+  Download UI identifies that the original result may contain local paths and tool-specific data.
+- Replace registration `roots` with separate `allow_dirs` (child input permission) and
+  `evidence_dirs` (host reading returned images/run directories). Reject old registration fields
+  with documented replacement instructions; do not silently migrate or broaden grants. Pass
+  canonical `--allow-dir` arguments for the dedicated materialized-input/import area plus explicit
+  registered input directories, not the whole library/database or home. Remove roots capability
+  and roots/list entirely. Read effective session `allowed_dirs`; config may narrow the request.
+  Changing grants requires an explicit new session and invalidates prepared estimates.
+- New artifact exports must resolve inside explicitly registered `evidence_dirs`, even though the
+  contract permits a tool to choose an export area outside run.dir. An out-of-bound export is refused
+  with setup guidance; never infer an export directory from a tool name. Read only the exact returned
+  regular file with race-safe opening, bounded size and export hash checks. Existing v0.3 document
+  rendering keeps its approved exact-file/isolation policy; this task does not broaden that policy. No export path is executed, exposed
+  as a browser path, or used to expand `allow_dirs`/`evidence_dirs`. Do not delete tool-owned files.
+
+### Task order and acceptance
+
+Each unchecked item below is implementation work, not a claim that a peer or host feature has
+shipped. File lists name primary areas, not exemptions from tests, stories or documentation.
+Budget each implementation commit to at most five authored files; generated assets/snapshots
+are reported separately. If wiring exceeds that budget, add named `.a/.b` sub-tasks with their
+own checks **before** building. Every code slice uses failing behavioral tests first, targeted
+verification, the full matrix and review before local merge. Listed commit subjects describe the parent
+intent; named sub-slices use scope-specific subjects and types. No unnumbered tooling follow-ups.
+
+#### M5.01 — Establish an independent v0.4 peer
+
+- [ ] Add schema-validated core/operations fixtures from the pinned contract, plus independently
+  authored fake actions with unrelated names, scalar/many ports, task outputs and all three kinds.
+- [ ] Fake scenarios cover preview/no-preview, portable/opaque types, indexed binding refusal,
+  invocation on all outcomes, artifact resources and export/import controls without provider calls.
+- [ ] Keep fake behavior independent of real peer implementation and host types; document each
+  fixture's source. Contract semantics have assertions beyond schema validity.
+
+**Depends:** owner approval. **Areas:** `testkit/`, contract fixture tests, Cargo manifest/lock.
+**Verify:** positive/negative fixture suite and fake wire tests. **Commit:** `test: add independent v0.4 operations peer`.
+
+**Planned build slices** (ordered, each with its own targeted checks and matching docs):
+
+- **M5.01a: schema fixtures and negative cases** — acceptance 1 and schema portion of 3; fixture tests.
+- **M5.01b: independent fake scenarios** — acceptance 2 and wire independence in 3; fake protocol tests.
+
+#### M5.02 — Separate input grants from evidence access
+
+- [ ] Replace registration roots with explicit input/evidence directory fields, validate existing
+  absolute canonical directories and argv ownership, and reject conflicting hand-written grant flags.
+  Remove Rascal-only grant injection from development descriptors in favor of the shared launcher.
+- [ ] Child argv contains repeated `--allow-dir`; input/import staging is the only automatic grant.
+  Preserve evidence/report read restrictions separately. No roots capability or roots/list remains.
+- [ ] Setup shows requested and effective `allowed_dirs`; no-grant, narrowed config, symlink escape,
+  invalid directory, restart and unchanged old-session spend have explicit tests and migration docs.
+  Before changing real registrations, save their previous form; rollback restores that form only with
+  the matching old binary/peers, never by translating live grants silently.
+
+**Depends:** M5.01. **Areas:** registration/client/session, evidence/render authorization, dev descriptors.
+**Verify:** argv capture and path-boundary integration tests, including an unrelated tool name.
+**Commit:** `feat: replace MCP roots with explicit input grants`.
+
+**Planned build slices** (ordered, each with its own targeted checks and matching docs):
+
+- **M5.02a: registration, argv and read-boundary cutover** — acceptance 1–2 and registration rollback;
+  path/argv tests.
+- **M5.02b: effective-grant setup display** — acceptance 3; session/restart browser tests and stories.
+
+#### M5.03 — Cut over live validation to v0.4
+
+- [ ] Adopt exactly `table-manners = "=0.4.0"` once published. Until publication, a coordinator-approved
+  pinned source checkout may supply the same version for development, with its revision explicit in
+  CI; no floating branch or untracked local dependency is acceptable. Remove any temporary source
+  pin at M5.22a before calling M5 complete. At publication, diff the tagged contract, schemas and
+  fixtures against `d1c49a7`; reopen affected acceptance criteria if the published contract differs.
+- [ ] Validate kinds/groups/ports/artifact types, result invocation, session grants and new refusals.
+  Reject inconsistent metadata and schema collisions before presenting an executable action. Reserved describe/estimate/export/import
+  controls cannot appear as runnable actions.
+- [ ] Existing task-only fake flows, paid preparation, report viewers and old saved evidence still
+  work. After checkpoint A, only v0.4 live peers are supported. Point opt-in real-peer harnesses and
+  development instructions at the approved M10 revisions with explicit version preflight; incompatible
+  installed peers explain the required update, never pass a smoke check by silently skipping it.
+  M5.21 owns full peer verification. Test v0.3 rejection rather than adding fallback dispatch.
+
+**Depends:** M5.01–02. **Areas:** contract validation, description/session consumers, testkit defaults,
+CI dependency setup if needed. **Verify:** contract mismatch tests and complete existing suite.
+**Commit:** `feat: adopt the v0.4 client contract`.
+
+**Planned build slices** (ordered, each with its own targeted checks and matching docs):
+
+- **M5.03a: v0.4 semantic validators** — acceptance 2; malformed-contract tests.
+- **M5.03b: live cutover and reproducible test/dependency wiring** — acceptance 1 and 3; fake defaults,
+  CI source pin and real-harness preflight.
+
+**Checkpoint A:** merge M5.01–03 as a coherent cutover of validation, launch arguments and fake
+defaults; v0.4 is the only supported live contract afterward. Green matrix and an independent fake task run are required. Publication
+may delay final dependency cleanup, not work against the approved immutable contract source.
+Rollback to `851b850` requires its v0.3 peers and saved pre-M5 registrations. It is safe on the
+same library only before a storage migration; afterward use a compatible binary or restore the
+matching pre-upgrade backup while retaining newer evidence separately. Revert cutover dependents
+together, never mix wire versions.
+
+#### M5.04 — Preserve resolved invocations
+
+- [ ] Snapshot result invocation on every terminal outcome and show it in the existing inspection
+  drawer alongside, and distinctly from, the recorded request. Null invalid invocation is explicit.
+- [ ] Preserve defaults, resolved effective settings, caps and requirement names exactly; no host
+  inference from UI labels, no credential values, no substituting current draft state for a saved run.
+- [ ] Older attempts remain viewable with invocation unavailable; any storage migration is additive,
+  versioned and tested against a pre-M5 library before the new binary opens real user data. Back up
+  the database and registration state before the first real-data upgrade here or in any later task;
+  document compatible-binary/backup rollback and refuse unsafe downgrade, without deleting newer evidence.
+
+**Depends:** M5.03. **Areas:** attempt persistence, result preservation, Inspector and API types.
+**Verify:** completed/invalid/cancelled fixtures, history reopen and draft-edit isolation.
+**Commit:** `feat: preserve resolved run invocations`.
+
+#### M5.05 — Present the declared activity hierarchy
+
+- [ ] Playground/Operations/Utilities and the focused grouped picker derive only from kind/group
+  metadata. Tools with only tasks stay uncluttered; unavailable operations explain readiness normally.
+- [ ] Switching tool/kind/action resets the existing draft and estimates, while leaving saved
+  runs immutable. M5.07 extends this same behavior to newly introduced port bindings. Parameter labels/choices come from the current declaration.
+- [ ] Add keyboard, long-label, empty-kind and narrow-screen stories plus stable region snapshots
+  using the V19 visual policy; record intentional differences from the two source mocks.
+
+**Depends:** M5.03. **Areas:** Workspace, Picker, styles/stories/browser tests.
+**Verify:** fake with renamed/reordered groups; keyboard selection and no horizontal category strip.
+**Commit:** `feat: organize activities by declared kind and group`.
+
+#### M5.06 — Bind operation ports through normal preparation
+
+- [ ] Bind scalar/many/optional ports in order, with image input/ref and shared location value/ref
+  alternatives; keep task image/location slots on their images-profile representation. Optional empty ports are omitted; populated many ports are nonempty arrays.
+  Ports cannot be overwritten by params; validate final arguments against the advertised MCP schema.
+- [ ] Use normal preparations, estimates, bound paid calls, progress, cancel and dispatch. Changing a
+  port value/order invalidates estimates. Do not compute the tool's identity or binding digest.
+- [ ] Decode binding refusals by port and optional item index, retaining order and remedy. They create
+  no tool run/spend and release client_run_id; malformed inline input can instead produce an invalid
+  run. Do not conflate those cases or automatically resubmit.
+
+**Depends:** M5.03. **Areas:** bindings, prepared/estimate/dispatch, submission/API models.
+**Verify:** binding refusal from both estimate and call, all four binding problems, many-index
+errors, ID reuse after refusal, paid-port edits.
+**Commit:** `feat: bind typed operation inputs`.
+
+**Checkpoint B:** invocations survive reopen; hierarchy is navigable; fake operations use the existing
+run path without weakening paid guards. Revert M5.04–06 newest dependent first if needed; retained
+new evidence remains data, not a reason to dispatch through an older contract.
+
+#### M5.07 — Add port editors to the input pane
+
+- [ ] Render typed port rows before parameters, with image/location editors and a saved-artifact
+  selection affordance. Many rows support accessible reorder/remove and item-specific refusal text.
+- [ ] Required, optional, empty, resolving and refused states are distinct. Artifact selection does
+  not claim frame validation; unknown compatibility is visible before explicit Run.
+- [ ] Input remains scrollable with fixed Run footer on desktop; long forms and validation focus
+  work at narrow width and increased text size. Stories cover all port shapes without tool branches.
+
+**Depends:** M5.05–06. **Areas:** port editor component, form state, API adapter, stories/browser tests.
+**Verify:** fresh image/location operation and scalar/list native binding through a fake reference.
+**Commit:** `feat: edit operation ports in the workspace`.
+
+#### M5.08 — Index output references and inspect artifacts
+
+- [ ] Preserve `artifacts.in/out` occurrence order, references and preview assets independently;
+  enforce tool/resource/identity consistency and advertised type/version rules. Reconcile duplicate
+  images/locations profile entries without duplicating owned image bytes or presenting phantom outputs.
+- [ ] Read only the advertised artifact resource and preview, with bounded parsing and clear missing,
+  stale-session and malformed-resource states. Display native record as opaque data; never decode it.
+- [ ] Output cards support multiple ports and previewless outputs, including salvaged error/cancelled
+  outputs. Preview failures affect preservation, not the tool's result or the native artifact identity.
+
+**Depends:** M5.04,06–07. **Areas:** artifact resource client, evidence/persistence, result cards/Inspector.
+**Verify:** restart resource resolution, artifact-resource refusal with port:null, forged URI/identity,
+missing preview and multiple same-port outputs.
+**Commit:** `feat: inspect typed operation outputs`.
+
+**Planned build slices** (ordered, each with its own targeted checks and matching docs):
+
+- **M5.08a: artifact evidence and resource access** — acceptance 1–2; persistence/resource/refusal
+  tests.
+- **M5.08b: output cards and inspection** — acceptance 3; stories and result browser tests.
+
+#### M5.09 — Connect outputs to new drafts
+
+- [ ] Send to and the saved-artifact picker use declared compatible ports; choosing among multiple
+  destinations is explicit. Carry source attempt, output port and occurrence as host lineage metadata.
+- [ ] Fill the destination draft without Run, hidden import or upstream work. Preserve list ordering
+  and duplicate occurrences; a wrong frame stays a tool refusal on the exact receiving port.
+- [ ] Shared image transfers use owned bytes/expect when a receiving store cannot resolve the ref;
+  location transfers use the shared contract representation or explicit supported import. Never send
+  a foreign native type or parse an opaque record to fabricate a shared value.
+
+**Depends:** M5.07–08. **Areas:** artifact selection, Workspace draft state, bindings/lineage persistence.
+**Verify:** fake Line → Rasterize → Feather equivalent, output-to-two-ports, cross-tool shared image,
+no hidden calls; stories and snapshots. **Commit:** `feat: send saved artifacts into operation drafts`.
+
+**Checkpoint C:** the independent-pieces loop works end to end with fake references. Saved outputs
+can be selected after host restart; missing tool-store data is honest and never triggers reconstruction.
+Rollback removes the UI route first, retaining immutable references and previews; apply the
+first-migration backup/downgrade rule from M5.04.
+
+#### M5.10 — Store native bytes with reference-aware ownership
+
+- [ ] Add a bounded opaque blob store and versioned library links for native exports, artifact
+  occurrences and future bundles; digest-check publication and deduplicate bytes without decoding them.
+- [ ] Attempts/examples/bundles own references independently. Deletion preview identifies bytes
+  actually eligible for removal; deleting one attempt never removes another owner's artifact inputs.
+- [ ] Migration/reopen and interrupted publication tests preserve existing assets/history. Cleanup
+  touches only host-owned blobs, never a tool workspace or returned export file.
+
+**Depends:** M5.08. **Areas:** library migration, blob publication, examples/cleanup reference accounting.
+**Verify:** shared-byte ownership, failed publication and pre-M5 database upgrade tests.
+**Commit:** `feat: preserve native artifact bytes in the library`.
+
+**Planned build slices** (ordered, each with its own targeted checks and matching docs):
+
+- **M5.10a: blob storage and migration** — acceptance 1 and storage portion of 3; upgrade/publication
+  tests.
+- **M5.10b: ownership and cleanup integration** — acceptance 2 and cleanup portion of 3;
+  shared-ownership/deletion tests.
+
+#### M5.11 — Add artifact export/import controls
+
+- [ ] Use reserved controls only when advertised by portable artifact types; controls remain responsive
+  during runs, create no attempts and do not take paid-run permits. Apply request size/concurrency bounds.
+- [ ] Read the exact exported file, verify declared bytes/hash/media type, then publish owned bytes.
+  An export outside evidence_dirs is refused before opening, even with a correct advertised hash.
+  For import, stage under an allowed directory or bounded inline form; verify returned artifact and
+  already_present semantics. Wrong native format is never retried as a preview image.
+- [ ] Missing export refs and invalid imports surface structured refusal/remedy. Cancellation/disconnect
+  leaves incomplete local state unpublished; an interrupted tool import is reconciled by idempotent retry,
+  not falsely described as rolled back.
+
+**Depends:** M5.02–03,10. **Areas:** artifact controls, exact-file reader, staging and API endpoints.
+**Verify:** control concurrency, duplicate import, corrupt hash, unsupported type and unsafe returned paths.
+**Commit:** `feat: transfer native artifacts through contract controls`.
+
+#### M5.12 — Preserve reusable artifacts after runs
+
+- [ ] Queue bounded deduplicated preservation for portable non-image artifact inputs/outputs after their references
+  are known. Existing successful run state is never held hostage by export failure or a stopped peer.
+- [ ] Show preserved, preserving, workspace-dependent and failed states with explicit retry; portable:none
+  has a reason. Restart can resume user-requested preservation without replaying the original action.
+- [ ] Reopen an unresolved saved artifact by offering import of its verified owned bytes; validate the
+  restored identity and re-read the artifact resource before binding. Do not silently import or run.
+
+**Depends:** M5.08,10–11. **Areas:** preservation queue/status, result cards/Inspector, artifact selection.
+**Verify:** tool store removed after preserving both a JSON location and native Mask, interrupted export,
+duplicate outputs and bounded queue.
+**Commit:** `feat: preserve reusable operation artifacts`.
+
+#### M5.13 — Save reusable operation examples
+
+- [ ] Examples retain typed bindings, parameters, owned artifact/image references and source occurrence
+  metadata independently from the original attempt. Opening fills a draft and never executes anything.
+- [ ] Missing resources, importable owned bytes and genuinely unportable bindings are distinguished;
+  saving partial preservation requires an explicit workspace-dependent label, not a silent success claim.
+- [ ] Deleting the source run and restarting leaves a preserved example usable. Moving the tool store
+  uses its new registration/resource identity; the host never searches old folders.
+
+**Depends:** M5.09,12. **Areas:** examples persistence/API, Examples drawer, cleanup UI.
+**Verify:** saved Feather inputs with changed sigma run without upstream calls; missing-store import flow.
+**Commit:** `feat: save independent operation examples`.
+
+**Checkpoint D:** preserved native examples survive deletion/restart; tool control failures cannot
+change run outcomes or accounting. Back up the database before schema adoption; binary rollback
+requires compatible schema or the matching backup, never a silent downgrade or ledger reset.
+
+#### M5.14 — Export the resolved single-call handoff
+
+- [ ] Pipeline drawer offers resolved invocation, recorded MCP evidence, requirements and a supported
+  `<tool> call <action> --arguments <file.json>` handoff. Materialize owned image locators and explicit
+  `--allow-dir`; shell-quote displayed argv, use argv arrays internally and never execute copied code.
+- [ ] Include resolved defaults/caps/effective values from the selected saved run, not current config.
+  Required config/env names are setup instructions; missing secrets are not inserted into downloads.
+- [ ] Label this handoff dependent on the configured local store. Use the contract-standard --config and --allow-dir arguments; never blindly copy serve-only
+  argv or interpret private effective fields. If the serving store requires other tool-specific launch
+  arguments, show that unresolved local dependency and withhold a claimed ready-to-run command.
+  A fresh store needs explicit native import or the bundle route. Distinguish this from portable; unresolved/null invocation and old
+  evidence retain inspection/export with the runnable option unavailable and explained.
+
+**Depends:** M5.04,12. **Areas:** invocation handoff builder, Pipeline/API, stories and tests.
+**Verify:** paths with spaces/metacharacters, missing owned bytes, draft edits and null invocation.
+**Commit:** `feat: export resolved CLI invocations`.
+
+#### M5.15 — Write canonical invocation bundles
+
+- [ ] Build schema-valid single-step manifests with original result/invocation, ordered image inputs and
+  non-image artifact inputs (including shared location references). Store original image bytes and exact
+  tool exports under digest-based names; map repeated
+  slot/port entries by occurrence and preserve duplicates without duplicating archive members.
+- [ ] Produce byte-identical uncompressed ustar: manifest first, remaining members sorted, prescribed
+  headers/modes/owners/timestamps. Check image digest and native export hash; never substitute previews.
+  Use a fixed media-type/extension mapping, lowercase safe basenames and the peer-compatible 96-byte
+  member-name bound; never take an archive member name from an export path.
+- [ ] Enforce documented limits before writing (initial common CLI-compatible ceiling: 8 MiB manifest,
+  64 MiB per member, 64 members, 256 MiB total; over-limit exports explain the limit). Include inputs by
+  default; explicit omissions populate reference_only, failed/unportable exports populate unportable.
+
+**Depends:** M5.04,10–13. **Areas:** new bundle writer/manifest mapping, archive dependency, library links.
+**Verify:** schema and byte-stability golden tests, Line → Rasterize with a location reference and
+its JSON export, location-by-value contrast, list duplicates, deterministic ordering, size boundaries.
+**Commit:** `feat: assemble portable invocation bundles`.
+
+#### M5.16 — Expose saved bundles in the pipeline drawer
+
+- [ ] Export reviews included files, omissions, artifact dependencies and requirements before downloading.
+  Portable versus workspace-dependent status is derived from preservation, never a user-editable claim.
+- [ ] Save manifest/digest/member ownership and selected-attempt links atomically; reopening a bundle
+  returns identical bytes. Failed assembly leaves no completed bundle or leaked ownership reference.
+- [ ] Pipeline drawer keeps command/MCP/configuration/input concepts from journey; evidence archive and
+  invocation bundle have distinct descriptions. Offer `<tool> call --bundle` only for a single-tool
+  bundle with empty reference_only and unportable lists; otherwise explain required host setup/replay.
+  Add loading/error/partial stories and region snapshots.
+
+**Depends:** M5.14–15. **Areas:** bundle API/persistence, Pipeline drawer, cleanup ownership display.
+**Verify:** export selected saved evidence after draft change, interrupted download, source deletion.
+**Commit:** `feat: review and download saved invocation bundles`.
+
+**Checkpoint E:** single-run invocation and bundle are reviewable, stable, and labelled accurately.
+Rollback can remove new export routes without deleting already downloaded files or retained evidence.
+
+#### M5.17 — Validate bundles before importing
+
+- [ ] Parse uploaded bundles with bounded uncompressed archive validation: safe member names, regular
+  files only, no links/traversal/duplicate members, complete manifest/schema/hash/reference checks before
+  any tool import, file publication or action dispatch. Apply M5.15 limits and reject unsupported versions.
+- [ ] Show steps, tools, requirements, omitted inputs and workspace dependencies in an import review.
+  Supplied replacements become a new draft; never mutate the original archived invocation/result.
+- [ ] Only explicit import stages owned bytes and calls the needed tool controls; imports are idempotent,
+  failures report which completed. Tool installation/configuration/grants remain separate explicit setup.
+
+**Depends:** M5.11,15–16. **Areas:** bundle reader, import staging/control orchestration, drawer/API.
+**Verify:** adversarial archive corpus, no side effects on invalid bundle, failure between two imports.
+**Commit:** `feat: review invocation bundles before import`.
+
+**Planned build slices** (ordered, each with its own targeted checks and matching docs):
+
+- **M5.17a: bounded archive reader** — acceptance 1; malformed archives cause no effects.
+- **M5.17b: import review and orchestration** — acceptance 2–3; drawer and partial/idempotent import
+  tests.
+
+#### M5.18 — Replay one imported step through the workspace
+
+- [ ] A reviewed imported step opens a normal draft with fresh resource refs and materialized inputs.
+  It reuses ordinary readiness/estimate/cap/Run/cancel; recorded estimates or session ids never authorize it.
+- [ ] A new attempt records linkage to the source bundle while preserving its original evidence.
+  Identity differences are displayed, not equated with failure or a guarantee of deterministic judgments.
+- [ ] Reference-only/unportable inputs block Run until resolved explicitly. Import, opening or restoring
+  a draft cannot start a paid action; restart requires new session readiness and estimates.
+
+**Depends:** M5.06,09,17. **Areas:** replay draft adapter, Workspace/Pipeline state, attempt linkage.
+**Verify:** original store absent, same invocation with new paths, changed provider output, paid confirmation.
+**Commit:** `feat: replay imported invocations as new experiments`.
+
+#### M5.19 — Export selected experiment chains
+
+- [ ] Select an ordered set of saved attempts, exporting only those steps, never hidden provenance.
+  Conservatively carry each non-image artifact input's export or mark it unportable, even when a selected preceding
+  step also produced it. Do not claim this extra copy replaces fresh-output rebinding.
+- [ ] Use one manifest-edge resolver for export and import/replay: find earlier matching output
+  occurrences for every artifact-reference input (image, shared location and tool-native), including
+  artifacts.out and images.out. Coalesce
+  only demonstrably mirrored profile entries for the same output, never distinct ports/items with equal
+  identities. Zero matches means an external supplied input; one match means a fresh-output edge;
+  multiple matches are ambiguous. Export only if this resolution agrees with recorded host lineage;
+  a selected producer with the same identity as an unselected actual source must not silently replace it.
+  Refuse ambiguous/mismatched runnable chains with an explanation and single-step bundle alternative.
+- [ ] Preserve selected order and deterministic bytes. Imported bundles derive edges from the manifest
+  using the same resolver, without requiring private host lineage; ambiguous ones cannot replay as a
+  chain. No invented from_step fields. Mixed-tool bundles use host replay, not a single-tool CLI claim.
+
+**Depends:** M5.09,15–18. **Areas:** chain selection/manifest builder, bundle ownership, Pipeline drawer.
+**Verify:** two consumers, two ports/items with equal identities, mirrored profiles, image edges,
+Line → Rasterize by reference versus by value, selected producer/unselected source collision,
+omitted upstream step and mixed tools.
+**Commit:** `feat: bundle selected experiment chains`.
+
+#### M5.20 — Replay chains using fresh outputs
+
+- [ ] Use M5.19's manifest resolver to map each earlier-output input to this replay's output port and
+  occurrence, never the old identity; report nondeterministic changes. Missing/ambiguous outputs stop the chain before a consumer
+  runs. Include shared location refs in this rule; location values remain literal inputs. Fresh image
+  outputs are copied through owned assets into the granted staging directory before consumption, never
+  passed directly from an evidence-only run directory. Maintain explicit host lineage without modifying
+  the contract bundle format.
+- [ ] Present ordered step progress in the shared drawer. Each step becomes its own ordinary attempt;
+  paid steps require a fresh estimate and explicit Run review after their inputs are known. No blanket
+  reuse of a cap approval, automatic retry or silent reconstruction after a failure.
+- [ ] Stop/cancel prevents later steps, retains completed evidence and spend, and offers explicit resume
+  from verified saved outputs. A session restart invalidates pending preparation normally.
+
+**Depends:** M5.18–19. **Areas:** bounded replay state machine, draft/dispatch adapter, progress drawer.
+**Verify:** changed producer identity, many output order, refusal, cancellation and paid next-step pause.
+**Commit:** `feat: replay chains with freshly produced artifacts`.
+
+**Planned build slices** (ordered, each with its own targeted checks and matching docs):
+
+- **M5.20a: replay orchestration and cancellation** — acceptance 1 and dispatch portion of 2–3; fake
+  changed-output/paid/cancel tests.
+- **M5.20b: step progress and resume UI** — presentation portion of 2–3; stories and keyboard/browser
+  replay tests.
+
+**Checkpoint F:** fresh-store single and multi-step replay pass the independent fake, including a
+nondeterministic producer. Remove replay entry points before reverting orchestration; stop active work
+and preserve partial attempts/charges. Do not label a partially executed import/replay transactional.
+
+#### M5.21 — Verify real v0.4 peers
+
+- [ ] Build the approved Rascal/Squint revisions in isolated disposable checkouts under the shared lock.
+  Verify version/description/allowed_dirs against v0.4 and document the exact executable and dependency
+  revisions. Never edit sibling branches; ask the coordinator for any necessary replacement revision.
+- [ ] Rascal: Line → Rasterize by location reference → Feather (including the Location JSON export),
+  location-by-value contrast, saved Mask parameter edit without upstream calls, indexed
+  binding refusal, resource after restart/store move, export/import to an empty store, and both host and
+  `rascal call --bundle` replay with original workspace unavailable. Assert invocation and native identity
+  for deterministic fixtures; do not claim visual previews prove native equivalence.
+- [ ] Squint: task-only hierarchy, ordered list images, invocation and single-tool CLI bundle replay
+  against its scripted test provider. Confirm path denial without grants and success with staging grants.
+  Real-provider checks, if used, keep explicit cap/spend records and do not replace deterministic checks.
+
+**Depends:** M5.03–20; published pin and peer v0.4 availability for final acceptance.
+**Areas:** opt-in real-peer harness, browser integration, fixtures and integration-source docs.
+**Verify:** complete journeys in Chromium/WebKit; strict report console checks remain; record native
+Safari manual coverage separately, never substitute WebKit as proof of Safari.
+**Commit:** `test: verify v0.4 operation and bundle journeys`.
+
+**Planned build slices** (ordered, each with its own targeted checks and matching docs):
+
+- **M5.21a: Rascal integration** — acceptance 1–2 for Rascal; isolated operations/CLI/browser checks.
+- **M5.21b: Squint integration** — acceptance 1 and 3 for Squint; isolated task/list/CLI/browser checks.
+
+#### M5.22 — Close out the operations milestone
+
+- [ ] Update SPEC/INTERFACE/ENGINEERING, tool requirements/handoffs and user setup/export docs to the
+  implemented behavior; retire resolved C1/C2/R3 gates with evidence, retain actual distribution gaps.
+  Capture before/after mock comparisons, stories and region screenshots for changed screens.
+- [ ] Verify the publication diff required in M5.03, replace any temporary dependency source with
+  published `=0.4.0`, and run the complete PLAN matrix. Include asset-manifest unit checks,
+  reproducible prebuilt assets/check-ui and release build, plus targeted repeated tests only where a
+  lifetime/race change needs evidence. Hosted CI must be green before declaring completion.
+- [ ] Record peer revisions, fixtures, archive bounds, ambiguous-chain limitations, preservation failures,
+  path migration instructions and downgrade limits in an M5 review. No implicit approval of M7 shipping.
+
+**Depends:** M5.21. **Areas:** milestone review, SPEC/INTERFACE/ENGINEERING and handoff/user docs.
+**Verify:** documentation links, final independent review, full matrix and coordinator-hosted CI.
+**Commit:** `docs: record v0.4 operations acceptance`.
+
+**Planned build slices** (ordered, each with its own targeted checks and matching docs):
+
+- **M5.22a: published dependency and final matrix** — acceptance 2; publication diff, exact crates.io
+  pin and full checks.
+- **M5.22b: acceptance documentation** — acceptance 1 and 3; review links, coverage and hosted CI
+  evidence.
+
+### Approval, checks and remaining coordination
+
+This proposal is committed on `plan-m5-v04` and left unmerged for owner review. After approval,
+implementation follows the dependency order above on short branches. Every coherent slice runs the
+full matrix under `../wafflemaker/scripts/heavy.sh wafflery <command>` and receives review before
+local merge; the coordinator alone scans, pushes and watches hosted CI. A red main takes precedence
+before subsequent merges. UI slices include Storybook, keyboard/error states and Playwright regions
+using the existing shared visual policy; do not loosen tolerances to hide layout changes. Update
+matching docs in each code commit, not only at closeout. Plan-only edits use diff/link/consistency
+checks rather than rerunning unchanged code.
+
+No new shared-contract ruling is needed to begin this plan. Publication and real-peer revision
+changes remain coordinator-owned gates. Ambiguous chain provenance is deliberately refused under
+the existing manifest rather than extending it locally; broader chain expressiveness would need a
+coordinator ruling. Portable Plan/Series/BandProfile, artifact enumeration, hidden provenance replay,
+agent orchestration, evaluation suites and distribution remain outside M5. The host only lists
+artifacts it has seen or explicitly imported; it does not promise a browser for an entire tool store.
+
 ## Verification and commit strategy
 
 At each task run its targeted checks. At M0/M1/M2/M3 run the checks relevant to code now present:
@@ -1108,6 +1651,7 @@ cargo clippy --locked --all-targets --all-features -- -D warnings
 cargo test --locked --all-targets
 bun run --cwd ui typecheck
 bun run --cwd ui test:unit
+bun test scripts/ui-manifest.test.ts
 bun run --cwd ui build:storybook
 bun run --cwd ui test:browser
 bun run scripts/check-ui.ts
@@ -1134,15 +1678,14 @@ checkpoint to save time. No backward-compatibility shims are added for unrelease
 | Risk | Response |
 |---|---|
 | Environment selection / browser execution | Record actual Node path/version; cached Chromium/WebKit must match the chosen Playwright and launch. Report sandbox limitations, do not bypass them |
-| Contract version changes / roots deprecated after current MCP revision | Exact supported contract set and explicit schema upgrade commit; v0.3 tasks above cover list bindings; no MCP revision bump until replacement path-access rules are agreed |
+| Contract version changes / path grants | M5.01–03 adopt exact v0.4 and replace MCP roots with explicit child grants, preserving separate evidence-read boundaries; MCP revision stays 2025-11-25 |
 | Shared SDK conceals protocol assumptions | Independent fake wire peer; explicit protocol selection and manual child ownership |
 | UI fixtures accidentally become tool-specific logic | Keep fixtures in Storybook/testkit; test differently named tools; validate contract objects |
-| Saved evidence is mistaken for full reproducibility | Separate preservation categories and label exports accurately; C2/C3 gates remain |
+| Saved evidence is mistaken for full reproducibility | Separate preservation categories and label exports accurately; M5 verifies native C2 portability, while completed C3 report checks remain regressions |
 | Stable tool workspaces grow beyond movable library | Show storage locations separately; cleanup/relocation never guesses ownership |
 | Too much infrastructure before a working screen | M1 import loop and M2 execution loop are visible checkpoints; no speculative packages/services |
 
-M0–M3 do not require another product decision. R3 now has a supplier milestone (Rascal M10);
-its shared profile still needs agreement because independent Operations is core to the full release.
-C3's v0.3 delivery is tracked by V14–V18 against Rascal M12/Squint M9; C2 portable replay still
-needs a separate integration checkpoint. R2 remains optional. Do not imply an Actions-only
+M0–M3 and the V01–V19 client are complete. The R3 operations profile and C2 portable invocation
+contract are specified in v0.4; host adoption awaits approval of M5 above and its real-peer
+checkpoint. C3's v0.3 delivery is verified by V14–V18 against Rascal M12/Squint M9. R2 remains optional. Do not imply an Actions-only
 development build satisfies those release requirements. Product choices remain Q1–Q19.
