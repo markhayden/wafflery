@@ -1214,6 +1214,22 @@ intent; named sub-slices use scope-specific subjects and types. No unnumbered to
 - **M5.01a: Complete — schema fixtures and negative cases** — acceptance 1 and schema portion of 3; fixture tests.
 - **M5.01b: independent fake scenarios** — acceptance 2 and wire independence in 3; fake protocol tests.
 
+M5.01b is split before implementation to keep the wire peer reviewable:
+
+- **M5.01b1: Complete — Discovery and session probe:** independent stdio initialization/describe/session/runs,
+  canonical `--allow-dir`, no roots request, fresh session on restart, bounded input and EOF shutdown.
+  Verify renamed tool identity and invalid-directory exits using a line-delimited client. Commit:
+  `test: add the v0.4 discovery wire peer`. This remains a control-only probe until b3.
+- **M5.01b2 — Artifact controls:** artifact/preview resources and verified idempotent export/import
+  of native and shared-location bytes, including structured refusals. Controls create no runs/spend.
+  Verify restart, corrupt bytes, missing identity and refused paths. Commit:
+  `test: add v0.4 artifact control scenarios`.
+- **M5.01b3 — Operation execution:** scalar/list binding, independent-piece runs, resolved invocations,
+  progress/cancellation and salvaged outputs, using actual request data and no providers. Verify a
+  chain, indexed pre-run refusals with released IDs, and controls during a held run. Commit:
+  `test: execute independent v0.4 operations over stdio`.
+Each slice includes testkit documentation, targeted tests, the full matrix and review.
+
 **M5.01a implementation checkpoint (2026-11-02, complete):**
 `testkit/v04_fixtures.rs` independently authors the descriptions, result outcomes, artifact
 resources and binding/export/import/session examples. It imports neither host nor peer code.
@@ -1238,6 +1254,46 @@ typecheck, 53 UI unit tests, 2 asset-tool tests, Storybook, reproducible assets/
 release build and 220 Chromium/WebKit tests (8 opt-in skipped). Lockfile and prebuilt assets
 were unchanged by the matrix. Independent review approved after the fixture corrections above;
 hosted CI remains separate coordinator-owned evidence after push.
+
+
+**M5.01b1 implementation checkpoint (2026-11-02, complete):**
+The independent `v04-operations` stdio probe handles discovery/session/empty runs, explicit
+canonical grants (invalid grants exit 64), renamed identities, fresh sessions and EOF shutdown.
+It never requests roots or writes a run. Only describe is callable until the next slices add
+controls and execution. Five wire tests pass after failing on the legacy roots request and
+invalid-directory exit. Review strengthened the input bound test: valid pings at 1 MiB pass,
+while 1 MiB + 1 fails with stdin still open. Deliberately raising the limit makes that test fail.
+Full matrix passed under the shared lock: fmt/clippy, 258 Rust tests (4 opt-in ignored),
+typecheck, 53 UI tests, 2 asset-tool tests, Storybook, reproducible assets, release build,
+and 220 Chromium/WebKit tests (8 opt-in skipped). An unrelated preview occupied port 4173;
+a temporary config changed only the local test server/base URL to 4187 and was removed after
+verification. The default CI configuration is unchanged. Independent review approved; no
+production behavior, dependency lock or prebuilt asset changed.
+
+#### V20 — Image import feedback (M5-adjacent; coordinator-approved 2026-11-02)
+
+This follow-up does not change M5's task order or block M5.01b. The demo showed that a
+15000×7500 image passes the library bound but can exceed a tool's own bound. Original bytes,
+dimensions and fingerprints remain authoritative; thumbnails never replace run inputs.
+
+- [ ] Read PNG/JPEG header dimensions without a full decode and immediately show dimensions
+  and estimated decoded memory, with explicit import progress and failure feedback.
+- [ ] Generate bounded thumbnails from a downscaled decode; stop fetching/decoding the full
+  original merely to display a thumbnail. Preserve full validation before an asset is ready.
+- [ ] Display size refusals and any remedy supplied by the tool clearly. Do not guess a tool's
+  limit or parse its private fields. The coordinator owns an additive next-contract proposal
+  for optional `max_pixels` (and potentially width/height) on image slots and ports.
+- [ ] Benchmark release-build import and preview stages with owned representative images,
+  recording dimensions, byte size, timing, memory where measurable, and test hardware/build.
+- [ ] Consider an explicit labelled "Make a resized copy" only if cheap and user-selected;
+  never automatically resize fidelity inputs or overwrite the original.
+
+**Build slices:** V20a measure/header/progress; V20b bounded preview pipeline; optional V20c
+explicit copy. Each needs failing behavioral tests, a five-file implementation budget split
+as needed, stories/browser evidence, full matrix and review. Header feedback is provisional;
+malformed/truncated images must still fail validation before becoming usable. Codec support
+and memory behavior must be measured before choosing a downscaled-decoding implementation.
+
 
 #### M5.02 — Separate input grants from evidence access
 

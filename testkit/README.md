@@ -290,3 +290,28 @@ attempts unauthenticated workspace fetches, form submission and redirects. A tes
 `report-target` file in the tool working directory selects a loopback canary destination.
 No host types, credentials or providers are imported. Browser tests verify actual blocked
 operations and that unapproved origins receive no navigation request.
+
+## v0.4 operation peer (M5.01)
+
+`v04_fixtures.rs` owns synthetic operation/task/utility descriptions, resolved results, references,
+previews and control examples. Published `table-manners =0.4.0` is currently a dev-only alias;
+the live client remains v0.3 until M5.03. Schema and cross-document checks live in
+`tests/v04_contract_fixtures.rs`. No host types or real tool output construct these fixtures.
+Token and Memo are test-only native types. Location is the shared type. Preview fingerprints
+come from actual PNG bytes, never from the native record's digest.
+
+`sample-lab <workspace> v04-operations [--allow-dir <abs>]... [--tool-name <name>]` now exposes
+an independent **discovery-only probe** over MCP 2025-11-25. Only describe and session/empty-run
+resource reads are implemented and advertised as callable; the description sketches the actions
+that M5.01b3 will implement. It is not yet a conforming operation execution peer. M5.01b2 adds
+artifact controls first. No provider, run allocation or workspace store write occurs here.
+
+The probe follows and deduplicates explicit directory grants, requires absolute existing
+folders (exit 64 otherwise), publishes effective `allowed_dirs`, and never asks for MCP roots.
+No flags means no granted directories. Every process has a new session ID; EOF exits cleanly.
+Input messages are bounded to 1 MiB; oversized or malformed JSON closes the probe. Test-only `--tool-name` changes the metadata/resource scheme
+so consumers cannot assume a particular tool name. These flags belong to the fake, not Wafflery.
+
+Run `cargo test --locked --test v04_wire` for initialization, no-roots, restart, invalid/symlink/
+space-containing grants, no-run control behavior and bounded-input/EOF checks. This manually
+framed client uses no MCP SDK; only process spawning uses the host's descriptor-isolation helper.

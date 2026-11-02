@@ -9,6 +9,8 @@ mod render;
 mod scenarios;
 mod v03_control;
 mod v03_fixtures;
+mod v04_fixtures;
+mod v04_peer;
 use serde_json::{Value, json};
 use std::{
     io::{self, BufRead, Read, Write},
@@ -104,6 +106,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             root.join("inherited-pipes.json"),
             serde_json::to_vec(&inherited)?,
         )?;
+    }
+
+    if scenario == "v04-operations" {
+        return v04_peer::serve(arguments.collect());
     }
 
     let mut configuration =
