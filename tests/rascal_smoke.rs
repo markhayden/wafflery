@@ -31,6 +31,8 @@ async fn real_rascal_offline_seam_uses_the_same_dispatch_and_evidence_guards() {
         executable: binary.clone(),
         args: vec![
             "serve".into(),
+            "--allow-dir".into(),
+            assets.root().join("execution").display().to_string(),
             "--workspace".into(),
             tool.join("workspace").display().to_string(),
             "--runs".into(),

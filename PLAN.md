@@ -696,6 +696,18 @@ Rollback in reverse order. V10b1's cohesive validation slice includes estimate m
 module registration, session-validator visibility, the existing MCP transport probe and moving the pinned time dependency
 into production with parsing enabled. Later slices connect it without enabling paid dispatch.
 
+**R-path — Complete: grant explicit input access to real Rascal launches.** The coordinator's
+`9ee6bc8` update requires `serve --allow-dir` before any caller path can be read. Update
+only Wafflery-owned development/test descriptors to grant the existing absolute
+`Library/execution` directory containing copied inputs; keep generic registration opaque.
+Use one shared argument builder for the development launcher and browser fixtures, and the
+same grant in the Rust smoke. Do not grant the home directory or migrate Squint before its
+matching change lands. Verify the real offline smoke fails before this update and passes
+afterward, then run real Rascal browser coverage and the full matrix. No keys or sibling edits.
+Commit: `fix: grant copied input access to Rascal`; rollback the descriptor/helper changes
+together (old descriptors will fail against current Rascal). This small integration correction
+precedes V11; it does not adopt v0.4 or change MCP roots for the v0.3 client.
+
 **V11 — Present the cap and exact estimate.** Add one positive cap control backed by the declared
 `max_spend_usd` field, avoiding a duplicate generic form field. Show worst case, effective model,
 cap, remaining session budget and unresolved spend; distinguish uncapped null from zero. Require

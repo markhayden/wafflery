@@ -1,3 +1,4 @@
+import { rascalServeArgs } from "./rascal-args";
 import { test as base, expect, type Page } from "@playwright/test";
 import { spawn, spawnSync, type ChildProcess } from "node:child_process";
 import {
@@ -61,13 +62,7 @@ export const test = base.extend<{
                     : resolve("../target/debug/examples/sample-lab"),
                 args:
                   hostKind === "rascal"
-                    ? [
-                        "serve",
-                        "--workspace",
-                        join(toolRoot, "workspace"),
-                        "--runs",
-                        join(toolRoot, "runs"),
-                      ]
+                    ? await rascalServeArgs(join(root, "Library"), toolRoot)
                     : [toolRoot, hostScenario],
                 cwd: toolRoot,
                 roots: [toolRoot],

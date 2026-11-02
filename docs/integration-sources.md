@@ -11,6 +11,17 @@ The independent peer supplies current discovery/offline validation; real Rascal 
 M9 remain V18 gates. Previously tested v0.2 executables below are historical evidence, not
 compatible live targets for the cutover. No sibling files are modified.
 
+### Rascal explicit paths — 2026-11-01
+
+Coordinator-selected Rascal main `9ee6bc8` requires `serve --allow-dir <absolute-directory>`
+for caller paths, even while declaring contract 0.3.0. Current development/test descriptors
+pass only Wafflery's `Library/execution` directory, created before launch. The tool's
+`[serve] allow_dirs` configuration can narrow that grant; an unloadable config grants nothing.
+The host still copies inputs and passes the same registered executable/arguments on restart.
+Existing manually registered Rascal descriptors need this argument added explicitly while the
+host is stopped; there is no implicit fallback or directory migration. Squint's equivalent
+change is not yet on main, so its descriptors are unchanged. Full v0.3 peer acceptance remains V18.
+
 ## Previous v0.2 integration — 2026-11-01
 
 - Current sibling checkout paths are `../rascal` and `../squint`; there is no alternate-name lookup.

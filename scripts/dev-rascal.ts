@@ -1,3 +1,4 @@
+import { rascalServeArgs } from "../ui/tests/browser/rascal-args";
 import { execFileSync } from "node:child_process";
 import { access, mkdir, mkdtemp, realpath, writeFile } from "node:fs/promises";
 import { constants } from "node:fs";
@@ -38,13 +39,7 @@ await writeFile(
       {
         id: "rascal",
         executable,
-        args: [
-          "serve",
-          "--workspace",
-          join(tool, "workspace"),
-          "--runs",
-          join(tool, "runs"),
-        ],
+        args: await rascalServeArgs(join(data, "Library"), tool),
         cwd: tool,
         roots: [tool],
       },

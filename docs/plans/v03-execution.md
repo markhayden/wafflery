@@ -628,3 +628,19 @@ release build and 100 browser cases (four opt-in skips). After the setup-only co
 repeated. Lockfiles and generated UI assets are unchanged. The common browser setup correction
 is a separate test commit before the estimate API commit. Revert the API/lifetime slice as a
 unit; the test correction and V10b1/V10b2 may remain.
+
+### Rascal explicit input directories
+
+Rascal main `9ee6bc8` refused the old smoke descriptor's caller image path: the offline run
+returned invalid and could not preserve input evidence. Adding the explicit execution-directory
+grant made the real Rust smoke pass. The browser check then exposed a module boundary issue:
+Playwright loads helpers outside the UI package as CommonJS. The shared argument builder now
+lives beside the existing ESM offline-pipeline helper, imported by the development script.
+It creates and canonicalizes only the owned execution directory before serving starts.
+
+The real Rascal 0.1.1 / table-manners 0.3.0 smoke passed with the new grant, as did both
+real-browser cases. The selected executable is a mutable development build, not an archived
+release acceptance target; V18 remains open. Final review and the full shared-lock matrix passed:
+167 Rust tests (three opt-in tests ignored), the additional real Rust smoke, 27 UI unit tests,
+two asset tests, typecheck, fmt, clippy, Storybook, reproducible assets, release build and
+102 browser cases (two Squint opt-in skips). No lockfile, UI asset or sibling file changed.

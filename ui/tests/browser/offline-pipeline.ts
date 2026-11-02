@@ -1,3 +1,4 @@
+import { rascalServeArgs } from "./rascal-args";
 import { access, copyFile, mkdir, realpath } from "node:fs/promises";
 import { constants } from "node:fs";
 import { isAbsolute, join } from "node:path";
@@ -22,13 +23,7 @@ export async function prepareOfflinePipeline(
     await mkdir(cwd, { mode: 0o700 });
     let args: string[];
     if (id === "rascal") {
-      args = [
-        "serve",
-        "--workspace",
-        join(cwd, "workspace"),
-        "--runs",
-        join(cwd, "runs"),
-      ];
+      args = await rascalServeArgs(join(directory, "data", "Library"), cwd);
     } else {
       for (const name of ["config.toml", "held.json"]) {
         await copyFile(
