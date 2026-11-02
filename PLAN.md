@@ -861,6 +861,12 @@ V15 execution slices (full matrix and review per slice; rollback in reverse orde
   bounded startup failures. Keep URLs private until framing exists. Commit: `feat: supervise report readiness`.
 - **V15c:** Add owned process groups, graceful SIGTERM and descendant cleanup while retaining
   explicit-force behavior and safe process identity. Commit: `feat: stop owned report process groups`.
+  Split into **V15c1: Complete** (`feat: retain owned report process groups`): a macOS group owner that
+  keeps the leader unreaped, checks bounded group observations and signals only its pinned
+  identity; then **V15c2** (`feat: stop owned report process groups`): integrate EOF/SIGTERM/
+  explicit-force escalation with descendant fixtures and the existing view lifecycle. Each
+  slice runs review and the full matrix. Linux report process groups remain unsupported until
+  an equivalent ownership implementation is tested; macOS is the approved initial platform.
 - **V15d:** Add five-minute idle expiry, visible-inspection activity and replacement/shutdown
   lifecycle coverage. Commit: `feat: expire idle report viewers`.
 No slice enables tool HTML in the app origin; V17 owns framing and the drawer integration.

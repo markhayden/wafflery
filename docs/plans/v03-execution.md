@@ -966,3 +966,20 @@ the usual five-file budget because it connects process close intent, supervision
 observations and the independent HTTP fixture together. The shared-lock full matrix passed:
 203 Rust tests (three ignored), 41 UI unit tests, two asset tests, 164 browser cases (four opt-in
 skips), fmt, clippy, typecheck, Storybook, reproducible assets and release build.
+
+### V15c1 owned report process groups
+
+The new macOS group owner retains its leader unreaped while observing exit through kqueue
+and checking bounded membership output from the fixed system `ps` executable. Unknown,
+malformed, timed-out or truncated observations preserve ownership. Stopped members count as
+live; only an observed all-zombie group can release its leader identity. Later signals are
+rejected. Helper observation is owned by an independent bounded worker, including cancellation
+of its caller. The existing pinned nix dependency enables its event and signal features.
+
+Four new tests first failed on the missing owner, then passed: strict observations, owned
+SIGTERM/reap, deterministic exit before event registration, and observer failure/overflow/
+timeout. Review found no blockers; live descendant integration remains V15c2. The shared-lock
+full matrix passed: 207 Rust tests (three ignored), 41 UI unit tests, two asset tests, 164 browser
+cases (four opt-in skips), fmt, clippy, typecheck, Storybook, reproducible assets and release build.
+The current report worker remains unchanged until V15c2. Module wiring, dependency features,
+owner, tests and design notes stay together despite exceeding the usual five-file budget.
