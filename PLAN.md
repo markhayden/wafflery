@@ -5,7 +5,7 @@ published main and manages subsequent pushes. The [CI gate](docs/plans/ci.md) ru
 full matrix on `macos-15`; its [checkpoint](docs/reviews/2026-11-01-ci.md) separates local checks
 from the first hosted run. Local merges remain subject to review; no automatic pushes or tags.
 
-Status: M0–M3 and V01–V19 complete; M5 v0.4 plan awaiting owner approval.
+Status: M0–M3 and V01–V19 complete; M5 v0.4 approved on 2026-11-02.
 Current implementation evidence: [M0 checkpoint](docs/reviews/2026-10-31-m0-checkpoint.md) and
 [M1 checkpoint](docs/reviews/2026-10-31-m1-checkpoint.md), and
 [M2 checkpoint](docs/reviews/2026-10-31-m2-checkpoint.md), and
@@ -32,8 +32,7 @@ requirements below describe the completed foundation checkpoint, not the current
 The [v0.3 client task list](#v03-client--proposed-task-list) is complete through V19 at `851b850`;
 hosted CI run `41438647360` passed on 2026-11-02. The live client requires exactly v0.3 and
 enforces paid dispatch through owned preparations, bound estimates and explicit browser Run.
-See [execution checkpoints](docs/plans/v03-execution.md). The M5 proposal below is plan-only,
-awaiting owner approval.
+See [execution checkpoints](docs/plans/v03-execution.md). The M5 plan below was approved on 2026-11-02; implementation proceeds in task order.
 
 ## Outcome
 
@@ -1104,7 +1103,7 @@ or publish a release as a side effect of completing the foundation.
 
 ## M5 — v0.4 operations and portable pipeline experiments
 
-**Status: proposed, plan only; owner approval required before implementation.** Goal 1
+**Status: owner approved for implementation, 2026-11-02.** Goal 1
 (V01–V19) is complete at `851b850`, with hosted CI run `41438647360` green. This milestone
 adopts v0.4; it does not reopen the completed v0.3 client or authorize distribution work.
 
@@ -1113,13 +1112,14 @@ adopts v0.4; it does not reopen the completed v0.3 client or authorize distribut
 Normative source: table-manners main `d1c49a7`, `CONTRACT.md` 2.3, 3–3.4, 4.5, 4.7–4.9,
 5–5.2 and 10; `schemas/core/{description,result,session,refusal,invocation-bundle}.json`,
 `schemas/operations/*`, and MAPPING's v0.4 table. Peer integration targets are Rascal
-`m10-operations` at `b5cae39` and Squint `m10-v0.4` at `f2f2e3e`. Read those revisions without
+main at `eed6397` (M10 merged, exact v0.4 pin; m10 tag pending CI) and Squint main at
+`6dd1e3a` (M10 merged, exact v0.4 pin). Read those revisions without
 changing sibling worktrees. The coordinator must approve replacement revisions. Hub research
 in `../wafflemaker/docs/v04-design.md` explains intent; the final contract takes precedence
 where its earlier examples differ. The coordinator confirmed crates.io publication of table-manners
 `0.4.0`, tagged `v0.4.0` at the reviewed `d1c49a7`. Use the published exact pin directly; no
 temporary source dependency is needed. Peer release status still requires verification, not inference
-from a branch name. Owner approval of M5 remains pending.
+from a branch name. These peer revisions supersede the earlier branch-head targets.
 
 Completion means a person can run Line, inspect its Location, send it to Rasterize, save the
 native Mask, and run Feather with changed parameters without rerunning a finder, filler or
@@ -1625,8 +1625,9 @@ Safari manual coverage separately, never substitute WebKit as proof of Safari.
 
 ### Approval, checks and remaining coordination
 
-This proposal is committed on `plan-m5-v04` and left unmerged for owner review. After approval,
-implementation follows the dependency order above on short branches. Every coherent slice runs the
+The owner approved `plan-m5-v04` on 2026-11-02, including the published v0.4 pin update.
+The coordinator supplied the main revisions recorded above. Merge this plan locally, then follow
+the dependency order above on short branches. Every coherent slice runs the
 full matrix under `../wafflemaker/scripts/heavy.sh wafflery <command>` and receives review before
 local merge; the coordinator alone scans, pushes and watches hosted CI. A red main takes precedence
 before subsequent merges. UI slices include Storybook, keyboard/error states and Playwright regions
@@ -1634,8 +1635,8 @@ using the existing shared visual policy; do not loosen tolerances to hide layout
 matching docs in each code commit, not only at closeout. Plan-only edits use diff/link/consistency
 checks rather than rerunning unchanged code.
 
-No new shared-contract ruling or publication wait is needed. Owner approval remains the build
-gate; real-peer revision changes remain coordinator-owned. Ambiguous chain provenance is deliberately refused under
+No new shared-contract ruling or publication wait is needed. Owner approval is recorded above;
+real-peer revision changes remain coordinator-owned. Ambiguous chain provenance is deliberately refused under
 the existing manifest rather than extending it locally; broader chain expressiveness would need a
 coordinator ruling. Portable Plan/Series/BandProfile, artifact enumeration, hidden provenance replay,
 agent orchestration, evaluation suites and distribution remain outside M5. The host only lists
