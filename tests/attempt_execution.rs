@@ -460,7 +460,7 @@ async fn cancelled_runs_are_recovered_from_progress_or_the_runs_list() {
         let saved = tokio::time::timeout(std::time::Duration::from_secs(8), async {
             loop {
                 let saved = c.attempts.get(&request.id).await.unwrap();
-                if saved.preservation["contract"] == "incomplete"
+                if saved.preservation["contract"] == "complete"
                     && saved.observations.get("session_after").is_some()
                 {
                     break saved;
@@ -477,8 +477,12 @@ async fn cancelled_runs_are_recovered_from_progress_or_the_runs_list() {
             ),
         };
         assert_eq!(saved.execution, "cancelled");
+        assert_eq!(
+            saved.result.as_ref().unwrap()["images"]["in"][0]["image"],
+            saved.arguments["source"]["expect"]
+        );
         assert!(
-            saved
+            !saved
                 .notices
                 .iter()
                 .any(|notice| notice.contains("input evidence is incomplete"))

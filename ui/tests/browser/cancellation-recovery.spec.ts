@@ -10,11 +10,12 @@ test("associated cancellation preserves the result and session evidence", async 
   await expect(page.getByRole("status").filter({ hasText: "cancelled" })).toBeVisible();
   await page.getByRole("button", { name: "Inspect run" }).click();
   const drawer = page.getByRole("dialog");
-  await expect(drawer).toContainText("Contract evidence: incomplete");
+  await expect(drawer).toContainText("Contract evidence: complete");
   await drawer.getByRole("button", { name: "Session", exact: true }).click();
   await expect(drawer.getByLabel("Saved evidence")).toContainText('"session_after"');
   await expect(drawer.getByLabel("Saved evidence")).toContainText('"reconciled_from"');
   await drawer.getByRole("button", { name: "Raw result", exact: true }).click();
   await expect(drawer.getByLabel("Saved evidence")).toContainText('"status": "cancelled"');
+  await expect(drawer.getByLabel("Saved evidence")).toContainText('"slot": "source"');
   await page.screenshot({ path: "test-results/cancellation-session.png" });
 });

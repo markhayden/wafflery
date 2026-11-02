@@ -1769,12 +1769,26 @@ order, and names of requirements actually used. Full matrix passed: fmt, clippy,
 (4 opt-in ignored), 55 UI unit tests, 2 asset tests, Storybook, byte-identical check-ui builds,
 release build and 226 Chromium/WebKit tests (8 opt-in skipped). Live peers still use exactly v0.3.
 
-**Next preparation slice — resolve task inputs before waiting:** `testkit/scenarios.rs`,
-`testkit/paid.rs`, `tests/fake_wire.rs`, and this plan. Resolve image identities before a synthetic
-wait or provider reservation; preserve those inputs when cancelled. A failure before resolution
-stays invalid even if cancellation arrives before saving, with no MCP reply to the cancelled
-request. Verify through the independent stdio peer, including a deterministic rejection/cancel
-race, before wiring the invocation helper at cutover. No live host behavior changes in this slice.
+**Task resolution preparation (split before merge):** the free-task slice changes exactly
+`testkit/scenarios.rs`, `tests/fake_wire.rs`, `tests/attempt_execution.rs`,
+`ui/tests/browser/cancellation-recovery.spec.ts`, and this plan. Resolve image identities before a
+synthetic wait and preserve those inputs when cancelled. Any failure before resolution, including
+file I/O, stays invalid even if cancellation arrives before saving, with no MCP reply to the
+cancelled request. A deterministic rejection/cancel gate verifies this through the independent
+stdio peer. Host and browser recovery checks now require complete matching input evidence rather
+than the previous missing inputs. Partial-evidence scenarios remain independently covered.
+
+The targeted stdio/recovery regressions pass. Review approved the preparation; the initial matrix
+found the old recovery expectation and the subsequent browser pass reproduced its UI counterpart
+before being stopped to apply that same correction. Final review approved; the full matrix passed:
+fmt, clippy, 358 Rust tests (4 opt-in ignored), 55 UI unit tests, 2 asset tests, Storybook,
+byte-identical check-ui builds, release build and 226 Chromium/WebKit tests (8 opt-in skipped).
+
+**Following preparation slice — paid input resolution:** `testkit/paid.rs`, `tests/fake_wire.rs`,
+and this plan. Share actual grant, image/frame and fingerprint checks before any synthetic provider
+reservation. The regression already demonstrated that a mismatched fingerprint was accepted;
+its fix/test are held separately until the free-task slice merges. No live host behavior changes
+or additional version support is introduced by either slice.
 
 **Checkpoint A file-budget exception (owner/coordinator, 2026-11-02):** one atomic final mechanical
 cutover commit may exceed five authored files. List its exact files here before building it. It may
@@ -1794,12 +1808,12 @@ excluded and land separately. Existing pre-v0.3 saved-history coverage stays unc
 - Host gates/test fixtures: `src/tools/mod.rs`, `src/tools/session.rs`,
   `src/tools/dispatch_transport.rs`, `src/tools/render/process_tests.rs`, `src/tools/render/tests.rs`.
 - Existing fake documents/callers: `testkit/fixtures.rs`, `testkit/main.rs`, `testkit/estimates.rs`,
-  `testkit/readiness.rs`, `testkit/scenarios.rs`, `testkit/v04_calls.rs`, `testkit/v04_schemas.rs`,
+  `testkit/readiness.rs`, `testkit/scenarios.rs`, `testkit/paid.rs`, `testkit/v04_calls.rs`, `testkit/v04_schemas.rs`,
   `testkit/v04_store.rs`; rename `testkit/v03_control.rs` to `testkit/control_peer.rs` and
   `testkit/v03_fixtures.rs` to `testkit/control_fixtures.rs`. The prepared task-invocation helper
   is wired to existing result construction here; its logic/tests land separately beforehand.
 - Rust contract tests: `tests/contract_fixtures.rs`, `tests/description_semantics.rs`,
-  `tests/mcp_client.rs`, `tests/rascal_smoke.rs`, `tests/squint_smoke.rs`, `tests/tool_session_api.rs`,
+  `tests/mcp_client.rs`, `tests/fake_wire.rs`, `tests/rascal_smoke.rs`, `tests/squint_smoke.rs`, `tests/tool_session_api.rs`,
   `tests/v04_bindings.rs`, `tests/v04_contract_fixtures.rs`, `tests/v04_results.rs`, `tests/v04_runs.rs`,
   `tests/v04_schemas.rs`, `tests/v04_wire.rs`, and the preparatory `tests/task_invocation.rs`.
   Rename `tests/v03_fixtures.rs` to `tests/control_fixtures.rs`, `tests/v03_wire.rs` to
@@ -1813,6 +1827,10 @@ excluded and land separately. Existing pre-v0.3 saved-history coverage stays unc
   `ui/tests/unit/workspace-contract.test.ts`.
 - Current-state docs: `README.md`, `ENGINEERING.md`, `docs/integration-sources.md`, `testkit/README.md`,
   and this `PLAN.md`. Historical review evidence is not rewritten.
+
+The inventory includes `testkit/paid.rs` and `tests/fake_wire.rs` before cutover edits: the paid
+result must wire the prepared invocation helper, and the independent wire assertions must verify
+its required v0.4 field. No new execution behavior is included in those mechanical edits.
 
 Generated `ui/prebuilt` output remains a separately reviewed build commit. If a further authored
 file is required, amend this inventory with its reason before editing it; do not turn the exception

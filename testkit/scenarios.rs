@@ -196,6 +196,7 @@ pub fn execute(
             let _ = writeln!(journal, "{}", json!({"step":progress,"message":text}));
         }
     };
+    let mut inputs_resolved = false;
     let operation = (|| -> Result<(), Box<dyn std::error::Error>> {
         fs::create_dir_all(&directory)?;
         writeln!(
@@ -210,6 +211,10 @@ pub fn execute(
         if scenario == "exit-during-call" {
             std::process::exit(0);
         }
+        let roots = state.lock().unwrap().allow_dirs.clone();
+        let (images, output_reference, output_bytes) = prepare_images(params, &roots)?;
+        run["images"]["in"] = images;
+        inputs_resolved = true;
         if matches!(scenario.as_str(), "held" | "estimates") {
             notify("Waiting in the offline test tool");
             let mut heartbeat = Instant::now();
@@ -255,16 +260,6 @@ pub fn execute(
                 }
             }
         }
-        let roots = state.lock().unwrap().allow_dirs.clone();
-        let (input_reference, output_reference, output_bytes) = mark(params, &roots)?;
-        run["images"]["in"] = json!([{"slot":"source","role":"source","image":input_reference}]);
-        for item in params["references"].as_array().into_iter().flatten() {
-            let (reference, _, _) = mark(&json!({"source":item}), &roots)?;
-            run["images"]["in"]
-                .as_array_mut()
-                .unwrap()
-                .push(json!({"slot":"references","role":"reference","image":reference}));
-        }
         if scenario == "data-only" {
             run["images"]["out"] = json!([]);
             run["body"] =
@@ -288,17 +283,27 @@ pub fn execute(
         notify("Illustrative test band saved");
         Ok(())
     })();
+    if operation.is_err() && !inputs_resolved && scenario == "rejected-input-held" {
+        notify("Inputs rejected; waiting before save");
+        while !cancelled.load(Ordering::Acquire) {
+            std::thread::sleep(Duration::from_millis(5));
+        }
+    }
     let is_cancelled = cancelled.load(Ordering::Acquire);
-    run["status"] = json!(if is_cancelled {
+    run["status"] = json!(if operation.is_err() && !inputs_resolved {
+        "invalid"
+    } else if is_cancelled {
         "cancelled"
     } else if operation.is_err() {
         "error"
     } else {
         "completed"
     });
-    if !is_cancelled && let Err(error) = operation {
+    if (!is_cancelled || !inputs_resolved)
+        && let Err(error) = operation
+    {
         let io_failure = error.downcast_ref::<io::Error>().is_some();
-        run["status"] = json!(if io_failure { "error" } else { "invalid" });
+        run["status"] = json!(if inputs_resolved { "error" } else { "invalid" });
         run["error"] = json!({"code":if io_failure {"io"} else {"input"},"retryable":false,"reason":error.to_string()});
     }
     if let Some(status) = scenario
@@ -332,7 +337,7 @@ pub fn execute(
     run["finished"] = json!(timestamp());
     run["duration_ms"] = json!(started.elapsed().as_millis() as u64);
     if let Err(error) = fs::write(directory.join("run.json"), run.to_string()) {
-        run["status"] = json!("error");
+        run["status"] = json!(if inputs_resolved { "error" } else { "invalid" });
         run["error"] = json!({"code":"io","retryable":false,"reason":error.to_string()});
     }
     {
@@ -382,6 +387,21 @@ pub fn execute(
         std::thread::sleep(Duration::from_millis(600));
         std::process::exit(0);
     }
+}
+
+/// Resolve every input before waiting or reserving synthetic provider spend. The
+/// candidate is tiny deterministic test output; preparing it has no side effects.
+pub(super) fn prepare_images(
+    params: &Value,
+    roots: &[PathBuf],
+) -> Result<(Value, Value, Vec<u8>), Box<dyn std::error::Error>> {
+    let (source, candidate, bytes) = mark(params, roots)?;
+    let mut images = vec![json!({"slot":"source","role":"source","image":source})];
+    for item in params["references"].as_array().into_iter().flatten() {
+        let (reference, _, _) = mark(&json!({"source":item}), roots)?;
+        images.push(json!({"slot":"references","role":"reference","image":reference}));
+    }
+    Ok((json!(images), candidate, bytes))
 }
 
 fn mark(

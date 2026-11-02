@@ -183,6 +183,20 @@ fn cancellation_persists_a_cancelled_run_without_an_mcp_call_result() {
                 serde_json::from_str(response["result"]["contents"][0]["text"].as_str().unwrap())
                     .unwrap();
             if runs["runs"][0]["status"] == "cancelled" {
+                let saved = peer.call(
+                    5,
+                    "resources/read",
+                    json!({"uri":runs["runs"][0]["resource"]}),
+                );
+                let run: Value =
+                    serde_json::from_str(saved["result"]["contents"][0]["text"].as_str().unwrap())
+                        .unwrap();
+                assert_eq!(
+                    run["images"]["in"].as_array().unwrap().len(),
+                    1,
+                    "cancellation must keep the already resolved source"
+                );
+                assert_eq!(run["images"]["in"][0]["image"]["width"], 160);
                 break;
             }
             assert!(std::time::Instant::now() < deadline);
@@ -391,4 +405,52 @@ fn a_queued_cancel_keeps_its_claim_and_does_not_allocate_a_run() {
             1
         );
     }
+}
+
+#[test]
+fn rejected_inputs_stay_invalid_when_cancelled_before_the_run_is_saved() {
+    use base64::{Engine, engine::general_purpose::STANDARD};
+    let temp = tempfile::tempdir().unwrap();
+    let mut peer = Peer::start(temp.path(), "rejected-input-held");
+    peer.initialize();
+    peer.send(json!({"jsonrpc":"2.0","id":3,"method":"tools/call","params":{
+        "name":"mark_band","arguments":{"source":{"inline":{"media_type":"image/png","data":STANDARD.encode(b"not a PNG")}},"label":"reject before cancellation"},
+        "_meta":{"progressToken":3}}}));
+    loop {
+        let message = peer.messages.recv_timeout(Duration::from_secs(5)).unwrap();
+        assert_eq!(message["method"], "notifications/progress", "{message}");
+        if message["params"]["message"] == "Inputs rejected; waiting before save" {
+            break;
+        }
+    }
+    peer.send(json!({"jsonrpc":"2.0","method":"notifications/cancelled","params":{"requestId":3}}));
+    // Cancelling releases the test-only gate; no sleep controls this race.
+    let deadline = std::time::Instant::now() + Duration::from_secs(5);
+    loop {
+        let response = peer.call(4, "resources/read", json!({"uri":"sample-lab://runs"}));
+        let runs: Value =
+            serde_json::from_str(response["result"]["contents"][0]["text"].as_str().unwrap())
+                .unwrap();
+        if runs["runs"][0]["status"] == "invalid" {
+            let saved = peer.call(
+                5,
+                "resources/read",
+                json!({"uri":runs["runs"][0]["resource"]}),
+            );
+            let run: Value =
+                serde_json::from_str(saved["result"]["contents"][0]["text"].as_str().unwrap())
+                    .unwrap();
+            assert_eq!(run["status"], "invalid");
+            assert_eq!(run["error"]["code"], "input");
+            assert!(run["images"]["in"].as_array().unwrap().is_empty());
+            break;
+        }
+        assert!(std::time::Instant::now() < deadline);
+        std::thread::sleep(Duration::from_millis(10));
+    }
+    assert!(
+        peer.messages
+            .recv_timeout(Duration::from_millis(100))
+            .is_err()
+    );
 }
