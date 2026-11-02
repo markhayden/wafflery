@@ -579,7 +579,7 @@ only confirmed force sends SIGKILL to that pinned group. Force acknowledgement i
 separate control reply, not an inferred transient status. A wait error never proves exit.
 
 The low-level process layer has no host route. V14b2 retains handles in the coordinator through
-request cancellation and shutdown. Report content remains gated on idle expiry and isolation.
+request cancellation and shutdown. Report content remains gated on isolation and framing.
 Synthetic renderer fixtures exercise process behavior without calling a provider.
 
 V14b2 retains report handles in the coordinator before replying to an open request. Each saved
@@ -608,7 +608,7 @@ and closes stdin on failure. Process state retains explicit close intent so norm
 cannot become a startup error when notifications coalesce. Failed supervision preserves its
 diagnostic even after the child exits; saved run evidence is untouched. Independent HTTP
 fixtures exercise actual listening, exact frame-ancestor response policy and EOF shutdown.
-Report addresses and content remain unavailable to the browser; idle expiry remains V15d.
+Report addresses and content remain unavailable to the browser until the isolation/framing gates.
 
 V15c1 introduces the macOS group owner used by V15c2's lifecycle worker. Each child is
 started in its own process group. The owner observes leader exit with kqueue without reaping
@@ -625,4 +625,9 @@ nonblocking exit event every 100 ms; only exited/unwatchable leaders need a memb
 An early leader exit with surviving descendants starts SIGTERM cleanup and keeps the slot
 until the group drains, including after explicit force. Failed observations retain the group.
 Report processes currently require macOS; unsupported platforms refuse before spawning.
-V15d still owns idle expiry.
+V15d attaches a five-minute in-memory idle deadline to each view. Opening the same active view
+or authenticated `POST /api/views/{id}/activity` with `{}` renews it; state reads do not. Activity
+after the deadline cannot resurrect the view, even if the timer has not yet run. Expiry closes
+the process through the same owned EOF/SIGTERM lifecycle, without automatic force, and exposes
+`idle_expired` for a later UI explanation. Closed/replaced IDs reject activity. There is no
+durable lease or caller-supplied TTL. V17b will send activity only during visible inspection.

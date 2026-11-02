@@ -1,6 +1,7 @@
 //! Resolve declared argv from saved evidence. No render executes during resolution.
 #[cfg(target_os = "macos")]
 pub mod group;
+pub mod idle;
 pub mod process;
 pub mod readiness;
 pub mod supervision;

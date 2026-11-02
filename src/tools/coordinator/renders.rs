@@ -1,6 +1,7 @@
 use super::{Coordinator, Error, Result};
 use crate::tools::render::{
     RenderKind, ResolvedRender,
+    idle::IdleLease,
     process::{ProcessPhase, RenderProcess},
     readiness::{Readiness, ServerReadiness},
     supervision::ServerMonitor,
@@ -15,6 +16,7 @@ pub(super) struct View {
     kind: RenderKind,
     process: RenderProcess,
     server: Option<ServerMonitor>,
+    idle: IdleLease,
 }
 impl View {
     fn observation(&self) -> Value {
@@ -32,7 +34,7 @@ impl View {
         json!({"id":self.id,"attempt":self.attempt,"name":self.name,
    "kind":match self.kind {RenderKind::Server=>"server",RenderKind::Document=>"document"},
    "phase":match state.phase {ProcessPhase::Running=>if matches!(readiness, Some(Readiness::Ready(_))) {"ready"} else {"starting"},ProcessPhase::Stopping=>"stopping",ProcessPhase::NeedsForce=>"needs_force",ProcessPhase::Exited=>"exited"},
-   "exit_code":state.exit_code,"error":error,
+   "exit_code":state.exit_code,"error":error,"idle_expired":self.idle.expired(),
    "diagnostics":String::from_utf8_lossy(&state.stderr.bytes),"diagnostics_truncated":state.stderr.overflow})
     }
 }
@@ -63,7 +65,13 @@ impl Coordinator {
             && view.process.snapshot().phase != ProcessPhase::Exited
         {
             return if view.name == name && view.process.snapshot().phase == ProcessPhase::Running {
-                Ok(view.observation())
+                if !view.process.snapshot().close_requested && view.idle.touch() {
+                    Ok(view.observation())
+                } else {
+                    Err(Error::Conflict(
+                        "Report expired; wait for it to close before reopening",
+                    ))
+                }
             } else {
                 Err(Error::Conflict(
                     "Close the existing report and confirm its exit before opening another",
@@ -92,6 +100,7 @@ impl Coordinator {
         };
         let process = RenderProcess::spawn(&plan)?;
         let server = validator.map(|validator| ServerMonitor::start(process.clone(), validator));
+        let idle = IdleLease::attach(process.clone());
         let view = View {
             id,
             attempt: attempt_id.into(),
@@ -99,6 +108,7 @@ impl Coordinator {
             kind: plan.kind(),
             process,
             server,
+            idle,
         };
         let observation = view.observation();
         views.insert(attempt_id.into(), view);
@@ -112,6 +122,21 @@ impl Coordinator {
             .find(|view| view.id == id)
             .map(View::observation)
             .ok_or(Error::Missing("Report view is no longer available"))
+    }
+    pub async fn render_activity(&self, id: &str) -> Result<Value> {
+        if self.stopping.load(Ordering::Acquire) {
+            return Err(Error::Conflict("Workspace is stopping"));
+        }
+        let views = self.renders.lock().await;
+        let view = views
+            .values()
+            .find(|view| view.id == id)
+            .ok_or(Error::Missing("Report view is no longer available"))?;
+        let state = view.process.snapshot();
+        if state.phase != ProcessPhase::Running || state.close_requested || !view.idle.touch() {
+            return Err(Error::Conflict("Report is closing or expired"));
+        }
+        Ok(view.observation())
     }
     pub async fn close_render(&self, id: &str, force: bool, confirmed: bool) -> Result<Value> {
         if force && !confirmed {

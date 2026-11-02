@@ -17,6 +17,7 @@ pub(super) fn router(coordinator: Arc<Coordinator>, origin: &str) -> Router {
     Router::new()
         .route("/api/attempts/{id}/views", post(open))
         .route("/api/views/{id}", get(state))
+        .route("/api/views/{id}/activity", post(activity))
         .route("/api/views/{id}/close", post(close))
         .route("/api/views/{id}/force-close", post(force))
         .with_state(Views {
@@ -50,6 +51,13 @@ async fn open(
 }
 async fn state(State(s): State<Views>, Path(id): Path<String>) -> Result<Json<Value>, ApiError> {
     Ok(Json(s.coordinator.render_state(&id).await?))
+}
+async fn activity(
+    State(s): State<Views>,
+    Path(id): Path<String>,
+    Json(_): Json<Empty>,
+) -> Result<Json<Value>, ApiError> {
+    Ok(Json(s.coordinator.render_activity(&id).await?))
 }
 async fn close(
     State(s): State<Views>,

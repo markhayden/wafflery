@@ -1002,3 +1002,20 @@ the shared-lock full matrix passed: 209 Rust tests (three ignored), 41 UI unit t
 tests, 164 browser cases (four opt-in skips), fmt, clippy, typecheck, Storybook, reproducible
 assets and release build. The lifecycle worker, group stdio transfer, independent descendant
 fixture, tests and docs form one cohesive slice beyond the usual five-file budget.
+
+### V15d idle viewer expiry
+
+Every view now has an in-memory five-minute idle deadline. Explicit activity or reopening the
+same active view renews it; status polling does not. Renewal and expiry are atomic, and late
+activity cannot revive a closed/expired view. Expiry requests the same graceful owned-group
+close and does not force-kill. An `idle_expired` observation explains closure without changing
+the saved run. The browser's visible-inspection activity wiring remains V17b.
+
+Three new idle tests and an activity API test first failed, then passed. They cover deadline
+renewal, old-timer races, late rejection, autonomous cleanup of a real abandoned renderer,
+strict authentication/body validation and closed/replaced IDs. Review found no blockers.
+The shared-lock full matrix passed: 213 Rust tests (three ignored), 41 UI unit tests, two asset
+tests, 164 browser cases (four opt-in skips), fmt, clippy, typecheck, Storybook, reproducible
+assets and release build. The lease, coordinator/API wiring, shared process fixture access and
+tests remain together beyond the usual file budget. V15 is complete; content isolation and
+visible report controls remain V16/V17.

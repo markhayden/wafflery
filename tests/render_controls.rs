@@ -442,3 +442,41 @@ async fn server_startup_timeout_bad_url_and_early_exit_preserve_the_run() {
     }
     h.finish().await;
 }
+
+#[tokio::test]
+async fn report_activity_is_private_strict_and_cannot_revive_closed_or_replaced_views() {
+    let h = Host::new().await;
+    let (_, view) = h
+        .request("POST", "/api/attempts/saved/views", json!({"name":"hold"}))
+        .await;
+    let id = view["id"].as_str().unwrap();
+    let path = format!("/api/views/{id}/activity");
+    assert_eq!(
+        h.call("POST", &path, json!({}), "wrong", "http://127.0.0.1:4811")
+            .await
+            .0,
+        StatusCode::UNAUTHORIZED
+    );
+    assert_eq!(
+        h.request("POST", &path, json!({"ttl":86400})).await.0,
+        StatusCode::UNPROCESSABLE_ENTITY
+    );
+    let (status, active) = h.request("POST", &path, json!({})).await;
+    assert_eq!(status, StatusCode::OK);
+    assert_eq!(active["idle_expired"], false);
+    h.request("POST", &format!("/api/views/{id}/close"), json!({}))
+        .await;
+    assert_eq!(
+        h.request("POST", &path, json!({})).await.0,
+        StatusCode::CONFLICT
+    );
+    let (_, replacement) = h
+        .request("POST", "/api/attempts/saved/views", json!({"name":"hold"}))
+        .await;
+    assert_ne!(replacement["id"], view["id"]);
+    assert_eq!(
+        h.request("POST", &path, json!({})).await.0,
+        StatusCode::NOT_FOUND
+    );
+    h.finish().await;
+}

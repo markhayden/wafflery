@@ -835,7 +835,7 @@ V14 execution slices (full matrix and review per slice; rollback in reverse orde
   Commit: `feat: coordinate saved report processes`.
 The first slice cannot execute a render and introduces no route or browser policy change.
 
-**V15 — Manage server readiness and lifetime.** Pass the host's exact origin through the declared
+**V15 — Manage server readiness and lifetime. Complete.** Pass the host's exact origin through the declared
 `--frame-ancestor` argv placeholder. Accept exactly one stdout URL line with http, literal
 127.0.0.1 and a valid port; reject credentials, redirects outside that origin and extra stdout.
 Honor `ready_timeout_s` up to 60 seconds. Keep at most one viewer per run. Use an in-memory
@@ -867,7 +867,7 @@ V15 execution slices (full matrix and review per slice; rollback in reverse orde
   explicit-force escalation with descendant fixtures and the existing view lifecycle. Each
   slice runs review and the full matrix. Linux report process groups remain unsupported until
   an equivalent ownership implementation is tested; macOS is the approved initial platform.
-- **V15d:** Add five-minute idle expiry, visible-inspection activity and replacement/shutdown
+- **V15d: Complete.** Add five-minute idle expiry, visible-inspection activity and replacement/shutdown
   lifecycle coverage. Commit: `feat: expire idle report viewers`.
 No slice enables tool HTML in the app origin; V17 owns framing and the drawer integration.
 

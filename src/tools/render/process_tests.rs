@@ -8,7 +8,7 @@ use std::{
     sync::OnceLock,
     time::Duration,
 };
-fn setup(mode: &str) -> (tempfile::TempDir, ResolvedRender) {
+pub(crate) fn setup(mode: &str) -> (tempfile::TempDir, ResolvedRender) {
     static BIN: OnceLock<PathBuf> = OnceLock::new();
     let bin = BIN.get_or_init(|| {
         assert!(

@@ -173,4 +173,4 @@ async fn drain(
 }
 #[cfg(test)]
 #[path = "process_tests.rs"]
-mod tests;
+pub(super) mod tests;
