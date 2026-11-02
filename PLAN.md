@@ -942,7 +942,8 @@ V17b execution slices (review and full matrix per slice; rollback in reverse ord
   another renderer. Keep one ownership manager across drawer mounts; serialize open/replacement/
   close, retain late-open ownership after dismissal, and reject malformed observations/frame
   URLs. Lost acknowledgements remain uncertain; null lookup never proves an outstanding open
-  failed. Block replacement until ownership is positively recovered or the host is restarted.
+  failed. Lost opens require a host restart; recover lost closes only by the exact retained view
+  ID. Never adopt another tab's current view as evidence that an uncertain request settled.
   Prove ordering with deferred-response tests.
   Commit: `feat: own report drawer lifetimes`.
 - **V17b2:** Shared-drawer report selector, embedded wrapper, loading/error/diagnostic states and

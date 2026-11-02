@@ -1193,3 +1193,23 @@ correction, retaining the production guard. No product change. Twenty stress rou
 launches), independent review and the full shared-lock matrix passed: 241 Rust tests, 41 UI unit,
 two asset and 180 browser cases (three Rust ignores/four browser skips), fmt, clippy, typecheck,
 Storybook, reproducible UI and release build. V17b stays on its branch until hosted CI is green.
+
+## V17b1: report ownership across drawer lifetimes
+
+The typed private client validates observations, exact view identities and host-relative frame
+grants. The workspace owner serializes mutations and retains ownership through dismissal,
+replacement and delayed replies. Lost opens require host restart; lost closes read the exact
+retained ID, never a different tab's current view. Definite pre-spawn 400/404/409/422 refusals allow
+a later explicit request. Older errors/status replies cannot replace a newer selection. Only an
+inspected ready frame sends activity; the visibility adapter and UI remain V17b2.
+
+Deferred-response tests cover these transitions and force confirmation; malformed observation
+and frame tests guard the API boundary. The read-only authenticated current-view endpoint was
+verified against the independent peer before, during and after a view's lifetime. The refusal
+and stale-error tests were observed red before their fixes. This coherent API/ownership slice
+uses eight authored implementation/test files plus matching docs; split UI wiring is V17b2.
+Rollback this slice before removing the V17a frame endpoints; no stored evidence changes.
+
+Verification: focused tests, independent review and the full matrix passed: 242 Rust tests
+(three ignored), 51 UI unit tests, two asset tests and 180 browser cases (four skips), plus fmt,
+clippy, typecheck, Storybook, reproducible UI and release build. Hold merge until hosted run 41419440339 confirms the preceding spawn-isolation correction.

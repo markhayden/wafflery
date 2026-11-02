@@ -729,3 +729,13 @@ navigation, popups, form submissions and unauthenticated workspace requests in C
 A real second loopback listener receives no request when the report links or redirects there;
 the wrapper reports the frame-src violation. This is browser isolation, not an OS sandbox for
 the renderer executable. Report-origin behavior remains the tool's responsibility.
+
+V17b1 adds a typed private report client and one workspace-level ownership manager, retained
+across drawer mounts. It serializes open/replacement/close, closes late successful opens after
+dismissal, and rejects stale status/frame responses. The authenticated attempt-view lookup
+observes only: it neither starts a renderer nor renews its lease. Lost opens remain unresolved
+until host restart because even a current-view lookup cannot prove a pending POST settled;
+lost closes recover only through their retained view identity. Definite pre-spawn refusals permit
+a later explicit open, with no automatic retry. Force remains an explicit confirmed action for
+a positively observed needs-force state. The visible drawer and document-visibility activity
+wiring follow in V17b2; this ownership layer alone does not expose new UI controls.

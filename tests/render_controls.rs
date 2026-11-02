@@ -484,3 +484,30 @@ async fn report_activity_is_private_strict_and_cannot_revive_closed_or_replaced_
     );
     h.finish().await;
 }
+
+#[tokio::test]
+async fn current_report_lookup_is_private_and_never_starts_or_replaces_a_view() {
+    let h = Host::new().await;
+    let path = "/api/attempts/saved/views";
+    assert_eq!(
+        h.call("GET", path, json!({}), "wrong", "http://127.0.0.1:4811")
+            .await
+            .0,
+        StatusCode::UNAUTHORIZED
+    );
+    let (status, empty) = h.request("GET", path, json!({})).await;
+    assert_eq!(status, StatusCode::OK);
+    assert_eq!(empty, json!({"view":null}));
+    let opened = h.request("POST", path, json!({"name":"document"})).await.1;
+    let id = opened["id"].as_str().unwrap();
+    h.state(id, "ready").await;
+    let (_, current) = h.request("GET", path, json!({})).await;
+    assert_eq!(current["view"]["id"], id);
+    assert_eq!(current["view"]["phase"], "ready");
+    h.request("POST", &format!("/api/views/{id}/close"), json!({}))
+        .await;
+    let (_, current) = h.request("GET", path, json!({})).await;
+    assert_eq!(current["view"]["id"], id);
+    assert_eq!(current["view"]["phase"], "exited");
+    h.finish().await;
+}

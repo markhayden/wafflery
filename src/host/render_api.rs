@@ -15,7 +15,7 @@ struct Views {
 }
 pub(super) fn router(coordinator: Arc<Coordinator>, origin: &str) -> Router {
     Router::new()
-        .route("/api/attempts/{id}/views", post(open))
+        .route("/api/attempts/{id}/views", post(open).get(current))
         .route("/api/views/{id}", get(state))
         .route("/api/views/{id}/activity", post(activity))
         .route("/api/views/{id}/close", post(close))
@@ -75,5 +75,11 @@ async fn force(
         s.coordinator
             .close_render(&id, true, body.confirmed)
             .await?,
+    ))
+}
+
+async fn current(State(s): State<Views>, Path(id): Path<String>) -> Result<Json<Value>, ApiError> {
+    Ok(Json(
+        serde_json::json!({"view": s.coordinator.current_render(&id).await?}),
     ))
 }

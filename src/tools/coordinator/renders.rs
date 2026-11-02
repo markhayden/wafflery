@@ -95,6 +95,16 @@ async fn close_owned_view(
     }
 }
 impl Coordinator {
+    pub async fn current_render(&self, attempt: &str) -> Result<Option<Value>> {
+        self.attempts.get(attempt).await?;
+        Ok(self
+            .renders
+            .lock()
+            .await
+            .get(attempt)
+            .map(View::observation))
+    }
+
     pub async fn open_render(&self, attempt_id: &str, name: &str, origin: &str) -> Result<Value> {
         // Linearize shutdown and opens; store ownership before returning to a cancellable requester.
         let _submission = self.submission.lock().await;
