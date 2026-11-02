@@ -824,7 +824,7 @@ attempt selection independent of the edited draft. Depends: V02/V04a.
 Commit: `feat: launch declared run renderers`.
 
 V14 execution slices (full matrix and review per slice; rollback in reverse order):
-- **V14a:** Resolve a declared render from saved attempt evidence, validate its registered
+- **V14a: Complete.** Resolve a declared render from saved attempt evidence, validate its registered
   executable, authorized run directory, whole-argument placeholders and host framing origin.
   Build the minimal-environment command without spawning it. Verify malformed commands, path
   escapes, spaces and literal shell metacharacters. Commit: `feat: resolve saved run render commands`.

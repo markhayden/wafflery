@@ -883,3 +883,19 @@ edits. All 120 acknowledgement repetitions passed, followed by the complete shar
 (183 Rust tests, three ignored; 41 UI units; two asset tests; 164 browser cases, four skipped).
 Review passed. No production code or assets changed. V14 is split into command resolution and
 process ownership so the next execution boundary can be reviewed before it is connected.
+
+### V14a saved render command resolution
+
+The resolver selects the render from saved evidence and builds literal argv for the serving
+client's canonical executable. It checks action/tool attribution, registered run-directory
+access, whole-argument substitution, the exact host origin, timeout shape and command bounds.
+An open directory handle permits a device/inode recheck before launch. A focused red regression
+caught re-canonicalization silently following changed registration symlinks; it now refuses
+those redirects at both resolution and command construction. No child, route or frame is opened.
+
+Six focused Rust checks cover server/document forms, spaces and shell metacharacters, malformed
+commands/origins, unavailable/escaped directories, explicit authorized copies and redirected
+registration paths. Review and the shared-lock full matrix passed: 189 Rust tests (three ignored),
+41 UI unit tests, two asset tests, 164 Chromium/WebKit cases (four opt-in skips), fmt, clippy,
+typecheck, Storybook, reproducible assets and release build. This slice adds no dependencies, library
+migration or UI assets. Roll it back after dependent process/viewer slices.

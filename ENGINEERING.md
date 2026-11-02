@@ -545,3 +545,26 @@ bounds, rounded upward at display precision. Estimated settled spend identifies 
 Recovery guidance never retries, increases caps or resets sessions. The setup drawer can bind to
 the saved request's tool/action; refresh and confirmed restart use that context, while draft
 inputs retain their own selected tool/action and quote lifecycle.
+
+### Declared report command boundary
+
+V14a resolves report commands from the selected saved attempt's description and result. It
+requires one matching action/render, matching tool/action evidence, and an existing absolute
+run directory within the serving client's canonical registered roots. A null, missing or
+unauthorized directory has no view; the host never guesses a replacement. An explicitly selected
+copied directory can be rendered only within those roots. Canonical registration paths may not
+silently follow a replaced symlink. The resolver retains an open directory handle and rechecks
+its device/inode and canonical path immediately before building the command.
+
+The first argv element must be the declared tool name and is replaced with the serving client's
+exact executable. Remaining arguments stay literal: only whole `{run.dir}` and server
+`{frame_ancestor}` placeholders are expanded. Embedded/unknown braces and NULs are refused.
+Every view binds its run directory; servers also bind the host's exact HTTP loopback origin.
+Commands are limited to 128 arguments and 128 KiB before and after expansion. Server readiness
+limits remain the contract's 1–60 seconds. Documents have no readiness field.
+
+Command construction uses the existing minimal base environment, with no credential/env
+requirements, API bearer or bootstrap token forwarded. It performs no shell expansion and does
+not spawn. Process ownership, output bounds and authenticated viewer routes follow in V14b–V17;
+reports remain unavailable in the UI at this slice. These path/identity checks authorize host
+operations; they do not sandbox the installed tool against filesystem changes after launch.

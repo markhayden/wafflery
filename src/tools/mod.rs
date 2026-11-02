@@ -13,6 +13,7 @@ mod materialized;
 mod prepared;
 mod probe;
 pub mod registration;
+pub mod render;
 mod session;
 
 #[derive(Debug, thiserror::Error)]
