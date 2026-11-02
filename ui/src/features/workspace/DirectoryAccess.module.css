@@ -1,0 +1,10 @@
+.access { display: grid; gap: 1rem; min-width: 0; }
+.access h3, .access h4, .access p { margin: 0; }
+.access h3 { font-size: 1rem; font-weight: 500; }
+.access h4 { font-size: .875rem; font-weight: 500; }
+.access p { font-size: .875rem; line-height: 1.6; color: var(--color-muted); }
+.access strong { color: var(--color-text); font-weight: 500; }
+.group { display: grid; gap: .5rem; min-width: 0; }
+.paths { display: grid; gap: .5rem; padding: 0 0 0 1.25rem; margin: 0; min-width: 0; }
+.paths li { min-width: 0; }
+.paths code { font-size: .8125rem; line-height: 1.6; overflow-wrap: anywhere; white-space: normal; }

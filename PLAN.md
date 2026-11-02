@@ -1592,6 +1592,10 @@ M5.02b is staged in three commits: **b1 (requested/evidence grant observation an
 **b2 (grant display, stories and browser states)**, then **b3 (setup wiring and live refresh checks)**.
 Each code commit stays within five authored files; generated prebuilt assets are a separate commit.
 Run the full matrix and independent review on the complete joined slice before merging.
+The b1 observation boundary is implemented: snapshot data comes from the serving client's validated
+registration, keeps requested/evidence lists separate, and includes no guessed effective grant.
+The targeted Rust boundary test and two UI parser tests failed first and now pass; final matrix/review
+cover all three joined commits. b2's browser tests failed first before the display/stories existed.
 The coordinator approved staging the display before M5.03: current v0.3 sessions cannot report
 `allowed_dirs`, so live effective access must say Not reported, never copy the requested set or
 pretend it is empty. Reported/narrowed/empty/loading/error states use independent stories now.
