@@ -39,6 +39,18 @@ pub(super) fn validate_observation(
     Ok(())
 }
 
+/// Validate before publishing either a resource read or an estimate-embedded observation.
+/// Requested grants belong to this owned child; previous is its last validated observation.
+pub(super) fn validate_granted_observation(
+    value: &Value,
+    tool: &Value,
+    requested: &[std::path::PathBuf],
+    previous: Option<&Value>,
+) -> Result<()> {
+    validate_observation(value, tool, previous)?;
+    super::session_grants::validate(value, requested, previous)
+}
+
 impl ToolClient {
     /// Caller holds observed_session through validation and publication. Snapshot reads use
     /// this separate short-lived lock, so a pending RPC never rolls the display backward.
@@ -57,7 +69,7 @@ impl ToolClient {
         let response = self.read_resource(&uri).await?;
         let (_, bytes) = resource_content(&response, &uri, 64 * 1024)?;
         let value = serde_json::from_slice(&bytes)?;
-        validate_observation(&value, tool, previous.as_ref())?;
+        validate_granted_observation(&value, tool, &self.descriptor.allow_dirs, previous.as_ref())?;
         self.publish_session(&mut previous, value.clone());
         Ok(value)
     }
@@ -96,5 +108,99 @@ mod tests {
         validate_observation(&uncapped, tool, None).unwrap();
         uncapped["remaining_usd"] = json!(0);
         assert!(validate_observation(&uncapped, tool, None).is_err());
+    }
+    #[test]
+    fn effective_grants_accept_narrowing_and_deny_all_but_not_extra_access() {
+        let temp = tempfile::tempdir().unwrap();
+        let root = temp.path().canonicalize().unwrap();
+        let requested = root.join("inputs");
+        let narrow = requested.join("selected");
+        std::fs::create_dir_all(&narrow).unwrap();
+        let mut value = observation();
+        let tool = value["tool"].clone();
+        for paths in [json!([requested]), json!([narrow]), json!([])] {
+            value["allowed_dirs"] = paths;
+            validate_granted_observation(&value, &tool, std::slice::from_ref(&requested), None)
+                .unwrap();
+        }
+        value["allowed_dirs"] = json!([root]);
+        let error = validate_granted_observation(&value, &tool, &[requested], None).unwrap_err();
+        assert!(error.to_string().contains("exceeds"), "{error}");
+    }
+
+    #[test]
+    fn malformed_or_noncanonical_session_grants_do_not_cross_the_boundary() {
+        let temp = tempfile::tempdir().unwrap();
+        let root = temp.path().canonicalize().unwrap();
+        let file = root.join("file");
+        std::fs::write(&file, b"not a directory").unwrap();
+        let outside = tempfile::tempdir().unwrap();
+        let link = root.join("escape");
+        std::os::unix::fs::symlink(outside.path(), &link).unwrap();
+        let mut value = observation();
+        let tool = value["tool"].clone();
+        for paths in [
+            json!([link]),
+            json!(["relative"]),
+            json!([format!("{}-other", root.display())]),
+            json!([format!("{}/", root.display())]),
+            json!([file]),
+            json!([root.join("missing")]),
+            json!([root.join(".")]),
+            json!([42]),
+            json!(null),
+        ] {
+            value["allowed_dirs"] = paths;
+            assert!(
+                validate_granted_observation(&value, &tool, std::slice::from_ref(&root), None)
+                    .is_err(),
+                "{}",
+                value["allowed_dirs"]
+            );
+        }
+    }
+
+    #[test]
+    fn observation_requires_same_access_until_explicit_replacement() {
+        let temp = tempfile::tempdir().unwrap();
+        let root = temp.path().canonicalize().unwrap();
+        let mut before = observation();
+        before["allowed_dirs"] = json!([root]);
+        let mut changed = before.clone();
+        changed["allowed_dirs"] = json!([]);
+        let error = validate_granted_observation(
+            &changed,
+            &before["tool"],
+            std::slice::from_ref(&root),
+            Some(&before),
+        )
+        .unwrap_err();
+        assert!(error.to_string().contains("effective access"), "{error}");
+        // A new owned client has no prior observation. Explicit replacement may narrow access.
+        changed["id"] = json!("cc8f5520-a822-4cdc-a9eb-f1a72018e000");
+        validate_granted_observation(&changed, &before["tool"], &[root], None).unwrap();
+    }
+    #[test]
+    fn later_ledger_observations_remain_valid_after_a_granted_directory_is_deleted() {
+        let temp = tempfile::tempdir().unwrap();
+        let root = temp.path().canonicalize().unwrap();
+        let narrow = root.join("inputs");
+        std::fs::create_dir(&narrow).unwrap();
+        let mut before = observation();
+        before["allowed_dirs"] = json!([narrow]);
+        validate_granted_observation(&before, &before["tool"], std::slice::from_ref(&root), None)
+            .unwrap();
+        std::fs::remove_dir(narrow).unwrap();
+        let mut after = before.clone();
+        after["spent_usd"] = json!(0.26);
+        after["remaining_usd"] = json!(1.7);
+        validate_granted_observation(
+            &after,
+            &before["tool"],
+            std::slice::from_ref(&root),
+            Some(&before),
+        )
+        .unwrap();
+        assert!(validate_granted_observation(&after, &before["tool"], &[root], None).is_err());
     }
 }

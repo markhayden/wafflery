@@ -16,6 +16,7 @@ mod probe;
 pub mod registration;
 pub mod render;
 mod session;
+mod session_grants;
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {

@@ -453,6 +453,13 @@ structural validation: declared groups/types, owned type namespaces, unique acti
 and direct parameter/input collisions. This applies at the shared live contract boundary, including
 discovery and renderer resolution. Composed/referenced parameter checks, callable-schema
 relationships, remaining staged validators and effective-grant display wiring follow separately.
+Session resource reads and estimate-embedded sessions now check effective directories against that
+owned child's canonical requested input grants before publishing an observation. Effective access
+may narrow or deny all, but must remain unchanged within the session. Rejected observations leave
+the prior ledger intact; an explicit replacement starts a new client and observation history.
+Filesystem checks apply to the first observation; subsequent unchanged grants remain valid if a
+directory disappears or is replaced, so the ledger stays observable. A replacement client validates
+its directories afresh. The tool still enforces access on each actual read.
 
 First-release history records Wafflery-started attempts. Tool run resources support reading
 those attempts, not heuristic adoption of unrelated runs. Automatic import of prior CLI/agent

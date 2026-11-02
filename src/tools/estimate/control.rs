@@ -3,6 +3,7 @@ use super::{ValidatedEstimate, validate_refusal};
 use crate::tools::{
     Error, Result,
     client::{Declaration, ToolClient},
+    session::validate_granted_observation,
 };
 use serde_json::{Value, json};
 use std::time::Duration;
@@ -72,6 +73,12 @@ impl ToolClient {
             cap,
             previous.as_ref().unwrap(),
             time::OffsetDateTime::now_utc(),
+        )?;
+        validate_granted_observation(
+            &quote.observation()["session"],
+            &declaration.document["tool"],
+            &self.descriptor.allow_dirs,
+            previous.as_ref(),
         )?;
         if Instant::now() >= deadline {
             return Err(Error::Conflict(
