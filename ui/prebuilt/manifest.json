@@ -37,7 +37,8 @@
     "ui/src/features/actions/ActionForm.module.css": "d2a8a7d8479e2e97a0c87dfb43fa230cbf3c43f17ace910a1f276df0acec8222",
     "ui/src/features/actions/ActionForm.stories.tsx": "9ffe2de622a09e423c6c8dd16170a312b8eed0d41302e9679a4044257f9af138",
     "ui/src/features/actions/ActionForm.tsx": "bad8d9547fe069060395292b9c043f2e52e0d87165c926a49207be266a7cc09c",
-    "ui/src/features/actions/model.ts": "cb71e5fa9e4404fbb59a7eb947d9a790040974c655d5e6856fec8ca87d804eec",
+    "ui/src/features/actions/model.ts": "fcbf69369d992928c24f3085f3e4af243082fa5b8a3ec05d9c8993247a708422",
+    "ui/src/features/actions/selection.ts": "5349724e613b1ad08f7feaaa5c1fb23f29c1351db3405494cde4a15e917ee0d1",
     "ui/src/features/workspace/Cleanup.tsx": "2ed0a0ac38e30af5b9f52d411bf63f505a2910072083a403aecc91be180e04c7",
     "ui/src/features/workspace/Examples.stories.tsx": "6d0e7e3e581eeb52d04ccc499ac2fdd21a63d2f238c3f7e1deac565ee4847ad3",
     "ui/src/features/workspace/Examples.tsx": "bfce4c5e80882a5a06170d3f421adf5f957d279d869710f44308fce1b6278b6d",
@@ -58,9 +59,9 @@
     "ui/vite.config.ts": "3aec7d6174ffca99d4d5288bea2f837d5e91335cbd7135a9682e6d18a40476b4"
   },
   "outputs": {
-    "assets/index-B6XGmmYT.js": "959f62a9d958cfa3f132937f3e9cd73681e8691a1dbaf8a9dfd1a91825794c97",
     "assets/index-DuQbatEM.css": "f09cf8623ec61e42154ffbd59c6229c58a34353d283d037640d1bdaf435c7886",
+    "assets/index-W92PQT2r.js": "8f9bcebfb20a93c4d2a9c6dc652641e3ddd5e9bd37720db69cfd07869d19b93e",
     "assets/wafflery-mark-CML0EpfM.svg": "51bc8a040e26b897a948238598b8cabdf69bf4687c2b1a70613b542de1c99f1f",
-    "index.html": "a46834087b6d3ba1141f591e298b3e929feecb242689d1fbdbf96486e518b2c1"
+    "index.html": "844c1742e8ce4f469d3cbcb568abbf8e9b7eac58a679f97ad68bea6ed5b22f9a"
   }
 }

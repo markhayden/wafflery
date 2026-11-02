@@ -17,3 +17,11 @@ describe("declared action inputs", () => {
     expect(() => encodeBindings("0.2.0", [], {})).toThrow("Unsupported");
   });
 });
+
+test("encodes ordered lists with duplicates and omits empty optional slots", () => {
+  const slots = [{slot:"references", role:"reference", required:false, many:true}];
+  expect(encodeBindings("0.3.0", slots, {references:["b","a","b"]})).toEqual({references:["b","a","b"]});
+  expect(encodeBindings("0.3.0", slots, {references:[]})).toEqual({});
+  expect(() => encodeBindings("0.3.0", [{...slots[0]!, required:true}], {references:[]})).toThrow("at least one");
+  expect(() => encodeBindings("0.3.0", slots, {references:Array(33).fill("a")})).toThrow("32 images");
+});

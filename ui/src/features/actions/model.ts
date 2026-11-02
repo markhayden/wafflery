@@ -72,11 +72,13 @@ export function encodeBindings(
   const result: Record<string, string[]> = {};
   for (const slot of slots) {
     const value = selected[slot.slot] ?? [];
-    if (value.length > 1)
+    if (!slot.many && value.length > 1)
       throw new Error(`${slot.slot} accepts at most one image.`);
-    if (slot.required && value.length !== 1)
-      throw new Error(`${slot.slot} requires one image.`);
-    result[slot.slot] = [...value];
+    if (slot.required && value.length === 0)
+      throw new Error(`${slot.slot} requires ${slot.many ? "at least one" : "one"} image.`);
+    if (value.length > 0) result[slot.slot] = [...value];
   }
+  if (Object.values(result).reduce((total, images) => total + images.length, 0) > 32)
+    throw new Error("An attempt supports at most 32 images.");
   return result;
 }

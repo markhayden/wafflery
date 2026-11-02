@@ -550,12 +550,24 @@ Files: evidence.rs, evidence tests, fake result fixtures, testkit README.
 Verify two different references, duplicates, wrong roles/order/count and empty/partial failed,
 invalid or cancelled results. Depends: V06a. Commit: `fix: associate every list image with result evidence`.
 
-**V07 — Edit and restore image lists.** Let ImageInput add/remove/reorder items according to slot
-cardinality. Save/open examples and attempt drafts retain order, roles and coordinates; no
-tool-specific `references` logic. Keep input scrolling and the Run footer stable.
-Files: ImageInput, ActionForm/model wiring, story, unit tests, browser tests (about five).
-Verify several references, removal/reorder, optional empty slots and saved-example round trip.
-Depends: V06a/V06b. Commit: `feat: edit list image slots`.
+**V07a — Preserve image selections and coordinates. Complete.** Encode declared list cardinality and omit
+empty optional slots. Store frame metadata with each selected occurrence so reorder/remove never
+separates it from its image; restore ordered selections from immutable saved inputs. Enforce the
+host's count and aggregate-byte limits before submission.
+Files: action model, selection helper, unit tests, execution notes.
+Verify duplicate identities with different frames, reorder/remove, optional omission, required
+empty refusal, aggregate limits and saved-input restoration. Depends: V06a/V06b.
+Commit: `feat: preserve ordered image selections`.
+
+**V07b — Edit and restore image lists in the workspace.** Wire list-capable ImageInput into
+ActionForm and Workspace with per-image coordinate controls. Saved examples and history drafts
+retain order and coordinates; saved-image insertion appends to lists. No tool-specific slot logic.
+Keep input scrolling and the Run footer stable. This cohesive UI slice includes component/form/
+workspace wiring, a story, browser coverage and generated assets; it is larger than the usual
+five-file budget to avoid an intermediate form that loses per-item coordinates.
+Verify several references, keyboard reorder/remove, duplicate images with different coordinates,
+optional empty slots, history and saved-example round trips. Depends: V07a.
+Commit: `feat: edit list image slots`.
 
 **Checkpoint V-A:** V01–V07, full matrix and review. Offline actions, setup and list inputs work
 against the independent peer; paid dispatch still refuses. Record exact contract/peer revisions
@@ -782,10 +794,9 @@ Depends: V-A/V-B/V-C plus published tools. Commit: `test: verify real v0.3 integ
 
 ### Approval, sequencing and rollback checkpoints
 
-This plan is the only v0.3 deliverable authorized now. The initial proposal is commit 0033af8.
-Commit these two-round review revisions as `docs: revise the v0.3 plan after review`, merge
-locally and stop for Mark's task-list approval. No v0.3 code, dependency bump or paid dispatch in
-this planning change.
+Mark approved V01–V18 on 2026-11-01 after the two review rounds. The initial proposal was
+commit 0033af8. Implementation proceeds in order with the per-task checks below; the coordinator
+reviews and pushes local merges. Paid dispatch remains blocked until its complete guard lands.
 
 After approval, use short-lived branches for V-A, V-B and V-C; V08 can follow V02 and V14
 can follow V02/V04a independently, while paid dispatch must wait for its complete guard. Each

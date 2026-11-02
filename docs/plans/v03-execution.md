@@ -323,3 +323,21 @@ complete; those now require incomplete evidence and the completed session observ
 found no blockers. The final full matrix passed: 117 Rust tests (three ignored), 18 UI unit tests,
 two asset tests and 86 browser cases (four skipped), plus fmt, clippy, typecheck, Storybook,
 asset reproducibility and release build. No product UI, dependency or contract changes.
+
+## V07 execution slices
+
+V07a owns pure selection encoding/restoration and its unit regressions. V07b wires those rules
+into the existing image editor, with coordinates carried on each selected occurrence instead of
+one projection per slot. The component exposes an item-details slot for coordinate controls;
+reordering moves the entire selection object. Examples and history restore immutable saved
+inputs. Scalars retain their existing labels and behavior; optional empty lists are omitted.
+Full matrix and review gate each slice. Roll back V07b before V07a; no storage migration.
+
+V07a verification: ordered-list encoding failed first against scalar-only cardinality. Four
+additional unit tests cover list omission/limits, duplicate occurrences with distinct coordinates,
+reorder/removal and restoration. Review found no blockers. The initial full matrix exposed an
+existing WebKit held-run test that submitted without establishing a required label value;
+[the test correction](../reviews/2026-11-01-held-run-input.md) passed 40 focused repetitions.
+The final full matrix passed: 117 Rust tests (three ignored), 22 UI unit tests, two asset tests,
+86 browser cases (four skipped), fmt, clippy, typecheck, Storybook, byte-identical UI rebuilds and
+release build. V07b owns visible per-item coordinates and saved-workspace restoration.
