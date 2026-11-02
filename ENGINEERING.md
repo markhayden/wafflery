@@ -296,7 +296,7 @@ receipt's wall-clock deadline is for display; monotonic time controls eligibilit
 HTTP controls now expose prepare, receipt lookup, discard and explicit prepared submission
 through the existing same-origin bearer boundary. The path id must match the strict saved request;
 other workspaces cannot resolve these ids. None of the preparation controls create history or
-call the action until explicit submission. V11 connects these controls to an explicitly requested browser estimate; V12 still owns paid dispatch.
+call the action until explicit submission. V11 connects these controls to an explicitly requested browser estimate; V12 connects guarded paid dispatch.
 Before copying, the host writes a private versioned ownership marker. Startup validates its
 execution root, skips recorded attempts before inspecting their contents, and reclaims only
 marked, unclaimed directories containing recognized regular input copies. Unknown content,
@@ -306,7 +306,7 @@ cannot expose a saved attempt to this cleanup. A retained marker is also removed
 input cleanup after the tool has relinquished those paths.
 
 v0.3 estimates (PLAN V10–V11) run outside the host execution reservation.
-Paid dispatch enforcement remains V12–V13. Estimates remain responsive while
+Paid dispatch is enforced by V12; V13 adds specific outcome guidance. Estimates remain responsive while
 an action runs; they neither consume a run-dispatch permit nor create attempts. The exact allowed
 quote, positive cap and binding are checked again under the host's execution reservation before
 dispatch. Tool-side caps and budgets remain authoritative; a quote is not a reservation.
@@ -345,7 +345,7 @@ before joining these workers. A returned quote must still match the same prepare
 current declaration and owned client. Browser estimate controls are connected in V11; paid API authorization is implemented in V12c.
 Controls do not wait for
 an execution slot. The former Squint behavior that created estimate runs describes v0.2 integration
-history only: v0.3 prohibits it. The paid Run button remains disabled until V12d; the API requires a validated owned quote.
+history only: v0.3 prohibits it. Paid Run uses the owned quoted preparation; the API requires its exact validated binding.
 Changing config or restarting a tool invalidates estimates and ends its old budget session.
 Show new session boundaries explicitly; never restart automatically to replenish an allowance.
 The authenticated restart control requires explicit confirmation and an idle execution slot.
@@ -521,3 +521,12 @@ requests/copies, stale declarations/sessions and expired/refused quotes cannot a
 An acknowledged duplicate returns the same saved attempt without another dispatch; a new attempt
 needs new preparation and estimation. Selected authorization facts remain in evidence archives.
 The independent paid peer reports synthetic spend only; real-peer/provider validation remains V18.
+
+
+Browser paid submission transfers its immutable request out of draft ownership before sending.
+Edits and quote timers cannot dispose inputs while that request is in flight. Acknowledgement
+must match both the attempt ID and the complete request (object-key order is insignificant;
+image array order is significant). Network/server uncertainty retains that identity for explicit
+same-ID retry, independently of the currently selected tool declaration. Definitive host input/
+conflict refusals discard the preparation; a new attempt requires a new explicit estimate and Run.
+No caller-supplied binding is sent, and neither a quote nor submission is retried automatically.

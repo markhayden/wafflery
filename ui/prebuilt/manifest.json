@@ -9,13 +9,13 @@
     "ui/package.json": "3aae554e483ff6d81698b993fd0ea98818d134da3d10d2056ad19e7e40388fa7",
     "ui/src/App.tsx": "46a420c040fefd229b7bc4e4478741cbd8d0a1d4fd2ff6081de0eab8ceb2fc0c",
     "ui/src/api/assets.ts": "7a6ad972558a4b9761d0a6ef791ef9f00c340eb0bbc1f65ec29721532d127aff",
-    "ui/src/api/client.ts": "df6d1259c266ef3c3e8d9e5a3a9b791bd9831bec458674d1e969d82474ca3b88",
+    "ui/src/api/client.ts": "d5ec022b4fd01245b1f3638e888e7435b43f80ac889015eb86ed8d906e81d87e",
     "ui/src/api/estimates.ts": "b3e4a64d781684bd75b03a81342b5784ae42c878d5ea16f1e82a0a40250bddb0",
     "ui/src/api/events.ts": "d6c4aa2983395573b58e2f0d099d73ace7e6d551e9831a368ec6a8db94ef277c",
     "ui/src/api/examples.ts": "ac29ab8bd91da377bd783d7e118b1791c1599784ad0ab92874293c31b0a0bac4",
     "ui/src/api/session.ts": "216dfa6b5e809fcb0c1f97f1cf47850455646b1382826a2eb83c5fad475f96fb",
     "ui/src/api/tool-session.ts": "1d42b42432ff0d93150359bdc52d45b88c2a7d85f02a2f526e3598f160498932",
-    "ui/src/api/workspace.ts": "99e63d296bc76500ae253823f9b3e0adb30f074c8dad2a425d3e47e13697a854",
+    "ui/src/api/workspace.ts": "c4be5c8a72eaa37b65043bcd544a4ff58d573d9efccd78c06f279bc098f6e1d1",
     "ui/src/assets/wafflery-mark.svg": "51bc8a040e26b897a948238598b8cabdf69bf4687c2b1a70613b542de1c99f1f",
     "ui/src/components/Button.module.css": "1ce502acb9d2561471ba7dffe4536d78bd51553a169a36a8fa230502499a9d1a",
     "ui/src/components/Button.stories.tsx": "489b0b293bbeb9f5813829a79bc9e78c5ddffa0116d71b0582985750716136fa",
@@ -54,19 +54,19 @@
     "ui/src/features/workspace/SavedComparison.tsx": "8a02acee808c1f7df4de346272875c90a65719c132286f3b394bfeb017e007c0",
     "ui/src/features/workspace/ToolSetup.module.css": "8bbcd85b8be8a7ca0765b8cfac3bc386f2f8ded0c852cfb08dfa297cfe434ae9",
     "ui/src/features/workspace/ToolSetup.stories.tsx": "7c59a58dadaa4df7ae67093510199b64d8e59717ded0e783a2f2cff29969696f",
-    "ui/src/features/workspace/ToolSetup.tsx": "cb2a276feb49bcf6beec67845313e6c79539fed57dd6489f36bfe45306d024e8",
+    "ui/src/features/workspace/ToolSetup.tsx": "88134eaef58239e59973046113b2b5ea751c223c21356a5c08ae1432d7ad0b7b",
     "ui/src/features/workspace/Workspace.module.css": "361e7bcd908349eeab575c460663b28de162ce1f1d7527d805d27ef6f3fd74a3",
-    "ui/src/features/workspace/Workspace.tsx": "791ca33bfe6be4bea4b32fbd79672f971749189df0c36a799edf01e0fab5f854",
-    "ui/src/features/workspace/useEstimateDraft.ts": "76c4e9d91f860e16b721880f4ac21fed5aeb4ebb067f088425fc6ffa91cb71d3",
+    "ui/src/features/workspace/Workspace.tsx": "2cee11713cbe7f6052d6311fe266b3bfe1537d3c06043c6a5b555c78656f13c4",
+    "ui/src/features/workspace/useEstimateDraft.ts": "1363ec97c5251563dc3c4d289717422ee654b3e4ddb24e31fd9670f3fd2e44d5",
     "ui/src/main.tsx": "03b2482769b6e395650dff286faa5e047805a68788a2d0c019ca79ca59b5cadf",
     "ui/src/tokens.css": "c3b0eee13fac143223d12e52a63497a6dab95065469028a0c3e49e4532b603ef",
     "ui/tsconfig.json": "cb18bc2ac7dda71c2c6b1688c5af0722292143bafb109a84a1d8464e28733ffe",
     "ui/vite.config.ts": "3aec7d6174ffca99d4d5288bea2f837d5e91335cbd7135a9682e6d18a40476b4"
   },
   "outputs": {
-    "assets/index-CBx2JqxG.js": "021b07034c7c186bb9befd68a10aeb1bf191952ca8b2eeee6db571c6669e76bb",
+    "assets/index-8ChHA_EQ.js": "ec111e016f569a535096490b44584f2ad051d5c4d91c472b5a0c625613cf07a2",
     "assets/index-CP6vzQ_P.css": "fbcddc2df51d434b8b2b412158c1ace563f7620c06cbf646d086ff7817b2a492",
     "assets/wafflery-mark-CML0EpfM.svg": "51bc8a040e26b897a948238598b8cabdf69bf4687c2b1a70613b542de1c99f1f",
-    "index.html": "5a7144f9296ed816b2d7513ed25b44fc53f57319efd76cdb86a9dff43222052a"
+    "index.html": "2ca25d4ea72944ec6041247f09883fe8c332b36ab95020221898683d6276e57f"
   }
 }

@@ -10,7 +10,7 @@ test("setup shows reported allowances and never promotes a credential name to re
   await expect(page.getByText("EXAMPLE_API_KEY", { exact: true })).toBeVisible();
   await expect(page.getByText("Present · not validated", { exact: true })).toBeVisible();
   await expect(page.getByText(/A present credential has not necessarily been validated/)).toBeVisible();
-  await expect(page.getByText(/Paid execution needs/)).toContainText("not enabled yet");
+  await expect(page.getByText(/Paid execution needs/)).toContainText("Review the estimate");
   for (const width of [320, 768, 1024, 1440]) {
     await page.setViewportSize({ width, height: 900 });
     await expect(page.getByRole("button", { name: "Refresh" })).toBeVisible();
@@ -62,7 +62,7 @@ test.describe("paid action setup", () => {
   test("opening setup never enables paid execution", async ({ page, host }) => {
     await host.open(page);
     await page.getByRole("button", { name: "Tool setup", exact: true }).click();
-    await expect(page.getByRole("dialog")).toContainText("It is not enabled yet");
+    await expect(page.getByRole("dialog")).toContainText("Review the estimate");
     await page.keyboard.press("Escape");
     await expect(page.getByRole("button", { name: "Run", exact: true })).toBeDisabled();
   });

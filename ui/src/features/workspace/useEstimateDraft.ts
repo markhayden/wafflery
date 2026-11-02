@@ -1,13 +1,17 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import type { LocalApi } from "../../api/client";
+import { ApiError, type LocalApi } from "../../api/client";
 import { estimateClient, estimateDeadline, type Preparation } from "../../api/estimates";
-import type { Submission } from "../../api/workspace";
+import { workspaceClient, type Submission } from "../../api/workspace";
 import type { CostState } from "./CostReview";
 
 type Draft = { key: string; request: Submission; receipt?: Preparation };
 export function useEstimateDraft(api: LocalApi, key: string, session: string | undefined,
   makeRequest: () => Submission, refresh: () => Promise<void>) {
   const client = useMemo(() => estimateClient(api), [api]);
+  const workspace = useMemo(() => workspaceClient(api), [api]);
+  const submitted = useRef<Draft | undefined>(undefined);
+  const sending = useRef(false);
+  const [submission, setSubmission] = useState<"sending" | "uncertain">();
   const owned = useRef<Draft | undefined>(undefined);
   const currentKey = useRef(key), alive = useRef(true), requesting = useRef(false);
   const [pending, setPending] = useState<string>();
@@ -43,7 +47,7 @@ export function useEstimateDraft(api: LocalApi, key: string, session: string | u
     return () => { clearTimeout(timer); document.removeEventListener("visibilitychange", visible); };
   }, [display, key, client]);
   async function estimate() {
-    if (requesting.current || !session) return;
+    if (requesting.current || submitted.current || !session) return;
     requesting.current = true;
     setPending(key);
     setDisplay({key,state:{kind:"stale"}});
@@ -80,5 +84,35 @@ export function useEstimateDraft(api: LocalApi, key: string, session: string | u
   const state: CostState = pending !== undefined ? {kind:"pending",stale:pending !== key}
     : display.key === key ? display.state
     : {kind:display.state.kind === "idle" ? "idle" : "stale"};
-  return {state, estimate};
+  const canRun = !submission && !!session && state.kind === "quoted" && state.estimate.allowed &&
+    owned.current?.key === key && !!owned.current.receipt &&
+    estimateDeadline({preparation:owned.current.receipt,estimate:state.estimate}) > Date.now();
+  async function submit() {
+    if (sending.current) throw new Error("This submission is already in progress.");
+    let draft = submitted.current;
+    if (!draft) {
+      if (!canRun || !owned.current) throw new Error("Estimate these inputs before running.");
+      draft = owned.current;
+      // Ownership transfers to submission: edits and quote expiry must not delete its inputs.
+      submitted.current = draft; owned.current = undefined;
+      setDisplay({key,state:{kind:"stale"}});
+    }
+    sending.current = true;
+    setSubmission("sending");
+    try {
+      const attempt = await workspace.submitPrepared(draft.request);
+      submitted.current = undefined;
+      if (alive.current) setSubmission(undefined);
+      return attempt;
+    } catch (failure) {
+      // Definitive host refusals allow a new estimate. Transport/server uncertainty retains
+      // the exact request ID; only an explicit retry can send that same submission again.
+      if (failure instanceof ApiError && [400,404,409,422].includes(failure.status)) {
+        submitted.current = undefined; discard(draft);
+        if (alive.current) setSubmission(undefined);
+      } else if (alive.current) setSubmission("uncertain");
+      throw failure;
+    } finally { sending.current = false; }
+  }
+  return {state, estimate, canRun, submit, submission};
 }

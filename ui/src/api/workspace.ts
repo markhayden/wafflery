@@ -110,6 +110,13 @@ function savedImage(value: unknown): value is SavedImage {
     typeof value.role === "string"
   );
 }
+function sameJson(left: unknown, right: unknown): boolean {
+  if (left === right) return true;
+  if (Array.isArray(left)) return Array.isArray(right) && left.length === right.length &&
+    left.every((item,index) => sameJson(item,right[index]));
+  return record(left) && record(right) && Object.keys(left).length === Object.keys(right).length &&
+    Object.keys(left).every(key => Object.hasOwn(right,key) && sameJson(left[key],right[key]));
+}
 function attempt(value: unknown): value is Attempt {
   return (
     record(value) &&
@@ -226,6 +233,17 @@ export function workspaceClient(api: LocalApi) {
         headers: { "Content-Type": "application/json" },
         body: "{}",
       }),
+    async submitPrepared(request: Submission): Promise<Attempt> {
+      const saved = await getAttempt(`/api/preparations/${encodeURIComponent(request.id)}/submit`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(request),
+      });
+      if (saved.id !== request.id || !sameJson({...saved.request,frames:saved.request.frames ?? {}},
+        {...request,frames:request.frames ?? {}}))
+        throw new Error("The acknowledgement belongs to a different submission. Retry the original submission.");
+      return saved;
+    },
     submit: (request: Submission) =>
       getAttempt("/api/attempts", {
         method: "POST",

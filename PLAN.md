@@ -22,15 +22,15 @@ changes and validation limits; it is not implementation verification.
 The owner agreed to proceed with foundation planning independently of later tool interfaces.
 The owner authorized continuing into real-tool integration on 2026-10-31; the concrete next
 slices are in [M4: real tool entry](docs/plans/m4-real-tool-entry.md). Paid runs are also authorized
-through owned preparation, bound estimate and cap/session checks. Browser paid Run wiring remains V12d.
+through owned preparation, bound estimate and cap/session checks. Browser paid Run uses the same owned preparation and estimate.
 Publishing and production installation are not authorized by this continuation.
 
 Current integration update (2026-11-01): published v0.2.0 and both tools are adopted on main.
 See [the v0.2 integration plan](docs/plans/table-manners-v02.md) and [verified checkpoint](docs/reviews/2026-11-01-table-manners-v02.md). The initial v0.1 fixture/version
 requirements below describe the completed foundation checkpoint, not the current live allowlist.
 The [v0.3 client task list](#v03-client--proposed-task-list) below is approved. V01–V11 are
-merged locally; the live client requires exactly v0.3. V12a–c enforce paid dispatch through
-owned preparations and validated estimates; V12d connects browser paid Run. See [execution checkpoints](docs/plans/v03-execution.md).
+merged locally; the live client requires exactly v0.3. V12 enforces paid dispatch through
+owned preparations and validated estimates, including explicit browser Run. See [execution checkpoints](docs/plans/v03-execution.md).
 
 ## Outcome
 
@@ -739,7 +739,7 @@ The API slice includes its tests and existing readiness-validator reuse; the com
 lifecycle slices each keep their stories/browser tests alongside their source. V12 owns the
 subsequent paid submit wiring and transport/evidence enforcement.
 
-**V12 — Enforce the paid guard on the server.** Replace the offline-only refusal only after
+**V12 — Enforce the paid guard on the server. Complete.** Replace the offline-only refusal only after
 V08–V11 pass. Direct API requests must supply a live owned preparation with matching declaration,
 session, positive cap and semantically validated allowed unexpired estimate from V10b. Atomically
 consume it once and dispatch
@@ -764,7 +764,7 @@ V12 execution slices (full matrix and review per slice; rollback in reverse orde
 - **V12c: Complete.** Connect paid prepared submission to the coordinator and exact wire metadata;
   exercise independent fake paid calls, bypass attempts, idempotence and evidence/export.
   Commit: `feat: dispatch only owned priced calls`.
-- **V12d:** Enable explicit paid Run only for the current quoted preparation; preserve
+- **V12d: Complete.** Enable explicit paid Run only for the current quoted preparation; preserve
   acknowledged attempt identity and require fresh preparation/estimation for another paid
   attempt. Verify edited, expired and refused drafts cannot run. Commit: `feat: run reviewed paid drafts`.
 Each slice includes its tests and accurate checkpoint documentation. V12a/b strengthen internal

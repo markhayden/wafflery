@@ -228,11 +228,21 @@ export function Workspace({
     setError(undefined);
     submitted.current = null;
   }
-  async function run() {
-    if (!action || !declaration || busy || action.cost.may_spend) return;
+  async function run(retry = false) {
+    if (busy) return;
+    if (!retry && (!action || !declaration)) return;
+    if (!retry && (cost.submission || (action?.cost.may_spend && !cost.canRun))) return;
     setError(undefined);
     setBusy(true);
     try {
+      if (retry || action?.cost.may_spend) {
+        const attempt = await cost.submit();
+        setSelectedId(attempt.id);
+        setSelected(attempt);
+        await updateSnapshot();
+        return;
+      }
+      if (!action || !declaration) return;
       const {images: bindings, frames} = encodeSelection(
         declaration.document.contract, action.images ?? [], images,
       );
@@ -437,14 +447,19 @@ export function Workspace({
               onCapChange={value => setParams(current => ({...current,max_spend_usd:value}))}
               onEstimate={() => { void cost.estimate(); }}
               onSetup={opener => setDrawer({opener,view:"setup"})}
-              disabled={restarting || typeof sessionId !== "string"}
+              disabled={busy || !!cost.submission || restarting || typeof sessionId !== "string"}
               {...(costSession ? {session:costSession} : {})} />}
+            {cost.submission === "uncertain" && <div role="status">
+              <p>The submission was not acknowledged. Retry sends the original reviewed inputs with
+                the same run ID; it cannot create a second attempt. Your current edits are kept separately.</p>
+              <Button busy={busy} onClick={() => { void run(true); }}>Retry submission</Button>
+            </div>}
             {error && <p role="alert">{error}</p>}
           </div>
           <div className={styles.run}>
             <p>
               {action?.cost.may_spend
-                ? "Paid runs are not available in this build."
+                ? "Paid action · Review the estimate before Run"
                 : "Free action · Inputs are saved locally"}
             </p>
             <Button
@@ -452,7 +467,9 @@ export function Workspace({
               busy={busy}
               disabled={
                 !action ||
-                action.cost.may_spend ||
+                (action.cost.may_spend && !cost.canRun) ||
+                !!cost.submission ||
+                restarting ||
                 action.readiness.state === "unavailable" ||
                 !!working ||
                 !!tool?.busy ||

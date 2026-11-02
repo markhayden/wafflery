@@ -794,3 +794,28 @@ are included in the full matrix. Final review passed. The shared-lock matrix pas
 tests (three ignored), 33 UI unit tests, two asset tests, 132 browser cases (four opt-in skips),
 fmt, clippy, typecheck, Storybook, reproducible assets and release build. No dependency or UI
 asset changes. Rollback this slice before V12b; browser Run remains closed until V12d.
+
+
+### V12d reviewed browser Run
+
+Paid Run now requires the current allowed, unexpired owned estimate. It submits the immutable
+prepared request, never reconstructed form values or a caller-supplied binding. Another paid
+attempt requires a fresh explicit estimate. Edits, invalid JSON, image order/coordinates,
+declaration/session changes and expiry keep Run disabled until the new draft is reviewed.
+
+Submission takes ownership before the request leaves the browser. Later edits and quote expiry
+cannot delete its inputs. Uncertain acknowledgement retains the original request for explicit
+same-ID Retry submission; acknowledged IDs are never reused for a new attempt. Review found two
+edge cases: mismatched acknowledgement must not clear ownership, and retry must work without a
+current tool declaration. Their regressions failed first and passed after correcting both paths.
+Structural response checks preserve ordered image arrays and tolerate JSON object-key ordering.
+The setup copy now describes the available estimate/Run flow.
+
+Targeted Chromium/WebKit checks passed 54 cases, including acknowledgement loss, wrong response,
+declaration loss and estimate invalidation. The cost panel was visually checked in WebKit.
+Two additional browser cases cover held submissions during edits and definite refusal recovery;
+the full shared-lock matrix passed: 178 Rust tests (three ignored), 35 UI unit tests, two asset
+tests, 144 browser cases (four opt-in skips), fmt, clippy, typecheck, Storybook, reproducible
+assets and release build. Final review passed. The API adapter, estimate owner and workspace form are kept
+in one slice with their tests despite exceeding the usual five authored files. Rollback V12d
+before V12c; no server wire or storage change is introduced by this browser slice.

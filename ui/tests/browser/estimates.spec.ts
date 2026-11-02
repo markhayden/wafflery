@@ -29,7 +29,7 @@ test("paid draft estimates exact inputs without attempts and edits discard the q
   await expect(cost(page)).toContainText("$0.12");
   await cost(page).getByRole("heading").scrollIntoViewIfNeeded();
   await page.screenshot({path:testInfo.outputPath("live-cost.png")});
-  await expect(page.getByRole("button",{name:"Run",exact:true})).toBeDisabled();
+  await expect(page.getByRole("button",{name:"Run",exact:true})).toBeEnabled();
   const recorded = (await readFile(resolve(host.root,"../tool/estimates.ndjson"),"utf8")).trim().split("\n").map(line => JSON.parse(line));
   expect(recorded).toHaveLength(1);
   expect(recorded[0].arguments.arguments.max_spend_usd).toBe(0.5);
@@ -37,6 +37,7 @@ test("paid draft estimates exact inputs without attempts and edits discard the q
   await page.getByLabel("Label *",{exact:true}).fill("Changed after estimate");
   await expect(cost(page)).toContainText("Estimate again for the current inputs and session.");
   await expect(cost(page)).not.toContainText("Worst case");
+  await expect(page.getByRole("button",{name:"Run",exact:true})).toBeDisabled();
   await expect.poll(async () => (await readFile(resolve(host.root,"../tool/estimates.ndjson"),"utf8")).trim().split("\n").length).toBe(1);
   await estimate(page).click();
   await expect(cost(page)).toContainText("Estimate within cap.");
@@ -44,6 +45,7 @@ test("paid draft estimates exact inputs without attempts and edits discard the q
   expect(preparations[0]).not.toBe(preparations[1]);
   await page.getByRole("textbox",{name:"Spending cap (USD)",exact:true}).fill("0.6");
   await expect(cost(page)).not.toContainText("Worst case");
+  await expect(page.getByRole("button",{name:"Run",exact:true})).toBeDisabled();
   expect(preparations).toHaveLength(2);
   await page.getByRole("button",{name:"History",exact:true}).click();
   await expect(page.getByRole("dialog")).toContainText("No saved attempts");
@@ -56,6 +58,7 @@ test("a late estimate after an edit is discarded and never restores old cost", a
   await expect.poll(async () => readFile(resolve(host.root,"../tool/estimate-started"),"utf8").then(() => true).catch(() => false)).toBe(true);
   await page.getByLabel("Label *",{exact:true}).fill("Fresh inputs");
   await expect(cost(page)).not.toContainText("Worst case");
+  await expect(page.getByRole("button",{name:"Run",exact:true})).toBeDisabled();
   await expect(estimate(page)).toBeDisabled();
   const finished = page.waitForResponse(response => new URL(response.url()).pathname.endsWith("/estimate") && response.request().method() === "POST");
   await writeFile(resolve(host.root,"../tool/release-estimate"),"release");
@@ -63,6 +66,7 @@ test("a late estimate after an edit is discarded and never restores old cost", a
   await expect(estimate(page)).toBeEnabled();
   await expect(cost(page)).toContainText("Estimate again for the current inputs and session.");
   await expect(cost(page)).not.toContainText("Worst case");
+  await expect(page.getByRole("button",{name:"Run",exact:true})).toBeDisabled();
   await estimate(page).click();
   await expect(cost(page)).toContainText("Estimate within cap.");
 });
@@ -82,6 +86,7 @@ test("quote expiry clears displayed cost without estimating or running again", a
     await page.clock.fastForward(120000);
     await expect(cost(page)).toContainText("Estimate again for the current inputs and session.");
     await expect(cost(page)).not.toContainText("Worst case");
+  await expect(page.getByRole("button",{name:"Run",exact:true})).toBeDisabled();
     expect(calls).toBe(1);
   } finally { await page.unrouteAll({behavior:"wait"}); }
 });
@@ -129,6 +134,7 @@ test("tool restart invalidates a quote and preserves the chosen cap", async ({pa
   await page.keyboard.press("Escape");
   await expect(cost(page)).toContainText("Estimate again");
   await expect(cost(page)).not.toContainText("Worst case");
+  await expect(page.getByRole("button",{name:"Run",exact:true})).toBeDisabled();
   await expect(page.getByRole("textbox",{name:"Spending cap (USD)",exact:true})).toHaveValue("0.5");
   expect((await readFile(resolve(host.root,"../tool/estimates.ndjson"),"utf8")).trim().split("\n")).toHaveLength(1);
 });
@@ -186,11 +192,13 @@ test("invalid JSON edits discard the quote and need an explicit estimate after c
   await estimate(page).click(); await expect(cost(page)).toContainText("Estimate within cap.");
   await tags.fill('["unfinished"');
   await expect(cost(page)).not.toContainText("Worst case");
+  await expect(page.getByRole("button",{name:"Run",exact:true})).toBeDisabled();
   await expect(cost(page)).toContainText("Estimate again");
   await estimate(page).click();
   await expect(tags).toBeFocused();
   await tags.fill('["corrected"]');
   await expect(cost(page)).not.toContainText("Worst case");
+  await expect(page.getByRole("button",{name:"Run",exact:true})).toBeDisabled();
   expect((await readFile(resolve(host.root,"../tool/estimates.ndjson"),"utf8")).trim().split("\n")).toHaveLength(1);
   await estimate(page).click(); await expect(cost(page)).toContainText("Estimate within cap.");
 });
@@ -205,6 +213,7 @@ test("a refreshed declaration invalidates its quote without losing draft inputs"
   await page.keyboard.press("Escape");
   await expect(cost(page)).toContainText("Estimate again");
   await expect(cost(page)).not.toContainText("Worst case");
+  await expect(page.getByRole("button",{name:"Run",exact:true})).toBeDisabled();
   await expect(page.getByLabel("Label *",{exact:true})).toHaveValue("declaration");
   expect((await readFile(resolve(host.root,"../tool/estimates.ndjson"),"utf8")).trim().split("\n")).toHaveLength(1);
 });

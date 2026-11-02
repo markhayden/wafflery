@@ -45,7 +45,7 @@ export function ToolSetup({ tool, action, loadSession }: Props) {
         }}>Refresh</Button>
       </div>
       <p>{action.cost.may_spend
-        ? "Paid execution needs provider setup, a current estimate and an enforced run limit. It is not enabled yet."
+        ? "Paid execution needs provider setup, a current estimate and an enforced run limit. Review the estimate before choosing Run."
         : "This action is declared free by the tool."}</p>
       <p><strong>{readinessLabel[action.readiness.state]}</strong></p>
       {action.readiness.state === "unavailable"
