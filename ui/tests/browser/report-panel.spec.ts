@@ -1,4 +1,5 @@
 import { test, expect } from "./fixtures";
+import { visualPolicy } from "./visual-policy";
 const story = (name:string) => `http://127.0.0.1:6006/iframe.html?id=workspace-reportpanel--${name}&viewMode=story`;
 
 test("report force stop requires an explicit confirmation and uncertain opens stay blocked", async ({page}) => {
@@ -28,7 +29,7 @@ test("report states fit the shared drawer at narrow and wide sizes", async ({pag
       expect(await page.locator("dialog[open]").evaluate(node => node.scrollWidth <= node.clientWidth)).toBe(true);
       if (width !== 768) {
         await page.mouse.move(0,0);
-        await expect(page).toHaveScreenshot(`report-${state}-${width}.png`,{animations:"disabled",maxDiffPixelRatio:.001});
+        await expect(report).toHaveScreenshot(`report-${state}-${width}.png`,visualPolicy);
       }
     }
   }

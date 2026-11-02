@@ -1,0 +1,3 @@
+/* Exclude OS-owned scrollbars and their gutters from visual baselines only. */
+* { scrollbar-width: none !important; scrollbar-gutter: auto !important; }
+*::-webkit-scrollbar { display: none !important; }

@@ -58,10 +58,11 @@ Button targets have an explicit 44px floor (2.75rem alone was 41.25px at the exi
 The new layout regression failed first on both desktop and mobile because Tool was outside the
 header. Targeted Chromium/WebKit checks then passed for header hierarchy, keyboard restoration,
 long input scrolling, result/run visibility, short/narrow page flow and disconnected states.
-The [desktop](../../ui/tests/browser/workspace-fidelity.spec.ts-snapshots/workspace-1440-chromium-darwin.png)
-and [mobile](../../ui/tests/browser/workspace-fidelity.spec.ts-snapshots/workspace-390-webkit-darwin.png)
+The [desktop](../../ui/tests/browser/workspace-fidelity.spec.ts-snapshots/workspace-input-1440-chromium-darwin.png)
+and [mobile](../../ui/tests/browser/workspace-fidelity.spec.ts-snapshots/workspace-header-390-webkit-darwin.png)
 baselines use the live independent peer with no runs, paths or capabilities displayed. Both
-browser baselines are reviewed; differences above 0.1% of pixels fail rather than auto-update.
+browser baselines are reviewed. The cross-machine capture policy below supersedes the initial
+full-page 0.1% comparison.
 WorkspaceFrame and compact Picker stories cover long tool names and connection states.
 
 The shell extraction and its two consumers land together to avoid two competing headers.
@@ -95,3 +96,41 @@ asset tests, 206 browser cases (eight opt-in skips), fmt/clippy/typecheck/Storyb
 release build. Independent code and representative screenshot review approved. One low-priority
 review suggestion is scheduled in V19d: let the close control grow with larger font settings
 while preserving its 44px minimum. The current normal-size layout already meets that minimum.
+
+## Hosted-runner visual baseline correction
+
+Hosted run 41432529164 differed by 4,371 pixels. The trace and failure image showed a classic
+scrollbar reserving about 15px in the input pane, where the local overlay scrollbar reserved
+nothing. That changed line wrapping and displaced the form; raising the tolerance alone would
+have accepted a real geometry difference between capture environments.
+
+All V19 captures now share `visualPolicy`: per-pixel threshold 0.2 and at most 1% differing
+pixels. Workspace chrome, context, action, input and result are separate regions; evidence is
+cropped to the drawer and reports to their panel. Large unrelated page backgrounds no longer
+dilute the comparison. No content is masked: these fixtures have no variable IDs/times/images.
+A capture-only stylesheet removes native scrollbars and gutters, whose appearance is owned by
+the OS. Product CSS and native scrolling during interaction tests are unchanged. This follows
+[the specified overlay/classic gutter distinction](https://www.w3.org/TR/css-overflow/#scrollbar-gutter-property).
+Browser baselines remain separate; they are never automatically accepted in CI. Regeneration
+with `--update-snapshots` must be followed by a plain run: positive comparisons can update
+files during regeneration, while the negated mutation comparisons never do.
+
+The desktop Chromium test forces a 24px classic gutter, asserts that it actually occupies
+space, then compares every region to the same baseline under capture normalization. WebKit
+retains overlay behavior despite that scrollbar rule, so this forced-classic probe is Chromium
+only. Both browsers also prove that a 24px internal action-label shift and a surface colour-token
+mutation differ from the approved action baseline at the normal tolerance; after restoration,
+the original must match. Desktop alignment/40:60 widths, mobile stacking, keyboard focus and
+native overflow checks remain independent of screenshot tolerance. Very subtle changes below
+the threshold are intentionally outside this pixel oracle; it does not promise to detect every
+possible one-pixel or near-identical colour change.
+
+CI uploads expected, actual and difference PNGs alongside the existing traces on failure.
+This correction applies to V19b and V19c together; V19d must reuse the same policy.
+Verification: 60 repeated visual cases passed without snapshot updates. Full shared-lock
+matrix passed: 243 Rust tests (four opt-in ignored), 53 UI unit tests, two asset tests,
+206 Chromium/WebKit cases (eight opt-in skips), fmt/clippy/typecheck, Storybook, reproducible
+UI assets, check-ui and release build. The typecheck first caught a test-only DOM annotation;
+it was corrected before completing the remaining matrix. Independent review found no required
+code changes. Hosted macOS validation remains pending the coordinator's push; local checks do
+not claim that hosted run has passed. Rollback this test-only correction as a single commit.

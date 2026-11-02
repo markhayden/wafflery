@@ -1013,6 +1013,10 @@ V19 execution slices (review and full matrix per behavior slice; rollback newest
 - **V19c: Complete.** Shared drawer evidence navigation and report layout: compact, accessible navigation
   without a second row on desktop; narrow-screen overflow remains reachable. Cover inspector,
   pipeline and report states in stories and screenshots. Commit: `style: refine evidence drawers`.
+- **V19 visual-runner correction: Complete locally; hosted verification pending.** Normalize OS scrollbar geometry only during capture; use
+  region baselines with a shared antialiasing tolerance, prove layout/colour mutations fail,
+  and upload screenshot diffs. Covers V19b/c and is required for V19d.
+  Commit: `test: stabilize visual regions across macOS runners`.
 - **V19d:** Examples and preview polish: self-contained example styling, clear saved entries and
   empty/loading/error states; inspect comparison controls against the wipe/comparison mocks.
   Add screenshot coverage for the retained/adjusted previews, verify responsive states, and

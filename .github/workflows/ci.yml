@@ -110,6 +110,9 @@ jobs:
           path: |
             ui/test-results/**/trace.zip
             ui/test-results/**/test-failed-*.png
+            ui/test-results/**/*-actual.png
+            ui/test-results/**/*-expected.png
+            ui/test-results/**/*-diff.png
             ui/test-results/**/error-context.md
             ui/test-results/**/attempt-state-before-shutdown.ndjson
           retention-days: 3

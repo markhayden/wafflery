@@ -1,4 +1,5 @@
 import { test, expect } from './fixtures';
+import { visualPolicy } from './visual-policy';
 for (const width of [1440,390]) {
   test(`evidence navigation stays reachable at ${width}px`, async ({page,browserName}) => {
     await page.setViewportSize({width,height:900});
@@ -15,12 +16,12 @@ for (const width of [1440,390]) {
     await first.focus();
     await page.getByRole('heading',{name:'Run details',exact:true}).click();
     await page.mouse.move(0,0);
-    await expect(page).toHaveScreenshot(`inspector-${width}.png`,{animations:'disabled',maxDiffPixelRatio:.001});
+    await expect(page.getByRole('dialog')).toHaveScreenshot(`inspector-${width}.png`,visualPolicy);
     await page.goto('http://127.0.0.1:6006/iframe.html?id=workspace-evidence--use-in-pipeline&viewMode=story');
     await expect(page.getByRole('navigation',{name:'Pipeline views'})).toBeVisible();
     await page.getByRole('heading',{name:'Use in your pipeline',exact:true}).click();
     await page.mouse.move(0,0);
-    await expect(page).toHaveScreenshot(`pipeline-${width}.png`,{animations:'disabled',maxDiffPixelRatio:.001});
+    await expect(page.getByRole('dialog')).toHaveScreenshot(`pipeline-${width}.png`,visualPolicy);
     expect(await page.locator('dialog[open]').evaluate(node=>node.scrollWidth<=node.clientWidth)).toBe(true);
   });
 }
