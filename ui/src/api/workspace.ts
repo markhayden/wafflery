@@ -1,6 +1,6 @@
 import { LocalApi } from "./client";
 import { isAsset, type Asset } from "./assets";
-import type { Declaration, Json, Schema } from "../features/actions/model";
+import type { Declaration, Json, Readiness, Schema } from "../features/actions/model";
 import type { Coordinates } from "../components/comparison";
 export type SavedImage = { asset: Asset; image: Coordinates; role: string };
 export type Submission = {
@@ -67,7 +67,7 @@ function summary(value: unknown): value is AttemptSummary {
 function record(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
-function readiness(value: unknown): boolean {
+export function isReadiness(value: unknown): value is Readiness {
   return record(value) && typeof value.state === "string" && ["ready", "needs_setup", "unavailable"].includes(value.state) &&
     Array.isArray(value.requirements) && value.requirements.every((item: unknown) =>
       record(item) && typeof item.name === "string" && item.name.length > 0 &&
@@ -95,7 +95,7 @@ function declaration(value: unknown): value is Declaration {
       record(action.params_schema) &&
       record(action.cost) &&
       typeof action.cost.may_spend === "boolean" &&
-      readiness(action.readiness),
+      isReadiness(action.readiness),
   );
 }
 function savedImage(value: unknown): value is SavedImage {

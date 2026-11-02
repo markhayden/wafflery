@@ -644,3 +644,24 @@ release acceptance target; V18 remains open. Final review and the full shared-lo
 167 Rust tests (three opt-in tests ignored), the additional real Rust smoke, 27 UI unit tests,
 two asset tests, typecheck, fmt, clippy, Storybook, reproducible assets, release build and
 102 browser cases (two Squint opt-in skips). No lockfile, UI asset or sibling file changed.
+
+### V11a browser estimate controls
+
+The browser client now has typed preparation, estimate, read and discard controls. Preparation
+responses must match the submitted identity; quotes must match every receipt field and the
+selected process session. Controls send exact request bodies once, without caller-supplied
+quote fields, automatic retries or attempts. Shared readiness and session validation protect
+display data. Unknown cost and uncapped allowance remain null. The positive cap parser accepts
+finite positive decimal values without defaulting or clamping; the expiry helper uses the
+shorter preparation/quote lifetime. Neither helper authorizes dispatch.
+
+Five targeted tests were written before the client module existed and then passed, covering
+invalid caps, unknown values, malformed/contradictory views, wrong preparation/session receipts,
+exact HTTP bodies and zero automatic retries. Typecheck caught a widened fixture literal;
+the independent fixture now declares its view type. The module is not wired into the workspace
+until V11c; V11b supplies the component states first. The generic paid guard remains closed.
+
+V11a passed review and the full shared-lock matrix: 167 Rust tests (three ignored), 32 UI unit
+tests, two asset tests, 100 browser cases (four opt-in skips), fmt, clippy, typecheck, Storybook,
+reproducible UI assets and release build. Only the checked-in UI input manifest changed;
+compiled UI output bytes and dependency lockfiles are unchanged.

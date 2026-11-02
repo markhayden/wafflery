@@ -720,6 +720,25 @@ clamping, unknown rather than zero unpriceable cost, needs-setup and an allowed 
 later loses budget while its readiness/declaration stays unchanged. Depends: V03/V10b.
 Commit: `feat: review cost and cap before paid runs`.
 
+V11 execution slices (full matrix and review per slice; rollback in reverse order):
+- **V11a: Complete.** Typed browser preparation/estimate controls, response attribution, shared readiness
+  validation, positive decimal cap parsing and expiry helpers. Keep controls unused by the
+  workspace until wiring is ready; no dispatch or history changes. Verify malformed responses,
+  unknown costs, identity mismatches, exact request bodies, invalid caps and bounded lifetime.
+  Commit: `feat: add browser estimate controls`.
+- **V11b:** Cost component, states, styles and Storybook coverage. Show one cap, effective
+  model/configuration, worst case, current allowance and refusal/setup information. Verify
+  keyboard behavior, invalid values and unknown versus zero amounts in both browsers.
+  Commit: `feat: present cost estimate states`.
+- **V11c:** Wire the component and owned preparation lifecycle into the workspace; remove the
+  duplicate generic paid cap field. Invalidate on exact draft/session/declaration/expiry changes,
+  ignore stale replies and discard abandoned preparations. Preserve estimates on ledger-only
+  updates. Verify live independent-peer cases in both browsers, no attempt on estimate, and
+  no automatic re-estimation or paid dispatch. Commit: `feat: review exact draft costs`.
+The API slice includes its tests and existing readiness-validator reuse; the component and
+lifecycle slices each keep their stories/browser tests alongside their source. V12 owns the
+subsequent paid submit wiring and transport/evidence enforcement.
+
 **V12 — Enforce the paid guard on the server.** Replace the offline-only refusal only after
 V08–V11 pass. Direct API requests must supply a live owned preparation with matching declaration,
 session, positive cap and semantically validated allowed unexpired estimate from V10b. Atomically
