@@ -1,6 +1,6 @@
 # V19 UI fidelity review
 
-Status: V19a/b complete; V19c/d remain. The coordinator authorized
+Status: V19a–c complete; V19d remains. The coordinator authorized
 starting this pass while V18c awaited the Squint report-style fix. V18c subsequently passed
 against approved Squint `54b1f41`; this visual pass does not weaken its console check.
 
@@ -72,3 +72,26 @@ Full shared-lock matrix passed for V19b: 243 Rust tests (four opt-in ignored), 5
 two asset tests, 202 Chromium/WebKit cases (eight opt-in skips), fmt/clippy/typecheck, Storybook,
 byte-identical UI rebuilds, check-ui and release build. Independent code and four-baseline visual
 review approved. Rollback reverts the shell/consumer/style slice together; protocol work remains.
+
+## V19c: evidence drawers
+
+Inspector and pipeline views now own their shared stylesheet. Their compact underline navigation
+stays on one row, with horizontal scrolling and focus kept inside the viewport on narrow screens.
+These remain ordinary pressed buttons: they do not claim ARIA tab behavior without implementing
+its arrow-key model. The drawer's close target is explicitly 44px wide.
+
+New standalone evidence stories use synthetic saved records and never contact a host. The layout
+regression caught wrapped evidence navigation at 390px before styling changed. Sixteen targeted
+Chromium/WebKit tests pass, including outside-click/focus behavior, report open/close, recovery
+confirmation and the new inspector/pipeline screenshots. Report empty, starting, ready, failed
+and unavailable stories now have screenshot assertions at 320/1440px, alongside geometry checks
+at 768px. Host report ownership, iframe policies, explicit actions and error copy are unchanged.
+
+[Inspector after](../../ui/tests/browser/evidence-fidelity.spec.ts-snapshots/inspector-1440-chromium-darwin.png)
+· [Pipeline narrow](../../ui/tests/browser/evidence-fidelity.spec.ts-snapshots/pipeline-390-webkit-darwin.png)
+· [Report error narrow](../../ui/tests/browser/report-panel.spec.ts-snapshots/report-failed-320-webkit-darwin.png).
+Full shared-lock matrix passed: 243 Rust tests (four opt-in ignored), 53 UI unit tests, two
+asset tests, 206 browser cases (eight opt-in skips), fmt/clippy/typecheck/Storybook/check-ui and
+release build. Independent code and representative screenshot review approved. One low-priority
+review suggestion is scheduled in V19d: let the close control grow with larger font settings
+while preserving its 44px minimum. The current normal-size layout already meets that minimum.

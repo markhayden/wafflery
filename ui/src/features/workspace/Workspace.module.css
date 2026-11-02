@@ -112,22 +112,6 @@
 .saved {
   margin-top: 1rem;
 }
-:global(.inspector) {
-  display: grid;
-  gap: 1.5rem;
-}
-:global(.inspector nav) {
-  display: flex;
-  gap: 0.5rem;
-  flex-wrap: wrap;
-}
-:global(.inspector nav button[aria-pressed="true"]) {
-  border-color: var(--color-muted);
-}
-:global(.inspector p) {
-  color: var(--color-muted);
-  font-size: 0.875rem;
-}
 @media (max-width: 60rem) {
   .columns {
     grid-template-columns: 1fr;

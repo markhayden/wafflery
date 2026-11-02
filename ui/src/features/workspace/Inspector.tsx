@@ -1,3 +1,4 @@
+import styles from "./Evidence.module.css";
 import { ReportInspection } from "./ReportInspection";
 import type { ReportOwner } from "./report-owner";
 import { useState } from "react";
@@ -18,7 +19,7 @@ export function Inspector({ attempt, reports }: { attempt: Attempt; reports: Rep
             ? { before: attempt.declaration.tool_session, observations: attempt.observations }
             : attempt.journal;
   return (
-    <div className="inspector">
+    <div className={styles.inspector}>
       <nav aria-label="Run evidence">
         <Button
           aria-pressed={view === "inputs"}

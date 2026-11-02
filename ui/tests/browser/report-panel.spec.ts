@@ -17,7 +17,8 @@ test("report force stop requires an explicit confirmation and uncertain opens st
   await expect(page.getByRole("alert")).toContainText("Quit and reopen Wafflery");
 });
 
-test("report states fit the shared drawer at narrow and wide sizes", async ({page},testInfo) => {
+test("report states fit the shared drawer at narrow and wide sizes", async ({page}) => {
+  test.setTimeout(30_000);
   for (const state of ["empty","starting","ready","failed","unavailable"]) {
     await page.goto(story(state));
     const report = page.getByRole("region",{name:"Tool report",exact:true});
@@ -25,7 +26,10 @@ test("report states fit the shared drawer at narrow and wide sizes", async ({pag
     for (const width of [320,768,1440]) {
       await page.setViewportSize({width,height:900});
       expect(await page.locator("dialog[open]").evaluate(node => node.scrollWidth <= node.clientWidth)).toBe(true);
-      await testInfo.attach(`report-${state}-${width}`,{body:await page.screenshot(),contentType:"image/png"});
+      if (width !== 768) {
+        await page.mouse.move(0,0);
+        await expect(page).toHaveScreenshot(`report-${state}-${width}.png`,{animations:"disabled",maxDiffPixelRatio:.001});
+      }
     }
   }
 });

@@ -1010,7 +1010,7 @@ V19 execution slices (review and full matrix per behavior slice; rollback newest
   subordinate action picker, quiet library navigation and more space for results. Keep desktop
   input scrolling and narrow/short-window page scrolling. Shared shell/picker stories and
   deterministic desktop/mobile screenshots. Commit: `style: restore workspace tool hierarchy`.
-- **V19c:** Shared drawer evidence navigation and report layout: compact, accessible navigation
+- **V19c: Complete.** Shared drawer evidence navigation and report layout: compact, accessible navigation
   without a second row on desktop; narrow-screen overflow remains reachable. Cover inspector,
   pipeline and report states in stories and screenshots. Commit: `style: refine evidence drawers`.
 - **V19d:** Examples and preview polish: self-contained example styling, clear saved entries and

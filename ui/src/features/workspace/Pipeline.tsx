@@ -1,3 +1,4 @@
+import styles from "./Evidence.module.css";
 import { useState } from "react";
 import type { LocalApi } from "../../api/client";
 import type { Attempt } from "../../api/workspace";
@@ -66,7 +67,7 @@ export function Pipeline({
     }
   }
   return (
-    <div className="inspector">
+    <div className={styles.inspector}>
       <nav aria-label="Pipeline views">
         <Button aria-pressed={view === "call"} onClick={() => setView("call")}>
           Recorded MCP call
