@@ -4,6 +4,7 @@ pub mod client;
 pub mod coordinator;
 mod environment;
 mod materialized;
+mod prepared;
 mod probe;
 pub mod registration;
 mod session;

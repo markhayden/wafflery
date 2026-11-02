@@ -264,8 +264,17 @@ may run concurrently. Reserve execution atomically at the host so two tabs canno
 the same Run button. Repeat HTTP submissions with the same attempt token return that attempt;
 they never submit a second MCP call. This does not promise exactly-once provider execution.
 
-Planned v0.3 behavior (PLAN V09–V13; not implemented): prepare exact arguments and materialized
-inputs, then estimate outside the host execution reservation. Estimates remain responsive while
+V09a separates exact arguments and materialized input copies into an owned preparation before
+saving an attempt. Preparation creates no history record; persistence transfers the same
+`execution/<id>` paths without rereading originals or library bytes. A storage read guard prevents
+cleanup from deleting asset references before that transaction commits. Failed or abandoned
+unclaimed preparations remove only their private temporary directory. Submission is an owned
+task, so dropping an HTTP requester cannot interrupt materialization, persistence or dispatch;
+an uncertain reply is retried with the same submission id. Explicit cancellation still uses the
+attempt cancellation control. Retained preparations, bounds/expiry and startup cleanup are V09b.
+
+Planned v0.3 behavior (PLAN V09b–V13; not implemented): retain prepared inputs and estimate
+outside the host execution reservation. Estimates remain responsive while
 an action runs; they neither consume a run-dispatch permit nor create attempts. The exact allowed
 quote, positive cap and binding are checked again under the host's execution reservation before
 dispatch. Tool-side caps and budgets remain authoritative; a quote is not a reservation.

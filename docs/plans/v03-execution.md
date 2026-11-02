@@ -435,3 +435,22 @@ passed: 125 Rust tests (three ignored), 23 UI unit tests, two asset tests and 10
 (four skipped), plus fmt, clippy, typecheck, Storybook, reproducible assets and release build.
 The WebKit result screenshot was inspected: the refusal and correction appear without a false
 missing-result warning. Native Safari was not rerun for this slice.
+
+## V09 execution slices
+
+V09a extracts preparation ownership from submission; V09b adds the retained resource lifecycle
+and authenticated controls. Both receive review and the full matrix. Revert V09b before V09a;
+no shared contract or library schema migration is required by the first slice.
+
+The V09a tests first failed for unavailable preparation behavior, then independently reproduced
+an abandoned submission when its requester disappeared during a database wait. An owned task now
+continues through persistence and dispatch. Unit coverage checks exact paths/bytes after both
+source and library bytes change, independent drafts, failed/duplicate cleanup, no early history,
+and cleanup waiting until a transfer makes its old preview stale. Preparations hold a storage
+read guard until durable ownership transfer; the worker cannot be dropped by its HTTP requester.
+
+V09a verification: review approved without blockers. Three preparation lifecycle tests and all
+20 execution tests pass. The full matrix passed: 129 Rust tests (three ignored), 23 UI unit tests,
+two asset tests, 100 browser cases (four skipped), fmt, clippy, typecheck, Storybook, reproducible
+assets and release build. The tampered-library fixture replaces its read-only file explicitly;
+production asset immutability is unchanged. Retention and expiry remain V09b.

@@ -616,7 +616,15 @@ Dispatch transfers ownership to an attempt without rereading mutable source file
 and abandoned preparations create no attempt/history/example records.
 Files: preparation module, materialization, coordinator seam, preparation tests, ENGINEERING.md.
 Verify changed source bytes, concurrent drafts, expiration, ownership transfer and cleanup races.
-Depends: V06a/V06b/V08. Commit: `refactor: prepare exact calls before dispatch`.
+Depends: V06a/V06b/V08. Implementation slices (each reviewed and full-matrix verified):
+- **V09a: Complete.** Extract immutable prepared inputs with explicit ownership transfer to an attempt.
+  Abandoned/failed preparation cleans only its own directory; submission remains owned across
+  requester cancellation. Commit: `refactor: prepare exact calls before dispatch`.
+- **V09b:** Retain bounded preparations behind authenticated controls; enforce identity,
+  session/declaration, expiry, invalidation, restart/startup cleanup and atomic consumption.
+  Commit: `feat: retain bounded draft preparations`.
+Rollback V09b before V09a. Neither slice changes the shared contract; preparations are temporary
+host resources, not attempts or library examples.
 
 **V10a — Exempt estimate controls from the run transport gate.** Exempt exactly reserved
 `describe` and `estimate` from RecordedTransport's run permit lookup/consumption. All action

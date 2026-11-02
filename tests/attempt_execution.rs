@@ -690,3 +690,53 @@ async fn null_claims_queued_cancellation_and_disconnect_never_become_no_run_refu
         assert_eq!(calls, usize::from(scenario == "exit-during-call"));
     }
 }
+
+#[tokio::test]
+async fn dropping_submission_requester_does_not_abandon_the_owned_dispatch() {
+    let (dir, c, request) = setup("normal").await;
+    let (entered, waiting) = tokio::sync::oneshot::channel();
+    let (release, blocked) = std::sync::mpsc::channel();
+    let db = c.assets.database.clone();
+    let blocker = tokio::spawn(async move {
+        db.call(move |_| {
+            entered.send(()).unwrap();
+            blocked.recv().unwrap();
+            Ok(())
+        })
+        .await
+        .unwrap();
+    });
+    waiting.await.unwrap();
+    let mut pending = Box::pin(c.submit(request.clone()));
+    // Poll submission once while the database worker is held, then lose its requester.
+    tokio::select! {
+        biased;
+        _ = &mut pending => panic!("submission cannot complete while its database is held"),
+        _ = tokio::task::yield_now() => (),
+    }
+    drop(pending);
+    release.send(()).unwrap();
+    blocker.await.unwrap();
+    let completed = tokio::time::timeout(std::time::Duration::from_secs(5), async {
+        loop {
+            if let Ok(saved) = c.attempts.get(&request.id).await
+                && saved.preservation["contract"] == "complete"
+            {
+                break saved;
+            }
+            tokio::time::sleep(std::time::Duration::from_millis(10)).await;
+        }
+    })
+    .await;
+    finish_host(&c).await;
+    c.assets.database.shutdown().await.unwrap();
+    let saved = completed.expect("owned submission must finish after its requester disconnects");
+    assert_eq!(saved.execution, "completed");
+    assert_eq!(
+        std::fs::read_to_string(dir.path().join("runs/calls.ndjson"))
+            .unwrap()
+            .lines()
+            .count(),
+        1
+    );
+}

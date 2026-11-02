@@ -155,15 +155,13 @@ impl Coordinator {
         )
     }
     pub async fn submit(self: &Arc<Self>, request: Submission) -> Result<Attempt> {
-        if request.id.is_empty()
-            || request.id.len() > 128
-            || !request
-                .id
-                .bytes()
-                .all(|b| b.is_ascii_alphanumeric() || b"_-".contains(&b))
-        {
-            return Err(Error::Invalid("Invalid submission ID".into()));
-        }
+        let coordinator = self.clone();
+        tokio::spawn(async move { coordinator.submit_owned(request).await })
+            .await
+            .map_err(|error| Error::Invalid(format!("Submission task failed: {error}")))?
+    }
+    async fn submit_owned(self: &Arc<Self>, request: Submission) -> Result<Attempt> {
+        super::prepared::validate_id(&request.id)?;
         let _submission = self.submission.lock().await;
         let _change = SubmissionChange(self.events.clone());
         if self.stopping.load(Ordering::Acquire) {
@@ -199,41 +197,15 @@ impl Coordinator {
                 "This foundation only runs actions declared free and offline.",
             ));
         }
-        validator(&action["params_schema"])?
-            .validate(&request.params)
-            .map_err(|e| Error::Invalid(format!("Invalid parameters: {e}")))?;
-        let directory = self.assets.root().join("execution").join(&request.id);
-        std::fs::DirBuilder::new().mode(0o700).create(&directory)?;
-        let materialized =
-            super::bindings::materialize(&self.assets, &request, action, &current, &directory)
-                .await;
-        let (arguments, inputs) = match materialized {
-            Ok(value) => value,
-            Err(error) => {
-                let _ = tokio::fs::remove_dir_all(&directory).await;
-                return Err(error);
-            }
-        };
-        let attempt = self
-            .attempts
-            .create(
-                request.clone(),
-                arguments.clone(),
-                {
-                    let mut declaration = serde_json::to_value(&current)?;
-                    declaration["session"] = json!(client.session);
-                    declaration
-                },
-                inputs,
-            )
-            .await;
-        let attempt = match attempt {
-            Ok(attempt) => attempt,
-            Err(error) => {
-                let _ = tokio::fs::remove_dir_all(&directory).await;
-                return Err(error.into());
-            }
-        };
+        let prepared = super::prepared::PreparedCall::new(
+            &self.assets,
+            request.clone(),
+            &current,
+            &client.session,
+        )
+        .await?;
+        let arguments = prepared.arguments().clone();
+        let attempt = prepared.persist(&self.attempts).await?;
         let (written, dispatched) = tokio::sync::watch::channel(false);
         *client.gate.lock().unwrap_or_else(|e| e.into_inner()) = Some(Permit {
             discovery,
