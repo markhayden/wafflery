@@ -2,10 +2,11 @@
 
 ## Current v0.3 cutover — 2026-11-01
 
-V02 uses the authorized sibling path dependency, exact version 0.3.0 at
-`e503a238ad6cc833834891c2c2cece7152b08bfc` on `../table-manners` branch `v0.3`.
-Publication is pending and does not gate V02. Hosted CI checks out this exact revision beside
-Wafflery; a coordinator-requested follow-up switches to crates.io `=0.3.0` after publication. The host accepts only live v0.3 and keeps older saved evidence readable.
+Live execution uses published crates.io `table-manners =0.3.0`, source commit
+`9ac2142bf9315f4c5a0eb5935aa94da9bc95a697`. Its eleven schemas are byte-identical to the reviewed
+`e503a238ad6cc833834891c2c2cece7152b08bfc` schemas. Cargo.lock records the registry checksum.
+The temporary sibling dependency and CI checkout are removed. The host accepts only live v0.3
+and keeps older saved evidence readable.
 The independent peer supplies current discovery/offline validation; real Rascal M12 and Squint
 M9 remain V18 gates. Previously tested v0.2 executables below are historical evidence, not
 compatible live targets for the cutover. No sibling files are modified.

@@ -452,13 +452,14 @@ files; the known sites are tools/mod.rs, tools/session.rs, UI api/tool-session.t
 actions/model.ts, ToolSetup and its stories, testkit fixtures/main/scenarios and their tests.
 Enumerate the final set before coding and review schema/parser/fake changes together.
 Depends: V01. Commit: `feat: adopt the v0.3 contract`.
-The coordinator authorized `table-manners = { path = "../table-manners", version = "=0.3.0" }`
-for development and the V02 merge. CI checks out exact reviewed revision
-`e503a238ad6cc833834891c2c2cece7152b08bfc` beside Wafflery. Publication is at the end of Goal 1,
-after the real tools deliver fixtures; it does not block V02 or later host tasks. On the
-coordinator's publication follow-up, switch to crates.io `=0.3.0`, refresh Cargo.lock, and remove
-the temporary CI checkout. Any changed contract text gets coordinator review before the pin
-moves. Do not edit the sibling repository.
+V02 merged with an authorized temporary sibling path and CI checkout at e503a23.
+The coordinator confirmed crates.io publication on 2026-11-01 and requested the follow-up below.
+
+**V02-publication — Use the published v0.3.0 contract. Complete.** Pin crates.io `=0.3.0`, refresh only
+that package's lock entry, remove the temporary sibling checkout from CI and update the active
+source inventory. Compare published schemas with reviewed e503a23, then run the full matrix.
+No sibling edits or contract changes. Rollback restores the reviewed path/CI checkout together;
+no stored data or wire-version change. Commit: `build: pin published table-manners v0.3.0`.
 
 **V03 — Display readiness and actionable setup. Complete.** Replace environment-name-only setup with
 per-action requirements and distinct missing/present/valid/invalid/unknown states. Reuse the setup

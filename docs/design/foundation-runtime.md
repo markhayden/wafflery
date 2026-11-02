@@ -19,7 +19,7 @@ framework, ORM, database service, global frontend state library, or plugin SDK i
 | Axum | 0.8.9 | [Official reference](https://docs.rs/axum/latest/axum/); HTTP routing |
 | rusqlite | 0.41.1, bundled SQLite | [Official project](https://github.com/rusqlite/rusqlite#optional-features); no system SQLite dependency |
 | rmcp | Exactly 3.8.0 | [SDK transports](https://docs.rs/rmcp/latest/rmcp/transport/index.html); client + async read/write transport |
-| table-manners | Exactly 0.3.0 | Authorized temporary sibling path at e503a23 until publication; current source/proposals tracked in the [inventory](../integration-sources.md#table-manners) |
+| table-manners | Exactly 0.3.0 | Published crates.io =0.3.0; source/checksum tracked in the [inventory](../integration-sources.md) |
 | Bun | 1.4.3 | Installed; package installation, scripts, pure TypeScript tests |
 | Node | Record resolved executable in M0 | Agent shell: 22.13.1 via Volta; owner review: 24.18.0. Both observations are retained; use one tested developer version for repeatable builds, not a production runtime |
 | React / React DOM | 19.3.1, matched versions | [Registry release](https://registry.npmjs.org/react/latest); installed compatibility still to verify |

@@ -20,8 +20,8 @@ The browser correction at 51d7935 passed hosted run
 - Each slice carries its tests and testkit docs. Validate the joined V01 checkpoint with the full
   matrix, review and then merge locally after hosted CI for the prior fix is green.
 
-V02 uses the authorized temporary sibling path through its merge and hosted checkpoint.
-CI checks out reviewed e503a23; the coordinator requests the crates.io switch after publication.
+V02 originally used the authorized temporary sibling path through its merge and hosted checkpoint.
+The publication follow-up below replaces it with crates.io =0.3.0 and removes the CI checkout.
 V01’s archived schema input avoids changing the live validator prematurely. Remove the archive in V02 when the dependency supplies the same schemas.
 
 Rollback newest dependent commits first. V01 changes only disposable peer/test coverage; no real
@@ -341,3 +341,18 @@ existing WebKit held-run test that submitted without establishing a required lab
 The final full matrix passed: 117 Rust tests (three ignored), 22 UI unit tests, two asset tests,
 86 browser cases (four skipped), fmt, clippy, typecheck, Storybook, byte-identical UI rebuilds and
 release build. V07b owns visible per-item coordinates and saved-workspace restoration.
+
+## V02 publication follow-up
+
+The coordinator confirmed table-manners 0.3.0 publication. Adopt its exact registry version and
+checksum, remove CI's temporary sibling checkout, and update active runtime/source documents.
+Published source is 9ac2142bf9315f4c5a0eb5935aa94da9bc95a697; all eleven schemas match the reviewed
+e503a23 and current sibling checkout byte-for-byte. This is a dependency-source change only;
+no schema, protocol or storage changes. Full matrix and review gate the local merge.
+
+Publication verification: Cargo.lock changed only the table-manners registry source and checksum
+(9bec37d99d246d9b9d2a05da9c9be30ca3951773e3f762c3b8f5c14fa2360c79). Offline all-target checking
+passed. Review corrected README's remaining sibling-checkout instruction; final review found no
+blockers. Full matrix passed against the published crate: 117 Rust tests (three ignored), 22 UI
+unit tests, two asset tests and 86 browser cases (four skipped), plus fmt, clippy, typecheck,
+Storybook, asset reproducibility and release build. No other dependency or generated asset drift.

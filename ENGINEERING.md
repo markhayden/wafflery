@@ -347,11 +347,10 @@ limits do not shrink the agreed first-release acceptance criteria. Add an opt-in
 contract version must pass the same validation. Squint already has a testkit scripted-provider
 path, but it must not be used to bypass a live `may_spend: true` declaration in this milestone.
 
-V02 accepts exactly 0.3.0 using the authorized temporary dependency at table-manners e503a23
-until publication. Older saved records remain readable without migration or replay. Paid
+Live execution accepts exactly published table-manners =0.3.0 from crates.io. Older saved records remain readable without migration or replay. Paid
 actions must declare a positive max_spend_usd and expose the reserved estimate MCP control,
 which is excluded from the Actions catalogue. Paid dispatch remains blocked. V0.3 declares
-list slots; editing and dispatch for them land in V07. MCP roots remain
+list slots; V06 binds and verifies them, and V07 supplies list editing/restoration. MCP roots remain
 specific to 2025-11-25; a future revision requires its own path-access decision.
 
 First-release history records Wafflery-started attempts. Tool run resources support reading
