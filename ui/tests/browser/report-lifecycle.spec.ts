@@ -66,8 +66,17 @@ test("a force-required view remains owned across drawer dismissal and reopening"
     await route.fulfill({response,json:{...await response.json(),phase:"stopping"}});
   });
   try {
+    // The close response is sent only after the host's EOF and SIGTERM grace periods
+    // settle. Waiting for it avoids racing those deadlines with a separate 5 s poll.
+    const closed = page.waitForResponse(response =>
+      new URL(response.url()).pathname === `/api/views/${view.id}/close`
+      && response.request().method() === "POST",
+    );
     await drawer(page).getByRole("button",{name:"Close",exact:true}).click();
-    await expect.poll(async () => (await api(`/api/views/${view.id}`)).phase).toBe("needs_force");
+    const response = await closed;
+    expect(response.ok()).toBe(true);
+    expect((await response.json()).phase).toBe("stopping");
+    expect((await api(`/api/views/${view.id}`)).phase).toBe("needs_force");
   } finally { await page.unrouteAll({behavior:"wait"}); }
   await inspect(page);
   await expect(page.getByRole("button",{name:"Open report",exact:true})).toBeDisabled();

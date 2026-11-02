@@ -1393,6 +1393,16 @@ checks used the temporary 4187 override; lockfile/prebuilt assets are unchanged.
 progress and cancellation remain c2/c3. The fake does not claim crash recovery; a failed terminal
 publication may repeat its private journal event, and only `run.json` establishes completion.
 
+**CI follow-up — report close completion (2026-11-02, complete):**
+Hosted run 41507896035 exposed a pre-existing WebKit assertion deadline racing the host's two
+close-grace stages. The force-required lifecycle test now waits for the actual close response
+and retains its stale-observation/remount assertions. All twenty WebKit repetitions passed.
+Independent review and the full matrix passed: fmt/clippy, 295 Rust tests (4 ignored), typecheck,
+53 UI tests, 2 asset-tool tests, Storybook, reproducible assets, release build and 220 browser
+tests (8 skipped). No production behavior, retry count or assertion timeout changed.
+Evidence and disposition: [report close review](docs/reviews/report-close-deadline.md).
+M5 schema/wire branches remain unmerged until main is green.
+
 #### V20 — Image import feedback (M5-adjacent; coordinator-approved 2026-11-02)
 
 This follow-up does not change M5's task order or block M5.01b. The demo showed that a
