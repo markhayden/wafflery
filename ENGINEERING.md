@@ -614,7 +614,11 @@ V15c1 introduces the macOS group owner used by V15c2's lifecycle worker. Each ch
 started in its own process group. The owner observes leader exit with kqueue without reaping
 it, then checks bounded `/bin/ps` output for that exact group. It requires the pinned leader
 to be present and every member to be a zombie before reaping; stopped or unknown members are
-not drained. Failure or a registration race preserves ownership. Only this owner can signal
+not drained. Darwin's `H` and `?` Mach states, including the observed `?E` exit transition,
+are valid but not drained. A received NOTE_EXIT remains known even if a later independent
+membership snapshot is uncertain; a one-shot event cannot be recovered after being erased.
+Empty/missing-member or malformed observations remain errors, never proof of exit.
+Failure or a registration race preserves ownership. Only this owner can signal
 the pinned group, and signaling is disabled after reap. The observation helper uses a minimal
 environment, bounded output and timeout; an independent worker kills/reaps the helper even
 if the caller cancels its wait. This uses the existing pinned nix crate's event/signal features.

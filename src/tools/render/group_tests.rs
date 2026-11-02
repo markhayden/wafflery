@@ -10,7 +10,7 @@ fn observations_require_the_pinned_leader_and_only_zombies_are_drained() {
         "12 12 Z\n12 12 Z",
         "12 99 Z",
         "13 12 Z",
-        "12 12 ?",
+        "12 12 invalid",
         "12 12 Z extra",
     ] {
         assert!(members(text.as_bytes(), 12).is_err(), "{text}");
@@ -20,6 +20,39 @@ fn observations_require_the_pinned_leader_and_only_zombies_are_drained() {
     assert!(!snapshot.drained, "a stopped descendant is still live");
     assert!(members(b"12 12 Z\n13 12 Z\n", 12).unwrap().drained);
     assert!(!members(b"12 12 S\n", 12).unwrap().leader_exited);
+}
+
+#[test]
+fn transitional_mach_states_are_valid_observations_but_never_drained() {
+    for state in ["?", "?E", "H", "HE"] {
+        let snapshot = members(format!("12 12 {state}\n").as_bytes(), 12).unwrap();
+        assert!(!snapshot.leader_exited);
+        assert!(!snapshot.drained);
+        let snapshot = members(format!("12 12 Z\n13 12 {state}\n").as_bytes(), 12).unwrap();
+        assert!(snapshot.leader_exited);
+        assert!(
+            !snapshot.drained,
+            "uncertain descendants keep the group owned"
+        );
+    }
+}
+
+#[tokio::test]
+async fn an_uncertain_snapshot_does_not_erase_a_confirmed_leader_exit_event() {
+    let mut group = OwnedGroup::spawn(&mut Command::new("/usr/bin/true")).unwrap();
+    // A received NOTE_EXIT is durable even when ps's separate observation is uncertain.
+    group.leader_exited = true;
+    let snapshot = members(
+        format!("{} {} ?E\n", group.pid, group.pid).as_bytes(),
+        group.pid,
+    )
+    .unwrap();
+    assert!(matches!(
+        group.finish_observation(snapshot).await.unwrap(),
+        GroupState::Draining
+    ));
+    assert!(group.child.id().is_some());
+    assert!(settled(&mut group).await.success());
 }
 
 #[tokio::test]

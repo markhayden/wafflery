@@ -103,7 +103,12 @@ impl OwnedGroup {
             }
         }
         let snapshot = self.observe_members().await?;
-        self.leader_exited = snapshot.leader_exited;
+        self.finish_observation(snapshot).await
+    }
+    async fn finish_observation(&mut self, snapshot: Members) -> Result<GroupState> {
+        // ps may still report a transitional Mach state after NOTE_EXIT. Never erase
+        // the event: the one-shot notification will not be delivered a second time.
+        self.leader_exited |= snapshot.leader_exited;
         if snapshot.drained {
             // No live member remains to fork. Reaping is now safe and permanently
             // disables signaling through this owner.
@@ -178,10 +183,11 @@ fn members(bytes: &[u8], leader: i32) -> Result<Members> {
             || state.len() > 16
             || !matches!(
                 state.as_bytes().first(),
-                Some(b'I' | b'R' | b'S' | b'T' | b'U' | b'Z')
+                Some(b'I' | b'R' | b'S' | b'T' | b'U' | b'Z' | b'H' | b'?')
             )
             || !state
                 .bytes()
+                .skip(1)
                 .all(|c| c.is_ascii_alphabetic() || b"+<>".contains(&c))
         {
             return Err(invalid());
