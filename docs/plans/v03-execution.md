@@ -1181,3 +1181,15 @@ covers all participating spawn sites and their documentation; rollback that comm
 Twenty focused rounds passed: 3,840 simultaneous peer launches and 500 attempt tests.
 Independent review and the full matrix above passed. Final wire-test/fmt/clippy checks also passed (nine wire tests).
 No change to the remaining V17–V19 scope.
+
+### Hosted ambient-descriptor correction
+
+Run 41417569096 exposed an overly broad spawn-isolation oracle: it counted pre-existing caller
+pipes as newly inherited sibling pipes. Model the runner with a retained synthetic pipe and
+snapshot the baseline before launches; keep the sibling-EOF check. The corrected test still
+fails when the production guard is temporarily removed. See the spawn-isolation review note.
+Commit: `test: distinguish ambient pipes from sibling leaks`; rollback only that test/docs
+correction, retaining the production guard. No product change. Twenty stress rounds (3,840
+launches), independent review and the full shared-lock matrix passed: 241 Rust tests, 41 UI unit,
+two asset and 180 browser cases (three Rust ignores/four browser skips), fmt, clippy, typecheck,
+Storybook, reproducible UI and release build. V17b stays on its branch until hosted CI is green.

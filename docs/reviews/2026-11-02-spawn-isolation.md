@@ -39,3 +39,25 @@ tests (three ignored), 41 UI unit tests, two asset tests, 180 Chromium/WebKit ca
 fmt, clippy, typecheck, Storybook, reproducible assets and release build. Review additionally
 routed the independent wire-test peer launches through the guard; their final targeted checks
 and fmt/clippy run are recorded in the execution checkpoints.
+
+## Hosted oracle correction
+
+Hosted run 41417569096 failed only the new regression: every peer reported the same descriptors
+143 and 146, with no EOF failures. The old oracle classified every non-stdio pipe as a sibling
+leak, although a caller may have passed pipes to the test process before any launch. Adding a
+synthetic caller-owned pipe reproduced that false positive locally with the spawn guard intact.
+
+The regression now snapshots pipe descriptors before the concurrent launches and reports only
+new descriptors. The test retains its synthetic ambient pipe for its entire lifetime and requires
+observations of both ends,
+so this distinction is tested even on a machine without hosted-runner pipes. EOF ownership is
+still checked with all siblings alive. Temporarily removing the Tokio spawn guard made the
+corrected oracle fail on new descriptors and an EOF failure; the guard was restored afterward.
+
+This is a test-boundary correction, not a product policy to close caller-owned descriptors.
+The host still protects its own concurrent launches; it does not claim general descriptor
+sandboxing. No production code or timeout changes. Rollback this test-only correction separately
+from the spawn guard. Twenty stress rounds passed with ambient pipes present (3,840 peer
+launches). Independent review approved. The full shared-lock matrix passed: 241 Rust tests
+(three ignored), 41 UI unit tests, two asset tests, 180 Chromium/WebKit cases (four skips), fmt,
+clippy, typecheck, Storybook, reproducible assets and the release build.
