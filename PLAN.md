@@ -1287,6 +1287,16 @@ a file-released held-run fixture, cancellation without an MCP reply, and EOF can
 If worker wiring exceeds five authored files, split the worker core and its stdio integration
 before implementation; every slice retains targeted tests, review and the full matrix.
 
+M5.01b3c3b is split into **c3b1 (owned worker core)** and **c3b2 (stdio integration)**.
+c3b1 adds a single owned execution worker with bounded admission, cancellable queued requests,
+file-released holds after execution, structured monotonic progress/heartbeats and shutdown join.
+Direct channel tests verify responsiveness, ID ownership, cancellation/salvage and EOF-equivalent
+shutdown without depending on browser timers. Its module is test-only until c3b2 connects it to
+stdio; c3b2 then tests actual protocol notifications, controls during holds, no cancelled replies
+and stdin EOF ownership. Both remain within five authored files and run the full matrix/review. The c3b2 code commit
+updates the testkit README alongside the five integration files; a following documentation-only
+checkpoint records M5.01 acceptance in this plan before the coherent slice is merged.
+
 **M5.01a implementation checkpoint (2026-11-02, complete):**
 `testkit/v04_fixtures.rs` independently authors the descriptions, result outcomes, artifact
 resources and binding/export/import/session examples. It imports neither host nor peer code.
@@ -1496,6 +1506,22 @@ reply suppression into the guard. The final full matrix passed: fmt/clippy, 314 
 build and 220 browser tests (8 skipped). Temporary port 4187 config is removed; lockfiles and
 prebuilt assets are unchanged. The wire path is still synchronous; c3b owns worker/notification
 integration. Production remains on v0.3 until M5.03.
+
+**M5.01b3c3b1 implementation checkpoint (2026-11-02, complete):**
+The owned serial worker admits at most 32 active/queued requests and leaves controls independent.
+Per-request progress keeps an increasing elapsed counter across queue/allocation, carries no run
+reference before allocation, and includes the four-field reference afterward. The explicit
+file-released hold drives running/queued heartbeats; cancellation stops further progress and
+shutdown cancels accepted work then joins. Six channel-based lifecycle tests cover queued ID
+ownership, cancellation without replies, saved output salvage, admission refusals, output failure,
+and response-ID reuse. A blocked response callback reproduced removal-after-delivery ordering;
+entries now leave the active registry before delivery. A queued-heartbeat test failed first,
+and disabling cancellation failed the corrected drain-based regression, proving shutdown cannot
+mask a missed cancel. All twenty repetitions passed. Two review rounds found no remaining
+blockers. The full matrix passed: fmt/clippy, 320 Rust tests (4 ignored), typecheck, 53 UI tests,
+2 asset-tool tests, Storybook, reproducible assets, release build and 220 browser tests (8 skipped).
+Temporary port 4187 config is removed; lockfiles/prebuilt assets are unchanged. This worker module
+remains test-only until c3b2 connects the stdio reader, notifications and EOF lifecycle.
 
 #### V20 — Image import feedback (M5-adjacent; coordinator-approved 2026-11-02)
 

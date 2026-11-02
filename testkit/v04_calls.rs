@@ -25,6 +25,7 @@ pub struct Pending {
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub enum Stage {
     Allocated,
+    Executing,
     Executed,
 }
 
@@ -120,6 +121,9 @@ impl Calls {
             ..
         } = pending;
         let journal = self.runs.journal(info, "executing");
+        if journal.is_ok() {
+            observe(info, Stage::Executing);
+        }
         let image_blocks = prepared
             .as_ref()
             .is_ok_and(|prepared| prepared.image_blocks);

@@ -5,6 +5,9 @@ use super::{
 };
 #[path = "v04_calls.rs"]
 mod calls;
+#[cfg(test)]
+#[path = "v04_jobs.rs"]
+mod jobs;
 use base64::{Engine, engine::general_purpose::STANDARD};
 use calls::Calls;
 use serde_json::{Value, json};

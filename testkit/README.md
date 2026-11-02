@@ -457,3 +457,18 @@ also suppresses storage-error replies for cancelled requests, writing a stderr d
 the retained claim still prevents redispatch. Such a storage failure can leave a running entry
 without final evidence. A cancelled run may have null invocation if inputs never resolved.
 Panics are not recovered by this synthetic dispatcher.
+
+### Owned execution worker (M5.01b3c3b1)
+
+The worker core accepts at most 32 active/queued calls, claims and resolves each before queueing,
+and executes one at a time. Duplicate request IDs and queue overflow refuse before claiming a
+correlation ID. The reader will continue serving controls independently. With the explicit hold
+fixture enabled, completed synthetic work waits for `release-operation` in its owned root; time
+never completes the hold. Progress includes the structured reference without `dir`, advances on
+journal stages and every second while held. Queued heartbeats omit the run reference until
+allocation and retain their increasing counter when execution starts. The held job supplies
+that wait tick; unheld synthetic steps are immediate and use stage notifications. No progress is sent without
+a token or after cancellation. A failed output
+callback requests cancellation. Shutdown cancels all accepted work and joins before returning;
+queued cancellation creates no run and allocated cancellation preserves completed outputs.
+Direct channel tests exercise this core; it is test-only until c3b2 connects stdio and EOF.
