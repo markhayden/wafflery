@@ -1269,6 +1269,14 @@ journals, retained artifacts and immutable final evidence directly. c2b2 then bu
 post-allocation recoverable I/O failures into results; only an unwritable final store remains a
 server-level failure. Both slices retain the five-file bound and full verification/review.
 
+**M5.01b3c2b2 implementation scope:** expose every declared callable, bind the actual arguments,
+claim/release correlation IDs through ownership handles, execute bounded synchronous steps,
+and persist/read results and journals with position-based paging. Use path previews by default
+on stdio and opt-in image content blocks. Invalid inputs and I/O outcomes are saved tool results;
+pre-run binding/schema refusals are RPC errors. Verify a renamed wire chain, ID retry/reuse,
+paging, original-byte evidence and both delivery modes. Held workers, progress and cancellation
+remain c3 and are explicitly absent from this intermediate peer.
+
 **M5.01a implementation checkpoint (2026-11-02, complete):**
 `testkit/v04_fixtures.rs` independently authors the descriptions, result outcomes, artifact
 resources and binding/export/import/session examples. It imports neither host nor peer code.
@@ -1447,6 +1455,21 @@ exact result. Follow-up review found no blockers. The full matrix passed: fmt/cl
 (4 ignored), typecheck, 53 UI tests, 2 asset-tool tests, Storybook, reproducible assets, release
 build and 220 browser tests (8 skipped). The temporary local 4187 override is removed; lockfiles
 and prebuilt assets are unchanged. Wire dispatch remains c2b2, then held-run cancellation is c3.
+
+**M5.01b3c2b2 implementation checkpoint (2026-11-02, complete):**
+All six independent actions are callable over stdio through their standalone schemas. A renamed
+Locate → Stamp → Soften chain verifies native identity, effective arguments, preview-byte hashes,
+saved results, journals and two-entry paging. Binding/shape refusals release their owned ID;
+completed and failed runs retain it. Stdio uses path previews by default and sends image content
+only on request. Invalid inputs and I/O failures return saved tool results with matching text,
+structured content and resource evidence. Two deterministic dispatch faults failed first: missing
+execution journal and missing preview storage before content delivery. Both now finalize an I/O
+result while retaining resolved invocation and completed outputs; final-record validation/write
+failure remains a server error with the claim retained. Review approved. The full matrix passed:
+fmt/clippy, 309 Rust tests (4 ignored), typecheck, 53 UI tests, 2 asset-tool tests, Storybook,
+reproducible assets, release build and 220 browser tests (8 skipped). Temporary port 4187 config
+was removed; lockfiles/prebuilt assets are unchanged. Execution remains synchronous until c3;
+progress, held-run controls, cancellation and EOF worker ownership are not yet implemented.
 
 #### V20 — Image import feedback (M5-adjacent; coordinator-approved 2026-11-02)
 

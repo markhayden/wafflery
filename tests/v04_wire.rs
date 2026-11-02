@@ -291,6 +291,7 @@ fn artifact_controls_round_trip_without_runs_or_spend() {
     assert_eq!(
         tools
             .iter()
+            .take(3)
             .map(|t| t["name"].as_str().unwrap())
             .collect::<Vec<_>>(),
         ["describe", "export", "import"]
@@ -423,4 +424,217 @@ fn artifact_control_refusals_are_errors_not_runs_or_results() {
     assert_eq!(peer.read("test-prism://runs")["runs"], json!([]));
     peer.close();
     assert_eq!(std::fs::read_dir(root.path()).unwrap().count(), 0);
+}
+
+fn source_image() -> Value {
+    use base64::{Engine, engine::general_purpose::STANDARD};
+    json!({"inline":{"media_type":"image/png","data":STANDARD.encode(include_bytes!("../ui/tests/fixtures/sample.png"))}})
+}
+fn action(peer: &mut Peer, name: &str, arguments: Value, client: &str) -> Value {
+    peer.call(
+        40,
+        "tools/call",
+        json!({"name":name,"arguments":arguments,"_meta":{"table-manners/client_run_id":client}}),
+    )
+}
+fn completed(response: &Value) -> Value {
+    assert!(response.get("error").is_none(), "{response}");
+    assert_eq!(response["result"]["isError"], false);
+    let value = response["result"]["structuredContent"].clone();
+    let _: table_manners_v04::RunResult = serde_json::from_value(value.clone()).unwrap();
+    assert_eq!(value["status"], "completed");
+    value
+}
+
+#[test]
+fn renamed_wire_peer_executes_a_chain_and_serves_paged_saved_evidence() {
+    let root = tempfile::tempdir().unwrap();
+    let mut peer = Peer::start(root.path(), &["--tool-name", "test-prism"]);
+    peer.initialize();
+    let before = peer.read("test-prism://session");
+    let tools = peer.call(2, "tools/list", json!({}))["result"]["tools"].clone();
+    assert_eq!(tools.as_array().unwrap().len(), 9);
+    for declared in fixtures::description("test-prism")["actions"]
+        .as_array()
+        .unwrap()
+    {
+        let callable = tools
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|t| t["name"] == declared["name"])
+            .expect("declared action is callable");
+        assert_eq!(callable["inputSchema"]["type"], "object");
+        jsonschema::validator_for(&callable["inputSchema"]).unwrap();
+    }
+    let located = completed(&action(
+        &mut peer,
+        "locate_marker",
+        json!({"image":source_image()}),
+        "locate",
+    ));
+    let stamped = completed(&action(
+        &mut peer,
+        "stamp_marker",
+        json!({"image":source_image(),"marker":located["artifacts"]["out"][0]["artifact"]}),
+        "stamp",
+    ));
+    let softened = completed(&action(
+        &mut peer,
+        "soften_token",
+        json!({"token":stamped["artifacts"]["out"][0]["artifact"],"amount":0.75}),
+        "soften",
+    ));
+    assert_eq!(softened["invocation"]["arguments"]["amount"], 0.75);
+    assert_eq!(
+        softened["artifacts"]["in"][0]["artifact"],
+        stamped["artifacts"]["out"][0]["artifact"]
+    );
+    assert_ne!(
+        softened["artifacts"]["out"][0]["artifact"]["identity"],
+        stamped["artifacts"]["out"][0]["artifact"]["identity"]
+    );
+    for run in [&located, &stamped, &softened] {
+        assert_eq!(run["run"]["session_id"], before["id"]);
+        assert_eq!(peer.read(run["run"]["resource"].as_str().unwrap()), *run);
+        let preview = run["images"]["out"][0]["path"]
+            .as_str()
+            .expect("stdio defaults to path previews");
+        assert!(Path::new(preview).is_absolute() && Path::new(preview).is_file());
+        use sha2::{Digest, Sha256};
+        let hash: String = Sha256::digest(std::fs::read(preview).unwrap())
+            .iter()
+            .map(|b| format!("{b:02x}"))
+            .collect();
+        assert_eq!(hash, run["images"]["out"][0]["image"]["file_sha256"]);
+        let journal = peer.call(9,"resources/read",json!({"uri":format!("test-prism://run/{}/journal",run["run"]["id"].as_str().unwrap())}));
+        assert!(
+            journal["result"]["contents"][0]["text"]
+                .as_str()
+                .unwrap()
+                .contains("completed")
+        );
+    }
+    let page = peer.read("test-prism://runs");
+    assert_eq!(page["runs"].as_array().unwrap().len(), 2);
+    let next = peer.read(&format!(
+        "test-prism://runs?cursor={}",
+        page["next_cursor"].as_str().unwrap()
+    ));
+    assert_eq!(next["runs"].as_array().unwrap().len(), 1);
+    assert_eq!(next["next_cursor"], Value::Null);
+    assert_eq!(peer.read("test-prism://session"), before);
+    peer.close();
+}
+
+#[test]
+fn wire_binding_refusals_release_ids_and_completed_calls_keep_them() {
+    let root = tempfile::tempdir().unwrap();
+    let mut peer = Peer::start(root.path(), &[]);
+    peer.initialize();
+    let missing = fixtures::artifact("sample-lab", "sample-lab:Token");
+    let refused = action(
+        &mut peer,
+        "collect_tokens",
+        json!({"tokens":[missing["artifact"]]}),
+        "fixed",
+    );
+    assert_eq!(refused["error"]["data"]["reason"], "binding");
+    assert_eq!(refused["error"]["data"]["bindings"][0]["index"], 0);
+    assert_eq!(peer.read("sample-lab://runs")["runs"], json!([]));
+    assert_eq!(std::fs::read_dir(root.path()).unwrap().count(), 0);
+    let made = completed(&action(
+        &mut peer,
+        "make_token",
+        json!({"source":source_image()}),
+        "make",
+    ));
+    let fixed = completed(&action(
+        &mut peer,
+        "collect_tokens",
+        json!({"tokens":[made["artifacts"]["out"][0]["artifact"]]}),
+        "fixed",
+    ));
+    let reused = action(&mut peer, "summarize", json!({}), "fixed");
+    assert_eq!(reused["error"]["data"]["reason"], "client_run_id_reused");
+    assert_eq!(reused["error"]["data"]["run"]["id"], fixed["run"]["id"]);
+    assert!(reused["error"]["data"]["run"].get("dir").is_none());
+    let bad = action(&mut peer, "soften_token", json!({}), "correct-shape");
+    assert_eq!(bad["error"]["code"], -32602);
+    assert!(bad["error"].get("data").is_none());
+    completed(&action(&mut peer, "summarize", json!({}), "correct-shape"));
+    peer.close();
+}
+
+#[test]
+fn wire_outcomes_distinguish_invalid_inputs_and_io_errors_from_rpc_refusals() {
+    let root = tempfile::tempdir().unwrap();
+    let mut peer = Peer::start(root.path(), &[]);
+    peer.initialize();
+    let invalid = action(
+        &mut peer,
+        "make_token",
+        json!({"source":{"inline":{"media_type":"image/png","data":"e30="}}}),
+        "invalid",
+    );
+    assert_eq!(invalid["result"]["isError"], true);
+    let invalid = &invalid["result"]["structuredContent"];
+    assert_eq!(invalid["status"], "invalid");
+    assert_eq!(invalid["invocation"], Value::Null);
+    assert_eq!(
+        peer.read(invalid["run"]["resource"].as_str().unwrap()),
+        *invalid
+    );
+    std::fs::write(root.path().join("previews"), b"blocked").unwrap();
+    let failed = action(
+        &mut peer,
+        "make_token",
+        json!({"source":source_image()}),
+        "io",
+    );
+    assert_eq!(failed["result"]["isError"], true);
+    let failed = &failed["result"]["structuredContent"];
+    assert_eq!(failed["status"], "error");
+    assert_eq!(failed["error"]["code"], "io");
+    assert_eq!(failed["invocation"]["action"], "make_token");
+    assert_eq!(
+        peer.read(failed["run"]["resource"].as_str().unwrap()),
+        *failed
+    );
+    peer.close();
+}
+
+#[test]
+fn wire_image_blocks_are_opt_in_and_match_the_recorded_previews() {
+    use base64::{Engine, engine::general_purpose::STANDARD};
+    use sha2::{Digest, Sha256};
+    let root = tempfile::tempdir().unwrap();
+    let mut peer = Peer::start(root.path(), &[]);
+    peer.initialize();
+    for blocks in [false, true] {
+        let response = action(
+            &mut peer,
+            "make_token",
+            json!({"source":source_image(),"return_images":"resource","image_blocks":blocks}),
+            if blocks { "blocks" } else { "no-blocks" },
+        );
+        let run = completed(&response);
+        let images: Vec<_> = response["result"]["content"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .filter(|b| b["type"] == "image")
+            .collect();
+        assert_eq!(images.len(), usize::from(blocks));
+        if let Some(image) = images.first() {
+            let bytes = STANDARD.decode(image["data"].as_str().unwrap()).unwrap();
+            let hash: String = Sha256::digest(bytes)
+                .iter()
+                .map(|b| format!("{b:02x}"))
+                .collect();
+            assert_eq!(hash, run["images"]["out"][0]["image"]["file_sha256"]);
+            assert_eq!(image["mimeType"], "image/png");
+        }
+    }
+    peer.close();
 }

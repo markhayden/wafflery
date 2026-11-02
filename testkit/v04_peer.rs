@@ -1,6 +1,12 @@
-//! Independent v0.4 control peer. No host types, MCP SDK, providers or run writes.
-use super::{v04_fixtures, v04_store::Store};
+//! Independent v0.4 peer. No host types, MCP SDK or providers.
+use super::{
+    v04_fixtures,
+    v04_store::{self, Store},
+};
+#[path = "v04_calls.rs"]
+mod calls;
 use base64::{Engine, engine::general_purpose::STANDARD};
+use calls::Calls;
 use serde_json::{Value, json};
 use std::{
     io::{self, BufRead, Read, Write},
@@ -67,58 +73,6 @@ fn structured(value: Value) -> Value {
     )
 }
 
-// Only the two pinned, acyclic export/import schemas: not a general JSON Schema resolver.
-// Do not reuse for schemas with recursive refs or unevaluated* sibling keywords.
-fn control_schema(name: &str) -> Value {
-    fn document(id: &str) -> Value {
-        serde_json::from_str(
-            table_manners_v04::SCHEMAS
-                .iter()
-                .find(|(uri, _)| *uri == id)
-                .unwrap()
-                .1,
-        )
-        .unwrap()
-    }
-    fn expand(value: &Value, root: &Value) -> Value {
-        match value {
-            Value::Object(fields) => {
-                if let Some(Value::String(reference)) = fields.get("$ref") {
-                    let (base, pointer) = reference.split_once('#').unwrap_or((reference, ""));
-                    let other = if base.is_empty() {
-                        root.clone()
-                    } else {
-                        document(base)
-                    };
-                    let target = if pointer.is_empty() {
-                        &other
-                    } else {
-                        other.pointer(pointer).unwrap()
-                    };
-                    let mut siblings = fields.clone();
-                    siblings.remove("$ref");
-                    json!({"allOf":[expand(target,&other),expand(&Value::Object(siblings),root)]})
-                } else {
-                    Value::Object(
-                        fields
-                            .iter()
-                            .map(|(key, value)| (key.clone(), expand(value, root)))
-                            .collect(),
-                    )
-                }
-            }
-            Value::Array(items) => {
-                Value::Array(items.iter().map(|value| expand(value, root)).collect())
-            }
-            _ => value.clone(),
-        }
-    }
-    let schema = document(&format!("urn:table-manners:operations:{name}"));
-    let mut expanded = expand(&schema, &schema);
-    expanded["type"] = json!("object");
-    expanded
-}
-
 pub fn serve(root: &Path, arguments: Vec<String>) -> Result<(), Box<dyn std::error::Error>> {
     let configuration = match Configuration::parse(arguments) {
         Ok(value) => value,
@@ -127,6 +81,8 @@ pub fn serve(root: &Path, arguments: Vec<String>) -> Result<(), Box<dyn std::err
             std::process::exit(64);
         }
     };
+    let workspace = root.canonicalize()?;
+    let root = workspace.as_path();
     let tool = &configuration.tool;
     let store = Store::new(root, tool, configuration.allowed.clone()).map_err(|e| e.to_string())?;
     let documents = v04_fixtures::documents(tool);
@@ -158,6 +114,7 @@ pub fn serve(root: &Path, arguments: Vec<String>) -> Result<(), Box<dyn std::err
         time::OffsetDateTime::now_utc().format(&time::format_description::well_known::Rfc3339)?
     );
     session["allowed_dirs"] = json!(configuration.allowed);
+    let calls = Calls::new(root, tool, session["id"].as_str().unwrap());
     let mut input = io::stdin().lock();
     let mut output = io::stdout().lock();
     let mut initialized = false;
@@ -187,11 +144,15 @@ pub fn serve(root: &Path, arguments: Vec<String>) -> Result<(), Box<dyn std::err
             }
             _ if !initialized => error(-32000, "Initialize the test peer first"),
             "ping" => result(json!({})),
-            "tools/list" => result(json!({"tools":[
-                {"name":"describe","description":"Describe the v0.4 test actions.","inputSchema":{"type":"object","properties":{},"additionalProperties":false}},
-                {"name":"export","description":"Export held synthetic artifacts.","inputSchema":control_schema("export-request")},
-                {"name":"import","description":"Import complete portable synthetic records.","inputSchema":control_schema("import-request")}
-            ]})),
+            "tools/list" => {
+                let mut tools = vec![
+                    json!({"name":"describe","description":"Describe the v0.4 test actions.","inputSchema":{"type":"object","properties":{},"additionalProperties":false}}),
+                    json!({"name":"export","description":"Export held synthetic artifacts.","inputSchema":Calls::control_schema("export-request")}),
+                    json!({"name":"import","description":"Import complete portable synthetic records.","inputSchema":Calls::control_schema("import-request")}),
+                ];
+                tools.extend(calls.catalogue());
+                result(json!({"tools":tools}))
+            }
             "tools/call" if params["name"] == "describe" => {
                 if params["arguments"]
                     .as_object()
@@ -217,13 +178,18 @@ pub fn serve(root: &Path, arguments: Vec<String>) -> Result<(), Box<dyn std::err
                 {"uri":format!("{tool}://session"),"name":"Session","mimeType":"application/json"},
                 {"uri":format!("{tool}://runs"),"name":"Runs","mimeType":"application/json"}
             ]})),
-            "tools/call" => error(
-                -32602,
-                "Only describe, export and import are implemented in this control peer",
-            ),
+            "tools/call" => match calls.call(&store, params) {
+                Ok(value) => result(value),
+                Err(value) => json!({"error":value}),
+            },
             "resources/read" => {
                 let uri = params["uri"].as_str().unwrap_or("");
-                if let Some(identity) = uri.strip_prefix(&format!("{tool}://artifact/")) {
+                if let Some(content) = calls.resource(uri) {
+                    match content {
+                        Ok(content) => result(json!({"contents":[content]})),
+                        Err(error) => json!({"error":error}),
+                    }
+                } else if let Some(identity) = uri.strip_prefix(&format!("{tool}://artifact/")) {
                     let response = if let Some(identity) = identity.strip_suffix("/preview") {
                         store.preview(identity).map(|bytes| json!({"uri":uri,"mimeType":"image/png","blob":STANDARD.encode(bytes)}))
                     } else {
@@ -236,10 +202,6 @@ pub fn serve(root: &Path, arguments: Vec<String>) -> Result<(), Box<dyn std::err
                 } else {
                     let value = if uri == format!("{tool}://session") {
                         Some(session.clone())
-                    } else if uri == format!("{tool}://runs") {
-                        Some(
-                            json!({"contract":"0.4.0","tool":{"name":tool,"version":"0.1.0"},"runs":[],"next_cursor":null}),
-                        )
                     } else {
                         None
                     };

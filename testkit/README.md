@@ -301,10 +301,11 @@ Token and Memo are test-only native types. Location is the shared type. Preview 
 come from actual PNG bytes, never from the native record's digest.
 
 `sample-lab <workspace> v04-operations [--allow-dir <abs>]... [--tool-name <name>]` now exposes
-an independent **control-only peer** over MCP 2025-11-25. Describe, export, import and resource
-reads are implemented; the description sketches the actions that M5.01b3 will implement.
-It is not yet an operation execution peer. Controls never allocate runs or spend; import/export
-write only the fake's artifact store/export area. Discovery alone makes no workspace writes.
+an independent peer over MCP 2025-11-25. Describe, export, import, resource reads and all six
+synthetic actions are callable. Dispatch is currently synchronous and bounded; M5.01b3c3 still
+owns held-run responsiveness, progress and wire cancellation, so this is not yet the complete
+lifecycle peer. Controls never allocate runs or spend; import/export write only the artifact
+store/export area. Discovery alone makes no workspace writes.
 
 The probe follows and deduplicates explicit directory grants, requires absolute existing
 folders (exit 64 otherwise), publishes effective `allowed_dirs`, and never asks for MCP roots.
@@ -378,8 +379,8 @@ preview writes become `io` error results with the resolved invocation and a plai
 Final elapsed time updates preserve the outcome and derive the finish timestamp from start plus
 monotonic elapsed time; invalid-input identities also exclude delivery options. Error/cancelled settlements
 keep completed outputs, while unresolved invalid inputs have null invocation and empty artifacts.
-These are direct executor tests in `tests/v04_results.rs`, not a wire cancellation claim: b3c
-still owns correlation claims, run persistence, progress, active workers and final elapsed timing.
+These direct executor tests in `tests/v04_results.rs` do not claim wire cancellation support;
+b3c3 still owns notifications, active workers and cancellation over stdio.
 
 ### Run records and claims (M5.01b3c1)
 
@@ -398,8 +399,8 @@ Two-entry pages encode a `(started, id)` position, so new runs cannot shift late
 
 Direct state tests in `tests/v04_runs.rs` cover concurrent claims, refusal release, failed
 allocation, running/final reads, immutable completion, mismatched references, relocation and
-paging across equivalent timestamps with different RFC3339 spellings. This slice adds no wire
-calls or worker threads: b3c2/b3c3 still own dispatch, progress, cancellation notifications and EOF.
+paging across equivalent timestamps with different RFC3339 spellings. Wire dispatch now uses
+these records; b3c3 still owns progress, cancellation notifications and active-worker EOF handling.
 
 ### Callable schemas (M5.01b3c2a)
 
@@ -410,4 +411,31 @@ expand locally without external retrieval. Reference sibling keywords stay at th
 level, preserving closed-object and `unevaluatedProperties` validation. This is an owned-fixture
 helper, not a general resolver for arbitrary tool descriptions. Four schema tests exercise every
 action, port cardinality, undeclared fields, reference siblings and the published control inputs.
-The current wire peer still exposes controls only; c2b connects the callable actions.
+The wire catalogue and call validation now use this same builder.
+
+
+### Wire execution (M5.01b3c2b2)
+
+`v04_calls.rs` connects owned correlation claims, input binding, execution and saved outcomes.
+All six described actions appear in tools/list with complete input schemas. Binding/shape
+refusals return JSON-RPC errors before a run and release only their owned claim. Invalid resolved
+inputs and execution failures return saved structured results with `isError: true`; completed
+calls retain their claim and a reused ID points at the earlier run. Every allocated result and
+journal is readable by resource URI, and runs paginate across sessions. Stdio defaults to path
+previews; image content blocks are returned only when explicitly requested. The original PNG
+and artifact identities remain authoritative. Stored path previews are local locators; relocation
+does not rewrite them (resource previews and portable artifact controls avoid that dependency).
+
+Eleven wire tests now cover an independently renamed Locate → Stamp → Soften chain, ordered
+many-input bindings, refusal/reuse semantics, invalid and I/O outcomes, saved resources/paging,
+opt-in image blocks and the earlier control/no-root/transport checks. All work is synthetic and
+free. Execution is synchronous in this slice; progress, held workers and wire cancellation remain
+b3c3 work before the host adopts this peer.
+
+After allocation, recoverable journal or image-content delivery failures become saved I/O results,
+retaining resolved invocation and completed outputs. Image blocks are prepared before publication;
+the text, structured result and run resource agree on the exact saved outcome. Earlier invalid or
+cancelled outcomes retain their primary status with a diagnostic. A failed execution journal and a
+failed final journal append may each add evidence; diagnostic count is not an API. Missing journals
+remain unreadable even when run.json is writable. Only failure to validate the allocated record or write final evidence itself is a
+server error; the allocated claim remains held. Direct dispatch fault tests cover both failure phases.
