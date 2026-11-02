@@ -773,3 +773,24 @@ preparation checks, final review and the full shared-lock matrix: 175 Rust tests
 33 UI unit tests, two asset tests, 132 browser cases (four opt-in skips), fmt, clippy, typecheck,
 Storybook, reproducible assets and release build. UI assets and dependency lockfiles are unchanged.
 Rollback this consumption slice before V12a; ordinary submissions still cannot authorize paid work.
+
+
+### V12c bound paid submission
+
+The authenticated prepared-call path now enables paid execution after atomic owned-quote
+consumption and input verification. It passes the exact stored binding in MCP metadata alongside
+client-run correlation and the SDK progress token. The transport permit holds the same validated
+quote. Ordinary submissions still cannot authorize new paid work. Duplicate acknowledged
+submissions return the saved attempt, while a new attempt needs fresh preparation and estimation.
+Browser paid Run remains disabled until V12d.
+
+The independent peer recomputes bindings, verifies expiry/cap/session budget and records a
+synthetic $0.08 spend against a $0.12 worst case, without provider calls. Its run and journal use
+the normal contract evidence path. Selected quote facts are present in the exported archive.
+A failing regression first reproduced the closed paid guard; the initial three integration cases
+then passed exact wire/evidence, idempotence/export, missing/refused/changed/expired/session/declaration
+cases and authenticated strict API access. Concurrent duplicate coverage and final fake refinements
+are included in the full matrix. Final review passed. The shared-lock matrix passed 178 Rust
+tests (three ignored), 33 UI unit tests, two asset tests, 132 browser cases (four opt-in skips),
+fmt, clippy, typecheck, Storybook, reproducible assets and release build. No dependency or UI
+asset changes. Rollback this slice before V12b; browser Run remains closed until V12d.

@@ -63,9 +63,12 @@ pub fn start(
         std::fs::write(root.join("estimate-read"), &digest).unwrap();
         if matches!(label, "ledger" | "drain") {
             let mut state = state.lock().unwrap();
-            let spent = if label == "drain" { 0.19 } else { 0.08 };
+            let spent = state.session["spent_usd"]
+                .as_f64()
+                .unwrap()
+                .max(if label == "drain" { 0.19 } else { 0.08 });
             state.session["spent_usd"] = json!(spent);
-            state.session["remaining_usd"] = json!(0.2 - spent);
+            state.session["remaining_usd"] = json!((0.2 - spent).max(0.0));
         }
         let session = state.lock().unwrap().session.clone();
         let refused = if label == "readiness" {
@@ -81,30 +84,8 @@ pub fn start(
         value["effective"]["x-sample-lab"] = json!({"path":path,"binding":"internal-debug"});
         value["session"] = session.clone();
         value["cap_usd"] = arguments["max_spend_usd"].clone();
-        let mut bound = arguments.clone();
-        bound.as_object_mut().unwrap().remove("return_images");
-        bound.as_object_mut().unwrap().remove("image_blocks");
-        bound["source"] = json!({"file_sha256":digest,"expect":arguments["source"]["expect"]});
-        if let Some(references) = bound.get_mut("references").and_then(Value::as_array_mut) {
-            for image in references {
-                let bytes = std::fs::read(image["path"].as_str().unwrap()).unwrap();
-                *image = json!({"file_sha256":hash(&bytes),"expect":image["expect"]});
-            }
-        }
-        value["binding"] = json!(format!(
-            "sha256:{}",
-            hash(
-                &serde_json::to_vec(&json!([
-                    "price_test",
-                    bound,
-                    value["tool"],
-                    value["effective"]["model"],
-                    value["effective"]["config_identity"],
-                    session["id"]
-                ]))
-                .unwrap()
-            )
-        ));
+        value["binding"] =
+            json!(binding(arguments, &value["tool"], &value["effective"], &session).unwrap());
         value["expires"] = json!(
             (time::OffsetDateTime::now_utc() + time::Duration::minutes(5))
                 .format(&time::format_description::well_known::Rfc3339)
@@ -113,12 +94,54 @@ pub fn start(
         if label == "wrong-session" {
             value["session_id"] = json!("33333333-3333-4333-8333-333333333333");
         }
+        state
+            .lock()
+            .unwrap()
+            .estimates
+            .insert(value["binding"].as_str().unwrap().to_owned(), value.clone());
         reply(
             &output,
             &message["id"],
             json!({"structuredContent":value,"content":[],"isError":false}),
         );
     });
+}
+
+pub fn binding(
+    arguments: &Value,
+    tool: &Value,
+    effective: &Value,
+    session: &Value,
+) -> io::Result<String> {
+    let mut bound = arguments.clone();
+    bound.as_object_mut().unwrap().remove("return_images");
+    bound.as_object_mut().unwrap().remove("image_blocks");
+    let normalize = |image: &Value| -> io::Result<Value> {
+        let path = image["path"]
+            .as_str()
+            .ok_or_else(|| io::Error::other("missing image path"))?;
+        Ok(json!({"file_sha256":hash(&std::fs::read(path)?),"expect":image["expect"]}))
+    };
+    bound["source"] = normalize(&arguments["source"])?;
+    if let Some(references) = bound.get_mut("references").and_then(Value::as_array_mut) {
+        for image in references {
+            *image = normalize(image)?;
+        }
+    }
+    Ok(format!(
+        "sha256:{}",
+        hash(
+            &serde_json::to_vec(&json!([
+                "price_test",
+                bound,
+                tool,
+                effective["model"],
+                effective["config_identity"],
+                session["id"]
+            ]))
+            .map_err(io::Error::other)?
+        )
+    ))
 }
 
 fn hash(bytes: &[u8]) -> String {

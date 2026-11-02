@@ -2,6 +2,7 @@
 mod configuration;
 mod estimates;
 mod fixtures;
+mod paid;
 mod readiness;
 mod scenarios;
 mod v03_control;
@@ -18,6 +19,7 @@ use std::{
 
 pub struct PeerState {
     pub session: Value,
+    pub estimates: std::collections::HashMap<String, Value>,
     pub claimed: std::collections::HashSet<String>,
     pub roots: Vec<PathBuf>,
     pub descriptions: usize,
@@ -45,6 +47,7 @@ impl Default for PeerState {
             session: json!({"contract":"0.3.0","tool":{"name":fixtures::TOOL,"version":"0.1.0"},
             "id":id,"started":time::OffsetDateTime::now_utc().format(&time::format_description::well_known::Rfc3339).unwrap(),
             "budget_usd":null,"spent_usd":0,"unresolved_usd":0,"reserved_usd":0,"remaining_usd":null}),
+            estimates: Default::default(),
             claimed: Default::default(),
             roots: vec![],
             descriptions: 0,
@@ -228,7 +231,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             {
                 estimates::start(root.clone(), state.clone(), output.clone(), message.clone());
             }
-            "tools/call" if initialized && params["name"] == "mark_band" => {
+            "tools/call"
+                if initialized
+                    && (params["name"] == "mark_band"
+                        || scenario == "estimates" && params["name"] == "price_test") =>
+            {
                 if let Some(correlation) = params["_meta"]["table-manners/client_run_id"].as_str() {
                     if let Err(error) = scenarios::validate(
                         &json!({"$ref":"urn:table-manners:core:run-ref#/$defs/client_run_id"}),
@@ -264,7 +271,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 }
                 if let Err(error) = scenarios::validate(
                     &scenarios::input_schema(
-                        &readiness::description(&root, &scenario)["actions"][0],
+                        readiness::description(&root, &scenario)["actions"]
+                            .as_array()
+                            .unwrap()
+                            .iter()
+                            .find(|action| action["name"] == params["name"])
+                            .unwrap(),
                     ),
                     &params["arguments"],
                 ) {
@@ -318,6 +330,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     message.clone(),
                 );
                 workers.push(std::thread::spawn(move || {
+                    if message["params"]["name"] == "price_test" {
+                        paid::execute(output, state, root, message, cancelled);
+                        return;
+                    }
                     scenarios::execute(
                         output,
                         state,

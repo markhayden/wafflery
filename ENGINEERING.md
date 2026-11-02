@@ -275,7 +275,7 @@ attempt cancellation control. V09b retains up to 16 preparations and 1 GiB of co
 15-minute absolute monotonic expiry. Identical preparation requests return the same deadline;
 conflicting inputs cannot replace an identity. Submission checks and consumes a live matching
 process session, tool session and declaration under the same discovery guard as dispatch.
-Preparing consumes no execution slot; paid preparations still cannot dispatch until V12c.
+Preparing consumes no execution slot; V12c enables paid prepared submission through the quote guard.
 V12b consumes request identity, session/declaration and quote eligibility atomically. Paid drafts
 require their current non-invalidated estimate ticket, an allowed unexpired quote attributed to
 the tool/action/session and positive cap, and no outstanding reader. Consumption returns that
@@ -318,7 +318,8 @@ slot to that permit. An unpriced permit rejects any estimate metadata; a priced 
 its exact opaque binding, allowed decision, matching action and live expiry. Expiry is checked
 again after durable wire evidence is recorded and before the transport write is polled. A denied
 write can therefore retain its wire intent as evidence without claiming bytes were sent. The
-coordinator still refuses paid actions until V12c connects owned quote consumption.
+coordinator now accepts paid work only through owned prepared submission; ordinary submissions
+cannot authorize a new paid attempt.
 V10b1 implements the estimate-validation boundary: strict structuredContent/schema, tool/action/
 serving-session attribution, shared ledger consistency, expiry and cap/decision checks. Valid
 readiness refusals retain unknown prices and configuration; they never authorize dispatch. The
@@ -341,10 +342,10 @@ cannot replace newer observations. Requester cancellation cannot abandon this wo
 Discarded/expired drafts become unavailable immediately, but leased copies still count against
 retention limits and block library cleanup until the reader ends. Shutdown closes owned children
 before joining these workers. A returned quote must still match the same prepared object,
-current declaration and owned client. Browser estimate controls are connected in V11; paid authorization remains V12.
+current declaration and owned client. Browser estimate controls are connected in V11; paid API authorization is implemented in V12c.
 Controls do not wait for
 an execution slot. The former Squint behavior that created estimate runs describes v0.2 integration
-history only: v0.3 prohibits it. Until the approved paid slice lands, dispatch stays offline-only.
+history only: v0.3 prohibits it. The paid Run button remains disabled until V12d; the API requires a validated owned quote.
 Changing config or restarting a tool invalidates estimates and ends its old budget session.
 Show new session boundaries explicitly; never restart automatically to replenish an allowance.
 The authenticated restart control requires explicit confirmation and an idle execution slot.
@@ -511,3 +512,12 @@ There are no automatic estimates or paid calls. Session amount observations upda
 without changing draft identity; the tool remains authoritative at execution time. The dedicated
 cap editor is excluded from generic parameter fields and whole-object JSON edits cannot replace
 it. Abandoned-copy disposal is best effort; the host's bounded retention remains authoritative.
+
+
+Paid prepared submission consumes exactly one owned priced call and retains the selected binding
+in both the private transport permit and `_meta["table-manners/estimate"]`. Correlation/progress
+metadata remain alongside it. Direct ordinary submissions, caller-provided bindings, changed
+requests/copies, stale declarations/sessions and expired/refused quotes cannot authorize paid work.
+An acknowledged duplicate returns the same saved attempt without another dispatch; a new attempt
+needs new preparation and estimation. Selected authorization facts remain in evidence archives.
+The independent paid peer reports synthetic spend only; real-peer/provider validation remains V18.

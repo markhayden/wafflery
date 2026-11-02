@@ -22,15 +22,15 @@ changes and validation limits; it is not implementation verification.
 The owner agreed to proceed with foundation planning independently of later tool interfaces.
 The owner authorized continuing into real-tool integration on 2026-10-31; the concrete next
 slices are in [M4: real tool entry](docs/plans/m4-real-tool-entry.md). Paid runs are also authorized
-once estimates/caps/session handling are implemented; the current dispatch guard remains offline-only.
+through owned preparation, bound estimate and cap/session checks. Browser paid Run wiring remains V12d.
 Publishing and production installation are not authorized by this continuation.
 
 Current integration update (2026-11-01): published v0.2.0 and both tools are adopted on main.
 See [the v0.2 integration plan](docs/plans/table-manners-v02.md) and [verified checkpoint](docs/reviews/2026-11-01-table-manners-v02.md). The initial v0.1 fixture/version
 requirements below describe the completed foundation checkpoint, not the current live allowlist.
 The [v0.3 client task list](#v03-client--proposed-task-list) below is approved. V01–V11 are
-merged locally; the live client requires exactly v0.3 and still refuses paid dispatch until
-its estimate/cap guards are implemented. See [execution checkpoints](docs/plans/v03-execution.md).
+merged locally; the live client requires exactly v0.3. V12a–c enforce paid dispatch through
+owned preparations and validated estimates; V12d connects browser paid Run. See [execution checkpoints](docs/plans/v03-execution.md).
 
 ## Outcome
 
@@ -761,7 +761,7 @@ V12 execution slices (full matrix and review per slice; rollback in reverse orde
 - **V12b: Complete.** Atomically consume matching retained preparations with their allowed live quotes,
   verify copied inputs and preserve selected quote/cap evidence. Keep ordinary submissions
   unable to authorize paid work. Commit: `feat: consume priced preparations atomically`.
-- **V12c:** Connect paid prepared submission to the coordinator and exact wire metadata;
+- **V12c: Complete.** Connect paid prepared submission to the coordinator and exact wire metadata;
   exercise independent fake paid calls, bypass attempts, idempotence and evidence/export.
   Commit: `feat: dispatch only owned priced calls`.
 - **V12d:** Enable explicit paid Run only for the current quoted preparation; preserve

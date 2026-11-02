@@ -9,7 +9,9 @@ Squint independently. Pixel, cross-tool workflows, and batch evaluations follow 
 This directory contains the Rust/React development application, its reviewed plans, and an earlier
 interactive mock. The application runs real offline MCP actions, preserves evidence, reopens
 history, compares baselines, saves examples and exports recorded calls/evidence. Production tool
-installation, paid runs, native replay and tool-owned reports remain later integration work.
+installation, browser paid Run, native replay and tool-owned reports remain later integration work.
+The authenticated prepared-call API can execute paid actions only from a current owned estimate;
+its automated verification uses synthetic spend, without provider charges.
 
 ## Try the working application
 
@@ -41,7 +43,9 @@ and an idle tool; it reprobes the selected config and starts a new spending ledg
 and unknown charges remain in history. The drawer reports the new session ID, and other tabs
 refresh their setup observations. A failed restart leaves recovery available in the same drawer.
 Environment changes require quitting and relaunching Wafflery from the updated terminal.
-Paid execution remains disabled until the estimate and cap controls are complete.
+Paid actions expose explicit cap and estimate controls. Edits, declaration/session changes and
+expiry invalidate the quote. Browser paid Run remains disabled until its submission wiring is
+complete; the host's prepared-call API already enforces the owned quote and exact binding.
 
 **Clean up library** previews selected runs/examples and reclaimable image bytes. Shared examples
 retain their images; deleting a baseline run clears its pin. Cleanup requires idle tools, rechecks

@@ -210,10 +210,19 @@ impl Coordinator {
             .as_array()
             .and_then(|actions| actions.iter().find(|a| a["name"] == request.action))
             .ok_or(Error::Missing("Action not declared"))?;
-        if action["cost"]["may_spend"].as_bool() != Some(false) {
-            return Err(Error::Conflict(
-                "This foundation only runs actions declared free and offline.",
-            ));
+        match action["cost"]["may_spend"].as_bool() {
+            Some(false) => (),
+            Some(true) if retained => (),
+            Some(true) => {
+                return Err(Error::Conflict(
+                    "Paid actions require an owned preparation and allowed estimate",
+                ));
+            }
+            None => {
+                return Err(Error::Conflict(
+                    "Action spending declaration is unavailable",
+                ));
+            }
         }
         let (prepared, estimate) = if retained {
             self.preparations
@@ -237,6 +246,9 @@ impl Coordinator {
         };
         let arguments = prepared.arguments().clone();
         let attempt = prepared.persist(&self.attempts, estimate.as_ref()).await?;
+        let binding = estimate
+            .as_ref()
+            .map(|quote| quote.observation()["binding"].clone());
         let (written, dispatched) = tokio::sync::watch::channel(false);
         *client.gate.lock().unwrap_or_else(|e| e.into_inner()) = Some(Permit {
             discovery,
@@ -261,7 +273,9 @@ impl Coordinator {
         );
         let coordinator = self.clone();
         let worker = tokio::spawn(async move {
-            coordinator.execute(client, request, arguments).await;
+            coordinator
+                .execute(client, request, arguments, binding)
+                .await;
             finished.store(true, Ordering::Release);
             coordinator.events.changed();
         });
@@ -269,9 +283,17 @@ impl Coordinator {
         self.events.changed();
         Ok(attempt)
     }
-    async fn execute(&self, client: Arc<ToolClient>, request: Submission, arguments: Value) {
+    async fn execute(
+        &self,
+        client: Arc<ToolClient>,
+        request: Submission,
+        arguments: Value,
+        binding: Option<Value>,
+    ) {
         let result = async {
-            let message = serde_json::from_value(json!({"method":"tools/call","params":{"name":request.action,"arguments":arguments,"_meta":{"table-manners/client_run_id":request.id}}}))?;
+            let mut meta = json!({"table-manners/client_run_id":request.id});
+            if let Some(binding) = binding { meta["table-manners/estimate"] = binding; }
+            let message = serde_json::from_value(json!({"method":"tools/call","params":{"name":request.action,"arguments":arguments,"_meta":meta}}))?;
             client.start_association(&request.id);
             let mut progress = client.progress();
             let call = client.peer()?.send_request(message);

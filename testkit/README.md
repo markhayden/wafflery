@@ -121,7 +121,7 @@ authorize dispatch. The same production may_spend guard still rejects paid actio
 
 `v03_fixtures.rs` owns descriptions for `sample-lab` and `test-lens`, a ready offline action beside
 an independently configured paid action, and session/estimate/refusal examples. These fixtures
-perform no provider calls and do not change the host's no-paid dispatch guard.
+perform no provider calls. Paid host dispatch additionally requires an owned priced preparation.
 The preparation tests validate independently of host-generated types.
 
 V02 replaces the temporary V01 schema archive with the exact contract dependency's embedded
@@ -146,7 +146,7 @@ Only the control-only v03 scenarios currently implement estimate responses.
 ## Readiness scenarios
 
 `readiness` and `readiness-held` describe an offline action with an optional missing filler,
-beside a paid action which the host’s current guard blocks. `credential-state` under the peer
+beside a paid action whose ordinary unprepared submission the host blocks. `credential-state` under the peer
 root selects present/valid/invalid/missing/unknown on the next description, without reading any
 credential. Only requesting the optional filler produces -32602 not_ready, before claiming the
 client ID or allocating a run; an omitted filler remains usable. Wire coverage reuses that
@@ -208,10 +208,22 @@ retain its prepared inputs through that boundary. `release-run` completes the in
 free run; none of these controls creates an attempt or incurs provider charges.
 
 The estimate scenario starts with a synthetic $0.20 session budget. Labels `ledger` and `drain`
-report spend of $0.08 and $0.19 to exercise later ledger observations; they do not charge anything.
+raise reported spend to at least $0.08 and $0.19 to exercise later ledger observations; they do not charge anything.
 Caps above its configured $1 limit receive an `invalid_arguments` refusal, while a positive cap
 below the $0.12 worst case returns a cap-refused estimate. Optional ordered `references` are
 bound by content fingerprints and coordinates, as is `source`. The
 `estimate-declaration-changed` marker changes the paid action's description on the next refresh.
 Browser probes use these controls to verify draft/session/declaration invalidation separately
 from ledger updates, and that estimates never become history entries.
+
+
+### Paid dispatch probes
+
+In the `estimates` scenario, `price_test` accepts a paid call as an offline protocol exercise.
+It records exact parameters and metadata, allocates a normal run, recomputes the quoted binding,
+checks expiry/cap/current budget, and reports a synthetic $0.08 cost against a $0.12 worst case.
+It never contacts a provider or incurs charges. Session settlement is atomic; input hashing runs
+outside the ledger lock. A cancellation observed before allocation produces no run. Completed
+calls preserve source/reference evidence and a journal; no synthetic repair image is promised.
+Host tests inspect exact wire metadata, concurrent/sequential idempotence, evidence export,
+authentication/origin checks, refusal of altered/unpriced/expired calls and fresh paid retries.
