@@ -408,6 +408,17 @@ impl Coordinator {
             }
         }
         super::dispatch_transport::revoke(&client.gate, &request.id);
+        if self.attempts.get(&request.id).await.is_ok_and(|attempt| {
+            attempt
+                .result
+                .as_ref()
+                .is_some_and(|result| result["error"]["code"] == "credential")
+                || attempt.observations["refusal"]["reason"] == "not_ready"
+        }) {
+            // A provider rejection or newly missing requirement changes setup, not just this
+            // run's message. Refresh discovery once; never restart or retry paid execution.
+            let _ = self.refresh(&request.tool).await;
+        }
         let child_exited = client.confirm_exit().await.unwrap_or(false);
         if preserved
             || child_exited

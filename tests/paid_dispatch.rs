@@ -312,3 +312,6 @@ async fn prepared_paid_api_keeps_auth_identity_and_binding_checks_on_the_server(
         1
     );
 }
+
+#[path = "paid_dispatch/outcomes.rs"]
+mod outcomes;

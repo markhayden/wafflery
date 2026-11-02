@@ -335,52 +335,61 @@ fn pre_run_refusals_release_the_claim_for_a_corrected_wire_request() {
 
 #[test]
 fn a_queued_cancel_keeps_its_claim_and_does_not_allocate_a_run() {
-    let temp = tempfile::tempdir().unwrap();
-    let source = temp.path().join("source.png");
-    std::fs::write(&source, include_bytes!("../ui/tests/fixtures/sample.png")).unwrap();
-    let mut peer = Peer::start(temp.path(), "queued");
-    peer.initialize();
-    let mut params = json!({"name":"mark_band","arguments":{"source":{"path":source},"label":"Queued"},"_meta":{"table-manners/client_run_id":"queued-id"}});
-    peer.send(json!({"jsonrpc":"2.0","id":3,"method":"tools/call","params":params}));
-    let deadline = std::time::Instant::now() + Duration::from_secs(3);
-    while !temp.path().join("runs/queued").exists() {
-        assert!(
-            std::time::Instant::now() < deadline,
-            "peer never queued the call"
+    for scenario in ["queued", "estimates"] {
+        let temp = tempfile::tempdir().unwrap();
+        let source = temp.path().join("source.png");
+        std::fs::write(&source, include_bytes!("../ui/tests/fixtures/sample.png")).unwrap();
+        let mut peer = Peer::start(temp.path(), scenario);
+        peer.initialize();
+        let mut params = json!({"name":"mark_band","arguments":{"source":{"path":source},"label":"Queued"},"_meta":{"table-manners/client_run_id":"queued-id"}});
+        if scenario == "estimates" {
+            use sha2::{Digest, Sha256};
+            params["name"] = json!("price_test");
+            params["arguments"]["label"] = json!("paid-queued");
+            params["arguments"]["max_spend_usd"] = json!(0.5);
+            params["arguments"]["source"]["expect"] = json!({"file_sha256":Sha256::digest(include_bytes!("../ui/tests/fixtures/sample.png")).iter().map(|byte| format!("{byte:02x}")).collect::<String>(),"width":160,"height":100,"projection":"flat","topology":"bounded"});
+        }
+        peer.send(json!({"jsonrpc":"2.0","id":3,"method":"tools/call","params":params}));
+        let deadline = std::time::Instant::now() + Duration::from_secs(3);
+        while !temp.path().join("runs/queued").exists() {
+            assert!(
+                std::time::Instant::now() < deadline,
+                "peer never queued the call"
+            );
+            std::thread::sleep(Duration::from_millis(10));
+        }
+        let duplicate = peer.call(4, "tools/call", params.clone());
+        assert_eq!(
+            duplicate["error"]["data"],
+            json!({"reason":"client_run_id_reused","run":null})
         );
-        std::thread::sleep(Duration::from_millis(10));
-    }
-    let duplicate = peer.call(4, "tools/call", params.clone());
-    assert_eq!(
-        duplicate["error"]["data"],
-        json!({"reason":"client_run_id_reused","run":null})
-    );
-    peer.send(json!({"jsonrpc":"2.0","method":"notifications/cancelled","params":{"requestId":3,"reason":"test"}}));
-    while !temp.path().join("runs/queue-cancelled").exists() {
-        assert!(
-            std::time::Instant::now() < deadline,
-            "queued cancel did not finish"
+        peer.send(json!({"jsonrpc":"2.0","method":"notifications/cancelled","params":{"requestId":3,"reason":"test"}}));
+        while !temp.path().join("runs/queue-cancelled").exists() {
+            assert!(
+                std::time::Instant::now() < deadline,
+                "queued cancel did not finish"
+            );
+            std::thread::sleep(Duration::from_millis(10));
+        }
+        let duplicate = peer.call(5, "tools/call", params.clone());
+        assert_eq!(
+            duplicate["error"]["data"],
+            json!({"reason":"client_run_id_reused","run":null})
         );
-        std::thread::sleep(Duration::from_millis(10));
+        assert!(!temp.path().join("runs/calls.ndjson").exists());
+        std::fs::write(temp.path().join("runs/release-queue"), "").unwrap();
+        params["_meta"]["table-manners/client_run_id"] = json!("fresh-id");
+        let fresh = peer.call(6, "tools/call", params);
+        assert_eq!(
+            fresh["result"]["structuredContent"]["status"], "completed",
+            "{fresh}"
+        );
+        assert_eq!(
+            std::fs::read_to_string(temp.path().join("runs/calls.ndjson"))
+                .unwrap()
+                .lines()
+                .count(),
+            1
+        );
     }
-    let duplicate = peer.call(5, "tools/call", params.clone());
-    assert_eq!(
-        duplicate["error"]["data"],
-        json!({"reason":"client_run_id_reused","run":null})
-    );
-    assert!(!temp.path().join("runs/calls.ndjson").exists());
-    std::fs::write(temp.path().join("runs/release-queue"), "").unwrap();
-    params["_meta"]["table-manners/client_run_id"] = json!("fresh-id");
-    let fresh = peer.call(6, "tools/call", params);
-    assert_eq!(
-        fresh["result"]["structuredContent"]["status"], "completed",
-        "{fresh}"
-    );
-    assert_eq!(
-        std::fs::read_to_string(temp.path().join("runs/calls.ndjson"))
-            .unwrap()
-            .lines()
-            .count(),
-        1
-    );
 }

@@ -819,3 +819,27 @@ tests, 144 browser cases (four opt-in skips), fmt, clippy, typecheck, Storybook,
 assets and release build. Final review passed. The API adapter, estimate owner and workspace form are kept
 in one slice with their tests despite exceeding the usual five authored files. Rollback V12d
 before V12c; no server wire or storage change is introduced by this browser slice.
+
+### V13a paid outcomes and readiness refresh
+
+The independent paid peer now exercises zero-spend stale/cap/credential failures, known failure
+charges, unresolved provider outcomes, sequential budget changes, readiness validation, and
+cancellation after a synthetic request was sent. Held calls reserve their worst case atomically
+and release the mutex while waiting; describe, estimate and session reads keep responding.
+Cancellation settles unresolved worst-case spend instead of clearing it. Cancellation before
+allocation keeps its client claim and creates no run; only a definitive no-run RPC refusal releases it.
+
+The host refreshes discovery after a credential error or no-run setup refusal, before releasing
+execution availability. It does not retry or restart. A regression with that refresh removed
+showed the obsolete ready state after the provider rejected authentication. Restoring it updated
+the declaration to needs_setup/invalid. All eight paid integration tests now pass, including
+separate sequential-budget and present-to-valid cases, no-run setup refusal, and cancelled spend.
+The initial full matrix passed. Review then caught a cancelled client claim being released and
+missing held-call heartbeats. Both regressions failed before correction; the extended free/paid
+wire reuse check and all eight paid tests now pass. Held calls emit progress each second with the
+original token and run metadata. Final review passed. The post-correction shared-lock matrix passed 183 Rust tests (three ignored),
+35 UI unit tests, two asset tests, 144 browser cases (four opt-in skips), fmt, clippy, typecheck,
+Storybook, reproducible assets and release build. No lockfile or UI asset changes.
+This slice groups the fake's protocol,
+ledger and execution paths with the host observer and outcome tests; the renderer stays V13b.
+Rollback the host refresh and scripted peer scenarios together before reverting V12.

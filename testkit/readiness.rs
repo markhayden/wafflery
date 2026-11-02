@@ -17,6 +17,7 @@ pub fn description(root: &Path, scenario: &str) -> Value {
             .as_array_mut()
             .unwrap()
             .push(json!({"slot":"references","role":"reference","required":false,"many":true}));
+        paid["readiness"] = super::paid_scenarios::readiness(root);
         paid["cost"] = json!({"may_spend":true,"basis":"estimated"});
         paid["params_schema"]["properties"]["max_spend_usd"] =
             json!({"type":"number","exclusiveMinimum":0});

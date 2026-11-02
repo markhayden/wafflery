@@ -3,6 +3,7 @@ mod configuration;
 mod estimates;
 mod fixtures;
 mod paid;
+mod paid_scenarios;
 mod readiness;
 mod scenarios;
 mod v03_control;
@@ -283,7 +284,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     reject(&output, id, -32602, &error);
                     continue;
                 }
-                if let Some(data) = readiness::refusal(&scenario, &params["arguments"]) {
+                if let Some(data) =
+                    readiness::refusal(&scenario, &params["arguments"]).or_else(|| {
+                        (scenario == "estimates" && params["name"] == "price_test")
+                            .then(|| paid_scenarios::refusal(&root, &params["arguments"]))
+                            .flatten()
+                    })
+                {
                     send(
                         &output,
                         json!({"jsonrpc":"2.0","id":id,"error":{"code":-32602,"message":"This call needs setup","data":data}}),

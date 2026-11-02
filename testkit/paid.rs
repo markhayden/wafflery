@@ -1,5 +1,5 @@
 //! Synthetic paid execution. Never connects to a provider or incurs a charge.
-use super::{PeerState, estimates, fixtures, reply, send};
+use super::{PeerState, estimates, fixtures, paid_scenarios, reply, send};
 use serde_json::{Value, json};
 use std::{
     fs::{self, OpenOptions},
@@ -22,16 +22,21 @@ pub fn execute(
     message: Value,
     cancelled: Arc<AtomicBool>,
 ) {
+    if message["params"]["arguments"]["label"] == "paid-queued" {
+        fs::write(root.join("queued"), "waiting before allocation").unwrap();
+        while !cancelled.load(Ordering::Acquire) && !root.join("release-queue").exists() {
+            std::thread::sleep(std::time::Duration::from_millis(5));
+        }
+    }
     if cancelled.load(Ordering::Acquire) {
-        state
-            .lock()
-            .unwrap()
-            .active
-            .retain(|(id, _)| id != &message["id"]);
+        let mut state = state.lock().unwrap();
+        state.active.retain(|(id, _)| id != &message["id"]);
+        fs::write(root.join("queue-cancelled"), "cancelled before allocation").unwrap();
         return;
     }
     let params = &message["params"];
     let arguments = &params["arguments"];
+    let label = arguments["label"].as_str().unwrap_or("");
     let mut run = fixtures::result("running");
     let id = format!("run-{:04}", state.lock().unwrap().runs.len() + 1);
     let directory = root.join(&id);
@@ -41,7 +46,14 @@ pub fn execute(
         "session_id":state.lock().unwrap().session["id"],"client_run_id":params["_meta"]["table-manners/client_run_id"]});
     run["started"] = json!(now());
     run["finished"] = Value::Null;
-    run["images"]["in"] = json!([]);
+    run["images"]["in"] =
+        json!([{"slot":"source","role":"source","image":arguments["source"]["expect"]}]);
+    for image in arguments["references"].as_array().into_iter().flatten() {
+        run["images"]["in"]
+            .as_array_mut()
+            .unwrap()
+            .push(json!({"slot":"references","role":"reference","image":image["expect"]}));
+    }
     run["notes"] = json!(["Synthetic spending observation; no provider or charge."]);
     fs::write(directory.join("run.json"), run.to_string()).unwrap();
     state.lock().unwrap().runs.push(run.clone());
@@ -66,6 +78,10 @@ pub fn execute(
     let effective =
         json!({"model":"offline-script","config_identity":format!("sha256:{}","1".repeat(64))});
     let session = state.lock().unwrap().session.clone();
+    let mut effective = effective;
+    if label == "paid-stale" {
+        effective["model"] = json!("changed-script");
+    }
     let binding = estimates::binding(arguments, &run["tool"], &effective, &session);
     let mut ledger = state.lock().unwrap();
     let stale = params["_meta"]
@@ -93,7 +109,7 @@ pub fn execute(
         ))
     } else if binding.is_err() {
         Some(("invalid", "input", "Synthetic input is unavailable"))
-    } else if cap < 0.12 {
+    } else if cap < if label == "paid-cap" { 0.6 } else { 0.12 } {
         Some(("error", "cap", "Synthetic cost exceeds the cap"))
     } else if remaining + 1e-6 < 0.12 {
         Some((
@@ -110,24 +126,26 @@ pub fn execute(
     } else if cancelled.load(Ordering::Acquire) {
         run["status"] = json!("cancelled");
     } else {
-        // The synthetic provider completes inside this atomic limit/settlement step.
-        let spent = ledger.session["spent_usd"].as_f64().unwrap() + 0.08;
-        ledger.session["spent_usd"] = json!(spent);
-        ledger.session["remaining_usd"] =
-            json!((ledger.session["budget_usd"].as_f64().unwrap() - spent).max(0.0));
-        run["status"] = json!("completed");
-        run["spend"]["usd"] = json!(0.08);
+        // Reserve before the simulated provider starts, then release the ledger mutex so
+        // describe, estimates and resources remain available throughout held requests.
+        ledger.session["reserved_usd"] =
+            json!(ledger.session["reserved_usd"].as_f64().unwrap() + 0.12);
+        paid_scenarios::balance(&mut ledger.session);
+        drop(ledger);
+        let mut progress = 1;
+        paid_scenarios::settle(&root, &state, &cancelled, label, &mut run, || {
+            if let Some(token) = params["_meta"].get("progressToken") {
+                progress += 1;
+                send(
+                    &output,
+                    json!({"jsonrpc":"2.0","method":"notifications/progress","params":{
+                    "progressToken":token,"progress":progress,"message":"Waiting for synthetic provider",
+                    "_meta":{"table-manners/run":reference}}}),
+                );
+            }
+        });
+        ledger = state.lock().unwrap();
         run["input_identity"] = json!(binding.unwrap());
-        run["images"]["in"]
-            .as_array_mut()
-            .unwrap()
-            .push(json!({"slot":"source","role":"source","image":arguments["source"]["expect"]}));
-        for image in arguments["references"].as_array().into_iter().flatten() {
-            run["images"]["in"]
-                .as_array_mut()
-                .unwrap()
-                .push(json!({"slot":"references","role":"reference","image":image["expect"]}));
-        }
     }
     run["finished"] = json!(now());
     fs::write(

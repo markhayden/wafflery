@@ -68,10 +68,11 @@ pub fn start(
                 .unwrap()
                 .max(if label == "drain" { 0.19 } else { 0.08 });
             state.session["spent_usd"] = json!(spent);
-            state.session["remaining_usd"] = json!((0.2 - spent).max(0.0));
+            super::paid_scenarios::balance(&mut state.session);
         }
         let session = state.lock().unwrap().session.clone();
-        let refused = if label == "readiness" {
+        let ready = super::paid_scenarios::readiness(&root);
+        let refused = if label == "readiness" || ready["state"] != "ready" {
             Some("readiness")
         } else if cap < 0.12 {
             Some("cap")
@@ -83,6 +84,9 @@ pub fn start(
         let mut value = super::v03_fixtures::estimate(super::fixtures::TOOL, &session, refused);
         value["effective"]["x-sample-lab"] = json!({"path":path,"binding":"internal-debug"});
         value["session"] = session.clone();
+        if label != "readiness" {
+            value["readiness"] = ready;
+        }
         value["cap_usd"] = arguments["max_spend_usd"].clone();
         value["binding"] =
             json!(binding(arguments, &value["tool"], &value["effective"], &session).unwrap());

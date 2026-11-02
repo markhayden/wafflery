@@ -227,3 +227,23 @@ outside the ledger lock. A cancellation observed before allocation produces no r
 calls preserve source/reference evidence and a journal; no synthetic repair image is promised.
 Host tests inspect exact wire metadata, concurrent/sequential idempotence, evidence export,
 authentication/origin checks, refusal of altered/unpriced/expired calls and fresh paid retries.
+
+Paid outcome labels extend that same independent peer:
+
+| Label | Simulated outcome |
+| --- | --- |
+| `paid-stale` | A changed effective model makes the binding stale; zero spend. |
+| `paid-cap` | The execution limits check needs $0.60 rather than the quoted $0.12; a $0.50 cap refuses it before spending. |
+| `paid-credential` | A synthetic provider 401 costs zero and marks the credential invalid. |
+| `paid-failed` | A provider failure reports a known $0.08 charge. |
+| `paid-unresolved` | A sent request has no settled answer; $0.12 is counted as unresolved. |
+| `paid-full` | A known $0.12 charge exhausts enough budget to refuse another earlier quote. |
+| `paid-validate` | A known $0.08 result changes credential readiness from present to valid. |
+| `paid-not-ready` | The call's pre-allocation check finds a missing requirement and refuses without claiming a run. |
+| `paid-queued` | Waits at `queued` until `release-queue` or cancellation; a cancelled ID stays claimed with no run. |
+| `paid-held` | Reserves $0.12 and writes `paid-provider-started`; `release-paid` completes it, while cancellation settles $0.12 as unresolved. |
+
+`paid-credential-state` is a synthetic state marker, never a key. Reads and estimates remain
+responsive while `paid-held` waits, with one-second progress heartbeats. Reservations and settlement hold the ledger mutex only for
+atomic updates; unresolved spend remains in the session after cancellation. These probes test
+host accounting and presentation, not real provider pricing or behavior.

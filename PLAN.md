@@ -785,6 +785,16 @@ for budget; separately test present-to-valid invalidates the second quote withou
 estimates spend zero.
 Depends: V12. Commit: `feat: explain paid execution failures`.
 
+V13 execution slices (full matrix and review per slice; rollback in reverse order):
+- **V13a: Complete.** Independent fake failures, actual/unresolved spend and cancellation reservations;
+  refresh host readiness after credential outcomes and verify sequential budget changes separately
+  from readiness changes. Commit: `feat: preserve paid outcomes and refresh readiness`.
+- **V13b:** Selected-run failure/spend presentation and focused recovery guidance, with stories,
+  unit and browser coverage. Commit: `feat: explain paid outcomes in the workspace`.
+- **V13c:** Complete the fake paid journey through cancellation, history and exported evidence;
+  record checkpoint V-B. Commit: `test: verify the paid workflow checkpoint`.
+Each slice keeps its relevant tests and accurate documentation; none calls a real provider.
+
 **Checkpoint V-B:** Full matrix, review and fake paid journey from cap/estimate through run,
 cancel, history and evidence export. Keep one active execution per tool: a second submission is
 busy, while two earlier estimates
@@ -794,6 +804,11 @@ credentials in mandatory
 tests and no claim of provider verification until V18. Record this checkpoint separately.
 
 ### M6b — Tool report viewers and documents
+
+For V14–V17, use the approved `work/*.html` mockups as the design reference from the start,
+especially the shared drawer, result hierarchy and preview controls. Preserve accessibility,
+contract boundaries and tested behavior where the mock is incomplete; record material divergences
+for V19 rather than introducing a separate report-viewer visual language.
 
 **V14 — Own render command execution.** Resolve declared render argv from the selected saved
 run, substitute `{run.dir}` and `{frame_ancestor}` only as whole argv elements, and spawn without a
@@ -883,9 +898,26 @@ helper path, report the concrete need to the coordinator rather than broaden inh
 Verify exact wire/evidence with each real peer, then full matrix for any changed host code.
 Depends: V-A/V-B/V-C plus published tools. Commit: `test: verify real v0.3 integrations`.
 
+**V19 — Bring the implemented UI into alignment with the mockups.** Final task of the v0.3
+client, after V18. Use `work/mockups.html`, `comparison-ui`, `drawer-ui`, `examples-ui`,
+`journey-ui`, `wipe-ui`, `interface-study`, `activity-hierarchy` and `preview-controls` HTML studies.
+Capture current screens and corresponding mock views, then record a short screenshot-backed gap
+list under `docs/reviews/`: layout, spacing, typography, colour tokens, iconography,
+empty/loading/error states and responsiveness. Fix the gaps within reason. Keep behavior required
+by the contract, accessibility or meaningful tests when it differs from a mock, and document
+each intentional divergence. Update Storybook stories alongside their components. Add Playwright
+screenshot regressions for each corrected screen, with stable fixture data and deterministic
+states; review baselines rather than accepting changes blindly. Run the full matrix and review
+before local merge. Files depend on the gap list; split into named screen-sized tasks with checks
+and docs per slice. Mark explicitly authorized this pass; no additional approval gate.
+Depends: V18. Commit strategy: `docs: record UI fidelity gaps`, then focused `style:`/`test:`
+commits per screen. Rollback visual slices in reverse order while retaining V18's working protocol
+and accessibility behavior. The coordinator reviews and pushes; this session does not push/tag.
+
 ### Approval, sequencing and rollback checkpoints
 
-Mark approved V01–V18 on 2026-11-01 after the two review rounds. The initial proposal was
+Mark approved V01–V18 on 2026-11-01 after the two review rounds and subsequently added V19
+as the final UI fidelity pass. The initial proposal was
 commit 0033af8. Implementation proceeds in order with the per-task checks below; the coordinator
 reviews and pushes local merges. Paid dispatch remains blocked until its complete guard lands.
 

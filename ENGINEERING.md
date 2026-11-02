@@ -530,3 +530,9 @@ image array order is significant). Network/server uncertainty retains that ident
 same-ID retry, independently of the currently selected tool declaration. Definitive host input/
 conflict refusals discard the preparation; a new attempt requires a new explicit estimate and Run.
 No caller-supplied binding is sent, and neither a quote nor submission is retried automatically.
+
+After preserving a `credential` outcome or definitive `not_ready` refusal, the host refreshes
+that tool's description once before releasing its execution reservation. Other tabs receive the
+usual invalidation; changed readiness invalidates retained estimates. This is discovery only,
+never an automatic retry, configuration change or session restart. A failed refresh leaves setup
+unavailable without rewriting the saved run or dropping its spend evidence.
