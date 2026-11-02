@@ -1199,7 +1199,7 @@ intent; named sub-slices use scope-specific subjects and types. No unnumbered to
 
 #### M5.01 — Establish an independent v0.4 peer
 
-- [ ] Add schema-validated core/operations fixtures from the pinned contract, plus independently
+- [x] Add schema-validated core/operations fixtures from the pinned contract, plus independently
   authored fake actions with unrelated names, scalar/many ports, task outputs and all three kinds.
 - [ ] Fake scenarios cover preview/no-preview, portable/opaque types, indexed binding refusal,
   invocation on all outcomes, artifact resources and export/import controls without provider calls.
@@ -1211,8 +1211,33 @@ intent; named sub-slices use scope-specific subjects and types. No unnumbered to
 
 **Planned build slices** (ordered, each with its own targeted checks and matching docs):
 
-- **M5.01a: schema fixtures and negative cases** — acceptance 1 and schema portion of 3; fixture tests.
+- **M5.01a: Complete — schema fixtures and negative cases** — acceptance 1 and schema portion of 3; fixture tests.
 - **M5.01b: independent fake scenarios** — acceptance 2 and wire independence in 3; fake protocol tests.
+
+**M5.01a implementation checkpoint (2026-11-02, complete):**
+`testkit/v04_fixtures.rs` independently authors the descriptions, result outcomes, artifact
+resources and binding/export/import/session examples. It imports neither host nor peer code.
+The synthetic Token/Memo types, action names and resource identities belong only to the test kit;
+source/image-artifact fingerprints come from the owned `ui/tests/fixtures/sample.png`. Location
+and Token previews encode actual deterministic PNG bytes, distinct from native records. Fixture
+input identities/timestamps are deterministic examples, not claims of live execution.
+`tests/v04_contract_fixtures.rs` validates them against published v0.4 schemas and checks semantic
+relationships that schemas alone cannot establish. Both the missing description and absent
+fixture catalogue failed before implementation. Review regressions then failed for the import
+grant, unchanged output identity and absent task/many-output cases before their fixes. Ten targeted
+tests now pass, including declaration/result/argument/profile consistency checks. All 21 published
+schema files match `d1c49a7` byte for byte. The dev-only `table-manners-v04 = =0.4.0` alias allows
+this independent test work while live dispatch still uses exactly v0.3; M5.03 replaces the live
+pin and removes the temporary alias, with no dual-version production dispatch. M5.01b still
+owns stdio behavior and the wire checks; these static examples do not claim execution coverage.
+Image-port examples supplied by artifact reference retain that reference in their invocation;
+the task's image input records `{expect}`. This also matches the approved Rascal revision's
+operation invocation handling, without importing its implementation into the fake.
+Full matrix passed under the shared lock: fmt, clippy, 253 Rust tests (4 opt-in ignored),
+typecheck, 53 UI unit tests, 2 asset-tool tests, Storybook, reproducible assets/check-ui,
+release build and 220 Chromium/WebKit tests (8 opt-in skipped). Lockfile and prebuilt assets
+were unchanged by the matrix. Independent review approved after the fixture corrections above;
+hosted CI remains separate coordinator-owned evidence after push.
 
 #### M5.02 — Separate input grants from evidence access
 
