@@ -1902,6 +1902,34 @@ The temporary port 4187 config was removed; lockfiles and prebuilt assets are un
 and renderer resolution now enforce the same direct description relationships. The composed-schema,
 callable-schema and remaining semantic/display follow-ups above are still open.
 
+##### As built — M5.03
+
+- Effective directories are checked against the owned child's launch grants. Filesystem resolution
+  belongs to the first validated observation; later observations retain the exact directory set
+  and lexical boundary so filesystem changes cannot hide the session ledger. A replacement client
+  starts validation afresh. Actual file reads remain subject to the tool's enforcement.
+- The live contract is exactly v0.4. Saved older evidence remains readable/exportable, while
+  starting a report renderer requires a current-contract saved declaration/result.
+- These decisions do not close checkpoint A: remaining semantic checks, effective-grant display
+  and the deferred lifecycle checks below still require implementation and evidence.
+
+**b2 preparation — stable session grants (review correction):** before wiring the staged grant
+validator, change `src/tools/session_grants.rs`, `tests/session_grants.rs`, and this plan. Validate
+canonical existing directories on the first observation; later observations of the same owned
+client must retain the same identity/set and stay within its original requested grants, but do not
+resolve those paths again. A deleted or replaced input directory must not hide a later spending
+observation. Tools still enforce every actual read, and explicit replacement validates directories
+anew. Tests cover disappearance, symlink replacement, changed grants and fresh-session rejection.
+The subsequent live-boundary slice remains separate, followed by display/wire lifecycle checks.
+
+**Stable-grant preparation checkpoint (2026-11-02):** the new disappearance regression failed
+against repeated filesystem validation. Four targeted tests now pass; independent review approved.
+The shared-lock full matrix passed fmt/clippy, 366 Rust tests (4 opt-in ignored), typecheck,
+56 UI unit tests, 2 asset tests, Storybook, byte-identical check-ui builds, release build and
+226 Chromium/WebKit tests (8 opt-in skipped). Lockfiles/prebuilt assets are unchanged and the
+temporary port 4187 config is removed. This commit changes the staged validator only; the live
+publication paths and their lifecycle evidence are the next slice.
+
 **Checkpoint A:** merge M5.01–03 as a coherent cutover of validation, launch arguments and fake
 defaults; v0.4 is the only supported live contract afterward. Green matrix, an independent fake
 task run and the published exact dependency pin are required.
