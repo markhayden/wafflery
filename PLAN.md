@@ -1728,6 +1728,39 @@ The shared-lock full matrix passed fmt/clippy, 344 Rust tests (4 ignored), typec
 2 asset-tool tests, Storybook, reproducible assets, release build and 226 browser tests (8 skipped).
 The temporary port 4187 config was removed; lockfiles/prebuilt assets are unchanged. This slice is
 still staged validation; live session wiring and its browser acceptance remain in M5.03b.
+M5.03a2.2 stages invocation identity checks after schema/association validation: a resolved invocation
+must name the result's action, and images-profile delivery options cannot appear in replay arguments.
+The validator does not rewrite arguments, defaults or opaque nested values. Unresolved invalid inputs
+keep their schema-permitted null invocation. Portable input/reference validation and preservation
+continue with the live cutover and M5.04–M5.08; this is not a claim of a complete replay bundle.
+M5.03a2.3 stages contextual binding-refusal checks: declared submitted operation ports, mandatory
+in-range indices only on list ports, one entry per failed item in port/item order, and a single
+unresolved identity for artifact reads or exports. Human-readable expected/got/remedy fields remain
+opaque. a2.2 and a2.3 have separate targeted tests; their joined verification/review covers five
+authored files (two validators, two test files and this plan) before the next local merge.
+Review regressions additionally cover integral JSON indices such as `1.0` and a schema-valid
+non-binding refusal reaching the binding validator: both failed first, then passed after accepting
+bounded integral numbers and rejecting other refusal reasons before reading bindings.
+The initial joined matrix found an unrelated WebKit baseline test using raw label fills. Its trace
+showed the second fill had not updated React's committed value before Run, so both edits now use the
+existing shared committed-input helper; native editing remains covered separately. The saved-settings
+assertions are unchanged, and 20 WebKit repetitions passed without retries or timeout changes. This
+test-only correction is a separate commit from the validators and the version cutover.
+**a2.2–a2.3 checkpoint (2026-11-02):** nine targeted Rust tests pass, including both review
+regressions. Initial tests failed before their validator modules existed; the review regressions
+failed on rejected integral indices and a non-binding panic before their fixes. Independent review
+and follow-up found no blockers. Final shared-lock verification passed fmt/clippy, 353 Rust tests
+(4 ignored), typecheck, 55 UI tests, 2 asset-tool tests, Storybook, reproducible assets, release build
+and 226 browser tests (8 skipped). The baseline test also passed 20 WebKit repetitions. Temporary
+port 4187 config was removed; lockfiles/prebuilt assets remained unchanged. The validators are still
+staged; live invocation/refusal wiring follows the mechanical version cutover in a separate slice.
+
+**Checkpoint A file-budget exception (owner/coordinator, 2026-11-02):** one atomic final mechanical
+cutover commit may exceed five authored files. List its exact files here before building it. It may
+contain only the version/pin, strict gates and corresponding fixture/test-document switch; no other
+behavior rides along. Runtime validation/display changes stay in their own slices before or after.
+Full review, full matrix and strict version-gate tests still apply. This is a one-off, not a budget
+change for later tasks.
 
 **Checkpoint A:** merge M5.01–03 as a coherent cutover of validation, launch arguments and fake
 defaults; v0.4 is the only supported live contract afterward. Green matrix, an independent fake
