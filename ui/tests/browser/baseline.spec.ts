@@ -1,4 +1,4 @@
-import { prepareSampleInput } from "./sample-input";
+import { editSampleLabel, prepareSampleInput } from "./sample-input";
 import { test, expect } from "./tool-host";
 test("baseline comparison uses two saved runs and survives restart", async ({
   page,
@@ -12,7 +12,7 @@ test("baseline comparison uses two saved runs and survives restart", async ({
   ).toBeVisible();
   await page.getByRole("button", { name: "Pin as baseline" }).click();
   await expect(page.getByText("This run is the baseline")).toBeVisible();
-  await page.getByLabel("Label *", { exact: true }).fill("Second experiment");
+  await editSampleLabel(page, "Second experiment");
   await page.getByRole("button", { name: "Run", exact: true }).click();
   await expect(
     page.getByRole("button", { name: "Compare with baseline" }),
@@ -20,9 +20,7 @@ test("baseline comparison uses two saved runs and survives restart", async ({
   await expect(
     page.getByText("Contract evidence: complete.", { exact: false }).first(),
   ).toBeVisible();
-  await page
-    .getByLabel("Label *", { exact: true })
-    .fill("Unsubmitted settings");
+  await editSampleLabel(page, "Unsubmitted settings");
   await page.getByRole("button", { name: "Compare with baseline" }).click();
   await page.getByText("Compare saved settings", { exact: true }).click();
   await expect(page.locator(".settings-comparison")).toContainText(
