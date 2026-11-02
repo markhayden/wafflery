@@ -988,7 +988,7 @@ V18 execution slices (review and full matrix per slice; rollback newest first):
   remaining manual/provider limits. Commit: `test: record real v0.3 browser acceptance`.
 
 **V19 — Bring the implemented UI into alignment with the mockups.** Final task of the v0.3
-client, after V18. Use `work/mockups.html`, `comparison-ui`, `drawer-ui`, `examples-ui`,
+client. The coordinator authorized starting it while V18c awaits the Squint CSP fix; V18c remains a separate strict gate. Use `work/mockups.html`, `comparison-ui`, `drawer-ui`, `examples-ui`,
 `journey-ui`, `wipe-ui`, `interface-study`, `activity-hierarchy` and `preview-controls` HTML studies.
 Capture current screens and corresponding mock views, then record a short screenshot-backed gap
 list under `docs/reviews/`: layout, spacing, typography, colour tokens, iconography,
@@ -999,9 +999,24 @@ screenshot regressions for each corrected screen, with stable fixture data and d
 states; review baselines rather than accepting changes blindly. Run the full matrix and review
 before local merge. Files depend on the gap list; split into named screen-sized tasks with checks
 and docs per slice. Mark explicitly authorized this pass; no additional approval gate.
-Depends: V18. Commit strategy: `docs: record UI fidelity gaps`, then focused `style:`/`test:`
+Depends: completed V01–V17; final acceptance also requires V18c. Commit strategy: `docs: record UI fidelity gaps`, then focused `style:`/`test:`
 commits per screen. Rollback visual slices in reverse order while retaining V18's working protocol
 and accessibility behavior. The coordinator reviews and pushes; this session does not push/tag.
+
+V19 execution slices (review and full matrix per behavior slice; rollback newest first):
+- **V19a:** Screenshot-backed audit of current UI and mock counterparts, with named gaps and
+  intentional contract/accessibility divergences. Commit: `docs: record UI fidelity gaps`.
+- **V19b:** Workspace hierarchy: tool selection in the application header, contextual tool title,
+  subordinate action picker, quiet library navigation and more space for results. Keep desktop
+  input scrolling and narrow/short-window page scrolling. Shared shell/picker stories and
+  deterministic desktop/mobile screenshots. Commit: `style: restore workspace tool hierarchy`.
+- **V19c:** Shared drawer evidence navigation and report layout: compact, accessible navigation
+  without a second row on desktop; narrow-screen overflow remains reachable. Cover inspector,
+  pipeline and report states in stories and screenshots. Commit: `style: refine evidence drawers`.
+- **V19d:** Examples and preview polish: self-contained example styling, clear saved entries and
+  empty/loading/error states; inspect comparison controls against the wipe/comparison mocks.
+  Add screenshot coverage for the retained/adjusted previews, verify responsive states, and
+  record remaining deliberate divergences. Commit: `style: refine examples and preview states`.
 
 ### Approval, sequencing and rollback checkpoints
 
