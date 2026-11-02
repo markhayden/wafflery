@@ -303,7 +303,12 @@ dispatch. Tool-side caps and budgets remain authoritative; a quote is not a rese
 Keep one active execution per tool and reject a second submission as busy. The transport now
 exempts exactly reserved `describe` and `estimate` calls from its persisted execution permit;
 controls cannot consume a staged action permit, record attempt wire evidence or reset its
-progress association. All other tool calls still require matching action authorization.
+progress association. All other tool calls still require matching action authorization. V12a adds a validated estimate
+slot to that permit. An unpriced permit rejects any estimate metadata; a priced permit requires
+its exact opaque binding, allowed decision, matching action and live expiry. Expiry is checked
+again after durable wire evidence is recorded and before the transport write is polled. A denied
+write can therefore retain its wire intent as evidence without claiming bytes were sent. The
+coordinator still refuses paid actions until V12c connects owned quote consumption.
 V10b1 implements the estimate-validation boundary: strict structuredContent/schema, tool/action/
 serving-session attribution, shared ledger consistency, expiry and cap/decision checks. Valid
 readiness refusals retain unknown prices and configuration; they never authorize dispatch. The

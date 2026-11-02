@@ -754,6 +754,23 @@ retry requiring new preparation/estimate and
 exact wire args/meta. Fake paid actions simulate spend without network/provider calls.
 Depends: V05a/V05b/V08/V09/V10a/V10b/V11. Commit: `feat: enforce bound paid dispatch`.
 
+V12 execution slices (full matrix and review per slice; rollback in reverse order):
+- **V12a: Complete.** Carry the validated quote in the transport permit; reject absent, substituted,
+  unexpected, refused or expired bindings before a wire write, including expiry during evidence
+  persistence. Keep the coordinator's paid guard closed. Commit: `feat: bind dispatch permits to validated estimates`.
+- **V12b:** Atomically consume matching retained preparations with their allowed live quotes,
+  verify copied inputs and preserve selected quote/cap evidence. Keep ordinary submissions
+  unable to authorize paid work. Commit: `feat: consume priced preparations atomically`.
+- **V12c:** Connect paid prepared submission to the coordinator and exact wire metadata;
+  exercise independent fake paid calls, bypass attempts, idempotence and evidence/export.
+  Commit: `feat: dispatch only owned priced calls`.
+- **V12d:** Enable explicit paid Run only for the current quoted preparation; preserve
+  acknowledged attempt identity and require fresh preparation/estimation for another paid
+  attempt. Verify edited, expired and refused drafts cannot run. Commit: `feat: run reviewed paid drafts`.
+Each slice includes its tests and accurate checkpoint documentation. V12a/b strengthen internal
+boundaries without opening paid dispatch; V12c opens only the authenticated prepared-call API,
+and V12d connects the reviewed browser flow. No provider call is required for verification.
+
 **V13 — Explain paid failures and retained spend.** Map `stale_estimate` to review/re-estimate,
 `credential` (provider 401/403 during a run only) to setup, `cap` to explicit cap review and
 `budget` to the session ledger. A larger

@@ -242,6 +242,7 @@ impl Coordinator {
             action: request.action.clone(),
             arguments: arguments.clone(),
             generation: current.generation,
+            estimate: None,
             written,
         });
         let finished = Arc::new(AtomicBool::new(false));

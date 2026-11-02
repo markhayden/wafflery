@@ -723,3 +723,24 @@ cases (four opt-in skips), fmt, clippy, typecheck, Storybook, reproducible asset
 build. Live cost screenshots were inspected in Chromium and WebKit. Generated UI assets are
 updated; dependency lockfiles are unchanged. Revert this lifecycle slice before V11b/V11a when
 rolling back; V12 remains gated.
+
+
+### V12a dispatch estimate boundary
+
+The transport permit now retains a validated quote when pricing is required. Before recording or
+sending an action, it checks the exact opaque binding, allowed decision, matching action and
+quote lifetime. Unpriced permits reject injected estimate metadata. The final expiry check runs
+after queued database persistence and before polling the wire write. If the quote expired during
+persistence, the recorded wire intent remains inspectable but the sent signal stays false.
+The coordinator still supplies only unpriced permits and refuses paid actions; consumption and
+paid activation remain V12b/c.
+
+A regression first proved an unpriced permit could send injected estimate metadata. All nine
+transport checks now pass, including exact metadata preservation, missing/substituted/null
+bindings, refused/expired quotes, mismatched actions, unchanged control requests and an explicitly
+blocked database write across a monotonic clock advance. No test invokes a provider.
+
+V12a passed final review and the full shared-lock matrix: 170 Rust tests (three ignored),
+33 UI unit tests, two asset tests, 132 browser cases (four opt-in skips), fmt, clippy, typecheck,
+Storybook, reproducible assets and release build. UI assets and dependency lockfiles are unchanged.
+This internal transport boundary can be reverted independently until V12b/c consume it.

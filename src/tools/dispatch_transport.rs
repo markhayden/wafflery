@@ -22,6 +22,7 @@ pub(crate) struct Permit {
     pub action: String,
     pub arguments: Value,
     pub generation: u64,
+    pub estimate: Option<super::estimate::ValidatedEstimate>,
     pub written: tokio::sync::watch::Sender<bool>,
 }
 pub(crate) type Gate = Arc<Mutex<Option<Permit>>>;
@@ -66,6 +67,7 @@ impl<T: Transport<RoleClient, Error = io::Error>> Transport<RoleClient> for Reco
             let wire = wire?;
             let mut written = None;
             let mut discovery = None;
+            let mut estimate = None;
             if let Some(permit) = permit {
                 let permit = permit
                     .ok_or_else(|| io::Error::other("No persisted dispatch authorization"))?;
@@ -78,6 +80,22 @@ impl<T: Transport<RoleClient, Error = io::Error>> Transport<RoleClient> for Reco
                         "Dispatch authorization is stale or does not match the request",
                     ));
                 }
+                let binding = wire["params"]["_meta"].get("table-manners/estimate");
+                let matches = match &permit.estimate {
+                    Some(quote) => {
+                        !quote.expired()
+                            && quote.observation()["allowed"] == true
+                            && quote.observation()["action"] == permit.action
+                            && binding == quote.observation().get("binding")
+                    }
+                    None => binding.is_none(),
+                };
+                if !matches {
+                    return Err(io::Error::other(
+                        "Dispatch estimate is missing, changed, refused or expired",
+                    ));
+                }
+                estimate = permit.estimate;
                 discovery = Some(permit.discovery);
                 // rmcp replaces progressToken when enqueuing; bind the actual wire token.
                 association.lock().unwrap_or_else(|e| e.into_inner()).token =
@@ -91,6 +109,11 @@ impl<T: Transport<RoleClient, Error = io::Error>> Transport<RoleClient> for Reco
                     return Err(io::Error::other("Declaration changed before dispatch"));
                 }
                 written = Some(permit.written);
+            }
+            // Evidence persistence may have waited on the database. Do not cross the write
+            // boundary with a quote that expired while that durable record was queued.
+            if estimate.as_ref().is_some_and(|quote| quote.expired()) {
+                return Err(io::Error::other("Estimate expired before dispatch"));
             }
             let outcome = write.await;
             drop(discovery);
@@ -225,6 +248,7 @@ mod tests {
             action: "op".into(),
             arguments: json!({}),
             generation: 0,
+            estimate: None,
             written: tokio::sync::watch::channel(false).0,
         });
         assets.database.shutdown().await.unwrap();
@@ -245,6 +269,7 @@ mod tests {
             action: "op".into(),
             arguments: json!({}),
             generation: 0,
+            estimate: None,
             written: tokio::sync::watch::channel(false).0,
         });
         transport
@@ -277,6 +302,7 @@ mod tests {
             action: "op".into(),
             arguments: json!({}),
             generation: 0,
+            estimate: None,
             written: tokio::sync::watch::channel(false).0,
         });
         let mut transport = RecordedTransport {
@@ -321,6 +347,7 @@ mod tests {
             action: "op".into(),
             arguments: json!({}),
             generation: 0,
+            estimate: None,
             written: tokio::sync::watch::channel(false).0,
         });
         // Model the exact interleaving: a replacement is authorized while old cleanup is paused.
@@ -354,6 +381,7 @@ mod tests {
             action: "op".into(),
             arguments: json!({}),
             generation: 0,
+            estimate: None,
             written: tokio::sync::watch::channel(false).0,
         });
         revoke(&gate, "abandoned");
@@ -381,6 +409,7 @@ mod tests {
             action: "op".into(),
             arguments: json!({}),
             generation: 0,
+            estimate: None,
             written,
         });
         let association = Arc::new(Mutex::new(super::super::association::ProgressAssociation {
@@ -469,5 +498,224 @@ mod tests {
             serde_json::from_str(runs.unwrap()["contents"][0]["text"].as_str().unwrap()).unwrap();
         assert!(runs["runs"].as_array().unwrap().is_empty());
         assert!(!dir.path().join("runs/calls.ndjson").exists());
+    }
+    #[tokio::test]
+    async fn an_unpriced_permit_refuses_injected_estimate_metadata() {
+        let dir = tempfile::tempdir().unwrap();
+        let assets = AssetStore::open(&dir.path().join("Library")).unwrap();
+        let store = AttemptStore::new(assets.database.clone());
+        let request: Submission = serde_json::from_value(json!({"id":"unpriced","tool":"fixture","action":"op","revision":"r","params":{},"images":{}})).unwrap();
+        store
+            .create(request, json!({}), json!({}), json!({}))
+            .await
+            .unwrap();
+        let wire = Wire::default();
+        let sent = wire.0.clone();
+        let gate = Gate::default();
+        *gate.lock().unwrap() = Some(Permit {
+            discovery: Arc::new(tokio::sync::Mutex::new(())).lock_owned().await,
+            id: "unpriced".into(),
+            store: store.clone(),
+            action: "op".into(),
+            arguments: json!({}),
+            generation: 0,
+            estimate: None,
+            written: tokio::sync::watch::channel(false).0,
+        });
+        let mut transport = RecordedTransport {
+            inner: wire,
+            gate,
+            association: Default::default(),
+            generation: Arc::new(AtomicU64::new(0)),
+        };
+        let response = transport.send(serde_json::from_value(json!({"jsonrpc":"2.0","id":1,"method":"tools/call","params":{
+            "name":"op","arguments":{},"_meta":{"table-manners/client_run_id":"unpriced","table-manners/estimate":"invented"}
+        }})).unwrap()).await;
+        let saved = store.get("unpriced").await.unwrap();
+        assets.database.shutdown().await.unwrap();
+        assert!(response.is_err(), "an injected binding reached the tool");
+        assert!(sent.lock().unwrap().is_empty());
+        assert!(saved.wire.is_none());
+    }
+    fn dispatch_quote(
+        refused: bool,
+        received: time::OffsetDateTime,
+    ) -> super::super::estimate::ValidatedEstimate {
+        let session = crate::tools::fixtures::session("sample-lab");
+        let mut value =
+            crate::tools::fixtures::estimate("sample-lab", &session, refused.then_some("cap"));
+        value["expires"] = json!(
+            (received + time::Duration::minutes(5))
+                .format(&time::format_description::well_known::Rfc3339)
+                .unwrap()
+        );
+        super::super::estimate::ValidatedEstimate::validate(
+            value.clone(),
+            &session["tool"],
+            "price_test",
+            value["cap_usd"].as_f64().unwrap(),
+            &session,
+            received,
+        )
+        .unwrap()
+    }
+    #[tokio::test]
+    async fn priced_permits_require_the_exact_allowed_live_binding() {
+        for scenario in [
+            "exact",
+            "missing",
+            "substituted",
+            "null",
+            "refused",
+            "expired",
+            "other-action",
+        ] {
+            let dir = tempfile::tempdir().unwrap();
+            let assets = AssetStore::open(&dir.path().join("Library")).unwrap();
+            let store = AttemptStore::new(assets.database.clone());
+            let action = if scenario == "other-action" {
+                "other"
+            } else {
+                "price_test"
+            };
+            let arguments = json!({"max_spend_usd":0.5});
+            let request: Submission = serde_json::from_value(json!({"id":"priced","tool":"sample-lab","action":action,"revision":"r","params":arguments,"images":{}})).unwrap();
+            store
+                .create(request, arguments.clone(), json!({}), json!({}))
+                .await
+                .unwrap();
+            let wire = Wire::default();
+            let sent = wire.0.clone();
+            let gate = Gate::default();
+            let received = time::OffsetDateTime::now_utc()
+                - if scenario == "expired" {
+                    time::Duration::minutes(6)
+                } else {
+                    time::Duration::ZERO
+                };
+            let quote = dispatch_quote(scenario == "refused", received);
+            let mut meta = json!({"table-manners/client_run_id":"priced","table-manners/estimate":quote.observation()["binding"],"progressToken":77});
+            match scenario {
+                "missing" => {
+                    meta.as_object_mut()
+                        .unwrap()
+                        .remove("table-manners/estimate");
+                }
+                "substituted" => {
+                    meta["table-manners/estimate"] = json!(format!("sha256:{}", "b".repeat(64)))
+                }
+                "null" => meta["table-manners/estimate"] = Value::Null,
+                _ => (),
+            }
+            let (written, observed) = tokio::sync::watch::channel(false);
+            *gate.lock().unwrap() = Some(Permit {
+                discovery: Arc::new(tokio::sync::Mutex::new(())).lock_owned().await,
+                id: "priced".into(),
+                store: store.clone(),
+                action: action.into(),
+                arguments: arguments.clone(),
+                generation: 0,
+                estimate: Some(quote),
+                written,
+            });
+            let mut transport = RecordedTransport {
+                inner: wire,
+                gate: gate.clone(),
+                association: Default::default(),
+                generation: Arc::new(AtomicU64::new(0)),
+            };
+            let message = json!({"jsonrpc":"2.0","id":7,"method":"tools/call","params":{"name":action,"arguments":arguments,"_meta":meta}});
+            let result = transport
+                .send(serde_json::from_value(message.clone()).unwrap())
+                .await;
+            let saved = store.get("priced").await.unwrap();
+            assets.database.shutdown().await.unwrap();
+            assert_eq!(
+                result.is_ok(),
+                scenario == "exact",
+                "{scenario}: {result:?}"
+            );
+            assert_eq!(*observed.borrow(), scenario == "exact", "{scenario}");
+            assert!(gate.lock().unwrap().is_none());
+            if scenario == "exact" {
+                assert_eq!(saved.wire, Some(message.clone()));
+                assert_eq!(*sent.lock().unwrap(), vec![message]);
+            } else {
+                assert!(saved.wire.is_none(), "{scenario}");
+                assert!(sent.lock().unwrap().is_empty(), "{scenario}");
+            }
+        }
+    }
+    #[tokio::test]
+    async fn quote_expiry_during_evidence_persistence_prevents_the_wire_write() {
+        let dir = tempfile::tempdir().unwrap();
+        let assets = AssetStore::open(&dir.path().join("Library")).unwrap();
+        let store = AttemptStore::new(assets.database.clone());
+        let arguments = json!({"max_spend_usd":0.5});
+        let request: Submission = serde_json::from_value(json!({"id":"waiting","tool":"sample-lab","action":"price_test","revision":"r","params":arguments,"images":{}})).unwrap();
+        store
+            .create(request, arguments.clone(), json!({}), json!({}))
+            .await
+            .unwrap();
+        let (release, released) = std::sync::mpsc::channel();
+        let (entered, ready) = tokio::sync::oneshot::channel();
+        let database = assets.database.clone();
+        let blocker = tokio::spawn(async move {
+            database
+                .call(move |_| {
+                    entered.send(()).unwrap();
+                    released
+                        .recv_timeout(std::time::Duration::from_secs(5))
+                        .unwrap();
+                    Ok(())
+                })
+                .await
+                .unwrap()
+        });
+        ready.await.unwrap();
+        tokio::time::pause();
+        let quote = dispatch_quote(false, time::OffsetDateTime::now_utc());
+        let binding = quote.observation()["binding"].clone();
+        let wire = Wire::default();
+        let sent = wire.0.clone();
+        let gate = Gate::default();
+        let (written, observed) = tokio::sync::watch::channel(false);
+        *gate.lock().unwrap() = Some(Permit {
+            discovery: Arc::new(tokio::sync::Mutex::new(())).lock_owned().await,
+            id: "waiting".into(),
+            store: store.clone(),
+            action: "price_test".into(),
+            arguments: arguments.clone(),
+            generation: 0,
+            estimate: Some(quote),
+            written,
+        });
+        let mut transport = RecordedTransport {
+            inner: wire,
+            gate,
+            association: Default::default(),
+            generation: Arc::new(AtomicU64::new(0)),
+        };
+        let mut sending = Box::pin(transport.send(serde_json::from_value(json!({"jsonrpc":"2.0","id":7,"method":"tools/call","params":{"name":"price_test","arguments":arguments,"_meta":{"table-manners/client_run_id":"waiting","table-manners/estimate":binding}}})).unwrap()));
+        assert!(futures_util::poll!(&mut sending).is_pending());
+        tokio::time::advance(std::time::Duration::from_secs(301)).await;
+        release.send(()).unwrap();
+        blocker.await.unwrap();
+        let result = sending.await;
+        tokio::time::resume();
+        let saved = store.get("waiting").await.unwrap();
+        assets.database.shutdown().await.unwrap();
+        assert!(
+            result
+                .unwrap_err()
+                .to_string()
+                .contains("expired before dispatch")
+        );
+        assert!(
+            saved.wire.is_some(),
+            "durable wire intent remains inspectable"
+        );
+        assert!(!*observed.borrow());
+        assert!(sent.lock().unwrap().is_empty());
     }
 }
