@@ -152,6 +152,7 @@ async fn host_grants_only_staging_and_explicit_inputs_and_reads_only_evidence() 
         .unwrap();
         let host = Arc::new(Coordinator::open(assets, vec![descriptor]).await.unwrap());
         let description = host.description("unrelated").await.unwrap();
+        let observed = host.snapshot().await.unwrap()["tools"][0]["directory_grants"].clone();
         let handshake: Value =
             serde_json::from_slice(&fs::read(tool.join("initialize.json")).unwrap()).unwrap();
         let grants: Value =
@@ -184,6 +185,19 @@ async fn host_grants_only_staging_and_explicit_inputs_and_reads_only_evidence() 
         };
         expected.push(root.join("Library/execution"));
         assert_eq!(grants, json!(expected));
+        assert_eq!(observed["requested_dirs"], json!(expected));
+        assert_eq!(
+            observed["evidence_dirs"],
+            if read_outputs {
+                json!([tool])
+            } else {
+                json!([])
+            }
+        );
+        assert!(
+            observed.get("allowed_dirs").is_none(),
+            "requested is not an effective grant"
+        );
         assert_eq!(saved.execution, "completed", "{:?}", saved.notices);
         if read_outputs {
             assert_eq!(saved.outputs.len(), 1);

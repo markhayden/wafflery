@@ -1588,6 +1588,16 @@ and memory behavior must be measured before choosing a downscaled-decoding imple
   path/argv tests.
 - **M5.02b: effective-grant setup display** — acceptance 3; session/restart browser tests and stories.
 
+M5.02b is staged in three commits: **b1 (requested/evidence grant observation and boundary tests)**,
+**b2 (grant display, stories and browser states)**, then **b3 (setup wiring and live refresh checks)**.
+Each code commit stays within five authored files; generated prebuilt assets are a separate commit.
+Run the full matrix and independent review on the complete joined slice before merging.
+The coordinator approved staging the display before M5.03: current v0.3 sessions cannot report
+`allowed_dirs`, so live effective access must say Not reported, never copy the requested set or
+pretend it is empty. Reported/narrowed/empty/loading/error states use independent stories now.
+M5.03 must finish live effective-grant validation, config narrowing and session/restart checks
+before M5.02's final acceptance is checked. No v0.4 fields are accepted through the v0.3 validator.
+
 M5.02a is one coordinated registration cutover. Replacing the public descriptor fields requires
 updating every Rust constructor and disposable JSON registration together; retaining an alias would
 violate the no-shim decision. This slice therefore exceeds the five-authored-file limit for the

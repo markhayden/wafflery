@@ -163,7 +163,12 @@ impl Coordinator {
                 // Amounts are observations, not input schema changes or spending permission.
                 declaration.tool_session = observed;
             }
-            json!({"id":id,"declaration":declaration,"error":state.error,
+            // These are the validated launch/read permissions, not the tool's effective grants.
+            let directories = state.client.as_ref().map(|client| json!({
+                "requested_dirs": client.descriptor.allow_dirs,
+                "evidence_dirs": client.descriptor.evidence_dirs,
+            }));
+            json!({"id":id,"declaration":declaration,"error":state.error,"directory_grants":directories,
                 "busy":entry.reservation.available_permits()==0,
                 "progress":state.client.as_ref().and_then(|client|client.progress().borrow().clone())})
         }).collect();
