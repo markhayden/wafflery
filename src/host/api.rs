@@ -35,6 +35,7 @@ pub fn router_with_tools(
 ) -> Router {
     let routes = if let Some(coordinator) = &tools {
         super::run_api::router(coordinator.clone())
+            .merge(super::render_api::router(coordinator.clone(), origin))
     } else {
         Router::new().route(
             "/api/state",

@@ -810,7 +810,7 @@ especially the shared drawer, result hierarchy and preview controls. Preserve ac
 contract boundaries and tested behavior where the mock is incomplete; record material divergences
 for V19 rather than introducing a separate report-viewer visual language.
 
-**V14 — Own render command execution.** Resolve declared render argv from the selected saved
+**V14 — Own render command execution. Complete.** Resolve declared render argv from the selected saved
 run, substitute `{run.dir}` and `{frame_ancestor}` only as whole argv elements, and spawn without a
 shell. Require command[0] to equal description tool.name; replace it with the exact registered
 serve executable. Reject absolute names, other programs and lookup through PATH. A render must
@@ -830,7 +830,7 @@ V14 execution slices (full matrix and review per slice; rollback in reverse orde
   escapes, spaces and literal shell metacharacters. Commit: `feat: resolve saved run render commands`.
 - **V14b1: Complete.** Own renderer children and bounded output, with the independent fake renderer and
   process-level tests. Commit: `feat: own declared renderer processes`.
-- **V14b2:** Retain renderer ownership in the coordinator and add authenticated host controls.
+- **V14b2: Complete.** Retain renderer ownership in the coordinator and add authenticated host controls.
   Keep report content unavailable until V15/V16 establish readiness and output isolation.
   Commit: `feat: coordinate saved report processes`.
 The first slice cannot execute a render and introduces no route or browser policy change.

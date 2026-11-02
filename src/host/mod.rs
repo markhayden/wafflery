@@ -8,6 +8,7 @@ mod event_api;
 mod example_api;
 mod export_api;
 pub mod launch;
+mod render_api;
 mod run_api;
 
 pub async fn serve(root: &std::path::Path) -> std::io::Result<()> {

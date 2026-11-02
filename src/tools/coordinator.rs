@@ -1,6 +1,7 @@
 mod estimates;
 mod preparation;
 mod readiness;
+mod renders;
 pub use super::prepared::retained::{Preparation, PreparedEstimate};
 mod recovery;
 mod restart;
@@ -64,6 +65,7 @@ pub struct Coordinator {
     submission: Mutex<()>,
     preparations: super::prepared::retained::Retained,
     active: Mutex<BTreeMap<String, Active>>,
+    renders: Mutex<BTreeMap<String, renders::View>>,
     workers: Mutex<Vec<tokio::task::JoinHandle<()>>>,
     stopping: AtomicBool,
     shutdown_phase: std::sync::atomic::AtomicU8,
@@ -120,6 +122,7 @@ impl Coordinator {
             submission: Mutex::new(()),
             preparations: super::prepared::retained::Retained::new(),
             active: Mutex::new(BTreeMap::new()),
+            renders: Mutex::new(BTreeMap::new()),
             workers: Mutex::new(vec![]),
             stopping: AtomicBool::new(false),
             shutdown_phase: std::sync::atomic::AtomicU8::new(0),
@@ -574,7 +577,7 @@ impl Coordinator {
         let _submission = self.submission.lock().await;
         self.preparations.clear();
         let preserving = self.preserving_tools().await;
-        let mut stopped = preserving.is_empty();
+        let mut stopped = self.close_renderers(false).await && preserving.is_empty();
         for (id, entry) in &self.tools {
             if preserving.contains(id) {
                 continue;

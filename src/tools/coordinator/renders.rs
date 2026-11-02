@@ -1,0 +1,137 @@
+use super::{Coordinator, Error, Result};
+use crate::tools::render::{
+    RenderKind, ResolvedRender,
+    process::{ProcessPhase, RenderProcess},
+};
+use serde_json::{Value, json};
+use std::sync::atomic::Ordering;
+
+pub(super) struct View {
+    id: String,
+    attempt: String,
+    name: String,
+    kind: RenderKind,
+    process: RenderProcess,
+}
+impl View {
+    fn observation(&self) -> Value {
+        let state = self.process.snapshot();
+        json!({"id":self.id,"attempt":self.attempt,"name":self.name,
+   "kind":match self.kind {RenderKind::Server=>"server",RenderKind::Document=>"document"},
+   "phase":match state.phase {ProcessPhase::Running=>"starting",ProcessPhase::Stopping=>"stopping",ProcessPhase::NeedsForce=>"needs_force",ProcessPhase::Exited=>"exited"},
+   "exit_code":state.exit_code,"error":state.error,
+   "diagnostics":String::from_utf8_lossy(&state.stderr.bytes),"diagnostics_truncated":state.stderr.overflow})
+    }
+}
+impl Coordinator {
+    pub async fn open_render(&self, attempt_id: &str, name: &str, origin: &str) -> Result<Value> {
+        // Linearize shutdown and opens; store ownership before returning to a cancellable requester.
+        let _submission = self.submission.lock().await;
+        if self.stopping.load(Ordering::Acquire) {
+            return Err(Error::Conflict("Workspace is stopping"));
+        }
+        let attempt = self.attempts.get(attempt_id).await?;
+        let entry = self
+            .tools
+            .get(&attempt.request.tool)
+            .ok_or(Error::Missing("Tool is not registered"))?;
+        let declaration = self.description(&attempt.request.tool).await?;
+        if declaration.document["tool"]["name"] != attempt.declaration["document"]["tool"]["name"] {
+            return Err(Error::Invalid(
+                "Saved run belongs to a different tool installation".into(),
+            ));
+        }
+        let client = entry
+            .client()
+            .ok_or(Error::Missing("Serving tool is unavailable"))?;
+        client.peer()?;
+        let mut views = self.renders.lock().await;
+        if let Some(view) = views.get(attempt_id)
+            && view.process.snapshot().phase != ProcessPhase::Exited
+        {
+            return if view.name == name && view.process.snapshot().phase == ProcessPhase::Running {
+                Ok(view.observation())
+            } else {
+                Err(Error::Conflict(
+                    "Close the existing report and confirm its exit before opening another",
+                ))
+            };
+        }
+        if views.len() >= 16 {
+            views.retain(|_, view| view.process.snapshot().phase != ProcessPhase::Exited);
+            if views.len() >= 16 {
+                return Err(Error::Conflict(
+                    "At most 16 report processes may remain open",
+                ));
+            }
+        }
+        let plan = ResolvedRender::resolve(&client.descriptor, &attempt, name, origin)?;
+        let mut bytes = [0u8; 16];
+        getrandom::fill(&mut bytes).map_err(|error| Error::Invalid(error.to_string()))?;
+        let id = bytes.iter().map(|b| format!("{b:02x}")).collect();
+        let view = View {
+            id,
+            attempt: attempt_id.into(),
+            name: name.into(),
+            kind: plan.kind(),
+            process: RenderProcess::spawn(&plan)?,
+        };
+        let observation = view.observation();
+        views.insert(attempt_id.into(), view);
+        Ok(observation)
+    }
+    pub async fn render_state(&self, id: &str) -> Result<Value> {
+        self.renders
+            .lock()
+            .await
+            .values()
+            .find(|view| view.id == id)
+            .map(View::observation)
+            .ok_or(Error::Missing("Report view is no longer available"))
+    }
+    pub async fn close_render(&self, id: &str, force: bool, confirmed: bool) -> Result<Value> {
+        if force && !confirmed {
+            return Err(Error::Conflict("Confirm force-closing this report"));
+        }
+        let process = self
+            .renders
+            .lock()
+            .await
+            .values()
+            .find(|view| view.id == id)
+            .map(|view| view.process.clone())
+            .ok_or(Error::Missing("Report view is no longer available"))?;
+        if force {
+            process.force_stop().await?;
+        } else {
+            process.close().await?;
+        }
+        self.render_state(id).await
+    }
+    pub(super) async fn close_renderers(&self, force: bool) -> bool {
+        let processes = self
+            .renders
+            .lock()
+            .await
+            .values()
+            .map(|view| view.process.clone())
+            .collect::<Vec<_>>();
+        futures_util::future::join_all(processes.into_iter().map(|process| async move {
+            if force {
+                process.force_stop().await.unwrap_or(false)
+            } else {
+                process.close().await.unwrap_or(false)
+            }
+        }))
+        .await
+        .into_iter()
+        .all(|stopped| stopped)
+    }
+    pub(super) async fn renderers_stopped(&self) -> bool {
+        self.renders
+            .lock()
+            .await
+            .values()
+            .all(|view| view.process.snapshot().phase == ProcessPhase::Exited)
+    }
+}

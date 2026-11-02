@@ -915,3 +915,22 @@ typecheck, Storybook, reproducible assets and release build. Coordinator retenti
 process groups, ready URLs and report content are still subsequent gates. This cohesive slice
 keeps the worker, its real child fixture, module wiring, shared fixture import and tests together
 despite exceeding the usual five authored files; it introduces no browser or public host API.
+
+### V14b2 coordinator-held report controls
+
+The coordinator now keeps view handles across HTTP response loss, enforces one live view per
+saved attempt and 16 retained slots, and uses the current serving client's canonical executable
+only when its tool name matches the saved declaration. Strict authenticated controls accept a
+view name, not argv or a caller-selected origin. Graceful/force shutdown includes every retained
+view. Responses expose process state and bounded diagnostics; raw stdout and report content
+remain private until the later output/framing gates.
+
+New API integration tests first failed on missing routes. They cover private/strict request
+boundaries, concurrent idempotent opens, replacement only after exit, startup failure without
+run mutation, missing directories, stuck-view shutdown ownership and capacity reclamation.
+All three targeted tests passed. Review and the shared-lock full matrix passed: 196 Rust tests
+(three ignored), 41 UI unit tests, two asset tests, 164 browser cases (four opt-in skips), fmt,
+clippy, typecheck, Storybook, reproducible assets and release build. Coordinator, shutdown, host routing and
+the independent fixture tests stay in one slice because exposing the controls before retaining
+shutdown ownership would be unsafe. This exceeds the usual five authored files; no UI assets,
+library migration or dependency changes are introduced.

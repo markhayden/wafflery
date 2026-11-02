@@ -59,6 +59,7 @@ impl Coordinator {
             })?;
         let coordinator = self.clone();
         tokio::spawn(async move {
+            coordinator.close_renderers(true).await;
             for entry in coordinator.tools.values() {
                 if let Some(client) = entry.client() {
                     let _ = client.force_stop().await;
@@ -83,7 +84,7 @@ impl Coordinator {
                 if self.shutdown_phase.load(Ordering::Acquire) != 2 {
                     return;
                 }
-                let mut all_exited = true;
+                let mut all_exited = self.renderers_stopped().await;
                 for entry in self.tools.values() {
                     if let Some(client) = entry.client() {
                         all_exited &= client.has_exited().await.unwrap_or(false);

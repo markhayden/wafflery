@@ -4,6 +4,11 @@ use std::path::Path;
 
 pub fn description(root: &Path, scenario: &str) -> Value {
     let mut document = super::scenarios::description(scenario);
+    if scenario == "renders" {
+        document["actions"][0]["renders"] = json!(["echo", "hold", "stuck", "early-error"].map(|mode| json!({
+            "name":mode,"kind":"document","command":[super::fixtures::TOOL,"--render-test",mode,"{run.dir}"]
+        })));
+    }
     if scenario == "estimates" {
         let mut paid = document["actions"][0].clone();
         paid["name"] = json!("price_test");

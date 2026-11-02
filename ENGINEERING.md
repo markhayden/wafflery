@@ -581,3 +581,19 @@ This low-level slice has no host route. V14b2 must retain handles in the coordin
 request cancellation and shutdown; V15 adds server readiness, owned process groups/SIGTERM,
 idle expiry and descendant handling before report content becomes available. The synthetic
 renderer tests process behavior without providing a real report or calling a provider.
+
+V14b2 retains report handles in the coordinator before replying to an open request. Each saved
+attempt has at most one live view; reopening the same running view returns its existing ID,
+while changing views requires confirmed exit. The host retains at most 16 view slots, evicting
+only confirmed exits when capacity is needed. Requests cannot supply executable paths, argv,
+run directories or framing origins. The current serving tool name must match saved evidence;
+resolution uses that serving client's canonical descriptor. A replaced registration cannot
+silently reinterpret an old tool's report command.
+
+Authenticated routes are `POST /api/attempts/{id}/views` with `{name}`, `GET /api/views/{id}`,
+`POST /api/views/{id}/close` with `{}`, and `POST /api/views/{id}/force-close` with
+`{confirmed:true}` after graceful close has timed out. Responses expose bounded stderr and
+process state, never raw stdout or report content. There is no browser report control yet.
+Quit closes all retained views concurrently and waits for confirmed exit; explicit host force
+quit also covers waiting views. A failed report never rewrites its saved attempt, status or spend.
+V15 still owns idle expiry, server readiness and process-group/descendant shutdown.
