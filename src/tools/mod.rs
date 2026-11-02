@@ -7,6 +7,7 @@ mod association;
 mod bindings;
 pub mod client;
 pub mod coordinator;
+mod description_semantics;
 mod environment;
 pub mod estimate;
 mod materialized;
@@ -69,7 +70,11 @@ pub fn validate_contract(kind: &str, value: &serde_json::Value) -> Result<()> {
         .ok_or_else(|| Error::Invalid("Unknown contract schema".into()))?;
     validator(&serde_json::from_str(text)?)?
         .validate(value)
-        .map_err(|e| Error::Invalid(format!("Invalid contract document: {e}")))
+        .map_err(|e| Error::Invalid(format!("Invalid contract document: {e}")))?;
+    if kind == "urn:table-manners:core:description" {
+        description_semantics::description(value)?;
+    }
+    Ok(())
 }
 
 mod dispatch_transport;

@@ -1,11 +1,8 @@
 #[path = "../testkit/v04_fixtures.rs"]
 #[allow(dead_code)]
 mod fixtures;
-// Compile the next live validator without changing the current wire-version gate.
-#[path = "../src/tools/description_semantics.rs"]
-mod semantics;
 use serde_json::{Value, json};
-use wafflery::tools::{Error, Result};
+use wafflery::tools::validate_contract;
 
 struct Embedded;
 impl jsonschema::Retrieve for Embedded {
@@ -37,7 +34,9 @@ fn shape(value: &Value) {
 fn refused(value: Value, reason: &str) {
     // These examples pass the published structural schema but violate contract relationships.
     shape(&value);
-    let error = semantics::description(&value).unwrap_err().to_string();
+    let error = validate_contract("urn:table-manners:core:description", &value)
+        .unwrap_err()
+        .to_string();
     assert!(error.contains(reason), "{error}");
 }
 
@@ -46,7 +45,7 @@ fn independent_descriptions_allow_reused_output_names_and_many_optional_ports() 
     for name in ["sample-lab", "test-prism"] {
         let value = fixtures::description(name);
         shape(&value);
-        semantics::description(&value).unwrap();
+        validate_contract("urn:table-manners:core:description", &value).unwrap();
     }
 }
 
@@ -142,5 +141,15 @@ fn core_only_tasks_need_no_image_or_artifact_metadata() {
     // A core-only action may own this name; the images profile is what reserves it.
     value["actions"][0]["params_schema"]["properties"]["image_blocks"] = json!({"type":"boolean"});
     shape(&value);
-    semantics::description(&value).unwrap();
+    validate_contract("urn:table-manners:core:description", &value).unwrap();
+}
+
+#[test]
+fn malformed_descriptions_are_rejected_before_relationship_checks() {
+    for value in [json!(null), json!({"contract":"0.4.0"})] {
+        assert!(validate_contract("urn:table-manners:core:description", &value).is_err());
+    }
+    let mut value = fixtures::description("test-prism");
+    value["actions"][0]["ports"]["in"][0]["name"] = json!(null);
+    assert!(validate_contract("urn:table-manners:core:description", &value).is_err());
 }

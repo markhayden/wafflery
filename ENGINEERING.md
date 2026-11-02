@@ -448,8 +448,11 @@ Live execution accepts exactly published table-manners =0.4.0 from crates.io. Ol
 actions must declare a positive max_spend_usd and expose the reserved estimate MCP control,
 which is excluded from the Actions catalogue. Paid dispatch requires the owned priced preparation.
 List slots preserve input order and frames. M5.02 replaced MCP roots with explicit launch grants
-while retaining protocol 2025-11-25. M5.03 now pins v0.4 and its structural schemas; staged
-cross-document validators and effective-grant display wiring follow in separate slices.
+while retaining protocol 2025-11-25. M5.03 pins v0.4 and checks description relationships after
+structural validation: declared groups/types, owned type namespaces, unique actions and ports,
+and direct parameter/input collisions. This applies at the shared live contract boundary, including
+discovery and renderer resolution. Composed/referenced parameter checks, callable-schema
+relationships, remaining staged validators and effective-grant display wiring follow separately.
 
 First-release history records Wafflery-started attempts. Tool run resources support reading
 those attempts, not heuristic adoption of unrelated runs. Automatic import of prior CLI/agent

@@ -1882,6 +1882,26 @@ tests, Storybook, byte-identical check-ui builds, release build and 226 Chromium
 either an old declaration or an old result before starting a process. Generated assets are committed
 separately; the temporary port 4187 browser config was removed.
 
+**Post-cutover semantic slices:** wire the staged validators separately from the approved
+mechanical switch. First, **b1 description boundary** changes `src/tools/mod.rs`,
+`tests/description_semantics.rs`, `ENGINEERING.md`, and this plan: existing relationship tests
+must exercise the public live validation boundary and fail there before activation. The boundary
+checks the structural schema before calling the semantic validator, so malformed input cannot
+reach its schema-dependent assumptions. Existing task and operations fixtures must still pass.
+This activates the reviewed direct-name relationships only; composed/referenced parameter-name
+checks, callable-schema relationships, invocation/refusal wiring and effective session grants
+remain explicit follow-ups before checkpoint A. Each slice needs independent review and the
+full matrix; the atomic file-budget exception has ended.
+
+**b1 checkpoint (2026-11-02):** four relationship tests failed through the public live boundary
+before activation; all seven description tests now pass, including malformed-document rejection
+before schema-dependent checks. Independent review approved. The shared-lock full matrix passed
+fmt/clippy, 365 Rust tests (4 opt-in ignored), typecheck, 56 UI unit tests, 2 asset tests, Storybook,
+byte-identical check-ui builds, release build and 226 Chromium/WebKit tests (8 opt-in skipped).
+The temporary port 4187 config was removed; lockfiles and prebuilt assets are unchanged. Discovery
+and renderer resolution now enforce the same direct description relationships. The composed-schema,
+callable-schema and remaining semantic/display follow-ups above are still open.
+
 **Checkpoint A:** merge M5.01–03 as a coherent cutover of validation, launch arguments and fake
 defaults; v0.4 is the only supported live contract afterward. Green matrix, an independent fake
 task run and the published exact dependency pin are required.
