@@ -1285,6 +1285,12 @@ verification. The default CI configuration is unchanged. Independent review appr
 production behavior, dependency lock or prebuilt asset changed.
 
 
+**M5.01b3b implementation scope:** build schema-valid resolved results for all synthetic actions,
+including ordered many outputs, shared-profile mirrors, preview locators and null invocation only
+when invalid inputs do not resolve. Accept cancellation between units of local work and retain
+completed outputs on failure/cancellation. Keep run persistence/progress/timing in b3c; direct
+executor tests prove result construction without claiming a live wire execution path.
+
 **M5.01b3a implementation scope:** resolve inputs without run allocation or store writes.
 Use published schemas for whole-call shape and report all typed-reference failures in port/list
 order. Preserve distinct image-reference, image-locator and literal-location invocation forms;
@@ -1346,6 +1352,20 @@ passed: fmt/clippy, 277 Rust tests (4 ignored), typecheck, 53 UI tests, 2 asset-
 Storybook, reproducible assets, release build and 220 browser tests (8 skipped), with the same
 temporary local 4187 override and unchanged lockfile/prebuilt assets. Results and execution
 remain b3b/b3c work; no production host behavior changes in this slice.
+
+**M5.01b3b implementation checkpoint (2026-11-02, complete):**
+The independent result builder executes all synthetic steps from resolved inputs, preserving
+ordered ports and mirroring artifact previews into the shared profiles. Ten executor tests cover
+chaining, native parameter changes, all preview locators and original-byte fingerprints, early
+and partial cancellation, partial output failure, invalid inputs and final timing. Regression
+tests failed first for missing execution/cancellation support, filesystem errors mislabeled as
+internal, and absent timing finalization. File failures now report `io` with plain reasons;
+updating elapsed time preserves terminal outcomes and derives finish from start plus elapsed.
+Delivery flags never change input identity, including unresolved invalid inputs. Independent
+review approved the corrected slice. The full matrix passed: fmt/clippy, 287 Rust tests (4 ignored),
+typecheck, 53 UI tests, 2 asset-tool tests, Storybook, reproducible assets, release build and
+220 Chromium/WebKit tests (8 skipped). The temporary local 4187 override was removed; lockfile
+and prebuilt assets are unchanged. Wire allocation, claims, progress and persistence remain b3c.
 
 #### V20 — Image import feedback (M5-adjacent; coordinator-approved 2026-11-02)
 

@@ -363,3 +363,20 @@ file identity. Image artifact references remain references in resolved arguments
 images become `{expect}`; literal locations stay literal. The store can hold the owned image
 internally and serve its original bytes as its preview, but cannot import/export it as a native
 Token. Tests live in `tests/v04_bindings.rs`; b3b/b3c still own run outcomes and wire execution.
+
+### Resolved outcomes (M5.01b3b)
+
+`v04_results.rs` executes the illustrative steps from resolved inputs: midpoint location,
+native Token creation/amount changes, ordered list pass-through, and a preview-free Memo.
+It produces every action's invocation and mirrors port artifacts into image/location profiles.
+Original input bytes remain intact. Output previews honor resource/inline/path selection with
+matching encoded-byte fingerprints; delivery options never affect the invocation/input identity.
+
+The result builder accepts a cancellation predicate and checks it between inputs and outputs.
+Early cancellation performs no work; later cancellation retains only completed entries. Failed
+preview writes become `io` error results with the resolved invocation and a plain reason.
+Final elapsed time updates preserve the outcome and derive the finish timestamp from start plus
+monotonic elapsed time; invalid-input identities also exclude delivery options. Error/cancelled settlements
+keep completed outputs, while unresolved invalid inputs have null invocation and empty artifacts.
+These are direct executor tests in `tests/v04_results.rs`, not a wire cancellation claim: b3c
+still owns correlation claims, run persistence, progress, active workers and final elapsed timing.
