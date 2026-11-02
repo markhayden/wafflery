@@ -1116,8 +1116,10 @@ Normative source: table-manners main `d1c49a7`, `CONTRACT.md` 2.3, 3–3.4, 4.5,
 `m10-operations` at `b5cae39` and Squint `m10-v0.4` at `f2f2e3e`. Read those revisions without
 changing sibling worktrees. The coordinator must approve replacement revisions. Hub research
 in `../wafflemaker/docs/v04-design.md` explains intent; the final contract takes precedence
-where its earlier examples differ. Publication and peer release status must be checked at
-implementation time, not inferred from a branch name.
+where its earlier examples differ. The coordinator confirmed crates.io publication of table-manners
+`0.4.0`, tagged `v0.4.0` at the reviewed `d1c49a7`. Use the published exact pin directly; no
+temporary source dependency is needed. Peer release status still requires verification, not inference
+from a branch name. Owner approval of M5 remains pending.
 
 Completion means a person can run Line, inspect its Location, send it to Rasterize, save the
 native Mask, and run Feather with changed parameters without rerunning a finder, filler or
@@ -1236,11 +1238,9 @@ intent; named sub-slices use scope-specific subjects and types. No unnumbered to
 
 #### M5.03 — Cut over live validation to v0.4
 
-- [ ] Adopt exactly `table-manners = "=0.4.0"` once published. Until publication, a coordinator-approved
-  pinned source checkout may supply the same version for development, with its revision explicit in
-  CI; no floating branch or untracked local dependency is acceptable. Remove any temporary source
-  pin at M5.22a before calling M5 complete. At publication, diff the tagged contract, schemas and
-  fixtures against `d1c49a7`; reopen affected acceptance criteria if the published contract differs.
+- [ ] Adopt published `table-manners = "=0.4.0"` directly and update the lockfile. Verify the packaged
+  schemas/fixtures against reviewed tag `v0.4.0` at `d1c49a7`; report any packaging discrepancy before
+  cutover. No path, git or temporary source pin is needed in development or CI.
 - [ ] Validate kinds/groups/ports/artifact types, result invocation, session grants and new refusals.
   Reject inconsistent metadata and schema collisions before presenting an executable action. Reserved describe/estimate/export/import
   controls cannot appear as runnable actions.
@@ -1251,18 +1251,18 @@ intent; named sub-slices use scope-specific subjects and types. No unnumbered to
   M5.21 owns full peer verification. Test v0.3 rejection rather than adding fallback dispatch.
 
 **Depends:** M5.01–02. **Areas:** contract validation, description/session consumers, testkit defaults,
-CI dependency setup if needed. **Verify:** contract mismatch tests and complete existing suite.
+published dependency wiring. **Verify:** contract mismatch tests and complete existing suite.
 **Commit:** `feat: adopt the v0.4 client contract`.
 
 **Planned build slices** (ordered, each with its own targeted checks and matching docs):
 
 - **M5.03a: v0.4 semantic validators** — acceptance 2; malformed-contract tests.
 - **M5.03b: live cutover and reproducible test/dependency wiring** — acceptance 1 and 3; fake defaults,
-  CI source pin and real-harness preflight.
+  published exact pin and real-harness preflight.
 
 **Checkpoint A:** merge M5.01–03 as a coherent cutover of validation, launch arguments and fake
-defaults; v0.4 is the only supported live contract afterward. Green matrix and an independent fake task run are required. Publication
-may delay final dependency cleanup, not work against the approved immutable contract source.
+defaults; v0.4 is the only supported live contract afterward. Green matrix, an independent fake
+task run and the published exact dependency pin are required.
 Rollback to `851b850` requires its v0.3 peers and saved pre-M5 registrations. It is safe on the
 same library only before a storage migration; afterward use a compatible binary or restore the
 matching pre-upgrade backup while retaining newer evidence separately. Revert cutover dependents
@@ -1605,8 +1605,8 @@ Safari manual coverage separately, never substitute WebKit as proof of Safari.
 - [ ] Update SPEC/INTERFACE/ENGINEERING, tool requirements/handoffs and user setup/export docs to the
   implemented behavior; retire resolved C1/C2/R3 gates with evidence, retain actual distribution gaps.
   Capture before/after mock comparisons, stories and region screenshots for changed screens.
-- [ ] Verify the publication diff required in M5.03, replace any temporary dependency source with
-  published `=0.4.0`, and run the complete PLAN matrix. Include asset-manifest unit checks,
+- [ ] Confirm the published `=0.4.0` pin and packaged-schema verification from M5.03 remain intact,
+  and run the complete PLAN matrix. Include asset-manifest unit checks,
   reproducible prebuilt assets/check-ui and release build, plus targeted repeated tests only where a
   lifetime/race change needs evidence. Hosted CI must be green before declaring completion.
 - [ ] Record peer revisions, fixtures, archive bounds, ambiguous-chain limitations, preservation failures,
@@ -1618,8 +1618,8 @@ Safari manual coverage separately, never substitute WebKit as proof of Safari.
 
 **Planned build slices** (ordered, each with its own targeted checks and matching docs):
 
-- **M5.22a: published dependency and final matrix** — acceptance 2; publication diff, exact crates.io
-  pin and full checks.
+- **M5.22a: published dependency and final matrix** — acceptance 2; packaged-schema verification, exact
+  crates.io pin and full checks.
 - **M5.22b: acceptance documentation** — acceptance 1 and 3; review links, coverage and hosted CI
   evidence.
 
@@ -1634,8 +1634,8 @@ using the existing shared visual policy; do not loosen tolerances to hide layout
 matching docs in each code commit, not only at closeout. Plan-only edits use diff/link/consistency
 checks rather than rerunning unchanged code.
 
-No new shared-contract ruling is needed to begin this plan. Publication and real-peer revision
-changes remain coordinator-owned gates. Ambiguous chain provenance is deliberately refused under
+No new shared-contract ruling or publication wait is needed. Owner approval remains the build
+gate; real-peer revision changes remain coordinator-owned. Ambiguous chain provenance is deliberately refused under
 the existing manifest rather than extending it locally; broader chain expressiveness would need a
 coordinator ruling. Portable Plan/Series/BandProfile, artifact enumeration, hidden provenance replay,
 agent orchestration, evaluation suites and distribution remain outside M5. The host only lists
