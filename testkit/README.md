@@ -301,15 +301,16 @@ Token and Memo are test-only native types. Location is the shared type. Preview 
 come from actual PNG bytes, never from the native record's digest.
 
 `sample-lab <workspace> v04-operations [--allow-dir <abs>]... [--tool-name <name>]` now exposes
-an independent **discovery-only probe** over MCP 2025-11-25. Only describe and session/empty-run
-resource reads are implemented and advertised as callable; the description sketches the actions
-that M5.01b3 will implement. It is not yet a conforming operation execution peer. M5.01b2 adds
-artifact controls first. No provider, run allocation or workspace store write occurs here.
+an independent **control-only peer** over MCP 2025-11-25. Describe, export, import and resource
+reads are implemented; the description sketches the actions that M5.01b3 will implement.
+It is not yet an operation execution peer. Controls never allocate runs or spend; import/export
+write only the fake's artifact store/export area. Discovery alone makes no workspace writes.
 
 The probe follows and deduplicates explicit directory grants, requires absolute existing
 folders (exit 64 otherwise), publishes effective `allowed_dirs`, and never asks for MCP roots.
 No flags means no granted directories. Every process has a new session ID; EOF exits cleanly.
-Input messages are bounded to 1 MiB; oversized or malformed JSON closes the probe. Test-only `--tool-name` changes the metadata/resource scheme
+Input messages are bounded to 2 MiB to fit the declared 1 MiB inline file after base64 encoding;
+oversized or malformed JSON closes the peer. The decoded inline-file limit stays 1 MiB. Test-only `--tool-name` changes the metadata/resource scheme
 so consumers cannot assume a particular tool name. These flags belong to the fake, not Wafflery.
 
 Run `cargo test --locked --test v04_wire` for initialization, no-roots, restart, invalid/symlink/
@@ -318,8 +319,10 @@ framed client uses no MCP SDK; only process spawning uses the host's descriptor-
 
 ### Portable store groundwork (M5.01b2a)
 
-`v04_store.rs` is the fake's independent store, currently exercised directly by
-`tests/v04_artifact_store.rs`; b2b connects it to stdio. The fake portable format is a complete
+`v04_store.rs` is the fake's independent store. Direct storage checks live in
+`tests/v04_artifact_store.rs`; `tests/v04_wire.rs` also verifies the reserved controls and
+artifact/preview resources through a manually framed stdio client. Control input schemas are
+expanded from the published schemas so an MCP client needs no external URN retriever. The fake portable format is a complete
 synthetic artifact-resource JSON document: `.bundle` with `application/x-<tool>-token` for Token,
 and `.json` with `application/json` for location. This is its own format, not Rascal's bundle.
 Whole-record/reference/preview validation and optional SHA-256 checks precede any store write.

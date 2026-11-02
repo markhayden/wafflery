@@ -1233,6 +1233,15 @@ The first validates and persists the fake's own portable records, serves stored 
 bytes, and tests idempotence, corruption, relocation and grants. The second connects export/import
 and resource reads to stdio, with wire schema/refusal/no-run checks. This separates storage
 behavior from protocol dispatch while keeping each commit within five authored files.
+M5.01b3 is split before implementation into **b3a (binding)**, **b3b (resolved results)**,
+and **b3c (wire execution/lifetime)**. b3a checks declared scalar/list ports, all indexed binding
+failures, defaults and shared image/location inputs, extending the synthetic store for its owned
+image fixture. b3b executes the fake steps from resolved inputs and builds matching invocation,
+artifact and image/location profiles for every outcome. b3c adds run allocation/claim release,
+progress, held-run controls, cancellation/salvage and EOF ownership over stdio. The fake exercises
+its own documented synthetic image/frame, not real image-repair algorithms: unsupported input
+bytes/frames fail explicitly rather than silently substituting an example. Each slice owns its
+behavioral tests and stays within five authored files; split b3c again if its wiring exceeds that.
 Each slice includes testkit documentation, targeted tests, the full matrix and review.
 
 **M5.01a implementation checkpoint (2026-11-02, complete):**
@@ -1276,6 +1285,12 @@ verification. The default CI configuration is unchanged. Independent review appr
 production behavior, dependency lock or prebuilt asset changed.
 
 
+**M5.01b2b implementation scope:** expose store controls and artifact/preview resource reads
+through the independently framed peer. Published control schemas are self-contained in tools/list.
+The transport envelope rises to 2 MiB to accommodate 1 MiB inline files after base64; the decoded
+file limit does not change. Wire tests must verify error-vs-result envelopes, no run/spend changes,
+fresh session with persistent artifacts, and valid inline requests on both sides of the limit.
+
 **M5.01b2a implementation checkpoint (2026-11-02, complete):**
 The independent portable store accepts complete verified synthetic Token/location records,
 retains identities across restart and workspace moves, and serves real fingerprinted preview
@@ -1291,6 +1306,23 @@ unit tests, 2 asset-tool tests, Storybook, reproducible assets, release build an
 tests (8 skipped). Browser verification again used the temporary 4187 override because an
 unrelated project held 4173. Lockfile/prebuilt assets are unchanged. M5.01b2b owns stdio wiring;
 these controls have not yet been exposed through the probe.
+
+
+**M5.01b2b implementation checkpoint (2026-11-02, complete):**
+The peer now serves reserved import/export controls and artifact/preview resources over stdio,
+with self-contained published input schemas. Successful controls return MCP structured content;
+refusals are JSON-RPC errors without a run. Seven wire tests pass after missing-control and
+missing-refusal failures, and an MCP object-schema assertion failed before its correction.
+Valid padded files at 1 MiB import successfully through base64; 1 MiB + 1 is refused without
+stopping the peer. The 2 MiB wire envelope is separately bounded. No control changes the session
+ledger or run list, and stored artifacts reopen in a fresh session. The full matrix passed:
+fmt/clippy, 268 Rust tests (4 ignored), typecheck, 53 UI unit tests, 2 asset-tool tests,
+Storybook, reproducible assets, release build and 220 browser tests (8 skipped). Browser
+verification used the same temporary 4187 override; lockfile/prebuilt assets are unchanged.
+Independent review approved. Schema expansion is intentionally limited to the two pinned
+acyclic control schemas; do not reuse it for recursive or unevaluated-property schemas.
+The peer remains control-only until b3. Tests of schema-invalid calls in later client work
+must accept plain invalid-params errors, not depend on the fake store's richer refusal data.
 
 #### V20 — Image import feedback (M5-adjacent; coordinator-approved 2026-11-02)
 

@@ -11,6 +11,7 @@ mod v03_control;
 mod v03_fixtures;
 mod v04_fixtures;
 mod v04_peer;
+mod v04_store;
 use serde_json::{Value, json};
 use std::{
     io::{self, BufRead, Read, Write},
@@ -109,7 +110,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     if scenario == "v04-operations" {
-        return v04_peer::serve(arguments.collect());
+        return v04_peer::serve(&root, arguments.collect());
     }
 
     let mut configuration =
