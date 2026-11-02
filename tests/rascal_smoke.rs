@@ -37,7 +37,7 @@ async fn real_rascal_offline_seam_uses_the_same_dispatch_and_evidence_guards() {
     let c = Arc::new(Coordinator::open(assets, vec![descriptor]).await.unwrap());
     let outcome = peer::run(&c, async {
         let description = c.description("real-offline-smoke").await.unwrap();
-        assert_eq!(description.document["contract"], "0.3.0");
+        assert_eq!(description.document["contract"], "0.4.0");
         let seam = description.document["actions"]
             .as_array()
             .unwrap()

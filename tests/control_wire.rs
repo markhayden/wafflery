@@ -1,4 +1,4 @@
-#[path = "support/v03_schema.rs"]
+#[path = "support/contract_schema.rs"]
 mod schema;
 use serde_json::{Value, json};
 use std::{
@@ -52,7 +52,7 @@ impl Peer {
             input,
             messages,
         };
-        assert_eq!(peer.call(1, "initialize", json!({"protocolVersion":"2025-11-25","capabilities":{},"clientInfo":{"name":"independent-v03-probe","version":"1"}}))["result"]["protocolVersion"], "2025-11-25");
+        assert_eq!(peer.call(1, "initialize", json!({"protocolVersion":"2025-11-25","capabilities":{},"clientInfo":{"name":"independent-control-probe","version":"1"}}))["result"]["protocolVersion"], "2025-11-25");
         writeln!(
             peer.input,
             "{}",
@@ -112,14 +112,14 @@ impl Drop for Peer {
 }
 
 #[test]
-fn v03_discovery_and_estimates_never_allocate_or_spend() {
+fn control_discovery_and_estimates_never_allocate_or_spend() {
     let mut sessions = std::collections::HashSet::new();
     for (scenario, tool, refused) in [
-        ("v03-ready", "sample-lab", None),
-        ("v03-lens", "test-lens", None),
-        ("v03-needs-setup", "sample-lab", Some("readiness")),
-        ("v03-unavailable", "sample-lab", Some("readiness")),
-        ("v03-budget", "sample-lab", Some("budget")),
+        ("control-ready", "sample-lab", None),
+        ("control-lens", "test-lens", None),
+        ("control-needs-setup", "sample-lab", Some("readiness")),
+        ("control-unavailable", "sample-lab", Some("readiness")),
+        ("control-budget", "sample-lab", Some("budget")),
     ] {
         let root = tempfile::tempdir().unwrap();
         let mut peer = Peer::start(root.path(), scenario);
@@ -139,7 +139,7 @@ fn v03_discovery_and_estimates_never_allocate_or_spend() {
                 .iter()
                 .all(|action| action["name"] != "estimate" && action["name"] != "describe")
         );
-        assert_eq!(description["contract"], "0.3.0");
+        assert_eq!(description["contract"], "0.4.0");
         assert_eq!(description["tool"]["name"], tool);
         let tools = peer.call(3, "tools/list", json!({}));
         assert!(
@@ -165,9 +165,9 @@ fn v03_discovery_and_estimates_never_allocate_or_spend() {
     }
 }
 #[test]
-fn v03_estimate_errors_and_caps_are_controls_not_runs() {
+fn control_estimate_errors_and_caps_are_controls_not_runs() {
     let root = tempfile::tempdir().unwrap();
-    let mut peer = Peer::start(root.path(), "v03-ready");
+    let mut peer = Peer::start(root.path(), "control-ready");
     let before = peer.session("sample-lab");
     for field in ["spent_usd", "unresolved_usd", "reserved_usd"] {
         assert_eq!(before[field], 0);

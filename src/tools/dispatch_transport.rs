@@ -470,7 +470,7 @@ mod tests {
             executable: repository.join("target/debug/examples/sample-lab"),
             args: vec![
                 dir.path().join("runs").display().to_string(),
-                "v03-ready".into(),
+                "control-ready".into(),
             ],
             cwd: dir.path().to_owned(),
             allow_dirs: vec![dir.path().to_owned()],

@@ -47,7 +47,7 @@ impl Calls {
     }
     pub fn control_schema(name: &str) -> Value {
         let id = format!("urn:table-manners:operations:{name}");
-        let text = table_manners_v04::SCHEMAS
+        let text = table_manners::SCHEMAS
             .iter()
             .find(|(uri, _)| *uri == id)
             .unwrap()

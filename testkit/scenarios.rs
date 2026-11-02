@@ -16,9 +16,9 @@ use std::{
 
 pub fn description(scenario: &str) -> Value {
     let mut document = fixtures::description(if scenario == "unsupported-contract" {
-        "0.1.0"
-    } else {
         "0.3.0"
+    } else {
+        "0.4.0"
     });
     if scenario == "paid" {
         document["actions"][0]["cost"]["may_spend"] = json!(true);
@@ -156,6 +156,7 @@ pub fn execute(
     run["started"] = json!(timestamp());
     run["status"] = json!("running");
     run["images"]["in"] = json!([]);
+    run["invocation"] = Value::Null;
     run["notes"] =
         json!(["Illustrative offline test output; not an image repair or quality evaluation."]);
     let identity: String = Sha256::digest(params.to_string().as_bytes())
@@ -214,6 +215,14 @@ pub fn execute(
         let roots = state.lock().unwrap().allow_dirs.clone();
         let (images, output_reference, output_bytes) = prepare_images(params, &roots)?;
         run["images"]["in"] = images;
+        let action = &super::readiness::description(&root, &scenario)["actions"][0];
+        run["invocation"] = super::task_invocation::build(
+            action,
+            params,
+            &run["images"]["in"],
+            &json!({"model":null,"config_identity":format!("sha256:{}","0".repeat(64))}),
+            &[],
+        )?;
         inputs_resolved = true;
         if matches!(scenario.as_str(), "held" | "estimates") {
             notify("Waiting in the offline test tool");
@@ -489,7 +498,7 @@ pub fn resource(state: &PeerState, root: &Path, uri: &str) -> Option<Value> {
     if uri == format!("{}://runs", fixtures::TOOL) {
         let runs: Vec<_> = state.runs.iter().rev().map(|run| json!({"id":run["run"]["id"],"action":run["action"],"status":run["status"],"started":run["started"],"resource":run["run"]["resource"],"session_id":run["run"]["session_id"],"client_run_id":run["run"]["client_run_id"]})).collect();
         return Some(
-            json!({"uri":uri,"mimeType":"application/json","text":json!({"contract":"0.3.0","next_cursor":null,"tool":{"name":fixtures::TOOL,"version":"0.1.0"},"runs":runs}).to_string()}),
+            json!({"uri":uri,"mimeType":"application/json","text":json!({"contract":"0.4.0","next_cursor":null,"tool":{"name":fixtures::TOOL,"version":"0.1.0"},"runs":runs}).to_string()}),
         );
     }
     for run in &state.runs {

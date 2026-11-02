@@ -88,8 +88,8 @@ async fn cancelling_a_prepared_attempt_atomically_prevents_its_transport_record(
 }
 
 #[tokio::test]
-async fn pre_v03_history_without_session_observations_remains_readable() {
-    for version in ["0.1.0", "0.2.0"] {
+async fn older_history_without_session_observations_remains_readable() {
+    for version in ["0.1.0", "0.2.0", "0.3.0"] {
         let root = tempfile::tempdir().unwrap();
         let assets = AssetStore::open(&root.path().join("Library")).unwrap();
         let store = AttemptStore::new(assets.database.clone());

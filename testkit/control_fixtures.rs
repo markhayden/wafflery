@@ -1,4 +1,4 @@
-//! Owned v0.3 fixtures; independent of host types and real tool output.
+//! Owned control fixtures; independent of host types and real tool output.
 use serde_json::{Value, json};
 
 pub fn readiness(state: &str) -> Value {
@@ -25,16 +25,16 @@ pub fn readiness(state: &str) -> Value {
 
 pub fn description(tool: &str, state: &str) -> Value {
     json!({
-        "contract":"0.3.0", "profiles":["images"],
+        "contract":"0.4.0", "profiles":["images"],
         "tool":{"name":tool,"version":"0.1.0","purpose":"Independent offline contract test peer."},
         "actions":[
-            {"name":"mark_band","title":"Add a test band","purpose":"Offline image fixture.",
+            {"name":"mark_band","kind":"task","title":"Add a test band","purpose":"Offline image fixture.",
              "params_schema":{"type":"object","additionalProperties":false,"properties":{"label":{"type":"string","minLength":1}},"required":["label"]},
              "images":[{"slot":"source","role":"source","required":true},{"slot":"references","role":"reference","required":false,"many":true}],
              "locations":[],"outputs":{"images":["candidate"],"locations":[]},
              "cost":{"may_spend":false},"readiness":{"state":"ready","requirements":[]},
              "duration":{"typical_s":1,"max_s":30},"renders":[]},
-            {"name":"price_test","title":"Price a scripted call","purpose":"Exercises paid controls without contacting a provider.",
+            {"name":"price_test","kind":"task","title":"Price a scripted call","purpose":"Exercises paid controls without contacting a provider.",
              "params_schema":{"type":"object","additionalProperties":false,"properties":{
                  "label":{"type":"string","minLength":1},"max_spend_usd":{"type":"number","exclusiveMinimum":0}
              },"required":["label"]},
@@ -49,9 +49,9 @@ pub fn description(tool: &str, state: &str) -> Value {
 }
 
 pub fn session(tool: &str) -> Value {
-    json!({"contract":"0.3.0","tool":{"name":tool,"version":"0.1.0"},
+    json!({"contract":"0.4.0","tool":{"name":tool,"version":"0.1.0"},
         "id":"22222222-2222-4222-8222-222222222222","started":"2026-11-01T00:00:00Z",
-        "budget_usd":2,"spent_usd":0,"unresolved_usd":0,"reserved_usd":0,"remaining_usd":2})
+        "allowed_dirs":[],"budget_usd":2,"spent_usd":0,"unresolved_usd":0,"reserved_usd":0,"remaining_usd":2})
 }
 
 pub fn estimate(tool: &str, session: &Value, refused: Option<&str>) -> Value {
@@ -61,7 +61,7 @@ pub fn estimate(tool: &str, session: &Value, refused: Option<&str>) -> Value {
         observation["remaining_usd"] = json!(0.05);
     }
     let blocked = refused == Some("readiness");
-    json!({"contract":"0.3.0","tool":{"name":tool,"version":"0.1.0"},"action":"price_test",
+    json!({"contract":"0.4.0","tool":{"name":tool,"version":"0.1.0"},"action":"price_test",
         "binding":format!("sha256:{}","a".repeat(64)),"session_id":observation["id"],
         "effective":{"model":if blocked {Value::Null} else {json!("offline-script")},
                      "config_identity":if blocked {Value::Null} else {json!(format!("sha256:{}","1".repeat(64)))}},

@@ -23,7 +23,7 @@ tempfile = "=3.27.0"
 image = { version = "=0.25.10", default-features = false, features = ["png", "jpeg"] }
 
 rmcp = { version = "=3.8.0", default-features = false, features = ["client", "transport-async-rw"] }
-table-manners = "=0.3.0"
+table-manners = "=0.4.0"
 jsonschema = { version = "=0.60.2", default-features = false }
 url = "=2.5.8"
 
@@ -40,8 +40,6 @@ serde_json = "=1.0.154"
 sha2 = "=0.11.1"
 
 [dev-dependencies]
-# M5.01 validates the next contract independently; live dispatch cuts over in M5.03.
-table-manners-v04 = { package = "table-manners", version = "=0.4.0" }
 tokio = { version = "=1.54.1", features = ["test-util"] }
 serde_json = "=1.0.154"
 sha2 = "=0.11.1"

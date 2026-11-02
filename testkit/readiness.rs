@@ -56,7 +56,7 @@ pub fn description(root: &Path, scenario: &str) -> Value {
         _ => "unknown",
     };
     let mut paid =
-        super::v03_fixtures::description(super::fixtures::TOOL, "ready")["actions"][1].clone();
+        super::control_fixtures::description(super::fixtures::TOOL, "ready")["actions"][1].clone();
     paid["readiness"] = json!({
         "state": if matches!(state, "missing" | "invalid") { "needs_setup" } else { "ready" },
         "requirements":[{"kind":"credential","name":"EXAMPLE_API_KEY","state":state,

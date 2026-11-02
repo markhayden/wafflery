@@ -12,7 +12,7 @@ const attempt: Attempt = {
   id:"saved-example",sequence:1,created_ms:0,
   request:{id:"saved-example",tool:"sample-lab",action:"mark_band",revision:"example",params:{label:"A saved experiment",strength:0.5},images:{}},
   arguments:{label:"A saved experiment",strength:0.5},
-  declaration:{revision:"example",generation:1,schemas:{},document:{contract:"0.3.0",
+  declaration:{revision:"example",generation:1,schemas:{},document:{contract:"0.4.0",
     tool:{name:"sample-lab",version:"0.1.0",purpose:"Illustrative offline tool."},
     actions:[{name:"mark_band",title:"Add a test band",purpose:"Illustrative image band.",params_schema:{},
       cost:{may_spend:false},readiness:{state:"ready",requirements:[]}}]}},

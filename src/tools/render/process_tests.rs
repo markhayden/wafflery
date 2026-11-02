@@ -41,7 +41,7 @@ pub(crate) fn setup(mode: &str) -> (tempfile::TempDir, ResolvedRender) {
     }
     .validate()
     .unwrap();
-    let mut document = fixtures::description("0.3.0");
+    let mut document = fixtures::description("0.4.0");
     document["actions"][0]["renders"] = json!([{"name":"test","kind":"document","command":["sample-lab","--render-test",mode,"{run.dir}","$(literal); value"]}]);
     let mut result = fixtures::result("completed");
     result["run"]["dir"] = json!(run);

@@ -13,7 +13,7 @@ impl jsonschema::Retrieve for Embedded {
         &self,
         uri: &jsonschema::Uri<String>,
     ) -> std::result::Result<Value, Box<dyn std::error::Error + Send + Sync>> {
-        let text = table_manners_v04::SCHEMAS
+        let text = table_manners::SCHEMAS
             .iter()
             .find(|(id, _)| *id == uri.as_str())
             .ok_or("Unknown schema")?
@@ -22,7 +22,7 @@ impl jsonschema::Retrieve for Embedded {
     }
 }
 fn shape(value: &Value) {
-    let text = table_manners_v04::SCHEMAS
+    let text = table_manners::SCHEMAS
         .iter()
         .find(|(id, _)| *id == "urn:table-manners:core:description")
         .unwrap()

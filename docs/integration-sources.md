@@ -1,18 +1,16 @@
 # Integration source inventory
 
-## Current v0.3 cutover — 2026-11-01
+## Current v0.4 cutover — 2026-11-02
 
-Live execution uses published crates.io `table-manners =0.3.0`, source commit
-`9ac2142bf9315f4c5a0eb5935aa94da9bc95a697`. Its eleven schemas are byte-identical to the reviewed
-`e503a238ad6cc833834891c2c2cece7152b08bfc` schemas. Cargo.lock records the registry checksum.
-The temporary sibling dependency and CI checkout are removed. The host accepts only live v0.3
-and keeps older saved evidence readable. M5.02 has since replaced roots with argv grants; the
-V18 Squint snapshot below is unsupported during this intermediate boundary cutover. M5.03 will
-adopt the approved v0.4 peers; the V18 results below describe the earlier verified build.
-The independent peer supplies required discovery/offline validation. V18a additionally verifies
-the approved real snapshots below; verified paths, resolved viewer issues and provider/manual limits are recorded in
-[checkpoint V18](plans/v03-real-peer-checkpoint.md). Previously tested v0.2 executables below are historical evidence, not
-compatible live targets for the cutover. No sibling files are modified.
+Live execution resolves published crates.io `table-manners =0.4.0` with Cargo.lock. The packaged
+schemas and contract/source files match reviewed tag `v0.4.0` at `d1c49a7`; the package deliberately
+excludes fixtures. There is no sibling pin, second contract dependency or live-version fallback.
+Older saved evidence remains readable. The independent peer is the required offline check target.
+
+Approved M10 integration snapshots are Rascal `eed6397` and Squint `6dd1e3a`. M5.03's remaining
+preflight work and M5.21's real-peer checks use those snapshots with explicit `--allow-dir` grants.
+No sibling files are modified. The V18 results below describe the earlier v0.3 build, not live
+compatibility with this cutover; their evidence is retained in [checkpoint V18](plans/v03-real-peer-checkpoint.md).
 
 ### V18 real-peer runs and reports — 2026-11-02
 
@@ -60,7 +58,7 @@ arguments to the shared host launcher: every registered tool receives its explic
 plus the dedicated `Library/execution` staging directory. Development descriptors declare separate
 `evidence_dirs` for returned image/report reads. No real registration is rewritten; back up and
 explicitly replace old `roots` registrations using the README procedure. The approved v0.4 peers
-are Rascal main `eed6397` and Squint main `6dd1e3a`; live schema validation switches in M5.03.
+are Rascal main `eed6397` and Squint main `6dd1e3a`; live structural schema validation now accepts v0.4.
 
 ## Previous v0.2 integration — 2026-11-01
 

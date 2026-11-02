@@ -68,9 +68,9 @@ mod tests {
     use super::*;
     use serde_json::json;
     fn observation() -> Value {
-        json!({"contract":"0.3.0","tool":{"name":"fixture","version":"1"},
+        json!({"contract":"0.4.0","tool":{"name":"fixture","version":"1"},
             "id":"bb8f5520-a822-4cdc-a9eb-f1a72018e000","started":"2026-01-01T00:00:00Z",
-            "budget_usd":2,"spent_usd":0.16,"unresolved_usd":0.04,"reserved_usd":0.04,"remaining_usd":1.8})
+            "allowed_dirs":[],"budget_usd":2,"spent_usd":0.16,"unresolved_usd":0.04,"reserved_usd":0.04,"remaining_usd":1.8})
     }
     #[test]
     fn checks_atomic_budget_arithmetic_and_session_continuity() {

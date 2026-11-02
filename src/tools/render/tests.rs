@@ -24,7 +24,7 @@ fn setup() -> (tempfile::TempDir, Descriptor, Attempt) {
     }
     .validate()
     .unwrap();
-    let mut document = fixtures::description("0.3.0");
+    let mut document = fixtures::description("0.4.0");
     document["actions"][0]["renders"] = json!([
       {"name":"report", "kind":"server", "ready_timeout_s":7,
        "command":["sample-lab","view","{run.dir}","--frame-ancestor","{frame_ancestor}","$(not-a-shell); literal"]},
@@ -94,6 +94,23 @@ fn saved_renderer_uses_registered_binary_and_literal_whole_arguments() {
     let doc = ResolvedRender::resolve(&descriptor, &attempt, "document", origin()).unwrap();
     assert_eq!(doc.kind(), RenderKind::Document);
     assert_eq!(doc.ready_timeout(), None);
+}
+#[test]
+fn saved_v03_evidence_cannot_launch_a_live_renderer() {
+    let (_temp, descriptor, attempt) = setup();
+    for old_description in [true, false] {
+        let mut saved = attempt.clone();
+        if old_description {
+            saved.declaration["document"]["contract"] = json!("0.3.0");
+        } else {
+            saved.result.as_mut().unwrap()["contract"] = json!("0.3.0");
+        }
+        let error = match ResolvedRender::resolve(&descriptor, &saved, "report", origin()) {
+            Ok(_) => panic!("old saved evidence must not launch a live renderer"),
+            Err(error) => error,
+        };
+        assert!(error.to_string().contains("0.4.0"), "{error}");
+    }
 }
 #[test]
 fn no_other_binary_or_ambiguous_renderer_can_be_selected() {

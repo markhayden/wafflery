@@ -37,7 +37,7 @@ pub fn start(
         }
         let cap = arguments["max_spend_usd"].as_f64().unwrap();
         if cap > 1.0 {
-            let mut data = super::v03_fixtures::refusal("invalid_arguments");
+            let mut data = super::control_fixtures::refusal("invalid_arguments");
             data["error"]["reason"] = json!("The requested cap exceeds the configured cap of $1.");
             send(
                 &output,
@@ -48,7 +48,7 @@ pub fn start(
         if label.ends_with("error") {
             let mut error = json!({"code":-32602,"message":"Scripted estimate rejection"});
             if label == "structured-error" {
-                error["data"] = super::v03_fixtures::refusal("invalid_arguments");
+                error["data"] = super::control_fixtures::refusal("invalid_arguments");
             }
             send(
                 &output,
@@ -81,7 +81,7 @@ pub fn start(
         } else {
             None
         };
-        let mut value = super::v03_fixtures::estimate(super::fixtures::TOOL, &session, refused);
+        let mut value = super::control_fixtures::estimate(super::fixtures::TOOL, &session, refused);
         value["effective"]["x-sample-lab"] = json!({"path":path,"binding":"internal-debug"});
         value["session"] = session.clone();
         if label != "readiness" {

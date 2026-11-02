@@ -9,7 +9,7 @@ use wafflery::{
 };
 
 #[tokio::test]
-#[ignore = "requires WAFFLERY_SQUINT_BIN pointing to a contract 0.3.0 testkit binary"]
+#[ignore = "requires WAFFLERY_SQUINT_BIN pointing to a contract 0.4.0 testkit binary"]
 async fn real_squint_scripted_check_preserves_zero_spend_evidence() {
     let binary = peer::binary("WAFFLERY_SQUINT_BIN");
     let dir = tempfile::tempdir().unwrap();
@@ -59,7 +59,7 @@ async fn real_squint_scripted_check_preserves_zero_spend_evidence() {
     );
     let saved = peer::run(&c, async {
         let description = c.description("squint").await.unwrap();
-        assert_eq!(description.document["contract"], "0.3.0");
+        assert_eq!(description.document["contract"], "0.4.0");
         for action in description.document["actions"].as_array().unwrap() {
             assert_eq!(action["cost"]["may_spend"], false, "{action}");
             assert_eq!(action["readiness"]["state"], "ready", "{action}");

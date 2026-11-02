@@ -70,7 +70,7 @@ fn list_bindings_report_every_problem_in_port_and_item_order() {
     assert_eq!(error["code"], -32602);
     assert_eq!(error["data"]["reason"], "binding");
     assert_eq!(error["data"]["run"], Value::Null);
-    let _: table_manners_v04::Refusal = serde_json::from_value(error["data"].clone()).unwrap();
+    let _: table_manners::Refusal = serde_json::from_value(error["data"].clone()).unwrap();
     let problems = error["data"]["bindings"].as_array().unwrap();
     assert_eq!(
         problems

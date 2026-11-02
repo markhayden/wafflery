@@ -8,7 +8,7 @@ impl jsonschema::Retrieve for Embedded {
         &self,
         uri: &jsonschema::Uri<String>,
     ) -> Result<Value, Box<dyn std::error::Error + Send + Sync>> {
-        let (_, text) = table_manners_v04::SCHEMAS
+        let (_, text) = table_manners::SCHEMAS
             .iter()
             .find(|(id, _)| *id == uri.as_str())
             .ok_or_else(|| format!("unknown v0.4 schema {uri}"))?;
@@ -17,7 +17,7 @@ impl jsonschema::Retrieve for Embedded {
 }
 
 fn validator(name: &str) -> jsonschema::Validator {
-    let (_, text) = table_manners_v04::SCHEMAS
+    let (_, text) = table_manners::SCHEMAS
         .iter()
         .find(|(id, _)| *id == name)
         .unwrap();
@@ -30,7 +30,7 @@ fn validator(name: &str) -> jsonschema::Validator {
 
 #[test]
 fn descriptions_are_independent_v04_operations_peers() {
-    assert_eq!(table_manners_v04::CONTRACT_VERSION, "0.4.0");
+    assert_eq!(table_manners::CONTRACT_VERSION, "0.4.0");
     for tool in ["sample-lab", "test-prism"] {
         let description = fixtures::description(tool);
         validator("urn:table-manners:core:description")

@@ -1667,8 +1667,9 @@ live v0.4 effective grants and verifies narrowing/restart with retained old-sess
 - [ ] Validate kinds/groups/ports/artifact types, result invocation, session grants and new refusals.
   Reject inconsistent metadata and schema collisions before presenting an executable action. Reserved describe/estimate/export/import
   controls cannot appear as runnable actions.
-- [ ] Existing task-only fake flows, paid preparation, report viewers and old saved evidence still
-  work. After checkpoint A, only v0.4 live peers are supported. Point opt-in real-peer harnesses and
+- [ ] Existing task-only fake flows, paid preparation and current-contract report viewers still
+  work. Old saved evidence remains readable/exportable; launching a renderer is a live operation
+  and requires v0.4 saved declarations/results. After checkpoint A, only v0.4 live peers are supported. Point opt-in real-peer harnesses and
   development instructions at the approved M10 revisions with explicit version preflight; incompatible
   installed peers explain the required update, never pass a smoke check by silently skipping it.
   M5.21 owns full peer verification. Test v0.3 rejection rather than adding fallback dispatch.
@@ -1824,7 +1825,8 @@ The following files form that single atomic commit. Changes are the exact publis
 version gates, required v0.4 wire fields in existing fake documents, matching test/story documents,
 version-neutral names for the former control-only fake, and current-version documentation. New
 runtime semantics, grant-display wiring, callable-schema checks and real-peer preflight behavior are
-excluded and land separately. Existing pre-v0.3 saved-history coverage stays unchanged.
+excluded and land separately. Existing saved-history cases remain; review adds v0.3 to the
+existing storage-read regression without changing storage behavior.
 
 - Dependency: `Cargo.toml`, `Cargo.lock`.
 - Host gates/test fixtures: `src/tools/mod.rs`, `src/tools/session.rs`,
@@ -1834,7 +1836,8 @@ excluded and land separately. Existing pre-v0.3 saved-history coverage stays unc
   `testkit/v04_store.rs`; rename `testkit/v03_control.rs` to `testkit/control_peer.rs` and
   `testkit/v03_fixtures.rs` to `testkit/control_fixtures.rs`. The prepared task-invocation helper
   is wired to existing result construction here; its logic/tests land separately beforehand.
-- Rust contract tests: `tests/contract_fixtures.rs`, `tests/description_semantics.rs`,
+- Rust contract tests: `tests/attempt_storage.rs` (extend the existing old-history loop with v0.3),
+  `tests/contract_fixtures.rs`, `tests/description_semantics.rs`,
   `tests/mcp_client.rs`, `tests/fake_wire.rs`, `tests/rascal_smoke.rs`, `tests/squint_smoke.rs`, `tests/tool_session_api.rs`,
   `tests/v04_bindings.rs`, `tests/v04_contract_fixtures.rs`, `tests/v04_results.rs`, `tests/v04_runs.rs`,
   `tests/v04_schemas.rs`, `tests/v04_wire.rs`, and the preparatory `tests/task_invocation.rs`.
@@ -1854,11 +1857,30 @@ The inventory includes `testkit/paid.rs` and `tests/fake_wire.rs` before cutover
 result must wire the prepared invocation helper, and the independent wire assertions must verify
 its required v0.4 field. No new execution behavior is included in those mechanical edits.
 
+UI-only story/test documents are partial projections, not full wire fixtures: session grant
+fields and task kinds are checked on the Rust wire boundary. Their UI types/parsers and complete
+grant projections land in the separate semantic/display slice. This avoids adding parser behavior
+to the mechanical switch. Saved v0.3 storage/API reads and refusal to launch its renderer have
+explicit regressions; no old evidence is rewritten or given an invented invocation.
+
 Generated `ui/prebuilt` output remains a separately reviewed build commit. If a further authored
 file is required, amend this inventory with its reason before editing it; do not turn the exception
 into unrelated cleanup. Strict tests must demonstrate v0.4 acceptance and v0.3 live rejection while
 saved older records remain readable. Preparatory task-invocation generation is independently tested
 against v0.4 before the fake's version switch; no temporary live compatibility path is introduced.
+
+**Mechanical cutover checkpoint (2026-11-02):** strict Rust and browser version-gate tests failed against
+v0.3 before the switch. The published runtime pin now replaces the dev alias; existing peer
+and test documents use v0.4, required task kinds, session grants and the already-reviewed invocation
+builder. Control-only fixtures use version-neutral names. Cross-document semantic wiring, live
+effective-grant display and real-peer preflight remain separate slices; this commit does not claim
+M5.03 or checkpoint A complete. Independent review and follow-up approved the change after
+correcting current-version documentation and adding old-evidence regressions. The final shared-lock
+matrix passed fmt/clippy, 364 Rust tests (4 opt-in ignored), typecheck, 56 UI unit tests, 2 asset
+tests, Storybook, byte-identical check-ui builds, release build and 226 Chromium/WebKit tests
+(8 opt-in skipped). Saved v0.3 storage/API reads preserve the original record; renderer tests reject
+either an old declaration or an old result before starting a process. Generated assets are committed
+separately; the temporary port 4187 browser config was removed.
 
 **Checkpoint A:** merge M5.01–03 as a coherent cutover of validation, launch arguments and fake
 defaults; v0.4 is the only supported live contract afterward. Green matrix, an independent fake

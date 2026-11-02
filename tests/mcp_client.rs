@@ -149,15 +149,19 @@ async fn invalid_schema_names_its_tool_and_does_not_block_another_registration()
 }
 
 #[tokio::test]
-async fn v03_discovery_accepts_unconfigured_tools_without_exposing_reserved_controls_as_actions() {
-    for (scenario, name) in [("v03-needs-setup", "sample-lab"), ("v03-lens", "test-lens")] {
+async fn control_discovery_accepts_unconfigured_tools_without_exposing_reserved_controls_as_actions()
+ {
+    for (scenario, name) in [
+        ("control-needs-setup", "sample-lab"),
+        ("control-lens", "test-lens"),
+    ] {
         let dir = tempfile::tempdir().unwrap();
         let mut client = ToolClient::spawn(descriptor(dir.path(), scenario)).unwrap();
         client.initialize().await.unwrap();
         let declaration = client.describe().await;
         assert!(client.close().await.unwrap());
         let declaration = declaration.unwrap();
-        assert_eq!(declaration.document["contract"], "0.3.0");
+        assert_eq!(declaration.document["contract"], "0.4.0");
         assert_eq!(declaration.document["tool"]["name"], name);
         assert!(declaration.schemas.contains_key("estimate"));
         assert!(
@@ -172,12 +176,12 @@ async fn v03_discovery_accepts_unconfigured_tools_without_exposing_reserved_cont
 }
 
 #[tokio::test]
-async fn v03_discovery_rejects_legacy_live_contract_and_paid_declarations_missing_controls_or_caps()
-{
+async fn control_discovery_rejects_legacy_live_contract_and_paid_declarations_missing_controls_or_caps()
+ {
     for (scenario, reason) in [
-        ("v03-legacy", "exactly 0.3.0"),
-        ("v03-no-estimate", "estimate"),
-        ("v03-no-cap", "max_spend_usd"),
+        ("control-legacy", "exactly 0.4.0"),
+        ("control-no-estimate", "estimate"),
+        ("control-no-cap", "max_spend_usd"),
     ] {
         let dir = tempfile::tempdir().unwrap();
         let mut client = ToolClient::spawn(descriptor(dir.path(), scenario)).unwrap();

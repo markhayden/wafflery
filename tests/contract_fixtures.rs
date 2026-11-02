@@ -30,7 +30,7 @@ fn validator(name: &str) -> jsonschema::Validator {
 
 #[test]
 fn owned_description_and_terminal_fixtures_match_the_published_contract() {
-    let description = fixtures::description("0.3.0");
+    let description = fixtures::description("0.4.0");
     validator("urn:table-manners:core:description")
         .validate(&description)
         .unwrap();
@@ -59,13 +59,13 @@ fn schema_validity_does_not_authorize_an_unapproved_contract_version() {
         json!(1),
         json!("0.1"),
     ] {
-        let mut document = fixtures::description("0.3.0");
+        let mut document = fixtures::description("0.4.0");
         document["contract"] = version;
         let executable =
             schema.is_valid(&document) && document["contract"] == table_manners::CONTRACT_VERSION;
         assert!(!executable);
     }
-    let mut missing = fixtures::description("0.3.0");
+    let mut missing = fixtures::description("0.4.0");
     missing.as_object_mut().unwrap().remove("contract");
     assert!(!schema.is_valid(&missing));
 }
@@ -73,15 +73,29 @@ fn schema_validity_does_not_authorize_an_unapproved_contract_version() {
 #[test]
 fn missing_cost_and_malformed_list_slots_fail_schema_validation() {
     let schema = validator("urn:table-manners:core:description");
-    let mut document = fixtures::description("0.3.0");
+    let mut document = fixtures::description("0.4.0");
     document["actions"][0]["cost"]
         .as_object_mut()
         .unwrap()
         .remove("may_spend");
     assert!(!schema.is_valid(&document));
-    let mut document = fixtures::description("0.3.0");
+    let mut document = fixtures::description("0.4.0");
     document["actions"][0]["images"][0]["many"] = json!(true);
     assert!(schema.is_valid(&document));
     document["actions"][0]["images"][0]["many"] = json!("true");
     assert!(!schema.is_valid(&document));
+}
+
+#[test]
+fn live_contract_gate_accepts_only_the_published_v04_version() {
+    assert_eq!(table_manners::CONTRACT_VERSION, "0.4.0");
+    let document = fixtures::description("0.4.0");
+    wafflery::tools::validate_contract("urn:table-manners:core:description", &document).unwrap();
+    for version in ["0.1.0", "0.2.0", "0.3.0", "0.5.0"] {
+        let mut old = document.clone();
+        old["contract"] = json!(version);
+        let error = wafflery::tools::validate_contract("urn:table-manners:core:description", &old)
+            .unwrap_err();
+        assert!(error.to_string().contains("exactly 0.4.0"), "{error}");
+    }
 }

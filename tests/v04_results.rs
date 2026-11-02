@@ -20,7 +20,7 @@ impl jsonschema::Retrieve for Embedded {
         &self,
         uri: &jsonschema::Uri<String>,
     ) -> Result<Value, Box<dyn std::error::Error + Send + Sync>> {
-        let (_, text) = table_manners_v04::SCHEMAS
+        let (_, text) = table_manners::SCHEMAS
             .iter()
             .find(|(id, _)| *id == uri.as_str())
             .ok_or_else(|| format!("Unknown schema {uri}"))?;
@@ -28,7 +28,7 @@ impl jsonschema::Retrieve for Embedded {
     }
 }
 fn check(run: &Value) {
-    let (_, text) = table_manners_v04::SCHEMAS
+    let (_, text) = table_manners::SCHEMAS
         .iter()
         .find(|(id, _)| *id == "urn:table-manners:core:result")
         .unwrap();

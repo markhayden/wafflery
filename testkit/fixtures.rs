@@ -11,7 +11,7 @@ pub fn description(version: &str) -> Value {
         "profiles": ["images"],
         "tool": {"name": TOOL, "version": "0.1.0", "purpose": "Offline test tool. Adds an illustrative band to exercise the workspace; it does not repair images."},
         "actions": [{
-            "name": "mark_band", "title": "Add a test band", "purpose": "Creates a deterministic visual change for testing inputs, inspection and saved runs.",
+            "name": "mark_band", "kind":"task", "title": "Add a test band", "purpose": "Creates a deterministic visual change for testing inputs, inspection and saved runs.",
             "params_schema": {"type": "object", "additionalProperties": false, "properties": {
                 "tags":{"type":"array","title":"Tags","items":{"type":"string"}},
                 "label": {"type": "string", "title": "Label", "description": "A note to identify this experiment.", "minLength": 1, "maxLength": 120},
@@ -42,9 +42,11 @@ pub fn reference(bytes: &[u8], width: u32, height: u32) -> Value {
 pub fn result(status: &str) -> Value {
     let reference = reference(SAMPLE, 160, 100);
     json!({
-        "contract": "0.3.0", "tool": {"name": TOOL, "version": "0.1.0"}, "action": "mark_band",
+        "contract": "0.4.0", "tool": {"name": TOOL, "version": "0.1.0"}, "action": "mark_band",
         "run": {"id": "fixture-001", "resource": format!("{TOOL}://run/fixture-001/run.json"), "dir": null, "session_id": null, "client_run_id": null},
         "status": status, "error": null, "started": "2026-01-01T00:00:00.000Z", "finished": "2026-01-01T00:00:00.000Z", "duration_ms": 0,
+        "invocation":{"action":"mark_band","arguments":{"label":"Fixture","tone":"blue","strength":0.5,"source":{"expect":reference}},
+            "effective":{"model":null,"config_identity":format!("sha256:{}","0".repeat(64))},"requirements":[]},
         "input_identity": format!("sha256:{}", "0".repeat(64)), "spend": {"usd": 0, "unresolved_usd": 0, "basis": "measured"}, "cache": "off",
         "images": {"in": [{"slot": "source", "role": "source", "image": reference}], "out": []},
         "locations": {"used": [], "found": []}, "notes": ["Owned schema fixture; no real provider or image repair."], "body": {"illustrative": true}

@@ -57,6 +57,18 @@ pub fn execute(
     if label == "paid-stale" {
         effective["model"] = json!("changed-script");
     }
+    run["invocation"] = if input_error.is_none() {
+        super::task_invocation::build(
+            &super::readiness::description(&root, "estimates")["actions"][1],
+            arguments,
+            &run["images"]["in"],
+            &effective,
+            &["SCRIPTED_PAID_KEY"],
+        )
+        .expect("owned paid arguments and resolved inputs match their declaration")
+    } else {
+        Value::Null
+    };
     run["notes"] = json!(["Synthetic spending observation; no provider or charge."]);
     super::result_file::publish(&directory.join("run.json"), &run).unwrap();
     state.lock().unwrap().runs.push(run.clone());

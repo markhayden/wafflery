@@ -133,9 +133,9 @@ fn v04_discovery_uses_explicit_grants_and_never_requests_roots() {
             .unwrap()
             .1;
         assert_eq!(description, expected);
-        let _: table_manners_v04::Description = serde_json::from_value(description).unwrap();
+        let _: table_manners::Description = serde_json::from_value(description).unwrap();
         let session = peer.read(&format!("{tool}://session"));
-        let _: table_manners_v04::Session = serde_json::from_value(session.clone()).unwrap();
+        let _: table_manners::Session = serde_json::from_value(session.clone()).unwrap();
         assert_eq!(
             session["allowed_dirs"],
             json!([allowed.path().canonicalize().unwrap()])
@@ -323,7 +323,7 @@ fn artifact_controls_round_trip_without_runs_or_spend() {
             json!({"name":"import","arguments":arguments}),
         );
         let imported = &response["result"]["structuredContent"];
-        let _: table_manners_v04::operations::ImportResponse =
+        let _: table_manners::operations::ImportResponse =
             serde_json::from_value(imported.clone()).unwrap();
         assert_eq!(imported["already_present"], false);
         assert_eq!(imported["artifact"], document["artifact"]);
@@ -350,7 +350,7 @@ fn artifact_controls_round_trip_without_runs_or_spend() {
             json!({"name":"export","arguments":{"artifact":imported["artifact"]}}),
         );
         let exported = &response["result"]["structuredContent"];
-        let _: table_manners_v04::operations::ExportResponse =
+        let _: table_manners::operations::ExportResponse =
             serde_json::from_value(exported.clone()).unwrap();
         let exported_bytes = std::fs::read(exported["file"]["path"].as_str().unwrap()).unwrap();
         assert_eq!(exported_bytes, bytes);
@@ -417,7 +417,7 @@ fn artifact_control_refusals_are_errors_not_runs_or_results() {
     for response in [read, export, import] {
         assert!(response.get("result").is_none());
         assert_eq!(response["error"]["data"]["run"], Value::Null);
-        let _: table_manners_v04::Refusal =
+        let _: table_manners::Refusal =
             serde_json::from_value(response["error"]["data"].clone()).unwrap();
     }
     assert_eq!(peer.read("test-prism://session"), session);
@@ -441,7 +441,7 @@ fn completed(response: &Value) -> Value {
     assert!(response.get("error").is_none(), "{response}");
     assert_eq!(response["result"]["isError"], false);
     let value = response["result"]["structuredContent"].clone();
-    let _: table_manners_v04::RunResult = serde_json::from_value(value.clone()).unwrap();
+    let _: table_manners::RunResult = serde_json::from_value(value.clone()).unwrap();
     assert_eq!(value["status"], "completed");
     value
 }

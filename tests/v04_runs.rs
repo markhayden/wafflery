@@ -92,7 +92,7 @@ fn allocation_is_discoverable_before_work_and_completion_is_immutable() {
     let info = runs.allocate("summarize", claim.as_ref()).unwrap();
     let id = info.reference["id"].as_str().unwrap();
     let page = runs.list(None).unwrap();
-    let _: table_manners_v04::RunsList = serde_json::from_value(page.clone()).unwrap();
+    let _: table_manners::RunsList = serde_json::from_value(page.clone()).unwrap();
     assert_eq!(page["runs"][0]["status"], "running");
     assert_eq!(page["runs"][0]["client_run_id"], "one");
     assert!(page["runs"][0].get("dir").is_none());

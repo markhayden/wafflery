@@ -1,5 +1,7 @@
 //! Independent, line-delimited MCP peer. Deliberately does not import rmcp or wafflery.
 mod configuration;
+mod control_fixtures;
+mod control_peer;
 mod estimates;
 mod fixtures;
 mod paid;
@@ -8,8 +10,7 @@ mod readiness;
 mod render;
 mod result_file;
 mod scenarios;
-mod v03_control;
-mod v03_fixtures;
+mod task_invocation;
 mod v04_fixtures;
 mod v04_peer;
 mod v04_store;
@@ -50,9 +51,9 @@ impl Default for PeerState {
             &hex[20..]
         );
         Self {
-            session: json!({"contract":"0.3.0","tool":{"name":fixtures::TOOL,"version":"0.1.0"},
+            session: json!({"contract":"0.4.0","tool":{"name":fixtures::TOOL,"version":"0.1.0"},
             "id":id,"started":time::OffsetDateTime::now_utc().format(&time::format_description::well_known::Rfc3339).unwrap(),
-            "budget_usd":null,"spent_usd":0,"unresolved_usd":0,"reserved_usd":0,"remaining_usd":null}),
+            "allowed_dirs":[],"budget_usd":null,"spent_usd":0,"unresolved_usd":0,"reserved_usd":0,"remaining_usd":null}),
             estimates: Default::default(),
             claimed: Default::default(),
             allow_dirs: vec![],
@@ -128,8 +129,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
     }
     let mut configuration = configuration::Configuration::load(&root, &scenario, remaining)?;
-    if scenario.starts_with("v03-") {
-        return v03_control::serve(&scenario);
+    if scenario.starts_with("control-") {
+        return control_peer::serve(&scenario);
     }
     if scenario == "malformed" {
         println!("not JSON");
@@ -140,6 +141,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         allow_dirs,
         ..PeerState::default()
     }));
+    {
+        let mut state = state.lock().unwrap();
+        state.session["allowed_dirs"] = json!(state.allow_dirs);
+    }
     if scenario == "estimates" {
         let mut state = state.lock().unwrap();
         state.session["budget_usd"] = json!(0.2);
@@ -416,7 +421,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     reply(
                         &output,
                         id,
-                        json!({"contents":[{"uri":params["uri"],"mimeType":"application/json","text":json!({"contract":"0.3.0","tool":{"name":fixtures::TOOL,"version":"0.1.0"},"runs":[],"next_cursor":null}).to_string()}]}),
+                        json!({"contents":[{"uri":params["uri"],"mimeType":"application/json","text":json!({"contract":"0.4.0","tool":{"name":fixtures::TOOL,"version":"0.1.0"},"runs":[],"next_cursor":null}).to_string()}]}),
                     );
                     continue;
                 }

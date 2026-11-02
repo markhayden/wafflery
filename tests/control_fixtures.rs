@@ -1,25 +1,25 @@
-#[path = "../testkit/v03_fixtures.rs"]
+#[path = "../testkit/control_fixtures.rs"]
 mod fixtures;
 use serde_json::{Value, json};
 
-#[path = "support/v03_schema.rs"]
+#[path = "support/contract_schema.rs"]
 mod schema;
 use schema::validator;
 #[test]
 fn schema_dependency_is_the_approved_contract_version() {
-    assert_eq!(table_manners::CONTRACT_VERSION, "0.3.0");
+    assert_eq!(table_manners::CONTRACT_VERSION, "0.4.0");
     for (id, text) in table_manners::SCHEMAS {
         assert_eq!(serde_json::from_str::<Value>(text).unwrap()["$id"], *id);
     }
 }
 #[test]
-fn independent_v03_fixtures_cover_readiness_estimates_and_refusals() {
+fn independent_control_fixtures_cover_readiness_estimates_and_refusals() {
     for tool in ["sample-lab", "test-lens"] {
         for state in ["ready", "needs_setup", "unavailable"] {
             let document = fixtures::description(tool, state);
             validator("description").validate(&document).unwrap();
             assert_eq!(document["tool"]["name"], tool);
-            assert_eq!(document["contract"], "0.3.0");
+            assert_eq!(document["contract"], "0.4.0");
             assert_eq!(document["actions"][0]["readiness"]["state"], "ready");
             assert_eq!(document["actions"][1]["readiness"]["state"], state);
             assert!(

@@ -42,7 +42,7 @@ pub fn input_schema(action: &Value) -> Value {
 /// Sibling keywords stay at the reference's level so unevaluatedProperties sees its evaluated fields.
 pub fn standalone(schema: &Value) -> Value {
     fn document(id: &str) -> Value {
-        let text = table_manners_v04::SCHEMAS
+        let text = table_manners::SCHEMAS
             .iter()
             .find(|(uri, _)| *uri == id)
             .expect("only pinned contract references")

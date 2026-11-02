@@ -201,7 +201,9 @@ for that workspace until the tool declares support. Missing declarations are C2/
 for those capabilities, not permission to implement tool-specific filesystem scraping.
 
 Generic previews and saved metadata remain readable when a tool is missing. Native replay or
-tool-rendered reports can require reinstalling a compatible tool; explain that locally.
+tool-rendered reports can require reinstalling a compatible tool; explain that locally. Rendering
+is a live operation and requires saved declarations/results for the current exact contract. Older
+saved evidence remains readable/exportable without a compatibility renderer or invented invocation.
 
 ## Deletion and changing storage location
 
@@ -442,11 +444,12 @@ limits do not shrink the agreed first-release acceptance criteria. Add an opt-in
 contract version must pass the same validation. Squint already has a testkit scripted-provider
 path, but it must not be used to bypass a live `may_spend: true` declaration in this milestone.
 
-Live execution accepts exactly published table-manners =0.3.0 from crates.io. Older saved records remain readable without migration or replay. Paid
+Live execution accepts exactly published table-manners =0.4.0 from crates.io. Older saved records remain readable without migration or replay. Paid
 actions must declare a positive max_spend_usd and expose the reserved estimate MCP control,
-which is excluded from the Actions catalogue. Paid dispatch remains blocked. V0.3 declares
-list slots; V06 binds and verifies them, and V07 supplies list editing/restoration. M5.02 replaces
-MCP roots with explicit launch grants while retaining protocol 2025-11-25; M5.03 adopts v0.4 validation.
+which is excluded from the Actions catalogue. Paid dispatch requires the owned priced preparation.
+List slots preserve input order and frames. M5.02 replaced MCP roots with explicit launch grants
+while retaining protocol 2025-11-25. M5.03 now pins v0.4 and its structural schemas; staged
+cross-document validators and effective-grant display wiring follow in separate slices.
 
 First-release history records Wafflery-started attempts. Tool run resources support reading
 those attempts, not heuristic adoption of unrelated runs. Automatic import of prior CLI/agent

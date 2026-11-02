@@ -119,7 +119,7 @@ fn ref_siblings_evaluate_properties_at_the_same_schema_level() {
 fn published_controls_also_expand_without_external_resolution() {
     for name in ["export-request", "import-request"] {
         let id = format!("urn:table-manners:operations:{name}");
-        let text = table_manners_v04::SCHEMAS
+        let text = table_manners::SCHEMAS
             .iter()
             .find(|(uri, _)| *uri == id)
             .unwrap()

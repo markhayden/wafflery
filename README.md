@@ -51,10 +51,11 @@ and unknown charges remain in history. The drawer reports the new session ID, an
 refresh their setup observations. A failed restart leaves recovery available in the same drawer.
 Environment changes require quitting and relaunching Wafflery from the updated terminal.
 **Folder access** separates requested input folders from folders Wafflery may read results from.
-The current v0.3 session cannot report its effective input permissions, so setup says **Not reported**;
-it never treats the requested list as proof of access. Failed session refreshes show **Unavailable**.
+Effective-grant validation and live display wiring remain staged for the next M5.03 slice;
+until then setup says **Not reported** and never treats the requested list as proof of access.
+Failed session refreshes show **Unavailable**.
 Changing registration folders requires stopping Wafflery; changing the tool's configuration requires
-restarting that tool session. Effective v0.4 permissions are added in M5.03.
+restarting that tool session. The session now carries the v0.4 `allowed_dirs` field.
 Paid actions expose explicit cap and estimate controls. Edits, declaration/session changes and
 expiry invalidate the quote. **Run** sends the exact reviewed preparation; another paid attempt
 requires a fresh estimate. If acknowledgement is lost, **Retry submission** keeps the original run
@@ -88,16 +89,17 @@ the opt-in real Rascal offline smoke. Automatic discovery and installation remai
 pushes to main and manual dispatch. Action revisions and runtime versions are pinned; Cargo
 and Bun dependencies are cached, and matching Chromium/WebKit browsers are installed explicitly.
 CI uses the independent offline peer without provider keys. Local and hosted builds resolve
-exactly table-manners 0.3.0 from crates.io using Cargo.lock; no sibling contract checkout is
+exactly table-manners 0.4.0 from crates.io using Cargo.lock; no sibling contract checkout is
 required. The three Rust and four browser real-tool probes remain explicit opt-ins. Checked-in UI assets are verified
 before any build can regenerate them. Failure diagnostics include Playwright traces, screenshots and an allowlisted attempt summary.
 See the [CI checkpoint](docs/reviews/2026-11-01-ci.md) for local versus hosted verification.
 
 ### Try real Rascal
 
-The v0.3 client cutover is being verified against the independent peer. Real Rascal M12 and
-Squint M9 integration is gated by V18; the previous v0.2 binaries are now rejected.
-With a stable contract 0.3.0 Rascal binary already built or installed, select its absolute path:
+The live client now accepts only v0.4, with the independent peer as its required check target.
+Approved M10 snapshots are Rascal `eed6397` and Squint `6dd1e3a`; M5.21 verifies their integration.
+Earlier live contracts are rejected; V18's v0.3 results remain historical evidence.
+With a stable contract 0.4.0 Rascal binary already built or installed, select its absolute path:
 
 The tool's `playground` launcher must also implement the renamed H1 interface (`wafflery` and
 `WAFFLERY_BIN`). Older contract-compatible binaries still work for direct MCP tests, but must not
@@ -127,13 +129,15 @@ For an isolated **two-tool offline test** workspace:
 bun run scripts/dev-pipeline.ts /absolute/path/to/rascal /absolute/path/to/testkit/squint
 ```
 
-Use stable contract 0.3.0 executables; Squint needs the `testkit` feature and its v0.3 M9 implementation. The helper registers both tools and opens through `squint playground`. Select
+Use stable contract 0.4.0 executables; Squint needs the `testkit` feature and its v0.4 M10 implementation. The helper registers both tools and opens through `squint playground`. Select
 **Source fidelity** and provide candidate/source images. Squint returns a **scripted fixture
 verdict, not a model judgment**; Rascal runs without a filler. No credentials are supplied.
 The helper prints a reopen command. The estimate journal follow-up is resolved and the probe now
 preserves complete evidence. No existing library is modified.
 
-The host executes exactly table-manners 0.3.0. Earlier saved history remains readable.
+The host executes exactly table-manners 0.4.0. Earlier saved history remains readable and
+exportable without rewriting its evidence. Launching a report viewer requires a saved v0.4
+declaration/result because it starts a live tool; older previews and raw evidence remain available.
 **Inspect run → Session** shows the server ledger before/after a run and any structured run
 association. This is a server-session ledger, not a provider account balance. Cancellation
 can recover a terminal result from its associated resource; missing or contradictory evidence
@@ -167,11 +171,9 @@ backup). Prepare a new descriptor file with both explicit arrays, selecting inpu
 permissions separately, then register it with the command below. Remove old hand-written
 `--allow-dir` arguments. No real registrations or stored history are migrated automatically.
 Rollback requires the old binary, matching peers and the original backed-up registration together;
-do not restore old grants under the new binary. Production contract validation remains 0.3.0 until
-M5.03, so this intermediate build needs peers that accept the explicit grant flags. The earlier
-Squint snapshot `54b1f41` uses MCP roots and is unsupported by this intermediate build; use the
-approved v0.4 Squint `6dd1e3a` only after the M5.03 validator cutover. The prior V18 interoperability
-results remain historical evidence, not a claim that those snapshots pass this registration format.
+do not restore old grants under the new binary. This build accepts exactly v0.4; use the
+approved M10 peers above. The prior V18 interoperability results remain historical evidence,
+not a claim that those older snapshots pass this registration format.
 
 While the host is stopped:
 

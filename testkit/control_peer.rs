@@ -1,5 +1,5 @@
-//! Control-only v0.3 preparation peer. No host SDK, execution permit, provider or run writes.
-use super::{PeerState, v03_fixtures as fixtures};
+//! Control-only preparation peer. No host SDK, execution permit, provider or run writes.
+use super::{PeerState, control_fixtures as fixtures};
 use serde_json::{Value, json};
 use sha2::{Digest, Sha256};
 use std::io::{self, BufRead, Read, Write};
@@ -110,19 +110,21 @@ fn estimate(document: &Value, session: &Value, request: &Value) -> Result<Value,
 
 pub fn serve(scenario: &str) -> Result<(), Box<dyn std::error::Error>> {
     let (tool, state) = match scenario {
-        "v03-ready" | "v03-budget" | "v03-legacy" | "v03-no-estimate" | "v03-no-cap" => {
-            ("sample-lab", "ready")
-        }
-        "v03-lens" => ("test-lens", "ready"),
-        "v03-needs-setup" => ("sample-lab", "needs_setup"),
-        "v03-unavailable" => ("sample-lab", "unavailable"),
-        _ => return Err("Unknown v0.3 control scenario".into()),
+        "control-ready"
+        | "control-budget"
+        | "control-legacy"
+        | "control-no-estimate"
+        | "control-no-cap" => ("sample-lab", "ready"),
+        "control-lens" => ("test-lens", "ready"),
+        "control-needs-setup" => ("sample-lab", "needs_setup"),
+        "control-unavailable" => ("sample-lab", "unavailable"),
+        _ => return Err("Unknown control scenario".into()),
     };
     let mut document = fixtures::description(tool, state);
-    if scenario == "v03-legacy" {
-        document["contract"] = json!("0.2.0");
+    if scenario == "control-legacy" {
+        document["contract"] = json!("0.3.0");
     }
-    if scenario == "v03-no-cap" {
+    if scenario == "control-no-cap" {
         document["actions"][1]["params_schema"]["properties"]
             .as_object_mut()
             .unwrap()
@@ -132,7 +134,7 @@ pub fn serve(scenario: &str) -> Result<(), Box<dyn std::error::Error>> {
     let mut session = fixtures::session(tool);
     session["id"] = fresh["id"].clone();
     session["started"] = fresh["started"].clone();
-    if scenario == "v03-budget" {
+    if scenario == "control-budget" {
         session["budget_usd"] = json!(0.05);
         session["remaining_usd"] = json!(0.05);
     }
@@ -174,7 +176,7 @@ pub fn serve(scenario: &str) -> Result<(), Box<dyn std::error::Error>> {
                     json!({"name":"describe","inputSchema":{"type":"object","additionalProperties":false}}),
                     json!({"name":"estimate","inputSchema":{"type":"object","additionalProperties":false,"required":["action","arguments"],"properties":{"action":{"type":"string"},"arguments":{"type":"object"}}}}),
                 ];
-                if scenario == "v03-no-estimate" {
+                if scenario == "control-no-estimate" {
                     tools.retain(|tool| tool["name"] != "estimate");
                 }
                 for action in document["actions"].as_array().unwrap() {
@@ -194,7 +196,7 @@ pub fn serve(scenario: &str) -> Result<(), Box<dyn std::error::Error>> {
                     Some(session.clone())
                 } else if params["uri"] == format!("{tool}://runs") {
                     Some(
-                        json!({"contract":"0.3.0","tool":session["tool"],"runs":[],"next_cursor":null}),
+                        json!({"contract":"0.4.0","tool":session["tool"],"runs":[],"next_cursor":null}),
                     )
                 } else {
                     None
@@ -206,9 +208,7 @@ pub fn serve(scenario: &str) -> Result<(), Box<dyn std::error::Error>> {
                     None => Err(json!({"code":-32002,"message":"Resource not found"})),
                 }
             }
-            _ => Err(
-                json!({"code":-32601,"message":"Only v0.3 preparation controls are implemented"}),
-            ),
+            _ => Err(json!({"code":-32601,"message":"Only preparation controls are implemented"})),
         };
         let response = match result {
             Ok(value) => json!({"jsonrpc":"2.0","id":id,"result":value}),

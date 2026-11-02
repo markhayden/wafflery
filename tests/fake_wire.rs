@@ -130,6 +130,12 @@ fn independent_peer_pages_tools_and_returns_verifiable_images_and_resources() {
         let run = &response["result"]["structuredContent"];
         assert_eq!(run["status"], "completed", "{response}");
         let _: table_manners::RunResult = serde_json::from_value(run.clone()).unwrap();
+        assert_eq!(run["invocation"]["action"], "mark_band");
+        assert_eq!(
+            run["invocation"]["arguments"],
+            json!({"label":"wire test","tone":"amber","strength":0.5,
+            "source":{"expect":run["images"]["in"][0]["image"]}})
+        );
         let image = &run["images"]["out"][0];
         let output = std::fs::read(image["path"].as_str().unwrap()).unwrap();
         let digest: String = Sha256::digest(&output)
@@ -197,6 +203,10 @@ fn cancellation_persists_a_cancelled_run_without_an_mcp_call_result() {
                     "cancellation must keep the already resolved source"
                 );
                 assert_eq!(run["images"]["in"][0]["image"]["width"], 160);
+                assert_eq!(
+                    run["invocation"]["arguments"]["source"],
+                    json!({"expect":run["images"]["in"][0]["image"]})
+                );
                 break;
             }
             assert!(std::time::Instant::now() < deadline);
@@ -442,6 +452,7 @@ fn rejected_inputs_stay_invalid_when_cancelled_before_the_run_is_saved() {
                     .unwrap();
             assert_eq!(run["status"], "invalid");
             assert_eq!(run["error"]["code"], "input");
+            assert_eq!(run["invocation"], Value::Null);
             assert!(run["images"]["in"].as_array().unwrap().is_empty());
             break;
         }
@@ -479,6 +490,7 @@ fn paid_fake_checks_actual_source_and_reference_images_before_reserving_spend() 
         let run = &response["result"]["structuredContent"];
         assert_eq!(run["status"], "invalid", "{response}");
         assert_eq!(run["error"]["code"], "input");
+        assert_eq!(run["invocation"], Value::Null);
         assert_eq!(run["spend"]["usd"], 0);
         assert!(run["images"]["in"].as_array().unwrap().is_empty());
         let response = peer.call(4, "resources/read", json!({"uri":"sample-lab://session"}));
@@ -517,4 +529,14 @@ fn paid_fake_records_resolved_image_identity_without_a_caller_expectation() {
         "width":160,"height":100,"projection":"flat","topology":"bounded"})
     );
     assert_eq!(run["spend"]["usd"], 0.08);
+    assert_eq!(
+        run["invocation"]["arguments"]["source"],
+        json!({"expect":run["images"]["in"][0]["image"]})
+    );
+    assert_eq!(run["invocation"]["arguments"]["max_spend_usd"], 0.5);
+    assert_eq!(run["invocation"]["effective"]["model"], "offline-script");
+    assert_eq!(
+        run["invocation"]["requirements"],
+        json!(["SCRIPTED_PAID_KEY"])
+    );
 }

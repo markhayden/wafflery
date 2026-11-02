@@ -8,7 +8,7 @@ use std::{
     io::{Read, Write},
     path::{Component, Path, PathBuf},
 };
-use table_manners_v04::operations::{ExportRequest, ImportRequest};
+use table_manners::operations::{ExportRequest, ImportRequest};
 
 const INLINE_LIMIT: usize = 1048576;
 const FILE_LIMIT: u64 = 4 * 1048576;

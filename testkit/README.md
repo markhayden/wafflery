@@ -4,7 +4,7 @@
 in for Rascal's repair operations or Squint's judgments. Its wire implementation does not use
 rmcp or Wafflery's coordinator/client. It may use the published contract's data/schema crate.
 
-The fixtures target published `table-manners =0.3.0`. `fixtures.rs` builds deterministic
+The fixtures target published `table-manners =0.4.0`. `fixtures.rs` builds deterministic
 description/result documents. The owned PNG is `ui/tests/fixtures/sample.png`, a generated RGB
 gradient; its byte fingerprint is computed, not copied from another tool's output. The fixture
 input identity is a documented placeholder until the wire peer computes actual request identity.
@@ -50,7 +50,7 @@ export XDG_CACHE_HOME="$probe_root/cache"
 export XDG_DATA_HOME="$probe_root/data"
 ```
 
-Then select the approved contract 0.3.0 binary:
+Then select the approved contract 0.4.0 binary:
 
 ```sh
 WAFFLERY_RASCAL_BIN=/absolute/path/to/rascal cargo test --locked --test rascal_smoke -- --ignored --nocapture
@@ -84,7 +84,7 @@ WAFFLERY_RASCAL_BIN=/absolute/path/to/rascal bun run --cwd ui test:browser
 The optional Chromium/WebKit journey uses explicit registration and the same generic UI as any
 tool. It checks a real seam mask, saved inputs, recorded call, image evidence download, independent
 example loading, and history/output preservation across a host restart. Without the environment
-variable those two cases are reported skipped. Choose a stable contract 0.3.0 executable; rebuilding
+variable those two cases are reported skipped. Choose a stable contract 0.4.0 executable; rebuilding
 a selected binary against a newer draft during the suite will correctly make it unavailable.
 
 `ui/tests/fixtures/panorama.png` is an owned, procedurally generated 2048×1024 RGBA gradient:
@@ -98,13 +98,8 @@ alignment. With no filler this verifies mask preparation, not a repaired image o
 
 ## Optional Squint and two-tool integration
 
-**Intermediate M5.02 limitation:** the V18 Squint commands below are historical until M5.03.
-Squint `54b1f41` requires MCP roots and does not support the new explicit grant boundary. Neither
-its Rust smoke nor the two-tool browser probe is a supported live check on this intermediate build.
-M5.03 switches the harness to the approved v0.4 peers without a compatibility fallback.
-
-Use an explicitly selected, stable contract 0.3.0 Squint binary built with `--features testkit`
-at coordinator-approved revision `54b1f41` (the viewer CSP fix over `db5cf78`). The coordinator
+Use an explicitly selected, stable contract 0.4.0 Squint binary built with `--features testkit`
+at coordinator-approved revision `6dd1e3a` (M10). The coordinator
 probe owns config/script/files, uses the host environment allowlist with the isolated XDG directories above, and supplies no credentials:
 
 ```sh
@@ -146,33 +141,33 @@ runs-list recovery. `unassociated` deliberately withholds evidence. `duplicate-p
 `conflict-once` and `endless-pages` verify that contradictions or incomplete searches keep the
 outcome unconfirmed and the reservation held. These negative peers deliberately violate the
 contract and are not conformance examples. `session-reset` proves a new ledger cannot silently
-authorize dispatch. The same production may_spend guard still rejects paid actions.
+authorize dispatch. Paid actions require an owned priced preparation before dispatch.
 
-## v0.3 preparation (V01)
+## Control preparation peer (V01, migrated in M5.03)
 
-`v03_fixtures.rs` owns descriptions for `sample-lab` and `test-lens`, a ready offline action beside
+`control_fixtures.rs` owns descriptions for `sample-lab` and `test-lens`, a ready offline action beside
 an independently configured paid action, and session/estimate/refusal examples. These fixtures
 perform no provider calls. Paid host dispatch additionally requires an owned priced preparation.
 The preparation tests validate independently of host-generated types.
 
 V02 replaces the temporary V01 schema archive with the exact contract dependency's embedded
 schemas. Fixed timestamps/UUIDs in fixture examples are test data; serving processes provide
-fresh sessions and live expiry. The temporary path points to reviewed table-manners e503a23.
+fresh sessions and live expiry. M5.03 uses the published =0.4.0 schemas with no path pin.
 
-The `v03-ready`, `v03-lens`, `v03-needs-setup`, `v03-unavailable` and `v03-budget` scenarios expose
+The `control-ready`, `control-lens`, `control-needs-setup`, `control-unavailable` and `control-budget` scenarios expose
 those objects over MCP 2025-11-25. They are **control-only preparation probes**, not complete
 execution peers: describe, estimate, session/runs reads and discovery work; action execution is
-explicitly unsupported until its owning task. The normal/held execution scenarios also use v0.3.
+explicitly unsupported until its owning task. The normal/held execution scenarios also use v0.4.
 `price_test` estimates are deterministic and local, with a scripted $0.12 worst case and $1
 configured cap. Delivery flags do not affect the binding. Each process gets a fresh session;
 no estimate allocates a run, claims a client run ID, reserves money or changes the ledger.
 The wire tests validate returned objects against the dependency’s embedded schemas, compare the ledger
 before and after controls/refusals, and verify the workspace remains empty.
 
-V02 discovery negatives (`v03-legacy`, `v03-no-estimate`, `v03-no-cap`) intentionally violate
+V02 discovery negatives (`control-legacy`, `control-no-estimate`, `control-no-cap`) intentionally violate
 one live boundary. The older `paid`/`becomes-paid` scenarios remain dispatch-guard probes:
 they advertise the reserved estimate control but do not implement a paid execution flow.
-Only the control-only v03 scenarios currently implement estimate responses.
+Only the control-only scenarios currently implement estimate responses.
 
 ## Readiness scenarios
 
@@ -182,7 +177,7 @@ root selects present/valid/invalid/missing/unknown on the next description, with
 credential. Only requesting the optional filler produces -32602 not_ready, before claiming the
 client ID or allocating a run; an omitted filler remains usable. Wire coverage reuses that
 released ID successfully. The held variant uses the existing release-run gate for concurrent
-refresh tests. The paid action is discovery-only; estimate execution remains in v03-control.
+refresh tests. The paid action is discovery-only; estimate execution remains in the control-only peer.
 
 V03a validation: five wire tests and fake-peer clippy passed. Review found and corrected an
 image-free action schema that incorrectly required source; input schemas now derive image fields
@@ -299,8 +294,8 @@ operations and that unapproved origins receive no navigation request.
 ## v0.4 operation peer (M5.01)
 
 `v04_fixtures.rs` owns synthetic operation/task/utility descriptions, resolved results, references,
-previews and control examples. Published `table-manners =0.4.0` is currently a dev-only alias;
-the live client remains v0.3 until M5.03. Schema and cross-document checks live in
+previews and control examples. Published `table-manners =0.4.0` is now the single exact dependency
+for both the live client and independent peers. Schema and cross-document checks live in
 `tests/v04_contract_fixtures.rs`. No host types or real tool output construct these fixtures.
 Token and Memo are test-only native types. Location is the shared type. Preview fingerprints
 come from actual PNG bytes, never from the native record's digest.
@@ -493,7 +488,7 @@ release file is one-shot for that root; no timer completes work. Six additional 
 tests cover controls and artifact resources during a hold, structured running/queued heartbeats,
 queued ID retention without a run, allocated cancellation with output salvage, EOF joining, reader-error cleanup before stdin closes, and cancellation after input rejection
 that preserves invalid status/null invocation without sending a reply.
-The host still uses v0.3 until M5.03; this completes the independent v0.4 peer first.
+The live host now accepts v0.4; operation workspace support follows the M5.03 contract cutover.
 
 Lifecycle clients must drain stdout through child exit or close the read pipe; keeping an unread
 pipe open can block normal output backpressure and therefore shutdown joining. Cancelled queued
@@ -505,6 +500,6 @@ The old-flow peer now reads repeated `--allow-dir` arguments instead of asking f
 synthetic `initialize.json` and `allowed-dirs.json` records expose handshake/grant evidence for
 boundary tests, without configuration or environment values. Direct wire probes pass their own
 grants; host probes prove that only input grants and the dedicated execution area reach argv.
-The production host's contract validator still accepts v0.3 until M5.03; the independent v0.4
-peer already uses the same explicit path rule. `tests/directory_grants.rs` checks registration
+The production host's structural validator now accepts only v0.4; both independent peers use
+the same explicit path rule. `tests/directory_grants.rs` checks registration
 rejection/canonicalization, literal argv, no roots capability and independent evidence reads.
