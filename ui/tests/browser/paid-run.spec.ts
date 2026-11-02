@@ -1,5 +1,5 @@
 import { test, expect } from "./tool-host";
-import { prepareSampleInput } from "./sample-input";
+import { editSampleLabel, prepareSampleInput } from "./sample-input";
 import { readFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import type { Page } from "@playwright/test";
@@ -70,7 +70,7 @@ for (const mode of ["lost", "wrong", "missing declaration"] as const) test(`${mo
     await run(page).click();
     const retry = page.getByRole("button",{name:"Retry submission",exact:true});
     await expect(retry).toBeVisible();
-    await page.getByLabel("Label *",{exact:true}).fill("edited after sending");
+    await editSampleLabel(page,"edited after sending");
     await expect(page.getByRole("button",{name:"Estimate cost",exact:true})).toBeDisabled();
     expect(submitted).toHaveLength(1);
     if (mode === "missing declaration") {
@@ -109,7 +109,7 @@ test("edits while paid submission is in flight cannot delete or replace its prep
   });
   try {
     await run(page).click(); await started;
-    await page.getByLabel("Label *",{exact:true}).fill("next draft");
+    await editSampleLabel(page,"next draft");
     await expect(run(page)).toBeDisabled();
     await expect(page.getByRole("button",{name:"Estimate cost",exact:true})).toBeDisabled();
     expect(deletes).toBe(0);
