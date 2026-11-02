@@ -9,11 +9,21 @@ export async function prepareSampleInput(page: Page, text: string) {
   await editSampleLabel(page, text);
 }
 
-/** Bring the scroll-pane input into focus before WebKit inserts text. */
+/** Set fixture input in one DOM task, then verify React committed it, not just the DOM value.
+ * Native keyboard behavior is covered separately in draft-edit.spec.ts.
+ */
 export async function editSampleLabel(page: Page, text: string) {
   const label = page.getByLabel("Label *", { exact: true });
-  await label.click();
-  await expect(label).toBeFocused();
-  await label.fill(text);
+  await expect(label).toBeEnabled();
+  await label.evaluate((node: HTMLInputElement, value) => {
+    const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")?.set;
+    if (!setter) throw new Error("Input value setter is unavailable");
+    // Bypass React's instance tracker, then deliver the same bubbling input event it observes.
+    setter.call(node, value);
+    node.dispatchEvent(new InputEvent("input", {
+      bubbles: true, composed: true, inputType: "insertReplacementText", data: value,
+    }));
+  }, text);
   await expect(label).toHaveValue(text);
+  await expect(label).toHaveAttribute("value", text);
 }
