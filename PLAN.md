@@ -1601,6 +1601,11 @@ The coordinator approved staging the display before M5.03: current v0.3 sessions
 pretend it is empty. Reported/narrowed/empty/loading/error states use independent stories now.
 M5.03 must finish live effective-grant validation, config narrowing and session/restart checks
 before M5.02's final acceptance is checked. No v0.4 fields are accepted through the v0.3 validator.
+The b2 display distinguishes reported-empty, unreported, loading and unavailable access. Chromium
+and WebKit checks cover narrow grants, separate result folders, escaped literal names and responsive
+wrapping at 320/768/1024/1440px. b3's live setup regression failed before wiring; its refresh path
+must clear effective status on failure while retaining the distinct registered folder observations.
+
 
 M5.02a is one coordinated registration cutover. Replacing the public descriptor fields requires
 updating every Rust constructor and disposable JSON registration together; retaining an alias would

@@ -37,10 +37,10 @@ test("live setup refresh preserves drafts and clears an unavailable allowance wi
   await expect(drawer.getByRole("region", { name: "Session spending" })).toContainText("Uncapped");
   await expect(drawer).toContainText("No setup requirements are declared");
   await drawer.getByText("Session identity", { exact: true }).click();
-  const before = await drawer.locator("code").innerText();
+  const before = await drawer.getByRole("region", { name: "Session spending" }).locator("code").innerText();
   await drawer.getByRole("button", { name: "Refresh", exact: true }).click();
   await expect(drawer.getByRole("region", { name: "Session spending" })).toContainText("Uncapped");
-  await expect(drawer.locator("code")).toHaveText(before);
+  await expect(drawer.getByRole("region", { name: "Session spending" }).locator("code")).toHaveText(before);
   await page.route("**/api/tools/sample/session", route => route.fulfill({ status: 503, contentType: "application/json", body: JSON.stringify({error: {message: "Session temporarily unavailable"}}) }));
   await drawer.getByRole("button", { name: "Refresh", exact: true }).click();
   await expect(drawer.getByRole("alert")).toContainText("Session temporarily unavailable");
@@ -307,4 +307,35 @@ test("restart stories fit small screens and explain busy or disconnected states"
   await page.getByRole("button", { name: "Confirm restart", exact: true }).click();
   await expect(page.getByRole("alert")).toContainText("could not initialize");
   await expect(page.getByRole("button", { name: "Restart tool session", exact: true })).toBeEnabled();
+});
+
+test("live folder setup reports launch permissions without inventing effective access", async ({page,host}, testInfo) => {
+  await host.open(page);
+  await page.getByRole("button", {name:"Tool setup",exact:true}).click();
+  const drawer = page.getByRole("dialog",{name:"Tool setup",exact:true});
+  const access = drawer.getByRole("region",{name:"Folder access"});
+  const effective = access.getByRole("group",{name:"Effective input folders"});
+  const requested = access.getByRole("group",{name:"Requested input folders"});
+  const results = access.getByRole("group",{name:"Result folders"});
+  await expect(effective).toContainText("Not reported");
+  await expect(effective.locator("code")).toHaveCount(0);
+  await expect(requested.locator("code")).toHaveCount(1);
+  await expect(requested.locator("code")).toContainText("/data/Library/execution");
+  await expect(results.locator("code")).toHaveCount(1);
+  await expect(results.locator("code")).toContainText("/tool");
+  const before = await requested.locator("code").allTextContents();
+  await page.route("**/api/tools/sample/session", route => route.fulfill({status:503,contentType:"application/json",body:JSON.stringify({error:{message:"Session temporarily unavailable"}})}));
+  try {
+    await drawer.getByRole("button",{name:"Refresh",exact:true}).click();
+    await expect(effective).toContainText("Unavailable");
+    await expect(effective).not.toContainText("Not reported");
+    await expect(effective).not.toContainText("No file paths allowed.");
+    await expect(requested.locator("code")).toHaveText(before);
+  } finally {
+    await page.unrouteAll({behavior:"wait"});
+  }
+  await drawer.getByRole("button",{name:"Refresh",exact:true}).click();
+  await expect(effective).toContainText("Not reported");
+  await access.scrollIntoViewIfNeeded();
+  await access.screenshot({path:testInfo.outputPath("live-folder-access.png")});
 });

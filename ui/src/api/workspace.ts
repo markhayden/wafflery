@@ -1,3 +1,4 @@
+import { parseDirectoryGrants, type DirectoryGrants } from "./directory-grants";
 import { LocalApi } from "./client";
 import { isAsset, type Asset } from "./assets";
 import type { Declaration, Json, Readiness, Schema } from "../features/actions/model";
@@ -35,6 +36,7 @@ export type Attempt = {
 };
 export type RegisteredTool = {
   id: string;
+  directory_grants: DirectoryGrants | null;
   declaration: Declaration | null;
   error: string | null;
   busy: boolean;
@@ -165,7 +167,10 @@ export function workspaceClient(api: LocalApi) {
         )
       )
         throw new Error("Workspace state could not be read.");
-      return value as Snapshot;
+      return {
+        ...value,
+        tools: value.tools.map(tool => ({...tool, directory_grants: parseDirectoryGrants(tool.directory_grants)})),
+      } as Snapshot;
     },
     async description(id: string): Promise<Declaration> {
       const value: unknown = await (

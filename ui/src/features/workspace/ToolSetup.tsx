@@ -1,3 +1,5 @@
+import { DirectoryAccess } from "./DirectoryAccess";
+import type { DirectoryGrants } from "../../api/directory-grants";
 import { useEffect, useState } from "react";
 import { Button } from "../../components/Button";
 import type { Action, Readiness, Requirement } from "../actions/model";
@@ -17,8 +19,9 @@ type Props = {
   tool: { name: string; version: string };
   action: Action;
   loadSession: () => Promise<ToolSession>;
+  directoryGrants?: DirectoryGrants | null;
 };
-export function ToolSetup({ tool, action, loadSession }: Props) {
+export function ToolSetup({ tool, action, loadSession, directoryGrants = null }: Props) {
   const [session, setSession] = useState<ToolSession>();
   const [error, setError] = useState<string>();
   const [loading, setLoading] = useState(true);
@@ -81,5 +84,9 @@ export function ToolSetup({ tool, action, loadSession }: Props) {
         </dl></details>
       </>}
     </section>
+    <DirectoryAccess grants={directoryGrants} effective={{
+      // v0.3 sessions cannot report effective folders; M5.03 supplies validated allowed_dirs.
+      state: loading ? "loading" : error ? "unavailable" : "not_reported",
+    }} />
   </div>;
 }

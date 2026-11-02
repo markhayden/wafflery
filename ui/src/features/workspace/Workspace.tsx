@@ -601,7 +601,7 @@ export function Workspace({
         }
         description={
           drawer?.view === "setup"
-            ? `${setupDeclaration?.document.tool.name ?? setupToolId} · Requirements and session spending`
+            ? `${setupDeclaration?.document.tool.name ?? setupToolId} · Requirements, folders and session spending`
             : drawer?.view === "history"
             ? "Saved local attempts. Opening a run never executes it."
             : drawer?.view === "examples"
@@ -621,6 +621,7 @@ export function Workspace({
                 tool={setupDeclaration.document.tool}
                 action={setupAction}
                 loadSession={loadToolSession}
+                directoryGrants={setupTool?.directory_grants ?? null}
               />
             ) : (
               <p role="status">Setup is unavailable because this tool or action is no longer available.</p>
