@@ -602,6 +602,12 @@ with an explicit nonzero port, and an origin distinct from the workspace. It rej
 normalization shortcuts, credentials, extra stdout, broken output and stopped processes.
 Startup deadlines are whole seconds from 1 through 60; a failed view cannot recover on late
 output. A ready view remains subject to output/process validation after its startup deadline.
-The validator is not yet connected to retained views; V15b supplies that supervision and real
-HTTP fixtures. Report addresses and content remain unavailable to the browser.
+V15b connects the validator to retained server views. A watch-driven worker enforces the
+original startup deadline without browser polling, continues checking output after readiness,
+and closes stdin on failure. Process state retains explicit close intent so normal viewer close
+cannot become a startup error when notifications coalesce. Failed supervision preserves its
+diagnostic even after the child exits; saved run evidence is untouched. Independent HTTP
+fixtures exercise actual listening, exact frame-ancestor response policy and EOF shutdown.
+Report addresses and content remain unavailable to the browser; process groups and escalation
+remain V15c, and idle expiry remains V15d.
 V15 still owns idle expiry, server readiness and process-group/descendant shutdown.

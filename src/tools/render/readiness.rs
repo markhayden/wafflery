@@ -40,6 +40,10 @@ impl ServerReadiness {
         self.observe_at(state, Instant::now())
     }
 
+    pub(super) fn deadline(&self) -> Instant {
+        self.started + self.timeout
+    }
+
     fn observe_at(&mut self, state: &ProcessState, now: Instant) -> Readiness {
         if let Some(reason) = self.failure {
             return Readiness::Failed(reason);

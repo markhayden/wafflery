@@ -8,6 +8,19 @@ pub fn description(root: &Path, scenario: &str) -> Value {
         document["actions"][0]["renders"] = json!(["echo", "hold", "stuck", "early-error"].map(|mode| json!({
             "name":mode,"kind":"document","command":[super::fixtures::TOOL,"--render-test",mode,"{run.dir}"]
         })));
+        for mode in [
+            "server",
+            "server-delayed",
+            "server-extra",
+            "server-timeout",
+            "server-bad",
+            "server-exit",
+        ] {
+            document["actions"][0]["renders"].as_array_mut().unwrap().push(json!({
+                "name":mode,"kind":"server","ready_timeout_s":2,
+                "command":[super::fixtures::TOOL,"--render-test",mode,"{run.dir}","--frame-ancestor","{frame_ancestor}"]
+            }));
+        }
     }
     if scenario == "estimates" {
         let mut paid = document["actions"][0].clone();

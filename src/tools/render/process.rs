@@ -29,6 +29,7 @@ pub struct Output {
 #[derive(Clone, Debug)]
 pub struct ProcessState {
     pub phase: ProcessPhase,
+    pub close_requested: bool,
     pub exit_code: Option<i32>,
     pub stdout: Output,
     pub stderr: Output,
@@ -57,6 +58,7 @@ impl RenderProcess {
         let stderr = child.stderr.take().expect("piped render stderr");
         let (state, observed) = watch::channel(ProcessState {
             phase: ProcessPhase::Running,
+            close_requested: false,
             exit_code: None,
             stdout: Output::default(),
             stderr: Output::default(),
@@ -223,6 +225,7 @@ async fn own(
                     },
                     request => {
                         if request.is_none() { open = false; }
+                        state.send_modify(|s|s.close_requested = true);
                         if state.borrow().phase == ProcessPhase::Running {
                             stdin.take(); deadline = Some(Instant::now() + CLOSE_GRACE);
                             state.send_modify(|s|s.phase = ProcessPhase::Stopping);

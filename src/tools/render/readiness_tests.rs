@@ -3,6 +3,7 @@ use crate::tools::render::process::{Output, ProcessPhase, ProcessState};
 fn output(bytes: &[u8]) -> ProcessState {
     ProcessState {
         phase: ProcessPhase::Running,
+        close_requested: false,
         exit_code: None,
         stdout: Output {
             bytes: bytes.to_vec(),

@@ -341,3 +341,104 @@ async fn report_capacity_is_bounded_and_confirmed_exit_releases_a_slot() {
     }
     h.finish().await;
 }
+
+#[tokio::test]
+async fn server_readiness_is_supervised_without_polling_and_extra_output_closes_the_view() {
+    use tokio::io::{AsyncReadExt, AsyncWriteExt};
+    let h = Host::new().await;
+    let before = serde_json::to_value(h.c.attempts.get("saved").await.unwrap()).unwrap();
+    let tool = h._root.path().join("tool");
+    let (status, view) = h
+        .request(
+            "POST",
+            "/api/attempts/saved/views",
+            json!({"name":"server-delayed"}),
+        )
+        .await;
+    assert_eq!(status, StatusCode::OK);
+    let id = view["id"].as_str().unwrap();
+    assert_eq!(view["phase"], "starting");
+    std::fs::write(tool.join("render-release"), "ready").unwrap();
+    let ready = h.state(id, "ready").await;
+    assert!(ready.get("url").is_none());
+    assert!(!ready.to_string().contains("http://"));
+    let address =
+        url::Url::parse(&std::fs::read_to_string(tool.join("render-address")).unwrap()).unwrap();
+    let mut stream = tokio::net::TcpStream::connect(("127.0.0.1", address.port().unwrap()))
+        .await
+        .unwrap();
+    stream
+        .write_all(b"GET /report HTTP/1.1\r\nHost: 127.0.0.1\r\nConnection: close\r\n\r\n")
+        .await
+        .unwrap();
+    let mut response = Vec::new();
+    tokio::time::timeout(Duration::from_secs(3), stream.read_to_end(&mut response))
+        .await
+        .unwrap()
+        .unwrap();
+    let response = String::from_utf8(response).unwrap();
+    assert!(response.contains("frame-ancestors http://127.0.0.1:4811"));
+    assert!(response.contains("Saved report"));
+    h.request("POST", &format!("/api/views/{id}/close"), json!({}))
+        .await;
+    let closed = h.state(id, "exited").await;
+    assert_eq!(closed["exit_code"], 0);
+    assert!(closed["error"].is_null());
+    let (_, view) = h
+        .request(
+            "POST",
+            "/api/attempts/saved/views",
+            json!({"name":"server-extra"}),
+        )
+        .await;
+    let id = view["id"].as_str().unwrap();
+    h.state(id, "ready").await;
+    std::fs::write(tool.join("render-extra"), "extra").unwrap();
+    // No GET drives cleanup: observe the independent process releasing its listener first.
+    let address =
+        url::Url::parse(&std::fs::read_to_string(tool.join("render-address")).unwrap()).unwrap();
+    tokio::time::timeout(Duration::from_secs(5), async {
+        while tokio::net::TcpStream::connect(("127.0.0.1", address.port().unwrap()))
+            .await
+            .is_ok()
+        {
+            tokio::time::sleep(Duration::from_millis(10)).await;
+        }
+    })
+    .await
+    .unwrap();
+    let failed = h.state(id, "exited").await;
+    assert!(failed["error"].as_str().unwrap().contains("extra stdout"));
+    assert_eq!(
+        serde_json::to_value(h.c.attempts.get("saved").await.unwrap()).unwrap(),
+        before
+    );
+    h.finish().await;
+}
+
+#[tokio::test]
+async fn server_startup_timeout_bad_url_and_early_exit_preserve_the_run() {
+    let h = Host::new().await;
+    let before = serde_json::to_value(h.c.attempts.get("saved").await.unwrap()).unwrap();
+    for (name, code, error) in [
+        ("server-timeout", 0, "deadline"),
+        ("server-bad", 0, "loopback"),
+        ("server-exit", 17, "Report"),
+    ] {
+        let (status, view) = h
+            .request("POST", "/api/attempts/saved/views", json!({"name":name}))
+            .await;
+        assert_eq!(status, StatusCode::OK);
+        let failed = h.state(view["id"].as_str().unwrap(), "exited").await;
+        assert_eq!(failed["exit_code"], code);
+        assert!(
+            failed["error"].as_str().unwrap().contains(error),
+            "{failed}"
+        );
+        assert_eq!(
+            serde_json::to_value(h.c.attempts.get("saved").await.unwrap()).unwrap(),
+            before
+        );
+    }
+    h.finish().await;
+}

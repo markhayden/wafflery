@@ -1,4 +1,5 @@
 //! Synthetic render processes; no provider, host library or shared host types.
+mod server;
 use std::{
     io::{self, Read, Write},
     path::PathBuf,
@@ -9,6 +10,9 @@ pub fn run(mut args: impl Iterator<Item = String>) -> Result<(), Box<dyn std::er
     let run = PathBuf::from(args.next().ok_or("saved run required")?);
     if !run.is_dir() {
         return Err("run is missing".into());
+    }
+    if mode.starts_with("server") {
+        return server::run(&mode, args);
     }
     match mode.as_str() {
         "echo" => println!(

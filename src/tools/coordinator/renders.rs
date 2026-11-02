@@ -2,6 +2,8 @@ use super::{Coordinator, Error, Result};
 use crate::tools::render::{
     RenderKind, ResolvedRender,
     process::{ProcessPhase, RenderProcess},
+    readiness::{Readiness, ServerReadiness},
+    supervision::ServerMonitor,
 };
 use serde_json::{Value, json};
 use std::sync::atomic::Ordering;
@@ -12,14 +14,25 @@ pub(super) struct View {
     name: String,
     kind: RenderKind,
     process: RenderProcess,
+    server: Option<ServerMonitor>,
 }
 impl View {
     fn observation(&self) -> Value {
         let state = self.process.snapshot();
+        let readiness = self.server.as_ref().map(ServerMonitor::snapshot);
+        let error = match &readiness {
+            Some(Readiness::Failed(reason)) => Some((*reason).to_owned()),
+            _ => state.error.clone().or_else(|| {
+                (self.server.is_some()
+                    && state.phase != ProcessPhase::Running
+                    && !state.close_requested)
+                    .then(|| "Report process is not running".to_owned())
+            }),
+        };
         json!({"id":self.id,"attempt":self.attempt,"name":self.name,
    "kind":match self.kind {RenderKind::Server=>"server",RenderKind::Document=>"document"},
-   "phase":match state.phase {ProcessPhase::Running=>"starting",ProcessPhase::Stopping=>"stopping",ProcessPhase::NeedsForce=>"needs_force",ProcessPhase::Exited=>"exited"},
-   "exit_code":state.exit_code,"error":state.error,
+   "phase":match state.phase {ProcessPhase::Running=>if matches!(readiness, Some(Readiness::Ready(_))) {"ready"} else {"starting"},ProcessPhase::Stopping=>"stopping",ProcessPhase::NeedsForce=>"needs_force",ProcessPhase::Exited=>"exited"},
+   "exit_code":state.exit_code,"error":error,
    "diagnostics":String::from_utf8_lossy(&state.stderr.bytes),"diagnostics_truncated":state.stderr.overflow})
     }
 }
@@ -69,12 +82,23 @@ impl Coordinator {
         let mut bytes = [0u8; 16];
         getrandom::fill(&mut bytes).map_err(|error| Error::Invalid(error.to_string()))?;
         let id = bytes.iter().map(|b| format!("{b:02x}")).collect();
+        let validator = if plan.kind() == RenderKind::Server {
+            let timeout = plan.ready_timeout().ok_or_else(|| {
+                Error::Invalid("Server report requires a readiness deadline".into())
+            })?;
+            Some(ServerReadiness::new(origin, timeout)?)
+        } else {
+            None
+        };
+        let process = RenderProcess::spawn(&plan)?;
+        let server = validator.map(|validator| ServerMonitor::start(process.clone(), validator));
         let view = View {
             id,
             attempt: attempt_id.into(),
             name: name.into(),
             kind: plan.kind(),
-            process: RenderProcess::spawn(&plan)?,
+            process,
+            server,
         };
         let observation = view.observation();
         views.insert(attempt_id.into(), view);

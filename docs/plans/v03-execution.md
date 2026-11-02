@@ -947,3 +947,22 @@ Five new tests first failed because the validator did not exist, then passed. Re
 required fixes. The shared-lock full matrix passed: 201 Rust tests (three ignored), 41 UI unit
 tests, two asset tests, 164 browser cases (four opt-in skips), fmt, clippy, typecheck, Storybook,
 reproducible assets and release build.
+
+### V15b retained server supervision
+
+Retained server views now own a readiness worker that wakes on process/output changes or the
+original startup deadline. Failure closes the renderer's stdin without requiring an observing
+browser. Explicit close intent survives coalesced process notifications, so normal close does
+not become a startup error. Addresses remain private and no tool HTML is embedded.
+
+The independent fixture runs a real loopback HTTP server with the supplied exact frame
+ancestor. Two new integration tests first failed on missing readiness and timeout transitions,
+then passed alongside the three existing report-control tests. They verify delayed startup,
+HTTP content and framing policy, listener shutdown after extra stdout without polling the
+host, timeout, malformed URL, early exit and unchanged saved evidence. An early exit can be
+observed as stdout EOF before the exit status; the test requires the failure and exit code
+without prescribing event order. Review found no required fixes. This cohesive slice exceeds
+the usual five-file budget because it connects process close intent, supervision, coordinator
+observations and the independent HTTP fixture together. The shared-lock full matrix passed:
+203 Rust tests (three ignored), 41 UI unit tests, two asset tests, 164 browser cases (four opt-in
+skips), fmt, clippy, typecheck, Storybook, reproducible assets and release build.

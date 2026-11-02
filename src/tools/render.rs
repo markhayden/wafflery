@@ -1,6 +1,7 @@
 //! Resolve declared argv from saved evidence. No render executes during resolution.
 pub mod process;
 pub mod readiness;
+pub mod supervision;
 use super::{Error, Result, environment, registration::Descriptor, validate_contract};
 use crate::library::attempts::Attempt;
 use serde::Deserialize;

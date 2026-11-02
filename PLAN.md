@@ -857,7 +857,7 @@ V15 execution slices (full matrix and review per slice; rollback in reverse orde
 - **V15a: Complete.** Validate the single stdout URL, exact loopback authority, separate report origin,
   process state and readiness deadline. A later extra line invalidates a ready view.
   Commit: `feat: validate report server readiness`.
-- **V15b:** Supervise readiness in retained views, with real independent HTTP report fixtures and
+- **V15b: Complete.** Supervise readiness in retained views, with real independent HTTP report fixtures and
   bounded startup failures. Keep URLs private until framing exists. Commit: `feat: supervise report readiness`.
 - **V15c:** Add owned process groups, graceful SIGTERM and descendant cleanup while retaining
   explicit-force behavior and safe process identity. Commit: `feat: stop owned report process groups`.
@@ -883,7 +883,8 @@ Depends: V14. Commit: `feat: isolate rendered documents`.
 permission to frame a host-owned report wrapper. That wrapper contains no tool HTML and sets a
 per-response CSP permitting only the selected report's exact origin. Both ancestors use the
 host origin, matching the server's exact frame-ancestor contract. Tool/document content stays on
-a separate origin, never on the authenticated app origin. The trusted wrapper iframe is not
+a separate origin, never on the authenticated app origin. Revalidate the current process/output
+when issuing a viewer grant; a cached ready observation can lag a process update. The trusted wrapper iframe is not
 sandboxed, preserving its host origin for the ancestor check. Only its inner report iframe uses
 sandbox="allow-scripts allow-same-origin"; no top-navigation, forms, popups or download flags.
 The report must be cross-origin from the wrapper; never allow these flags for same-origin tool HTML.
