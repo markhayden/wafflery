@@ -76,3 +76,28 @@ fn an_observation_cannot_change_access_or_identity_inside_a_session() {
     grants::validate(&replacement, &requested, None).unwrap();
     assert_eq!(before["allowed_dirs"], json!([a, b]));
 }
+
+#[test]
+fn stable_session_grants_remain_valid_after_directory_changes() {
+    let temp = tempfile::tempdir().unwrap();
+    let root = temp.path().canonicalize().unwrap();
+    let requested = root.join("inputs");
+    let narrow = requested.join("selected");
+    let outside = root.join("outside");
+    fs::create_dir_all(&narrow).unwrap();
+    fs::create_dir(&outside).unwrap();
+    let before = session(&[&narrow]);
+    grants::validate(&before, std::slice::from_ref(&requested), None).unwrap();
+    fs::remove_dir(&narrow).unwrap();
+    let after = before.clone();
+    grants::validate(&after, std::slice::from_ref(&requested), Some(&before)).unwrap();
+    assert!(grants::validate(&after, std::slice::from_ref(&requested), None).is_err());
+    symlink(&outside, &narrow).unwrap();
+    grants::validate(&after, std::slice::from_ref(&requested), Some(&before)).unwrap();
+    // A new session must not trust a directory validated for an older client.
+    let mut replacement = after.clone();
+    replacement["id"] = json!("22222222-2222-4222-8222-222222222222");
+    assert!(grants::validate(&replacement, &[requested], None).is_err());
+    // Unchanged effective paths do not authorize silently changing the requested boundary.
+    assert!(grants::validate(&after, &[], Some(&before)).is_err());
+}

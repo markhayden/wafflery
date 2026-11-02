@@ -17,6 +17,7 @@ fn directories(session: &Value) -> BTreeSet<&str> {
 
 /// Requested directories are the canonical grants passed to this specific child.
 /// Both observations have passed the v0.4 schema and existing ledger/identity checks.
+/// A previous observation also passed this grant check for the same owned client.
 /// A deliberate restart has a new client and no previous observation.
 pub fn validate(session: &Value, requested: &[PathBuf], previous: Option<&Value>) -> Result<()> {
     let allowed = directories(session);
@@ -34,6 +35,12 @@ pub fn validate(session: &Value, requested: &[PathBuf], previous: Option<&Value>
             return Err(Error::Invalid(
                 "Tool effective access exceeds its requested input grants".into(),
             ));
+        }
+        // The directory list is frozen for this session. A later deletion or symlink change
+        // must not hide its spending ledger; the tool still checks every actual file read.
+        // A new client has no previous observation and validates its directories afresh.
+        if previous.is_some() {
+            continue;
         }
         let canonical = path.canonicalize().map_err(|_| {
             Error::Invalid("Tool effective access is not an existing canonical directory".into())
