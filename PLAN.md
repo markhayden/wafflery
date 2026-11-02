@@ -853,6 +853,18 @@ zero exit on EOF/SIGTERM, stuck slot, owned process group, duplicate opens, idle
 cleanup and exact framing origin. Depends: V14.
 Commit: `feat: manage local report server lifetime`.
 
+V15 execution slices (full matrix and review per slice; rollback in reverse order):
+- **V15a: Complete.** Validate the single stdout URL, exact loopback authority, separate report origin,
+  process state and readiness deadline. A later extra line invalidates a ready view.
+  Commit: `feat: validate report server readiness`.
+- **V15b:** Supervise readiness in retained views, with real independent HTTP report fixtures and
+  bounded startup failures. Keep URLs private until framing exists. Commit: `feat: supervise report readiness`.
+- **V15c:** Add owned process groups, graceful SIGTERM and descendant cleanup while retaining
+  explicit-force behavior and safe process identity. Commit: `feat: stop owned report process groups`.
+- **V15d:** Add five-minute idle expiry, visible-inspection activity and replacement/shutdown
+  lifecycle coverage. Commit: `feat: expire idle report viewers`.
+No slice enables tool HTML in the app origin; V17 owns framing and the drawer integration.
+
 **V16 — Isolate document outputs.** A declared document renderer writes one self-contained
 file outside run.dir, with images/styles inline, then prints only its absolute path and exits
 zero. Read exactly that returned regular file through a narrowly scoped per-render output grant;

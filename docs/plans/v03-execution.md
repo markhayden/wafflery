@@ -934,3 +934,16 @@ clippy, typecheck, Storybook, reproducible assets and release build. Coordinator
 the independent fixture tests stay in one slice because exposing the controls before retaining
 shutdown ownership would be unsafe. This exceeds the usual five authored files; no UI assets,
 library migration or dependency changes are introduced.
+
+### V15a server readiness validation
+
+The readiness validator accepts one complete literal-loopback HTTP URL line on a separate
+origin, validates process/output health throughout viewing, and makes startup failure sticky.
+It checks the raw authority before URL normalization and bounds startup deadlines to 1–60
+whole seconds. Supervision and real HTTP report fixtures remain V15b; no report content is
+exposed yet.
+
+Five new tests first failed because the validator did not exist, then passed. Review found no
+required fixes. The shared-lock full matrix passed: 201 Rust tests (three ignored), 41 UI unit
+tests, two asset tests, 164 browser cases (four opt-in skips), fmt, clippy, typecheck, Storybook,
+reproducible assets and release build.

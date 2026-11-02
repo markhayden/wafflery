@@ -596,4 +596,12 @@ Authenticated routes are `POST /api/attempts/{id}/views` with `{name}`, `GET /ap
 process state, never raw stdout or report content. There is no browser report control yet.
 Quit closes all retained views concurrently and waits for confirmed exit; explicit host force
 quit also covers waiting views. A failed report never rewrites its saved attempt, status or spend.
+
+V15a adds the server readiness validator: one complete stdout URL line, literal HTTP loopback
+with an explicit nonzero port, and an origin distinct from the workspace. It rejects parser
+normalization shortcuts, credentials, extra stdout, broken output and stopped processes.
+Startup deadlines are whole seconds from 1 through 60; a failed view cannot recover on late
+output. A ready view remains subject to output/process validation after its startup deadline.
+The validator is not yet connected to retained views; V15b supplies that supervision and real
+HTTP fixtures. Report addresses and content remain unavailable to the browser.
 V15 still owns idle expiry, server readiness and process-group/descendant shutdown.
