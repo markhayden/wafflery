@@ -1,6 +1,7 @@
 //! Synthetic render processes; no provider, host library or shared host types.
 mod document;
 mod lifetime;
+mod probe;
 mod server;
 use std::{
     io::{self, Read, Write},

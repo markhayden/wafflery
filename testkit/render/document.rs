@@ -24,10 +24,12 @@ pub fn run(mode: &str, run: &Path) -> Result<(), Box<dyn std::error::Error>> {
         root.join(format!("document-{}.html", std::process::id()))
     };
     if mode != "document-missing" {
-        std::fs::write(
-            &output,
-            "<!doctype html><title>Sample report</title><h1>Saved document</h1>",
-        )?;
+        let body = if mode == "document-probe" {
+            super::probe::html("http://127.0.0.1:9", "http://127.0.0.1:9/blocked")
+        } else {
+            "<!doctype html><title>Sample report</title><h1>Saved document</h1>".into()
+        };
+        std::fs::write(&output, body)?;
     }
     println!("{}", output.display());
     if mode == "document-extra" {

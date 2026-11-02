@@ -1,48 +1,7 @@
-import { test, expect, type Host } from "./tool-host";
-import { prepareSampleInput, editSampleLabel } from "./sample-input";
-import type { Page } from "@playwright/test";
+import { test, expect } from "./tool-host";
+import { savedRun, frame } from "./report-fixture";
 
 test.use({ hostScenario: "renders" });
-
-async function savedRun(page: Page, host: Host) {
-  const session = page.waitForResponse(
-    (response) => new URL(response.url()).pathname === "/api/session",
-  );
-  await host.open(page);
-  const { token } = await (await session).json();
-  const api = async (path: string, method = "GET", data?: unknown) => {
-    const response = await page.request.fetch(`${host.origin}${path}`, {
-      method, data,
-      headers: { authorization: `Bearer ${token}`, origin: host.origin },
-    });
-    expect(response.ok()).toBe(true);
-    return response.json();
-  };
-  await prepareSampleInput(page, "report source");
-  const submitted = page.waitForResponse(
-    (response) => new URL(response.url()).pathname === "/api/attempts"
-      && response.request().method() === "POST",
-  );
-  await page.getByRole("button", { name: "Run", exact: true }).click();
-  const { id } = await (await submitted).json();
-  await expect.poll(async () =>
-    (await api(`/api/attempts/${id}`)).preservation.contract,
-  ).toBe("complete");
-  await editSampleLabel(page, "later draft");
-  return { api, id };
-}
-
-async function frame(page: Page, host: Host, url: string) {
-  await page.evaluate((url) => {
-    const iframe = document.createElement("iframe");
-    iframe.title = "Report wrapper";
-    iframe.src = url;
-    iframe.style.cssText = "position:fixed;inset:5%;width:90%;height:90%;z-index:999;background:white";
-    document.body.append(iframe);
-  }, `${host.origin}${url}`);
-  return page.frameLocator('iframe[title="Report wrapper"]')
-    .frameLocator('iframe[title="Tool report"]');
-}
 
 test("server and document reports load inside the exact-origin trusted wrapper", async ({ page, host }) => {
   const { api, id } = await savedRun(page, host);

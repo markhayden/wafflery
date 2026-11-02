@@ -42,11 +42,16 @@ pub fn run(
                 _ = &mut eof => return Ok(()),
                 accepted = listener.accept() => {
                     let (mut stream, _) = accepted?;
-                    let body = "<!doctype html><title>Sample report</title><h1>Saved report</h1>";
+                    let target = std::fs::read_to_string(root.join("report-target"))
+                        .unwrap_or_else(|_| "http://127.0.0.1:9/blocked".into());
+                    let body = if mode == "server-probe" { super::probe::html(&ancestor, &target) }
+                        else { "<!doctype html><title>Sample report</title><h1>Saved report</h1>".into() };
+                    let redirect = format!("HTTP/1.1 302 Found\r\nLocation: {target}\r\nContent-Length: 0\r\nConnection: close\r\n\r\n");
                     let response = format!("HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nContent-Security-Policy: frame-ancestors {ancestor}\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{body}", body.len());
                     tokio::spawn(async move {
                         let mut request = [0u8;4096];
                         if matches!(tokio::time::timeout(Duration::from_secs(1), stream.read(&mut request)).await, Ok(Ok(n)) if n > 0) {
+                            let response = if request.starts_with(b"GET /redirect ") { &redirect } else { &response };
                             let _ = stream.write_all(response.as_bytes()).await;
                             let _ = stream.shutdown().await;
                         }

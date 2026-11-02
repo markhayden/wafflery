@@ -925,7 +925,7 @@ V17a execution slices (review and full matrix per slice; rollback in reverse ord
 - **V17a2: Complete.** Revalidate current view targets, issue/consume grants through authenticated controls
   and a trusted wrapper, and apply route-specific frame headers. Verify the real nested frame
   in both browsers before exposing drawer controls. Commit: `feat: isolate report frames by exact origin`.
-- **V17a3:** Extend independent malicious-report fixtures and browser checks for parent/API access,
+- **V17a3: Complete.** Extend independent malicious-report fixtures and browser checks for parent/API access,
   redirects, external resources and navigation restrictions. Commit: `test: verify report frame isolation`.
 
 **V17b — Embed reports in the shared run drawer.** Offer tool-declared views on a saved run;
@@ -935,6 +935,23 @@ Files: report drawer, API client, story, browser tests, README.
 External navigation/popups are blocked; this slice offers no viewer-controlled external launch.
 Verify frame load, blocked external-link behavior, close/reopen/replacement, background expiry and
 startup failure. Dependencies: V17a. Commit: `feat: inspect tool reports in the run drawer`.
+
+V17b execution slices (review and full matrix per slice; rollback in reverse order):
+- **V17b1:** Typed private report client and lifecycle ownership. Expose the existing view for a
+  saved attempt so reopening inspection can recover a pending close/force state without starting
+  another renderer. Keep one ownership manager across drawer mounts; serialize open/replacement/
+  close, retain late-open ownership after dismissal, and reject malformed observations/frame
+  URLs. Lost acknowledgements remain uncertain; null lookup never proves an outstanding open
+  failed. Block replacement until ownership is positively recovered or the host is restarted.
+  Prove ordering with deferred-response tests.
+  Commit: `feat: own report drawer lifetimes`.
+- **V17b2:** Shared-drawer report selector, embedded wrapper, loading/error/diagnostic states and
+  explicit force confirmation. Activity renews only during visible inspection; dismissal or
+  switching evidence releases the view. Match drawer mocks and add stories plus browser coverage.
+  Commit: `feat: inspect tool reports in the run drawer`.
+- **V17b3:** Browser lifecycle checks for dismissal during startup, replacement, reopening,
+  hidden-tab expiry and failures with raw evidence still usable. Record checkpoint V-C, including
+  any separately pending native Safari check. Commit: `test: verify report drawer lifecycle`.
 
 **Checkpoint V-C:** Full matrix and review with real fake-peer report processes, not static UI
 fixtures. Confirm shutdown ownership and no run-status mutation on report failure. Native Safari

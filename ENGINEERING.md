@@ -716,3 +716,9 @@ no-referrer report POST with `Origin: null`; only the private document-capabilit
 accepts it, still validating the exact document URI, content type and bounded body. Foreign
 and duplicate origins remain refused. Workspace API origin rules are unchanged. V17a3 adds
 adversarial navigation/API checks before V17b exposes the drawer controls.
+
+V17a3's independent active-content probes verify blocked parent DOM/storage access, top-level
+navigation, popups, form submissions and unauthenticated workspace requests in Chromium/WebKit.
+A real second loopback listener receives no request when the report links or redirects there;
+the wrapper reports the frame-src violation. This is browser isolation, not an OS sandbox for
+the renderer executable. Report-origin behavior remains the tool's responsibility.

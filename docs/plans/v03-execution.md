@@ -1139,3 +1139,23 @@ tests, two asset tests, 168 browser cases (four skips), fmt, clippy, typecheck, 
 reproducible assets and release build. The routes, current-target checks, browser proof and matching
 docs form one cohesive boundary change beyond the usual file budget. V17a3 owns adversarial
 fixtures/navigation checks; V17b still owns visible drawer controls.
+
+### V17a3 adversarial report browser checks
+
+Independent server/document probe pages attempt parent DOM/storage access, top navigation,
+popups, workspace API requests and form submission. Exact-origin navigation tests use a real
+second loopback listener: both a direct link and an HTTP redirect trigger the wrapper's
+frame-src violation without a request reaching that listener. The saved attempt remains intact.
+
+The new tests first failed without the fixtures, then all six browser cases passed. A browser
+CORS failure intentionally hides its response; the test observes the missing credentials and
+rejected fetch, then independently checks the host's foreign-origin 403. No production policy
+was loosened to make the probes pass. Existing document tests cover blocked external resources
+and policy-error cleanup. These checks establish browser isolation, not an OS/network sandbox
+for tool executables or a guarantee about every browser version.
+
+Review approved. One hundred focused browser repetitions and the full shared-lock matrix passed:
+240 Rust tests (three ignored), 41 UI unit tests, two asset tests, 174 browser cases (four skips),
+fmt, clippy, typecheck, Storybook, reproducible assets and release build. Fixture declarations, renderer pages,
+shared browser setup, tests and matching docs form one cohesive verification slice beyond the
+usual file budget. Visible report controls remain V17b.

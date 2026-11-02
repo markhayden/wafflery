@@ -257,3 +257,10 @@ reports argument strings, environment variable names (never values) and the work
 `early-error` exits 17 with a synthetic diagnostic; `stdout-flood` and `stderr-flood` exceed the
 host's output limits. These are process-test behaviors, not yet conforming server/document views.
 V15/V16 add report readiness and document fixtures. No mode calls a provider.
+
+The `renders` scenario also declares `server-probe` and `document-probe`. Their standalone
+probe page attempts parent/storage access, top navigation and popups; the server variant also
+attempts unauthenticated workspace fetches, form submission and redirects. A test-owned
+`report-target` file in the tool working directory selects a loopback canary destination.
+No host types, credentials or providers are imported. Browser tests verify actual blocked
+operations and that unapproved origins receive no navigation request.

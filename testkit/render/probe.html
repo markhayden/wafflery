@@ -1,0 +1,35 @@
+<!doctype html><meta charset="utf-8"><title>Isolation probe</title>
+<h1>Isolation probe</h1>
+<button id="parent">Probe parent</button><button id="api">Probe API</button>
+<button id="submit">Submit form</button>
+<a id="other">Other origin</a><a href="/redirect">Redirect</a>
+<form method="post"></form><output></output>
+<script>
+const workspace = __WORKSPACE__;
+const target = __TARGET__;
+const output = document.querySelector('output');
+document.querySelector('#other').href = target;
+document.querySelector('form').action = workspace + '/api/host/quit';
+document.querySelector('#parent').onclick = () => {
+  const result = [];
+  for (const [name, access] of [
+    ['parent', () => parent.document.body.textContent],
+    ['storage', () => parent.localStorage.length],
+    ['top', () => { top.location.href = target; }],
+  ]) {
+    try { access(); result.push(name + ':allowed'); }
+    catch (error) { result.push(name + ':' + (error.name === 'SecurityError' ? 'blocked' : error.name)); }
+  }
+  result.push('popup:' + (window.open(target) === null ? 'blocked' : 'allowed'));
+  output.textContent = result.join(';');
+};
+document.querySelector('#api').onclick = async () => {
+  try {
+    const response = await fetch(workspace + '/api/host/quit', {
+      method: 'POST', credentials: 'include', headers: {'Content-Type': 'text/plain'}, body: '{}'
+    });
+    output.textContent = 'api:readable:' + response.status;
+  } catch { output.textContent = 'api:blocked'; }
+};
+document.querySelector('#submit').onclick = () => document.querySelector('form').submit();
+</script>
