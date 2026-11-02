@@ -570,7 +570,7 @@ Verify several references, keyboard reorder/remove, duplicate images with differ
 optional empty slots, history and saved-example round trips. Depends: V07a.
 Commit: `feat: edit list image slots`.
 
-**Checkpoint V-A:** V01–V07, full matrix and review. Offline actions, setup and list inputs work
+**Checkpoint V-A: Complete.** [Verification](docs/plans/v03-setup-checkpoint.md). V01–V07, full matrix and review. Offline actions, setup and list inputs work
 against the independent peer; paid dispatch still refuses. Record exact contract/peer revisions
 and verification in a checkpoint document. This supplies M4's readiness/session portion, not
 automatic discovery, production installation or the full three first-install journeys.
