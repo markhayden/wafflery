@@ -259,3 +259,18 @@ V05b full matrix passed under the shared lock: formatting, clippy, 105 Rust test
 typecheck, 18 UI unit tests, two asset tests, Storybook, byte-identical UI builds, release build
 and 86 browser cases (four real-tool skips). Embedded UI assets were regenerated and verified.
 No provider calls, sibling edits, push or tags.
+
+## Hosted V05a setup-test follow-up
+
+Hosted run 41368632787 failed an existing unavailable-tool browser test. The trace showed no
+second run submission and no restart: a required label remained empty, then the assertion timed
+out and success-only route cleanup was skipped. The fix triggers invalidation through Refresh,
+waits for the mutated declaration response, and drains routes in finally. Review also required
+arming mutation only after the explicit refresh request.
+
+The final test passed 40 repetitions, then the complete matrix passed with 105 Rust tests, 18 UI
+unit tests, two asset tests and 86 browser cases (three Rust ignores/four browser skips), plus
+formatting, clippy, typecheck, Storybook, asset reproducibility and release build.
+[Evidence and diagnosis](../reviews/2026-11-01-setup-refresh-ci.md). No production change was
+needed for this failure. V05b was already locally merged before the hosted V05a failure arrived;
+its full matrix passed separately. Resume V06 after the hosted gate is green.

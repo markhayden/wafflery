@@ -67,32 +67,48 @@ test.describe("paid action setup", () => {
   });
 });
 
-test("an unavailable tool never replaces setup with a saved-run inspector", async ({ page, context, host }) => {
+test("an unavailable tool never replaces setup with a saved-run inspector", async ({ page, host }) => {
   await host.open(page);
   await page.locator("input[type=file]").setInputFiles("tests/fixtures/sample.png");
-  await page.getByLabel("Label *", { exact: true }).fill("Saved before setup");
+  const label = page.getByLabel("Label *", { exact: true });
+  await label.click();
+  await expect(label).toBeFocused();
+  await label.fill("Saved before setup");
+  await expect(label).toHaveValue("Saved before setup");
   await page.getByRole("button", { name: "Run", exact: true }).click();
   await expect(page.getByText("Contract evidence: complete.", { exact: false }).first()).toBeVisible();
   await page.getByRole("button", { name: "Tool setup", exact: true }).click();
   const drawer = page.getByRole("dialog", { name: "Tool setup", exact: true });
   await expect(drawer).toContainText("Uncapped");
+  let armed = false;
+  await page.route("**/api/tools/sample/refresh", async route => {
+    armed = true;
+    await route.continue();
+  });
   await page.route("**/api/state", async route => {
+    const makeUnavailable = armed;
     const response = await route.fetch();
     const value = await response.json();
-    value.tools = value.tools.map((tool: {id: string}) => ({ ...tool, declaration: null, error: "Tool description is unavailable" }));
+    if (makeUnavailable) value.tools = value.tools.map((tool: {id: string}) => ({ ...tool, declaration: null, error: "Tool description is unavailable" }));
     await route.fulfill({ response, json: value });
   });
-  const other = await context.newPage();
-  await host.open(other);
-  await other.locator("input[type=file]").setInputFiles("tests/fixtures/sample.png");
-  await other.getByLabel("Label *", { exact: true }).fill("Trigger a state update");
-  await other.getByRole("button", { name: "Run", exact: true }).click();
-  await expect(drawer).toContainText("Setup is unavailable because this tool or action is no longer available.");
-  await expect(drawer.getByRole("navigation", { name: "Run evidence" })).not.toBeVisible();
-  await expect(drawer).not.toContainText("Uncapped");
-  // Drain intercepted state reads before the host fixture shuts down.
-  await page.unrouteAll({ behavior: "wait" });
-  await other.close();
+  try {
+    const changed = page.waitForResponse(async response => {
+      if (new URL(response.url()).pathname !== "/api/state" || response.status() !== 200) return false;
+      const value = await response.json();
+      return value.tools.some((tool: { declaration: unknown }) => tool.declaration === null);
+    });
+    await Promise.all([
+      changed,
+      drawer.getByRole("button", { name: "Refresh", exact: true }).click(),
+    ]);
+    await expect(drawer).toContainText("Setup is unavailable because this tool or action is no longer available.");
+    await expect(drawer.getByRole("navigation", { name: "Run evidence" })).not.toBeVisible();
+    await expect(drawer).not.toContainText("Uncapped");
+  } finally {
+    // Also drain interception when an assertion fails, before the host fixture stops.
+    await page.unrouteAll({ behavior: "wait" });
+  }
 });
 
 
