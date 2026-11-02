@@ -976,9 +976,9 @@ V18 execution slices (review and full matrix per slice; rollback newest first):
   snapshots. Fail invalid explicit binaries/contracts; use observed shutdown, ordered list image
   inputs, zero-spend evidence and both declared renderer kinds. Retire the obsolete estimate-as-run
   assertion. Commit: `test: verify v0.3 peer runs and reports`.
-- **V18b:** Real-peer readiness/default lookup and selected configuration/restart, plus bound
-  estimates and capped dispatch using a scripted paid Rascal filler. Verify Squint's estimate
-  control independently where its free scripted profile does not expose a host paid workflow.
+- **V18b: Complete.** Real-peer readiness/default lookup and selected configuration/restart, plus bound
+  estimates and capped dispatch using a scripted paid Rascal filler. Verify Squint's real-profile
+  estimate control without credentials; its scripted profile declares free actions.
   Isolate configuration/cache directories without changing sibling checkouts. Record any live
   provider-only checks separately. Commit: `test: verify real peer setup and estimate controls`.
 - **V18c:** Browser acceptance against both isolated binaries, including report frames, list

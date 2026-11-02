@@ -103,7 +103,7 @@ at coordinator-approved revision `db5cf78`. The coordinator probe owns config/sc
 the host environment allowlist with the isolated XDG directories above, and supplies no credentials:
 
 ```sh
-WAFFLERY_SQUINT_BIN=/absolute/path/to/testkit/squint cargo test --locked --test squint_smoke real_squint_scripted -- --ignored --nocapture
+env -u ANTHROPIC_API_KEY WAFFLERY_SQUINT_BIN=/absolute/path/to/testkit/squint cargo test --locked --test squint_smoke -- --ignored --nocapture
 ```
 
 This verifies discovery, truthful free metadata, a reference-consistency scripted result, zero spend,
@@ -115,6 +115,13 @@ With both `WAFFLERY_RASCAL_BIN` and `WAFFLERY_SQUINT_BIN` set to explicit stable
 `bun run --cwd ui test:browser` includes the two-tool journey: Squint check, inspect/export,
 example reload without execution, switch to Rascal and run a seam, restart, then restore Squint
 history without mixing results. Without both variables those cases are skipped.
+
+The setup probe additionally verifies default `./squint.toml` lookup and explicit selected paths,
+missing configuration/credentials, configuration frozen until restart, and real-profile catalog
+estimates that create neither a host attempt nor a tool run. It requires `ANTHROPIC_API_KEY` unset
+and makes no provider call. Rascal's second probe requires a `testkit` build: its local filler
+reports a synthetic $0.04 cost to exercise bound dispatch, per-call caps, session budget refusal,
+configuration identity and explicit restart with a fresh ledger. No real charge occurs.
 
 The old estimate-as-run probe is retired: in v0.3, estimates are controls and never attempts.
 Its v0.2 journal evidence remains [historical](../docs/handoffs/squint-estimate-journal.md). [Original discovery blockers](../docs/handoffs/squint-discovery-blockers.md)

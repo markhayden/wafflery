@@ -1,0 +1,14 @@
+# Priced from the catalog only; the probe requires ANTHROPIC_API_KEY to be absent.
+[provider]
+profile = "anthropic"
+model = "claude-haiku-5-5"
+
+[budget]
+spend_cap_usd = 2.0
+
+[privacy]
+cloud_calls = true
+account = "anthropic:wafflery-test"
+
+[output]
+dir = "./runs"

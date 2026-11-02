@@ -26,8 +26,28 @@ roots through the host's fixed environment/PATH policy; no provider credentials 
 - Each report uses the serving executable, the exact frame ancestor and a separate origin. Closing
   removes frame access; the saved attempt is unchanged. Explicit probe failures cannot become skips.
 - These checks establish host interoperability, not provider quality or paid-provider readiness.
-  Setup/restart, estimates/caps and browser acceptance remain V18b/V18c. Estimates are no longer
+  Browser acceptance remains V18c. Estimates are no longer
   actions or runs; the previous v0.2 estimate-journal test has been retired.
+
+### V18 setup and cost controls — 2026-11-02
+
+The same approved snapshots pass real-peer coordinator setup and cost checks under the fixed
+PATH and isolated lookup directories. No tool-specific production code was added.
+
+- Rascal without selected configuration describes its seam as ready and free. With a selected
+  configuration, its own local `fake-filler` executable reports a synthetic $0.04 cost. A cap above
+  the configured limit fails; a lower cap refuses; the accepted quote binds the actual call and
+  is preserved with spend evidence. The next call refuses the exhausted session budget. Editing
+  the configuration does not change the running session's price/identity; explicit restart does,
+  resets the ledger, invalidates old preparations and leaves saved evidence unchanged.
+- Squint discovers missing configuration through both default `./squint.toml` lookup and an
+  explicit path containing spaces. Adding configuration requires restart. A real Anthropic
+  profile without its credential produces a priced readiness refusal, with no host attempt,
+  tool run directory or spend; restart invalidates that quote. `ANTHROPIC_API_KEY` is explicitly
+  unset for this probe. There is no provider dispatch or credential validation.
+
+This verifies the shared host's cost/setup boundary, not live provider billing or model quality.
+Actual provider 401/403 responses and billed calls remain outside this offline acceptance.
 
 ### Rascal explicit paths — 2026-11-01
 

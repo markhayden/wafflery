@@ -1289,3 +1289,24 @@ Verification: both real-peer probes pass, independent review approved, and the f
 matrix passed: 243 Rust tests (two opt-in ignored), 53 UI unit tests, two asset tests and
 198 Chromium/WebKit cases (four opt-in skips), fmt, clippy, typecheck, Storybook, reproducible
 assets and release build. Rust and both real-peer probes passed again after the cleanup correction.
+
+## V18b: real setup and estimates
+
+Add real-peer opt-in checks for configuration selection, restart, estimates and caps. Rascal's
+scripted local filler has a declared synthetic cost, so the ordinary paid host path binds the
+quote, records $0.04, refuses cap/budget violations and verifies the reset/new configuration
+identity only after explicit restart. Squint's production profile can be priced without keys:
+default and selected configuration paths yield setup requirements and a priced readiness refusal,
+never an attempt or tool run. It stays unready until restart after configuration is created.
+No provider calls, real charges, sibling changes or production host behavior changes.
+The no-credential Squint probe fails early if ANTHROPIC_API_KEY is present.
+
+Both added probes passed against the approved snapshots, alongside the two run/report probes.
+Initial fixture errors (Rascal's call-cap field and Squint's required output table) were corrected
+against those exact sources. Estimate bindings remain private in UI quotes; the test compares
+the dispatched binding to saved evidence. Rollback reverts these probe/fixture additions.
+
+Independent review approved. Full shared-lock matrix passed: 243 Rust tests (four opt-in
+ignored), 53 UI unit tests, two asset tests and 198 Chromium/WebKit cases (four opt-in skips),
+fmt, clippy, typecheck, Storybook, reproducible assets and release build. All four real-peer
+probes passed separately with the approved isolated binaries and no provider credentials.

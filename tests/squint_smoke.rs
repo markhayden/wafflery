@@ -115,3 +115,124 @@ async fn real_squint_scripted_check_preserves_zero_spend_evidence() {
     assert!(saved.outputs.is_empty());
     assert_eq!(std::fs::read(input).unwrap(), bytes);
 }
+
+#[tokio::test]
+#[ignore = "requires the approved Squint binary, isolated XDG directories and no ANTHROPIC_API_KEY"]
+async fn real_squint_discovers_setup_and_prices_without_allocating_a_run() {
+    assert!(
+        std::env::var_os("ANTHROPIC_API_KEY").is_none(),
+        "Run this no-credential probe with ANTHROPIC_API_KEY unset"
+    );
+    let binary = peer::binary("WAFFLERY_SQUINT_BIN");
+    for selected in [false, true] {
+        let dir = tempfile::tempdir().unwrap();
+        let tool = dir.path().join("tool");
+        std::fs::create_dir(&tool).unwrap();
+        let config = if selected {
+            dir.path().join("selected config.toml")
+        } else {
+            tool.join("squint.toml")
+        };
+        let assets = AssetStore::open(&dir.path().join("Library")).unwrap();
+        let input = dir.path().join("image.png");
+        std::fs::write(&input, include_bytes!("../ui/tests/fixtures/sample.png")).unwrap();
+        let image = assets.import_path(input).await.unwrap();
+        let c = Arc::new(
+            Coordinator::open(
+                assets,
+                vec![Descriptor {
+                    id: "squint".into(),
+                    executable: binary.clone(),
+                    config: selected.then(|| config.clone()),
+                    args: vec![
+                        "serve".into(),
+                        "--out".into(),
+                        tool.join("runs").display().to_string(),
+                    ],
+                    cwd: tool.clone(),
+                    roots: vec![tool.clone()],
+                }],
+            )
+            .await
+            .unwrap(),
+        );
+        peer::run(&c, async {
+            let missing = c.description("squint").await.unwrap();
+            let action = |description: &wafflery::tools::client::Declaration| {
+                description.document["actions"]
+                    .as_array()
+                    .unwrap()
+                    .iter()
+                    .find(|a| a["name"] == "source_fidelity")
+                    .unwrap()
+                    .clone()
+            };
+            assert_eq!(action(&missing)["readiness"]["state"], "needs_setup");
+            assert!(
+                action(&missing)["readiness"]["requirements"]
+                    .as_array()
+                    .unwrap()
+                    .iter()
+                    .any(|r| r["kind"] == "config" && r["state"] == "missing")
+            );
+            std::fs::write(
+                &config,
+                include_str!("../testkit/squint/estimate-config.toml"),
+            )
+            .unwrap();
+            assert_eq!(
+                c.refresh("squint").await.unwrap().tool_session["id"],
+                missing.tool_session["id"]
+            );
+            assert_eq!(
+                action(&c.description("squint").await.unwrap())["readiness"],
+                action(&missing)["readiness"]
+            );
+            let configured = c.restart("squint", true).await.unwrap();
+            assert_ne!(configured.tool_session["id"], missing.tool_session["id"]);
+            let current = action(&configured);
+            assert_eq!(current["cost"]["may_spend"], true);
+            assert_eq!(current["readiness"]["state"], "needs_setup");
+            assert!(
+                current["readiness"]["requirements"]
+                    .as_array()
+                    .unwrap()
+                    .iter()
+                    .any(|r| r["kind"] == "credential"
+                        && r["name"] == "ANTHROPIC_API_KEY"
+                        && r["state"] == "missing")
+            );
+            let request =
+                serde_json::from_value::<wafflery::library::attempts::Submission>(json!({
+                    "id":"estimate-control", "tool":"squint", "action":"source_fidelity",
+                    "revision":configured.revision, "params":{"max_spend_usd":2.0},
+                    "images":{"candidate":[image.id],"source":[image.id]}
+                }))
+                .unwrap();
+            c.prepare(request.clone()).await.unwrap();
+            let quote = c.estimate_prepared(&request.id).await.unwrap();
+            assert_eq!(quote.estimate["allowed"], false);
+            assert_eq!(quote.estimate["refused"], "readiness");
+            assert!(quote.estimate["worst_case_usd"].as_f64().unwrap() > 0.0);
+            assert_eq!(quote.estimate["effective"]["model"], "claude-haiku-5-5");
+            assert!(
+                quote.estimate["effective"]["config_identity"]
+                    .as_str()
+                    .unwrap()
+                    .starts_with("sha256:")
+            );
+            assert!(c.submit_prepared(request.clone()).await.is_err());
+            assert_eq!(c.snapshot().await.unwrap()["attempts"], json!([]));
+            let runs = tool.join("runs");
+            assert!(
+                !runs.exists() || std::fs::read_dir(runs).unwrap().next().is_none(),
+                "An estimate must not create a tool run"
+            );
+            assert_eq!(c.session("squint").await.unwrap()["spent_usd"], 0.0);
+            c.restart("squint", true).await.unwrap();
+            assert!(c.prepared_estimate(&request.id).await.is_err());
+            assert_eq!(c.snapshot().await.unwrap()["attempts"], json!([]));
+        })
+        .await;
+    }
+}
