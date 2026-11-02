@@ -539,7 +539,7 @@ Verify array order, duplicate file identities, scalar/list mismatch, optional om
 refusal, fingerprint mismatch and cleanup after partial failure. Depends: V02.
 Commit: `feat: bind ordered image lists`.
 
-**V06b — Verify list-image result evidence.** Replace evidence.rs's first-item-only input match
+**V06b — Verify list-image result evidence. Complete.** Replace evidence.rs's first-item-only input match
 with per-slot checks of role, identity and order. Completed results must account for the complete
 submitted list. Non-completed results can legitimately have empty/partial input evidence: match
 reported entries as an ordered subsequence, reject additions/changed identities or roles, and

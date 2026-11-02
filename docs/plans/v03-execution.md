@@ -304,3 +304,22 @@ unit tests, two asset tests and 86 browser cases (four skipped), plus fmt, clipp
 Storybook, asset reproducibility and release build. The additional frame test passed afterward
 alongside all six binding tests, formatting and all-target clippy, bringing Rust coverage to 113.
 No UI assets, dependencies or contract changes. Result-list evidence remains V06b.
+
+## V06b execution boundary
+
+Result association checks every reported image against the submitted slot, role and frame.
+Completed results must account for every occurrence in each slot, in order. A non-completed
+result may report an ordered subsequence, including no images; missing occurrences produce a
+preservation notice without replacing the tool's outcome. Repeated identical entries are counted,
+not assigned inferred positions. Images-profile containers remain required for all outcomes.
+Unit regressions cover adversarial identity/order/role/count changes; the independent peer and
+host integration cover complete lists and partial non-completed evidence. Roll back V07 before
+V06b if needed; V06a's saved bindings remain readable.
+
+V06b verification: all three new association tests failed before implementation. Seven binding
+integration tests now include complete-list preservation and six partial/empty terminal cases.
+The first full matrix exposed stale cancellation assertions that called absent input evidence
+complete; those now require incomplete evidence and the completed session observation. Review
+found no blockers. The final full matrix passed: 117 Rust tests (three ignored), 18 UI unit tests,
+two asset tests and 86 browser cases (four skipped), plus fmt, clippy, typecheck, Storybook,
+asset reproducibility and release build. No product UI, dependency or contract changes.

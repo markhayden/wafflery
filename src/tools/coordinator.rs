@@ -304,11 +304,12 @@ impl Coordinator {
                 let saved = async {
                     self.record_reference(&client, &request.id).await?;
                     let attempt = self.attempts.get(&request.id).await?;
-                    super::evidence::check_association(&attempt, &result)?;
+                    let input_notices = super::evidence::check_association(&attempt, &result)?;
                     let attempt = self.attempts.bind_result(&request.id, result).await?;
                     self.events.changed();
                     let (outputs, journal, mut notices) =
                         super::evidence::capture(&self.assets, &client, &attempt).await;
+                    notices.extend(input_notices);
                     let session_after = match client
                         .observe_session(&attempt.declaration["document"]["tool"])
                         .await

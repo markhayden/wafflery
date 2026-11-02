@@ -284,6 +284,25 @@ pub fn execute(
         run["status"] = json!(if io_failure { "error" } else { "invalid" });
         run["error"] = json!({"code":if io_failure {"io"} else {"input"},"retryable":false,"reason":error.to_string()});
     }
+    if let Some(status) = scenario
+        .strip_prefix("image-list-partial-")
+        .or_else(|| scenario.strip_prefix("image-list-empty-"))
+    {
+        run["status"] = json!(status);
+        run["error"] = match status {
+            "error" => json!({"code":"io","retryable":false,"reason":"Synthetic partial evidence"}),
+            "invalid" => {
+                json!({"code":"input","retryable":false,"reason":"Synthetic partial evidence"})
+            }
+            _ => Value::Null,
+        };
+        run["images"]["in"] = if scenario.starts_with("image-list-empty-") {
+            json!([])
+        } else {
+            json!([run["images"]["in"][0], run["images"]["in"][2]])
+        };
+        run["images"]["out"] = json!([]);
+    }
     if scenario == "digest-mismatch" {
         run["images"]["out"][0]["image"]["file_sha256"] = json!("0".repeat(64));
     }

@@ -12,7 +12,7 @@ use std::{
     path::Path,
 };
 
-pub fn check_association(attempt: &Attempt, result: &Value) -> Result<()> {
+pub fn check_association(attempt: &Attempt, result: &Value) -> Result<Vec<String>> {
     let tool = &attempt.declaration["document"]["tool"];
     if result["tool"]["name"] != tool["name"]
         || result["tool"]["version"] != tool["version"]
@@ -34,19 +34,73 @@ pub fn check_association(attempt: &Attempt, result: &Value) -> Result<()> {
         ));
     }
     super::association::check_reference(attempt, &result["run"])?;
+    if attempt.declaration["document"]["profiles"]
+        .as_array()
+        .is_some_and(|profiles| profiles.iter().any(|profile| profile == "images"))
+    {
+        for (container, fields) in [("images", ["in", "out"]), ("locations", ["used", "found"])] {
+            if fields
+                .iter()
+                .any(|field| !result[container][field].is_array())
+            {
+                return Err(Error::Invalid(format!(
+                    "Images-profile result is missing {container} containers"
+                )));
+            }
+        }
+    }
+    let mut positions = std::collections::BTreeMap::<&str, usize>::new();
+    let mut counts = std::collections::BTreeMap::<&str, usize>::new();
+    let completed = result["status"] == "completed";
     for input in result["images"]["in"].as_array().into_iter().flatten() {
         let slot = input["slot"]
             .as_str()
             .ok_or_else(|| Error::Invalid("Missing input slot".into()))?;
-        let expected = &attempt.inputs[slot][0]["image"];
-        if !same_frame(expected, &input["image"]) {
-            return Err(Error::Invalid(
-                "Result input fingerprint conflicts with the submitted image".into(),
-            ));
+        let expected = attempt.inputs[slot]
+            .as_array()
+            .ok_or_else(|| Error::Invalid("Result reports an unsubmitted image slot".into()))?;
+        let position = positions.entry(slot).or_default();
+        let matches = |entry: &Value| {
+            entry["role"] == input["role"] && same_frame(&entry["image"], &input["image"])
+        };
+        let offset = if completed {
+            expected
+                .get(*position)
+                .filter(|entry| matches(entry))
+                .map(|_| 0)
+        } else {
+            expected[*position..].iter().position(matches)
+        }
+        .ok_or_else(|| {
+            Error::Invalid(
+                "Result input role, fingerprint, frame or order conflicts with submitted images"
+                    .into(),
+            )
+        })?;
+        *position += offset + 1;
+        *counts.entry(slot).or_default() += 1;
+    }
+    let mut notices = Vec::new();
+    for (slot, expected) in attempt
+        .inputs
+        .as_object()
+        .into_iter()
+        .flat_map(|inputs| inputs.iter())
+    {
+        let total = expected.as_array().map_or(0, Vec::len);
+        let reported = counts.get(slot.as_str()).copied().unwrap_or(0);
+        if reported < total {
+            if completed {
+                return Err(Error::Invalid(
+                    "Completed result omits submitted image evidence".into(),
+                ));
+            }
+            notices.push(format!("Result reports {reported} of {total} submitted images for slot {slot}; input evidence is incomplete."));
         }
     }
-    Ok(())
+    Ok(notices)
 }
+
 fn same_frame(a: &Value, b: &Value) -> bool {
     ["file_sha256", "width", "height", "projection", "topology"]
         .iter()
@@ -204,4 +258,109 @@ async fn capture_image(
         ));
     }
     Ok(asset)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    fn frame(name: &str) -> Value {
+        json!({"file_sha256":name.repeat(64),"width":8,"height":4,"projection":"flat","topology":"bounded"})
+    }
+    fn fixture() -> (Attempt, Value) {
+        let inputs = json!({"source":[{"role":"source","image":frame("a")}], "references":[
+            {"role":"reference","image":frame("b")}, {"role":"reference","image":frame("a")}, {"role":"reference","image":frame("b")}
+        ]});
+        let attempt = serde_json::from_value(json!({
+            "id":"request", "sequence":1, "created_ms":0,
+            "request":{"id":"request","tool":"fixture","action":"mark","revision":"r","params":{},"images":{}},
+            "arguments":{},"declaration":{"document":{"tool":{"name":"fixture","version":"1"},"profiles":["images"]},"tool_session":{"id":"session"}},"inputs":inputs,"wire":null,
+            "execution":"running","result":null,"preservation":{},"outputs":[],"journal":null,"notices":[]
+        })).unwrap();
+        let result = json!({"tool":{"name":"fixture","version":"1"},"action":"mark","run":{"id":"run","resource":"fixture://run/run/run.json","session_id":"session","client_run_id":"request"},"status":"completed","images":{"in":[
+            {"slot":"references","role":"reference","image":frame("b")},
+            {"slot":"source","role":"source","image":frame("a")},
+            {"slot":"references","role":"reference","image":frame("a")},
+            {"slot":"references","role":"reference","image":frame("b")}
+        ],"out":[]},"locations":{"used":[],"found":[]}});
+        (attempt, result)
+    }
+
+    #[test]
+    fn complete_lists_match_per_slot_in_order_including_duplicates() {
+        let (attempt, result) = fixture();
+        assert!(check_association(&attempt, &result).is_ok());
+        for case in [
+            "order",
+            "role",
+            "missing",
+            "extra",
+            "unknown",
+            "frame",
+            "fingerprint",
+        ] {
+            let mut changed = result.clone();
+            let inputs = changed["images"]["in"].as_array_mut().unwrap();
+            match case {
+                "order" => inputs.swap(0, 2),
+                "role" => inputs[0]["role"] = json!("source"),
+                "missing" => {
+                    inputs.pop();
+                }
+                "extra" => inputs.push(inputs[0].clone()),
+                "unknown" => inputs[0]["slot"] = json!("other"),
+                "frame" => inputs[0]["image"]["topology"] = json!("wrap"),
+                _ => inputs[0]["image"]["file_sha256"] = json!("c".repeat(64)),
+            }
+            assert!(check_association(&attempt, &changed).is_err(), "{case}");
+        }
+    }
+
+    #[test]
+    fn noncompleted_lists_accept_only_ordered_subsequences_with_duplicate_counts() {
+        let (attempt, result) = fixture();
+        for status in ["error", "invalid", "cancelled"] {
+            for selected in [vec![], vec![2], vec![0, 3], vec![0, 2, 3]] {
+                let mut partial = result.clone();
+                partial["status"] = json!(status);
+                partial["images"]["in"] = json!(
+                    selected
+                        .iter()
+                        .map(|index| result["images"]["in"][index].clone())
+                        .collect::<Vec<_>>()
+                );
+                let notices = check_association(&attempt, &partial).unwrap();
+                assert_eq!(notices.len(), if selected.len() == 3 { 1 } else { 2 });
+                assert!(notices.iter().all(|notice| notice.contains("incomplete")));
+            }
+            for selected in [vec![2, 0, 3], vec![0, 0, 0]] {
+                let mut wrong = result.clone();
+                wrong["status"] = json!(status);
+                wrong["images"]["in"] = json!(
+                    selected
+                        .iter()
+                        .map(|index| result["images"]["in"][index].clone())
+                        .collect::<Vec<_>>()
+                );
+                assert!(
+                    check_association(&attempt, &wrong).is_err(),
+                    "{status} {selected:?}"
+                );
+            }
+            let mut wrong = result.clone();
+            wrong["status"] = json!(status);
+            wrong["images"]["in"][0]["role"] = json!("source");
+            assert!(check_association(&attempt, &wrong).is_err());
+        }
+    }
+
+    #[test]
+    fn image_profile_requires_containers_even_without_completed_inputs() {
+        let (attempt, result) = fixture();
+        for field in ["images", "locations"] {
+            let mut missing = result.clone();
+            missing["status"] = json!("cancelled");
+            missing.as_object_mut().unwrap().remove(field);
+            assert!(check_association(&attempt, &missing).is_err(), "{field}");
+        }
+    }
 }

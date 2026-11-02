@@ -82,6 +82,21 @@ impl Host {
         .await
         .unwrap()
     }
+    async fn settled(&self) -> Attempt {
+        tokio::time::timeout(Duration::from_secs(5), async {
+            loop {
+                let attempt = self.c.attempts.get("binding-test").await.unwrap();
+                if !attempt.preservation["contract"].is_null()
+                    && attempt.preservation["contract"] != "pending"
+                {
+                    return attempt;
+                }
+                tokio::time::sleep(Duration::from_millis(10)).await;
+            }
+        })
+        .await
+        .unwrap()
+    }
     async fn close(&self) {
         let (quit, mut stopped) = tokio::sync::watch::channel(false);
         self.c.begin_shutdown(true, quit).await.unwrap();
@@ -115,8 +130,11 @@ async fn list_bindings_keep_wire_order_duplicate_copies_and_frames() {
     assert_eq!(refs[0]["expect"]["file_sha256"], h.b.sha256);
     assert_eq!(refs[1]["expect"]["file_sha256"], h.a.sha256);
     assert_eq!(refs[2]["expect"], refs[0]["expect"]);
-    let saved = h.response().await;
+    h.response().await;
+    let saved = h.settled().await;
     h.close().await;
+    assert_eq!(saved.execution, "completed");
+    assert_eq!(saved.preservation["contract"], "complete");
     assert_eq!(
         saved.wire.as_ref().unwrap()["params"]["arguments"]["references"],
         submitted.arguments["references"]
@@ -276,4 +294,31 @@ async fn list_frames_are_bound_per_occurrence_even_for_the_same_asset() {
         assert_eq!(&attempt.inputs["references"][index]["image"], reference);
     }
     assert!(!h.directory().exists());
+}
+
+#[tokio::test]
+async fn partial_input_evidence_preserves_noncompleted_outcomes_with_notices() {
+    for status in ["error", "invalid", "cancelled"] {
+        for extent in ["partial", "empty"] {
+            let h = Host::new(&format!("image-list-{extent}-{status}")).await;
+            h.c.submit(
+                h.request(Some(vec![h.b.id.clone(), h.a.id.clone(), h.b.id.clone()]))
+                    .await,
+            )
+            .await
+            .unwrap();
+            let saved = h.settled().await;
+            h.close().await;
+            assert_eq!(saved.execution, status);
+            assert_eq!(saved.result.as_ref().unwrap()["status"], status);
+            assert_eq!(saved.preservation["contract"], "incomplete");
+            assert!(
+                saved
+                    .notices
+                    .iter()
+                    .any(|notice| notice.contains("input evidence is incomplete"))
+            );
+            assert!(!h.directory().exists());
+        }
+    }
 }

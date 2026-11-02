@@ -159,7 +159,11 @@ Each occurrence gets a separate execution copy and its own fingerprint, coordina
 including repeated asset IDs. Before copying, the host checks every binding and metadata size:
 at most 32 images, 128 MiB per file and 512 MiB total per attempt. Byte reads still verify the
 stored fingerprint. Cleanup validates all scalar/array paths before removing owned copies and
-never recursively removes unrelated tool files. Full list-result association is tracked in V06b.
+never recursively removes unrelated tool files. Completed results must account for all submitted
+images per slot, matching role, frame, identity and order. Non-completed results may report an
+ordered subsequence; missing occurrences produce preservation notices while retaining the tool
+outcome. Duplicate identities are counted without inferring which indistinguishable occurrence
+was reported. Images-profile results always require images and locations containers.
 
 Once execution is confirmed terminal and preservation/export no longer needs materialized
 inputs, remove those disposable copies. Keep references to immutable assets in retained records.

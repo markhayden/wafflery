@@ -171,3 +171,13 @@ that an unresponsive probe stays owned and requires deliberate force authorizati
 The `initialize-held` scenario writes an `initializing` marker and waits for
 `release-initialize` before answering initialize. It exercises abandoning a restart requester
 while the host still owns replacement startup; it makes no provider calls.
+
+## List image evidence
+
+`image-list` declares an optional `many` references slot; `image-list-required` makes it required.
+The peer reads, fingerprints and records each image in order, including duplicates. The
+`image-list-partial-{error,invalid,cancelled}` variants report source plus one reference;
+`image-list-empty-{error,invalid,cancelled}` reports no input images. These are synthetic terminal
+results, not provider calls. Host tests verify completed lists and preservation notices without
+relabeling partial non-completed outcomes. Binding tests separately exercise per-occurrence
+coordinates; the sample image processor itself only interprets flat bounded images.

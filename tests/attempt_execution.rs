@@ -455,7 +455,9 @@ async fn cancelled_runs_are_recovered_from_progress_or_the_runs_list() {
         let saved = tokio::time::timeout(std::time::Duration::from_secs(8), async {
             loop {
                 let saved = c.attempts.get(&request.id).await.unwrap();
-                if saved.preservation["contract"] == "complete" {
+                if saved.preservation["contract"] == "incomplete"
+                    && saved.observations.get("session_after").is_some()
+                {
                     break saved;
                 }
                 tokio::time::sleep(std::time::Duration::from_millis(20)).await;
@@ -470,6 +472,12 @@ async fn cancelled_runs_are_recovered_from_progress_or_the_runs_list() {
             ),
         };
         assert_eq!(saved.execution, "cancelled");
+        assert!(
+            saved
+                .notices
+                .iter()
+                .any(|notice| notice.contains("input evidence is incomplete"))
+        );
         assert!(
             saved.raw_response.is_none(),
             "resource recovery is not a tool-call response"
