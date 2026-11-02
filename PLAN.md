@@ -1755,6 +1755,27 @@ and 226 browser tests (8 skipped). The baseline test also passed 20 WebKit repet
 port 4187 config was removed; lockfiles/prebuilt assets remained unchanged. The validators are still
 staged; live invocation/refusal wiring follows the mechanical version cutover in a separate slice.
 
+**M5.03b preparation — task invocation fixture:** before the mechanical cutover, add
+`testkit/task_invocation.rs` and `tests/task_invocation.rs` (plus this plan). The helper records
+resolved image references in declared slot order, applies the owned task schema defaults, retains
+explicit caps and opaque parameter values, excludes delivery switches, and takes explicit effective
+settings and requirement names. Missing image resolution is an error, never an invented reference.
+It remains test-only until the version switch; this slice does not change live dispatch.
+
+**Task invocation fixture checkpoint (2026-11-02):** four tests failed before the helper existed
+and now pass against the published v0.4 invocation schema. Review approved; documented caller
+preconditions require validated action/effective settings, actual resolved references in submitted
+order, and names of requirements actually used. Full matrix passed: fmt, clippy, 357 Rust tests
+(4 opt-in ignored), 55 UI unit tests, 2 asset tests, Storybook, byte-identical check-ui builds,
+release build and 226 Chromium/WebKit tests (8 opt-in skipped). Live peers still use exactly v0.3.
+
+**Next preparation slice — resolve task inputs before waiting:** `testkit/scenarios.rs`,
+`testkit/paid.rs`, `tests/fake_wire.rs`, and this plan. Resolve image identities before a synthetic
+wait or provider reservation; preserve those inputs when cancelled. A failure before resolution
+stays invalid even if cancellation arrives before saving, with no MCP reply to the cancelled
+request. Verify through the independent stdio peer, including a deterministic rejection/cancel
+race, before wiring the invocation helper at cutover. No live host behavior changes in this slice.
+
 **Checkpoint A file-budget exception (owner/coordinator, 2026-11-02):** one atomic final mechanical
 cutover commit may exceed five authored files. List its exact files here before building it. It may
 contain only the version/pin, strict gates and corresponding fixture/test-document switch; no other
