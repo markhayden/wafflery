@@ -400,3 +400,14 @@ Direct state tests in `tests/v04_runs.rs` cover concurrent claims, refusal relea
 allocation, running/final reads, immutable completion, mismatched references, relocation and
 paging across equivalent timestamps with different RFC3339 spellings. This slice adds no wire
 calls or worker threads: b3c2/b3c3 still own dispatch, progress, cancellation notifications and EOF.
+
+### Callable schemas (M5.01b3c2a)
+
+`v04_schemas.rs` builds each synthetic action's callable input schema from its declared parameters
+and scalar/list ports. The resolver uses the same schema intended for tools/list, including
+literal image/location alternatives and delivery options. Pinned, acyclic contract references
+expand locally without external retrieval. Reference sibling keywords stay at their original
+level, preserving closed-object and `unevaluatedProperties` validation. This is an owned-fixture
+helper, not a general resolver for arbitrary tool descriptions. Four schema tests exercise every
+action, port cardinality, undeclared fields, reference siblings and the published control inputs.
+The current wire peer still exposes controls only; c2b connects the callable actions.

@@ -4,6 +4,8 @@ use super::{
     v04_store::{Store, inline_bytes},
 };
 use serde_json::{Value, json};
+#[path = "v04_schemas.rs"]
+pub mod schemas;
 
 #[derive(Debug)]
 pub enum Failure {
@@ -24,19 +26,6 @@ pub struct Prepared {
     pub image_blocks: bool,
 }
 
-struct Embedded;
-impl jsonschema::Retrieve for Embedded {
-    fn retrieve(
-        &self,
-        uri: &jsonschema::Uri<String>,
-    ) -> Result<Value, Box<dyn std::error::Error + Send + Sync>> {
-        let (_, text) = table_manners_v04::SCHEMAS
-            .iter()
-            .find(|(id, _)| *id == uri.as_str())
-            .ok_or_else(|| format!("Unknown test schema {uri}"))?;
-        Ok(serde_json::from_str(text)?)
-    }
-}
 fn usage() -> Failure {
     Failure::Rpc(
         json!({"code":-32602,"message":"Arguments do not match the action's declared schema"}),
@@ -156,40 +145,9 @@ pub fn prepare(
         .find(|a| a["name"] == action)
         .ok_or_else(usage)?
         .clone();
-    let operation = action["kind"] == "operation";
-    let ports: Vec<Value> = if operation {
-        action["ports"]["in"].as_array().unwrap().clone()
-    } else {
-        action["images"].as_array().unwrap().iter().map(|slot| json!({"name":slot["slot"],"type":"image","required":slot["required"],"many":slot.get("many").cloned().unwrap_or(json!(false))})).collect()
-    };
-    let mut schema = action["params_schema"].clone();
-    schema["$schema"] = json!("https://json-schema.org/draft/2020-12/schema");
-    schema["required"] = schema.get("required").cloned().unwrap_or(json!([]));
-    for port in &ports {
-        let mut alternatives = vec![];
-        if operation {
-            alternatives.push(json!({"$ref":"urn:table-manners:operations:artifact-ref"}));
-        }
-        match port["type"].as_str().unwrap() {
-            "image" => alternatives.push(json!({"$ref":"urn:table-manners:images:image-in"})),
-            "location" => alternatives.push(json!({"$ref":"urn:table-manners:images:location"})),
-            _ => {}
-        }
-        let item = json!({"oneOf":alternatives});
-        let name = port["name"].as_str().unwrap();
-        schema["properties"][name] = if port["many"] == true {
-            json!({"type":"array","minItems":1,"items":item})
-        } else {
-            item
-        };
-        if port["required"] == true {
-            schema["required"].as_array_mut().unwrap().push(json!(name));
-        }
-    }
-    schema["properties"]["return_images"] = json!({"enum":["path","inline","resource"]});
-    schema["properties"]["image_blocks"] = json!({"type":"boolean"});
+    let ports = schemas::ports(&action);
+    let schema = schemas::input_schema(&action);
     let validator = jsonschema::options()
-        .with_retriever(Embedded)
         .should_validate_formats(true)
         .build(&schema)
         .expect("pinned synthetic action schema");

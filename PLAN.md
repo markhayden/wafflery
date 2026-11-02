@@ -1251,6 +1251,12 @@ through those records, using the stdio default of path previews. c3 keeps contro
 while a run is held, journals progress/heartbeats, and proves cancel-before/after-allocation and
 EOF cleanup. Each part stays within five authored files; its docs distinguish direct state tests
 from completed wire behavior.
+M5.01b3c2 is split into **c2a (standalone callable schemas)** and **c2b (wire dispatch)**.
+c2a shares the resolver's declared input schema with future tools/list, expanding only pinned
+contract references without changing sibling validation semantics. It tests scalar/list inputs,
+literal/shared references and closed schemas without external resolution. c2b connects those
+schemas and completed run records to stdio. This avoids duplicating call validation in the peer
+and keeps each slice within five authored files.
 Each slice includes testkit documentation, targeted tests, the full matrix and review.
 
 **M5.01a implementation checkpoint (2026-11-02, complete):**
@@ -1402,6 +1408,19 @@ Independent review and the full matrix passed: fmt/clippy, 295 Rust tests (4 ign
 tests (8 skipped). No production behavior, retry count or assertion timeout changed.
 Evidence and disposition: [report close review](docs/reviews/report-close-deadline.md).
 M5 schema/wire branches remain unmerged until main is green.
+
+**M5.01b3c2a implementation checkpoint (2026-11-02, complete):**
+The fake's resolver and upcoming callable catalogue share one declared-input schema builder.
+Pinned input references expand locally; reference siblings remain at the same level so closed
+objects and `unevaluatedProperties` keep their meaning. Four new tests cover all six actions,
+scalar/list forms, literal/shared references, delivery options, closed objects and published
+control inputs without external resolution. The missing-module test failed first; all binding,
+result and run-record regressions pass after extraction. Review approved within the documented
+owned, acyclic fixture scope. Clippy caught an unused extraction variable, which was removed.
+The final full matrix passed: fmt/clippy, 299 Rust tests (4 ignored), typecheck, 53 UI tests,
+2 asset-tool tests, Storybook, reproducible assets, release build and 220 browser tests
+(8 skipped). Local browser checks used the temporary 4187 override; lockfile/prebuilt assets
+are unchanged. The wire peer remains control-only until c2b.
 
 #### V20 — Image import feedback (M5-adjacent; coordinator-approved 2026-11-02)
 
