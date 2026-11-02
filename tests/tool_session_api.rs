@@ -26,6 +26,7 @@ async fn session_reads_are_authenticated_live_and_do_not_dispatch_or_wait_for_a_
         Coordinator::open(
             assets.clone(),
             vec![Descriptor {
+                config: None,
                 id: "fixture".into(),
                 executable: Path::new(env!("CARGO_MANIFEST_DIR"))
                     .join("target/debug/examples/sample-lab"),

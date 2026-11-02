@@ -26,6 +26,7 @@ async fn real_rascal_offline_seam_uses_the_same_dispatch_and_evidence_guards() {
     std::fs::write(&input, bytes).unwrap();
     let asset = assets.import_path(input.clone()).await.unwrap();
     let descriptor = Descriptor {
+        config: None,
         id: "real-offline-smoke".into(),
         executable: binary.clone(),
         args: vec![

@@ -23,6 +23,7 @@ fn binary() -> PathBuf {
 }
 fn descriptor(root: &Path, scenario: &str) -> Descriptor {
     Descriptor {
+        config: None,
         id: "unrelated-registration-name".into(),
         executable: binary(),
         args: vec![root.join("runs").display().to_string(), scenario.into()],

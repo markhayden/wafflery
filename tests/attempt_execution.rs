@@ -32,6 +32,7 @@ async fn setup(scenario: &str) -> (tempfile::TempDir, Arc<Coordinator>, Submissi
         Coordinator::open(
             store,
             vec![Descriptor {
+                config: None,
                 id: "example".into(),
                 executable: binary(),
                 args: vec![

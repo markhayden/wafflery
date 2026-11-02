@@ -162,3 +162,23 @@ The full matrix passed under the shared lock: formatting, clippy, 88 Rust tests 
 ignores), typecheck, 14 UI unit tests, two asset-tooling tests, Storybook, two byte-identical clean
 UI builds, release build, and 78 browser cases (four real-tool opt-in skips). Assets and lockfiles
 remained unchanged. No provider calls, sibling edits, push or tags.
+
+## V04b execution slices
+
+- V04b1, `feat: select tool configuration paths`: optional absolute config path in registration,
+  reject duplicate --config arguments, pass the path as separate argv without reading contents.
+  Sites: registration/client, registration tests, README. Adding the optional Rust field also
+  requires mechanical `config: None` in six existing test descriptor constructors; review these
+  separately from behavior changes.
+- V04b2, `feat: replace stopped tool registrations explicitly`: `--replace-registration` with
+  `--register`, atomic replacement of existing IDs only, unchanged stopped-host lock. Sites:
+  registration, launch options, main/help, registration and CLI tests, README.
+- V04b3, `feat: probe requirements before serving`: independent fake startup probes and final
+  environment discovery; close the probe before starting the serving process, retain ownership
+  on cleanup failure, show added requirements as incomplete setup without bootstrap loops.
+  Sites: probe helper/client/coordinator/readiness/environment wiring, testkit startup scenario,
+  integration tests, ENGINEERING and testkit docs.
+
+Each slice gets failing-first targeted checks and review. The joined V04b full matrix gates its
+local merge. Roll back newest slices first; registration's optional config path is additive,
+but there is no alternate invocation or legacy environment fallback.

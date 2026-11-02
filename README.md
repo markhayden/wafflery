@@ -119,7 +119,9 @@ remains unconfirmed. Paid dispatch remains disabled pending provider readiness a
 ### Registration format
 
 The host accepts a JSON array of descriptors with `id`, absolute `executable`, `args` (an array,
-never a shell command), absolute `cwd`, and absolute directory `roots`. See the real-tool helper
+never a shell command), absolute `cwd`, absolute directory `roots`, and an optional absolute
+`config` path. The host appends `--config` and that path as separate arguments and never reads
+the file; a conflicting `--config` in `args` is refused. Omit `config` for the tool’s default lookup. See the real-tool helper
 for a concrete Rascal descriptor. These records select programs that will execute when the host
 starts; only register executables you intend to run. The host supplies its own input staging root
 and starts the tool with a minimal environment for default configuration lookup and locale,

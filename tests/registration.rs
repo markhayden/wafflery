@@ -142,3 +142,54 @@ async fn maximum_registered_roots_leave_room_for_host_inputs_at_startup() {
     host.assets.database.shutdown().await.unwrap();
     assert_eq!(description.unwrap().document["tool"]["name"], "sample-lab");
 }
+
+#[tokio::test]
+async fn selected_config_is_passed_as_one_argument_without_reading_it() {
+    use wafflery::tools::client::ToolClient;
+    let dir = tempfile::tempdir().unwrap();
+    let root = dir.path().join("data");
+    let mut value = descriptor(dir.path(), "configured");
+    fs::write(
+        value["executable"].as_str().unwrap(),
+        "#!/bin/sh\nprintf '%s\\n' \"$@\" > received-args\n",
+    )
+    .unwrap();
+    let config = dir.path().join("missing $(not-shell) config.toml");
+    value["args"] = json!(["serve"]);
+    value["config"] = json!(config);
+    registration::register(&root, &input(dir.path(), json!([value]))).unwrap();
+    let client = ToolClient::spawn(
+        registration::load(&root.join("tools.json"))
+            .unwrap()
+            .remove(0),
+    )
+    .unwrap();
+    assert!(client.close().await.unwrap());
+    assert_eq!(
+        fs::read_to_string(dir.path().join("received-args")).unwrap(),
+        format!("serve\n--config\n{}\n", config.display())
+    );
+    assert!(!config.exists());
+    assert!(!dir.path().join("not-shell").exists());
+}
+
+#[test]
+fn conflicting_config_arguments_and_relative_paths_are_refused() {
+    let dir = tempfile::tempdir().unwrap();
+    let root = dir.path().join("data");
+    for args in [
+        json!(["serve", "--config", "/other"]),
+        json!(["serve", "--config=/other"]),
+    ] {
+        let mut value = descriptor(dir.path(), "configured");
+        value["config"] = json!(dir.path().join("config.toml"));
+        value["args"] = args;
+        assert!(registration::register(&root, &input(dir.path(), json!([value]))).is_err());
+    }
+    for path in ["relative.toml", "", "/nul\0config"] {
+        let mut value = descriptor(dir.path(), "configured");
+        value["config"] = json!(path);
+        assert!(registration::register(&root, &input(dir.path(), json!([value]))).is_err());
+    }
+    assert!(!root.exists());
+}

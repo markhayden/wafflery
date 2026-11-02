@@ -48,6 +48,7 @@ impl Harness {
             Coordinator::open(
                 assets.clone(),
                 vec![Descriptor {
+                    config: None,
                     id: "fixture".into(),
                     executable: binary.clone(),
                     args: vec![

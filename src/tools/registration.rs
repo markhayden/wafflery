@@ -34,6 +34,8 @@ pub struct Descriptor {
     pub id: String,
     pub executable: PathBuf,
     pub args: Vec<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub config: Option<PathBuf>,
     pub cwd: PathBuf,
     pub roots: Vec<PathBuf>,
 }
@@ -56,6 +58,23 @@ impl Descriptor {
         {
             return Err(Error::Invalid("Registration paths must be absolute".into()));
         }
+        if let Some(config) = &self.config {
+            if !config.is_absolute() || config.as_os_str().as_encoded_bytes().contains(&0) {
+                return Err(Error::Invalid(
+                    "Configuration path must be absolute and contain no NUL bytes".into(),
+                ));
+            }
+            if self
+                .args
+                .iter()
+                .any(|arg| arg == "--config" || arg.starts_with("--config="))
+            {
+                return Err(Error::Invalid(
+                    "Select config in the descriptor or args, not both".into(),
+                ));
+            }
+        }
+        // Configuration contents and existence are the tool's responsibility.
         self.executable = self.executable.canonicalize()?;
         self.cwd = self.cwd.canonicalize()?;
         if !self.cwd.is_dir()

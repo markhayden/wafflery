@@ -43,6 +43,7 @@ async fn probe(action: &str, params: serde_json::Value) {
         Coordinator::open(
             assets,
             vec![Descriptor {
+                config: None,
                 id: "squint".into(),
                 executable: binary,
                 args: vec![

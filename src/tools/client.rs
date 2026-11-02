@@ -101,8 +101,11 @@ impl ToolClient {
         let session = random.iter().map(|b| format!("{b:02x}")).collect();
         let mut command = Command::new(&descriptor.executable);
         super::environment::apply(&mut command, &[]);
+        command.args(&descriptor.args);
+        if let Some(config) = &descriptor.config {
+            command.arg("--config").arg(config);
+        }
         let mut child = command
-            .args(&descriptor.args)
             .current_dir(&descriptor.cwd)
             .stdin(Stdio::piped())
             .stdout(Stdio::piped())
