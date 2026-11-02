@@ -1,5 +1,5 @@
 import { test, expect } from "./tool-host";
-import { prepareSampleInput } from "./sample-input";
+import { editSampleLabel, prepareSampleInput } from "./sample-input";
 import { readFile, writeFile, readdir } from "node:fs/promises";
 import { resolve } from "node:path";
 import type { Page } from "@playwright/test";
@@ -34,7 +34,7 @@ test("paid draft estimates exact inputs without attempts and edits discard the q
   expect(recorded).toHaveLength(1);
   expect(recorded[0].arguments.arguments.max_spend_usd).toBe(0.5);
   expect(recorded[0].arguments.arguments.label).toBe("ledger");
-  await page.getByLabel("Label *",{exact:true}).fill("Changed after estimate");
+  await editSampleLabel(page,"Changed after estimate");
   await expect(cost(page)).toContainText("Estimate again for the current inputs and session.");
   await expect(cost(page)).not.toContainText("Worst case");
   await expect(page.getByRole("button",{name:"Run",exact:true})).toBeDisabled();
@@ -56,7 +56,8 @@ test("a late estimate after an edit is discarded and never restores old cost", a
   await host.open(page); await paidDraft(page,"hold");
   await estimate(page).click();
   await expect.poll(async () => readFile(resolve(host.root,"../tool/estimate-started"),"utf8").then(() => true).catch(() => false)).toBe(true);
-  await page.getByLabel("Label *",{exact:true}).fill("Fresh inputs");
+  await editSampleLabel(page,"Fresh inputs");
+  await expect(cost(page)).toContainText("Waiting for the previous estimate to finish");
   await expect(cost(page)).not.toContainText("Worst case");
   await expect(page.getByRole("button",{name:"Run",exact:true})).toBeDisabled();
   await expect(estimate(page)).toBeDisabled();
@@ -114,7 +115,8 @@ test("an edit during preparation discards the late receipt without asking for a 
   });
   try {
     await estimate(page).click(); await captured;
-    await page.getByLabel("Label *",{exact:true}).fill("new draft");
+    await editSampleLabel(page,"new draft");
+    await expect(cost(page)).toContainText("Waiting for the previous estimate to finish");
     release(); await page.unrouteAll({behavior:"wait"});
     await expect(estimate(page)).toBeEnabled();
     await expect(cost(page)).toContainText("Estimate again");
