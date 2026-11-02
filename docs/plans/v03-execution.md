@@ -1101,3 +1101,18 @@ typecheck, Storybook, reproducible assets and release build. Coordinator lifecyc
 idle deadline checks, fake declarations, tests and docs are one cohesive slice beyond the usual
 file budget. V16 is complete; V17 still owns private framing grants, browser isolation proof and
 visible drawer controls.
+
+### V17a1 one-use frame grants
+
+The host now has a bounded in-memory store for sixty-second, 256-bit random frame tokens.
+Each token identifies one view and is removed atomically on consumption, including when later
+target validation fails. At most sixty-four unused grants exist; use and expiry release capacity.
+The store is separate from API authentication, has no persistence/logging and changes no route
+or browser policy yet. V17a2 must validate the active target before issue and after consume.
+
+Three tests failed before implementation, then passed: concurrent consumption has one winner,
+exact expiry, and bounded capacity with consumption/expiry recovery and host isolation. Review
+approved. Full shared-lock matrix passed: 237 Rust tests (three ignored), 41 UI unit tests,
+two asset tests, 164 browser cases (four skips), fmt, clippy, typecheck, Storybook, reproducible
+assets and release build. The store, tests, host module and matching engineering/plan/execution
+docs form one cohesive slice beyond the usual file budget.

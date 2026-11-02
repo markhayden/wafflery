@@ -919,6 +919,15 @@ Verify real nested-frame CSP in Chromium/WebKit; malicious report scripts cannot
 state, authenticate API requests or navigate the top-level app. Depends: V15/V16.
 Commit: `feat: isolate report frames by exact origin`.
 
+V17a execution slices (review and full matrix per slice; rollback in reverse order):
+- **V17a1: Complete.** Bounded, sixty-second, single-use frame grants scoped to one existing view identity.
+  Keep them private to the host lifetime. Commit: `feat: scope one-use report frame grants`.
+- **V17a2:** Revalidate current view targets, issue/consume grants through authenticated controls
+  and a trusted wrapper, and apply route-specific frame headers. Verify the real nested frame
+  in both browsers before exposing drawer controls. Commit: `feat: isolate report frames by exact origin`.
+- **V17a3:** Extend independent malicious-report fixtures and browser checks for parent/API access,
+  redirects, external resources and navigation restrictions. Commit: `test: verify report frame isolation`.
+
 **V17b — Embed reports in the shared run drawer.** Offer tool-declared views on a saved run;
 show readiness/loading/error and open V17a's wrapper. Close/replacement releases the viewer;
 visible activity refreshes its idle timeout. Keep raw evidence/comparison usable on start failure.

@@ -690,3 +690,10 @@ lifetime. Public observations expose status and bounded diagnostics, never outpu
 Output failures preserve the saved run. Deadline checks consult the clock even before the expiry
 worker runs, so activity or later viewer grants cannot revive a deadline that already passed.
 Reports are ready for V17 framing; the workspace still does not embed content.
+
+V17a1 adds host-lifetime frame grants separate from browser API credentials. Each 256-bit random
+token names one view identity, lasts sixty seconds and is removed atomically on first use.
+At most sixty-four unconsumed grants exist; consumption or expiry releases capacity. Nothing is
+persisted or logged. The issuing handler must first validate the active view, and the consuming
+wrapper must revalidate it after consuming the grant, even if loading then fails. Grant storage
+alone does not authorize content or relax any frame headers; V17a2 owns those routes/checks.
