@@ -638,3 +638,372 @@ fn wire_image_blocks_are_opt_in_and_match_the_recorded_previews() {
     }
     peer.close();
 }
+
+fn send(peer: &mut Peer, id: u64, method: &str, params: Value) {
+    writeln!(
+        peer.input.as_mut().unwrap(),
+        "{}",
+        json!({"jsonrpc":"2.0","id":id,"method":method,"params":params})
+    )
+    .unwrap();
+}
+fn next_before(peer: &Peer, deadline: Instant) -> Value {
+    peer.messages
+        .recv_timeout(deadline.saturating_duration_since(Instant::now()))
+        .expect("expected protocol event before deadline")
+}
+fn reply(peer: &Peer, id: u64, events: &mut Vec<Value>) -> Value {
+    let deadline = Instant::now() + Duration::from_secs(5);
+    loop {
+        let message = next_before(peer, deadline);
+        if message["id"] == id {
+            return message;
+        }
+        assert!(message.get("id").is_none(), "unexpected reply: {message}");
+        assert_eq!(message["method"], "notifications/progress");
+        events.push(message);
+    }
+}
+fn control(peer: &mut Peer, method: &str, params: Value, events: &mut Vec<Value>) -> Value {
+    send(peer, 100, method, params);
+    reply(peer, 100, events)
+}
+fn read_control(peer: &mut Peer, uri: &str, events: &mut Vec<Value>) -> Value {
+    let response = control(peer, "resources/read", json!({"uri":uri}), events);
+    serde_json::from_str(response["result"]["contents"][0]["text"].as_str().unwrap()).unwrap()
+}
+fn wait_progress(peer: &Peer, token: &str, message: &str, events: &mut Vec<Value>) {
+    let deadline = Instant::now() + Duration::from_secs(5);
+    loop {
+        let event = next_before(peer, deadline);
+        assert!(event.get("id").is_none(), "unexpected reply: {event}");
+        assert_eq!(event["method"], "notifications/progress");
+        let done =
+            event["params"]["progressToken"] == token && event["params"]["message"] == message;
+        events.push(event);
+        if done {
+            return;
+        }
+    }
+}
+fn start_held(peer: &mut Peer, events: &mut Vec<Value>) -> Value {
+    send(
+        peer,
+        10,
+        "tools/call",
+        json!({"name":"make_token","arguments":{"source":source_image()},"_meta":{"progressToken":"held","table-manners/client_run_id":"held"}}),
+    );
+    wait_progress(peer, "held", "Waiting for test release", events);
+    let reference = events[0]["params"]["_meta"]["table-manners/run"].clone();
+    assert_eq!(reference["client_run_id"], "held");
+    assert!(reference.get("dir").is_none());
+    reference
+}
+fn cancel(peer: &mut Peer, id: u64, events: &mut Vec<Value>) {
+    writeln!(peer.input.as_mut().unwrap(), "{}", json!({"jsonrpc":"2.0","method":"notifications/cancelled","params":{"requestId":id,"reason":"test stop"}})).unwrap();
+    assert_eq!(
+        control(peer, "ping", json!({}), events)["result"],
+        json!({})
+    );
+}
+fn drain(peer: &mut Peer) {
+    send(
+        peer,
+        20,
+        "tools/call",
+        json!({"name":"summarize","arguments":{},"_meta":{"table-manners/client_run_id":"drain"}}),
+    );
+}
+
+#[test]
+fn wire_lifecycle_controls_and_progress_remain_live_while_execution_is_held() {
+    use base64::{Engine, engine::general_purpose::STANDARD};
+    let root = tempfile::tempdir().unwrap();
+    let mut peer = Peer::start(root.path(), &["--hold-operation"]);
+    peer.initialize();
+    let mut events = vec![];
+    let reference = start_held(&mut peer, &mut events);
+    let runs = read_control(&mut peer, "sample-lab://runs", &mut events);
+    assert_eq!(runs["runs"][0]["status"], "running");
+    let unfinished = control(
+        &mut peer,
+        "resources/read",
+        json!({"uri":reference["resource"]}),
+        &mut events,
+    );
+    assert_eq!(unfinished["error"]["code"], -32002);
+    let journal = control(
+        &mut peer,
+        "resources/read",
+        json!({"uri":format!("sample-lab://run/{}/journal",reference["id"].as_str().unwrap())}),
+        &mut events,
+    );
+    assert!(
+        journal["result"]["contents"][0]["text"]
+            .as_str()
+            .unwrap()
+            .contains("executing")
+    );
+    let description = control(
+        &mut peer,
+        "tools/call",
+        json!({"name":"describe","arguments":{}}),
+        &mut events,
+    );
+    assert_eq!(
+        description["result"]["structuredContent"]["contract"],
+        "0.4.0"
+    );
+    let artifact = fixtures::artifact_variant("sample-lab", "sample-lab:Token", 0.75);
+    let imported = control(
+        &mut peer,
+        "tools/call",
+        json!({"name":"import","arguments":{"inline":{"media_type":"application/x-sample-lab-token","data":STANDARD.encode(serde_json::to_vec(&artifact).unwrap())}}}),
+        &mut events,
+    );
+    assert_eq!(
+        imported["result"]["structuredContent"]["artifact"],
+        artifact["artifact"]
+    );
+    let exported = control(
+        &mut peer,
+        "tools/call",
+        json!({"name":"export","arguments":{"artifact":artifact["artifact"]}}),
+        &mut events,
+    );
+    assert!(exported["result"]["structuredContent"]["file"]["path"].is_string());
+    assert_eq!(
+        read_control(
+            &mut peer,
+            artifact["artifact"]["resource"].as_str().unwrap(),
+            &mut events
+        ),
+        artifact
+    );
+    assert_eq!(
+        read_control(&mut peer, "sample-lab://session", &mut events)["spent_usd"],
+        0
+    );
+    wait_progress(&peer, "held", "Waiting for test release", &mut events);
+    let mut previous = -1.0;
+    for event in &events {
+        assert_eq!(event["params"]["_meta"]["table-manners/run"], reference);
+        let progress = event["params"]["progress"].as_f64().unwrap();
+        assert!(progress > previous);
+        previous = progress;
+    }
+    std::fs::write(root.path().join("release-operation"), "release").unwrap();
+    let response = reply(&peer, 10, &mut events);
+    assert_eq!(
+        response["result"]["structuredContent"]["status"],
+        "completed"
+    );
+    assert_eq!(
+        read_control(
+            &mut peer,
+            reference["resource"].as_str().unwrap(),
+            &mut events
+        ),
+        response["result"]["structuredContent"]
+    );
+    peer.close();
+}
+
+#[test]
+fn wire_lifecycle_queued_cancel_keeps_claim_without_a_run_or_reply() {
+    let root = tempfile::tempdir().unwrap();
+    let mut peer = Peer::start(root.path(), &["--hold-operation"]);
+    peer.initialize();
+    let mut events = vec![];
+    start_held(&mut peer, &mut events);
+    send(
+        &mut peer,
+        11,
+        "tools/call",
+        json!({"name":"summarize","arguments":{},"_meta":{"progressToken":"queued","table-manners/client_run_id":"queued"}}),
+    );
+    wait_progress(&peer, "queued", "Waiting for execution", &mut events);
+    assert!(events.last().unwrap()["params"].get("_meta").is_none());
+    cancel(&mut peer, 11, &mut events);
+    drain(&mut peer);
+    std::fs::write(root.path().join("release-operation"), "release").unwrap();
+    assert_eq!(
+        reply(&peer, 10, &mut events)["result"]["structuredContent"]["status"],
+        "completed"
+    );
+    assert_eq!(
+        reply(&peer, 20, &mut events)["result"]["structuredContent"]["status"],
+        "completed"
+    );
+    let runs = read_control(&mut peer, "sample-lab://runs", &mut events);
+    assert_eq!(runs["next_cursor"], Value::Null);
+    assert_eq!(runs["runs"].as_array().unwrap().len(), 2);
+    assert!(
+        runs["runs"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .all(|run| run["client_run_id"] != "queued")
+    );
+    let reused = control(
+        &mut peer,
+        "tools/call",
+        json!({"name":"summarize","arguments":{},"_meta":{"table-manners/client_run_id":"queued"}}),
+        &mut events,
+    );
+    assert_eq!(reused["error"]["data"]["reason"], "client_run_id_reused");
+    assert_eq!(reused["error"]["data"]["run"], Value::Null);
+    peer.close();
+}
+
+#[test]
+fn wire_lifecycle_allocated_cancel_preserves_outputs_and_never_replies() {
+    let root = tempfile::tempdir().unwrap();
+    let mut peer = Peer::start(root.path(), &["--hold-operation"]);
+    peer.initialize();
+    let mut events = vec![];
+    let reference = start_held(&mut peer, &mut events);
+    cancel(&mut peer, 10, &mut events);
+    drain(&mut peer);
+    std::fs::write(root.path().join("release-operation"), "release").unwrap();
+    assert_eq!(
+        reply(&peer, 20, &mut events)["result"]["structuredContent"]["status"],
+        "completed"
+    );
+    let run = read_control(
+        &mut peer,
+        reference["resource"].as_str().unwrap(),
+        &mut events,
+    );
+    assert_eq!(run["status"], "cancelled");
+    assert_eq!(run["invocation"]["action"], "make_token");
+    assert_eq!(run["artifacts"]["out"].as_array().unwrap().len(), 1);
+    peer.close();
+}
+
+#[test]
+fn wire_lifecycle_eof_joins_the_worker_and_saves_only_the_allocated_run() {
+    let root = tempfile::tempdir().unwrap();
+    let mut peer = Peer::start(root.path(), &["--hold-operation"]);
+    peer.initialize();
+    let mut events = vec![];
+    let reference = start_held(&mut peer, &mut events);
+    send(
+        &mut peer,
+        11,
+        "tools/call",
+        json!({"name":"summarize","arguments":{},"_meta":{"table-manners/client_run_id":"queued"}}),
+    );
+    let duplicate = control(
+        &mut peer,
+        "tools/call",
+        json!({"name":"summarize","arguments":{},"_meta":{"table-manners/client_run_id":"queued"}}),
+        &mut events,
+    );
+    assert_eq!(duplicate["error"]["data"]["reason"], "client_run_id_reused");
+    peer.close();
+    loop {
+        match peer.messages.recv_timeout(Duration::from_secs(5)) {
+            Ok(message) => assert!(
+                message.get("id").is_none(),
+                "cancelled request replied: {message}"
+            ),
+            Err(mpsc::RecvTimeoutError::Disconnected) => break,
+            Err(error) => panic!("stdout reader did not finish: {error}"),
+        }
+    }
+    let directory = root.path().join("runs");
+    assert_eq!(std::fs::read_dir(&directory).unwrap().count(), 1);
+    let run: Value = serde_json::from_slice(
+        &std::fs::read(
+            directory
+                .join(reference["id"].as_str().unwrap())
+                .join("run.json"),
+        )
+        .unwrap(),
+    )
+    .unwrap();
+    assert_eq!(run["status"], "cancelled");
+    assert_eq!(run["artifacts"]["out"].as_array().unwrap().len(), 1);
+    assert!(!root.path().join("release-operation").exists());
+}
+
+#[test]
+fn wire_lifecycle_reader_error_cancels_and_joins_without_waiting_for_stdin_eof() {
+    let root = tempfile::tempdir().unwrap();
+    let mut peer = Peer::start(root.path(), &["--hold-operation"]);
+    peer.initialize();
+    let mut events = vec![];
+    let reference = start_held(&mut peer, &mut events);
+    writeln!(peer.input.as_mut().unwrap(), "{{invalid JSON").unwrap();
+    let deadline = Instant::now() + Duration::from_secs(5);
+    loop {
+        if let Some(status) = peer.child.try_wait().unwrap() {
+            assert!(!status.success());
+            break;
+        }
+        assert!(
+            Instant::now() < deadline,
+            "reader error did not stop the owned worker"
+        );
+        std::thread::sleep(Duration::from_millis(10));
+    }
+    assert!(
+        peer.input.is_some(),
+        "stdin stays open until the process has exited"
+    );
+    let run: Value = serde_json::from_slice(
+        &std::fs::read(
+            root.path()
+                .join("runs")
+                .join(reference["id"].as_str().unwrap())
+                .join("run.json"),
+        )
+        .unwrap(),
+    )
+    .unwrap();
+    assert_eq!(run["status"], "cancelled");
+    assert_eq!(run["artifacts"]["out"].as_array().unwrap().len(), 1);
+    assert!(!root.path().join("release-operation").exists());
+}
+
+#[test]
+fn wire_lifecycle_cancel_after_input_rejection_keeps_invalid_without_reply() {
+    let root = tempfile::tempdir().unwrap();
+    let mut peer = Peer::start(root.path(), &["--hold-operation"]);
+    peer.initialize();
+    let mut events = vec![];
+    send(
+        &mut peer,
+        10,
+        "tools/call",
+        json!({"name":"make_token","arguments":{"source":{"inline":{"media_type":"image/png","data":"e30="}}},"_meta":{"progressToken":"rejected","table-manners/client_run_id":"rejected"}}),
+    );
+    wait_progress(&peer, "rejected", "Waiting for test release", &mut events);
+    let reference = events[0]["params"]["_meta"]["table-manners/run"].clone();
+    cancel(&mut peer, 10, &mut events);
+    drain(&mut peer);
+    std::fs::write(root.path().join("release-operation"), "release").unwrap();
+    assert_eq!(
+        reply(&peer, 20, &mut events)["result"]["structuredContent"]["status"],
+        "completed"
+    );
+    let run = read_control(
+        &mut peer,
+        reference["resource"].as_str().unwrap(),
+        &mut events,
+    );
+    assert_eq!(run["status"], "invalid");
+    assert_eq!(run["invocation"], Value::Null);
+    assert_eq!(run["error"]["code"], "input");
+    assert_eq!(run["artifacts"]["out"], json!([]));
+    let reused = control(
+        &mut peer,
+        "tools/call",
+        json!({"name":"make_token","arguments":{"source":source_image()},"_meta":{"table-manners/client_run_id":"rejected"}}),
+        &mut events,
+    );
+    assert_eq!(reused["error"]["data"]["reason"], "client_run_id_reused");
+    assert_eq!(reused["error"]["data"]["run"], reference);
+    peer.close();
+}

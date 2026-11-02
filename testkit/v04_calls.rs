@@ -54,11 +54,6 @@ impl Calls {
             .1;
         v04_bindings::schemas::standalone(&serde_json::from_str(text).unwrap())
     }
-    pub fn call(&self, store: &Store, params: &Value) -> Result<Value, Value> {
-        let pending = self.accept(store, params)?;
-        self.execute(store, pending, &Cancellation::default(), |_, _| {})
-            .map(|reply| reply.expect("synchronous calls are never cancelled"))
-    }
     pub fn accept(&self, store: &Store, params: &Value) -> Result<Pending, Value> {
         let client = params["_meta"].get("table-manners/client_run_id");
         if client.is_some_and(|value| !value.is_string()) {
@@ -167,9 +162,10 @@ impl Calls {
             }
         }
         cancellation.finish(|cancelled| {
-            if cancelled {
-                // Publication is the terminal boundary: before it, cancellation wins (4.2).
-                // Preserve any earlier failure details even though no MCP response is sent.
+            if cancelled && !run["invocation"].is_null() {
+                // Cancellation becomes an outcome only after invocation resolution (2.3/4.2).
+                // Unresolved input rejection stays invalid; the guard still suppresses its reply.
+                // Preserve resolved execution failure details when cancellation wins publication.
                 if let Some(reason) = run["error"]["reason"].as_str().map(str::to_owned) {
                     run["notes"].as_array_mut().unwrap().push(json!(reason));
                 }
@@ -455,7 +451,7 @@ mod tests {
         }
     }
     #[test]
-    fn cancellation_before_publication_retains_prior_error_details_in_notes() {
+    fn cancellation_after_input_rejection_keeps_invalid_and_resolved_failures_keep_their_notes() {
         for invalid in [false, true] {
             let root = tempfile::tempdir().unwrap();
             let calls = Calls::new(
@@ -488,7 +484,10 @@ mod tests {
                 .unwrap();
             assert!(response.is_none());
             let listed = calls.runs.list(None).unwrap();
-            assert_eq!(listed["runs"][0]["status"], "cancelled");
+            assert_eq!(
+                listed["runs"][0]["status"],
+                if invalid { "invalid" } else { "cancelled" }
+            );
             let run: Value = serde_json::from_str(
                 &calls
                     .runs
@@ -496,9 +495,13 @@ mod tests {
                     .unwrap(),
             )
             .unwrap();
-            assert_eq!(run["status"], "cancelled");
-            assert_eq!(run["error"], Value::Null);
-            assert!(!run["notes"][0].as_str().unwrap().is_empty());
+            assert_eq!(run["status"], if invalid { "invalid" } else { "cancelled" });
+            if invalid {
+                assert_eq!(run["error"]["code"], "input");
+            } else {
+                assert_eq!(run["error"], Value::Null);
+                assert!(!run["notes"][0].as_str().unwrap().is_empty());
+            }
             assert_eq!(run["invocation"].is_null(), invalid);
             assert_eq!(
                 run["artifacts"]["out"].as_array().unwrap().len(),

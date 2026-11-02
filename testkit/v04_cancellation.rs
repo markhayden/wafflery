@@ -8,7 +8,6 @@ struct State {
 #[derive(Default)]
 pub struct Cancellation(Mutex<State>);
 impl Cancellation {
-    #[cfg(test)] // The stdio cancellation receiver is wired in c3b.
     pub fn cancel(&self) {
         let mut state = self.0.lock().unwrap();
         if !state.finished {

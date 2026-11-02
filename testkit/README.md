@@ -300,11 +300,10 @@ the live client remains v0.3 until M5.03. Schema and cross-document checks live 
 Token and Memo are test-only native types. Location is the shared type. Preview fingerprints
 come from actual PNG bytes, never from the native record's digest.
 
-`sample-lab <workspace> v04-operations [--allow-dir <abs>]... [--tool-name <name>]` now exposes
+`sample-lab <workspace> v04-operations [--allow-dir <abs>]... [--tool-name <name>] [--hold-operation]` now exposes
 an independent peer over MCP 2025-11-25. Describe, export, import, resource reads and all six
-synthetic actions are callable. Dispatch is currently synchronous and bounded; M5.01b3c3 still
-owns held-run responsiveness, progress and wire cancellation, so this is not yet the complete
-lifecycle peer. Controls never allocate runs or spend; import/export write only the artifact
+synthetic actions are callable. An owned serial worker keeps controls responsive and implements
+structured progress, queued/allocated cancellation and joined EOF cleanup. Controls never allocate runs or spend; import/export write only the artifact
 store/export area. Discovery alone makes no workspace writes.
 
 The probe follows and deduplicates explicit directory grants, requires absolute existing
@@ -363,7 +362,7 @@ fingerprints/dimensions/frame must match `expect`; optional pixel hashes never o
 file identity. Image artifact references remain references in resolved arguments; file/inline
 images become `{expect}`; literal locations stay literal. The store can hold the owned image
 internally and serve its original bytes as its preview, but cannot import/export it as a native
-Token. Tests live in `tests/v04_bindings.rs`; b3b/b3c still own run outcomes and wire execution.
+Token. Tests live in `tests/v04_bindings.rs`; b3b/b3c below implement run outcomes and wire execution.
 
 ### Resolved outcomes (M5.01b3b)
 
@@ -379,8 +378,8 @@ preview writes become `io` error results with the resolved invocation and a plai
 Final elapsed time updates preserve the outcome and derive the finish timestamp from start plus
 monotonic elapsed time; invalid-input identities also exclude delivery options. Error/cancelled settlements
 keep completed outputs, while unresolved invalid inputs have null invocation and empty artifacts.
-These direct executor tests in `tests/v04_results.rs` do not claim wire cancellation support;
-b3c3 still owns notifications, active workers and cancellation over stdio.
+Direct executor tests live in `tests/v04_results.rs`; c3b2 below verifies notifications,
+active workers and cancellation over stdio.
 
 ### Run records and claims (M5.01b3c1)
 
@@ -400,7 +399,7 @@ Two-entry pages encode a `(started, id)` position, so new runs cannot shift late
 Direct state tests in `tests/v04_runs.rs` cover concurrent claims, refusal release, failed
 allocation, running/final reads, immutable completion, mismatched references, relocation and
 paging across equivalent timestamps with different RFC3339 spellings. Wire dispatch now uses
-these records; b3c3 still owns progress, cancellation notifications and active-worker EOF handling.
+these records alongside the c3b2 progress, cancellation and EOF checks below.
 
 ### Callable schemas (M5.01b3c2a)
 
@@ -426,11 +425,11 @@ previews; image content blocks are returned only when explicitly requested. The 
 and artifact identities remain authoritative. Stored path previews are local locators; relocation
 does not rewrite them (resource previews and portable artifact controls avoid that dependency).
 
-Eleven wire tests now cover an independently renamed Locate → Stamp → Soften chain, ordered
+The initial eleven wire tests cover an independently renamed Locate → Stamp → Soften chain, ordered
 many-input bindings, refusal/reuse semantics, invalid and I/O outcomes, saved resources/paging,
 opt-in image blocks and the earlier control/no-root/transport checks. All work is synthetic and
-free. Execution is synchronous in this slice; progress, held workers and wire cancellation remain
-b3c3 work before the host adopts this peer.
+free. This slice originally dispatched synchronously; c3b2 below adds the owned worker,
+progress, cancellation and EOF ownership before host adoption.
 
 After allocation, recoverable journal or image-content delivery failures become saved I/O results,
 retaining resolved invocation and completed outputs. Image blocks are prepared before publication;
@@ -445,24 +444,25 @@ server error; the allocated claim remains held. Direct dispatch fault tests cove
 
 Acceptance now claims and validates before the execution permit; allocation is a separate phase.
 A per-request cancellation guard serializes cancellation with allocation and final publication.
-A queued cancellation keeps its claimed ID and creates no run. An allocated cancellation writes
-`cancelled`, retains resolved invocation and completed outputs, and yields no reply. Cancellation
+A queued cancellation keeps its claimed ID and creates no run. An allocated cancellation with
+resolved invocation writes `cancelled`, retains completed outputs, and yields no reply. Cancellation
 after final publication cannot rewrite its outcome. Allocation/execution callbacks provide the
-next worker's deterministic hold points without timers. The synchronous wire path uses these same
-boundaries with an uncancelled request; cancellation notifications and EOF worker cleanup remain
-c3b, not implemented by this slice. Publication is the terminal boundary: a cancellation received
-before it saves `cancelled` even if an earlier execution failure is already known; that failure's
-reason is retained in notes. After publication, cancellation cannot rewrite the outcome. The guard
+worker's deterministic hold points without timers. The c3b2 wire path now uses these same
+boundaries for cancellation notifications and EOF worker cleanup. Once invocation resolves,
+publication is the terminal boundary: cancellation before it saves `cancelled`, retaining any
+prior execution failure reason in notes. An input rejection before resolution remains `invalid`
+with null invocation even if cancellation arrives before saving; the cancelled request still
+gets no MCP reply. After publication, cancellation cannot rewrite the outcome. The guard
 also suppresses storage-error replies for cancelled requests, writing a stderr diagnostic instead;
 the retained claim still prevents redispatch. Such a storage failure can leave a running entry
-without final evidence. A cancelled run may have null invocation if inputs never resolved.
+without final evidence. Only an invalid run may have null invocation.
 Panics are not recovered by this synthetic dispatcher.
 
 ### Owned execution worker (M5.01b3c3b1)
 
 The worker core accepts at most 32 active/queued calls, claims and resolves each before queueing,
 and executes one at a time. Duplicate request IDs and queue overflow refuse before claiming a
-correlation ID. The reader will continue serving controls independently. With the explicit hold
+correlation ID. The reader continues serving controls independently. With the explicit hold
 fixture enabled, completed synthetic work waits for `release-operation` in its owned root; time
 never completes the hold. Progress includes the structured reference without `dir`, advances on
 journal stages and every second while held. Queued heartbeats omit the run reference until
@@ -471,4 +471,25 @@ that wait tick; unheld synthetic steps are immediate and use stage notifications
 a token or after cancellation. A failed output
 callback requests cancellation. Shutdown cancels all accepted work and joins before returning;
 queued cancellation creates no run and allocated cancellation preserves completed outputs.
-Direct channel tests exercise this core; it is test-only until c3b2 connects stdio and EOF.
+Direct channel tests exercise this core; c3b2 connects it to stdio and EOF.
+
+### Stdio lifecycle (M5.01b3c3b2)
+
+The independent peer now routes actions to the owned worker while its reader serves describe,
+artifact export/import and every resource independently. It handles `notifications/cancelled`
+without replying to the cancelled request. All output is serialized as complete JSON lines;
+write failures return false to the worker and request cancellation. Stdin EOF cancels queued and
+active requests, joins the worker and exits only after writable cancelled evidence is saved.
+The same cleanup runs on reader errors through owned Drop. No MCP roots requests are made.
+
+Use `--hold-operation` only for lifecycle tests: after synthetic outputs finish, the run remains
+running until `release-operation` exists in the peer's owned root or cancellation arrives. The
+release file is one-shot for that root; no timer completes work. Six additional child-process
+tests cover controls and artifact resources during a hold, structured running/queued heartbeats,
+queued ID retention without a run, allocated cancellation with output salvage, EOF joining, reader-error cleanup before stdin closes, and cancellation after input rejection
+that preserves invalid status/null invocation without sending a reply.
+The host still uses v0.3 until M5.03; this completes the independent v0.4 peer first.
+
+Lifecycle clients must drain stdout through child exit or close the read pipe; keeping an unread
+pipe open can block normal output backpressure and therefore shutdown joining. Cancelled queued
+RPC IDs and admission slots remain occupied until the serial worker consumes those entries.

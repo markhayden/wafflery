@@ -5,29 +5,36 @@ use super::{
 };
 #[path = "v04_calls.rs"]
 mod calls;
-#[cfg(test)]
 #[path = "v04_jobs.rs"]
 mod jobs;
 use base64::{Engine, engine::general_purpose::STANDARD};
 use calls::Calls;
+use jobs::Jobs;
 use serde_json::{Value, json};
 use std::{
     io::{self, BufRead, Read, Write},
     path::{Path, PathBuf},
+    sync::{Arc, Mutex},
 };
 
 struct Configuration {
     tool: String,
     allowed: Vec<PathBuf>,
+    hold_operation: bool,
 }
 impl Configuration {
     fn parse(arguments: Vec<String>) -> Result<Self, String> {
         let mut result = Self {
             tool: "sample-lab".into(),
             allowed: vec![],
+            hold_operation: false,
         };
         let mut arguments = arguments.into_iter();
         while let Some(flag) = arguments.next() {
+            if flag == "--hold-operation" {
+                result.hold_operation = true;
+                continue;
+            }
             let value = arguments
                 .next()
                 .ok_or_else(|| format!("Missing value for {flag}"))?;
@@ -87,7 +94,8 @@ pub fn serve(root: &Path, arguments: Vec<String>) -> Result<(), Box<dyn std::err
     let workspace = root.canonicalize()?;
     let root = workspace.as_path();
     let tool = &configuration.tool;
-    let store = Store::new(root, tool, configuration.allowed.clone()).map_err(|e| e.to_string())?;
+    let store =
+        Arc::new(Store::new(root, tool, configuration.allowed.clone()).map_err(|e| e.to_string())?);
     let documents = v04_fixtures::documents(tool);
     let description = &documents
         .iter()
@@ -117,9 +125,17 @@ pub fn serve(root: &Path, arguments: Vec<String>) -> Result<(), Box<dyn std::err
         time::OffsetDateTime::now_utc().format(&time::format_description::well_known::Rfc3339)?
     );
     session["allowed_dirs"] = json!(configuration.allowed);
-    let calls = Calls::new(root, tool, session["id"].as_str().unwrap());
+    let calls = Arc::new(Calls::new(root, tool, session["id"].as_str().unwrap()));
+    let output = Arc::new(Mutex::new(io::stdout()));
+    let worker_output = output.clone();
+    let mut jobs = Jobs::new(
+        root,
+        calls.clone(),
+        store.clone(),
+        configuration.hold_operation,
+        move |message| write_message(&worker_output, &message).is_ok(),
+    );
     let mut input = io::stdin().lock();
-    let mut output = io::stdout().lock();
     let mut initialized = false;
     loop {
         let mut line = Vec::new();
@@ -131,6 +147,9 @@ pub fn serve(root: &Path, arguments: Vec<String>) -> Result<(), Box<dyn std::err
         }
         let message: Value = serde_json::from_slice(&line)?;
         let Some(id) = message.get("id") else {
+            if initialized && message["method"] == "notifications/cancelled" {
+                jobs.cancel(&message["params"]["requestId"]);
+            }
             continue;
         };
         let params = &message["params"];
@@ -181,8 +200,8 @@ pub fn serve(root: &Path, arguments: Vec<String>) -> Result<(), Box<dyn std::err
                 {"uri":format!("{tool}://session"),"name":"Session","mimeType":"application/json"},
                 {"uri":format!("{tool}://runs"),"name":"Runs","mimeType":"application/json"}
             ]})),
-            "tools/call" => match calls.call(&store, params) {
-                Ok(value) => result(value),
+            "tools/call" => match jobs.submit(id.clone(), params.clone()) {
+                Ok(()) => continue,
                 Err(value) => json!({"error":value}),
             },
             "resources/read" => {
@@ -220,8 +239,14 @@ pub fn serve(root: &Path, arguments: Vec<String>) -> Result<(), Box<dyn std::err
         };
         response["jsonrpc"] = json!("2.0");
         response["id"] = id.clone();
-        writeln!(output, "{response}")?;
-        output.flush()?;
+        write_message(&output, &response)?;
     }
+    jobs.shutdown();
     Ok(())
+}
+
+fn write_message(output: &Mutex<io::Stdout>, message: &Value) -> io::Result<()> {
+    let mut output = output.lock().unwrap();
+    writeln!(output, "{message}")?;
+    output.flush()
 }
