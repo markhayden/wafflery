@@ -665,3 +665,28 @@ V11a passed review and the full shared-lock matrix: 167 Rust tests (three ignore
 tests, two asset tests, 100 browser cases (four opt-in skips), fmt, clippy, typecheck, Storybook,
 reproducible UI assets and release build. Only the checked-in UI input manifest changed;
 compiled UI output bytes and dependency lockfiles are unchanged.
+
+### V11b cost presentation
+
+The controlled cost component keeps the user's cap text intact, accepts only positive finite
+values for an explicit estimate request and respects the surrounding form's validity. It
+shows worst case, effective model, cap, current session allowance and unresolved spend, with
+configuration/session/expiry details expandable. Readiness, cap and budget refusals have distinct
+copy; an unavailable backend is not described as merely needing setup. A changed session hides
+the old quote; a ledger-only update keeps it visible with a warning if the balance has fallen.
+Workspace lifecycle wiring remains V11c, and paid dispatch remains gated.
+
+Browser tests were written before the component existed. The initial six Chromium/WebKit cases
+passed after implementation, including keyboard-only estimation, invalid cap text, refusal and
+loading/error/stale states, unknown versus uncapped amounts, and narrow/wide layouts. Screenshots
+at 320 and 1440 pixels were inspected; details wrap without horizontal overflow. A further test
+proved unavailable-backend copy needed to differ from missing setup. The shared USD formatter's
+new regression first displayed a positive sub-microdollar amount as zero; it now displays
+`< $0.000001`, preserving the distinction from free work. Component/stories/browser coverage and
+the small shared formatter regression form one presentation slice.
+
+V11b passed final review, all eight targeted Chromium/WebKit component cases and the full
+shared-lock matrix: 167 Rust tests (three ignored), 32 UI unit tests, two asset tests,
+108 browser cases (four opt-in skips), fmt, clippy, typecheck, Storybook, reproducible assets
+and release build. Generated UI assets were refreshed for the shared formatter; lockfiles
+are unchanged. This slice can be reverted independently until the workspace consumes it.

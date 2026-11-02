@@ -726,7 +726,7 @@ V11 execution slices (full matrix and review per slice; rollback in reverse orde
   workspace until wiring is ready; no dispatch or history changes. Verify malformed responses,
   unknown costs, identity mismatches, exact request bodies, invalid caps and bounded lifetime.
   Commit: `feat: add browser estimate controls`.
-- **V11b:** Cost component, states, styles and Storybook coverage. Show one cap, effective
+- **V11b: Complete.** Cost component, states, styles and Storybook coverage. Show one cap, effective
   model/configuration, worst case, current allowance and refusal/setup information. Verify
   keyboard behavior, invalid values and unknown versus zero amounts in both browsers.
   Commit: `feat: present cost estimate states`.

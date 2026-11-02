@@ -33,6 +33,7 @@ export async function readToolSession(api: LocalApi, tool: string): Promise<Tool
   return parseToolSession(await response.json());
 }
 export function usd(value: number): string {
+  if (value > 0 && value < 0.000001) return "< $0.000001";
   return new Intl.NumberFormat("en-US", {
     style: "currency", currency: "USD", minimumFractionDigits: 2, maximumFractionDigits: 6,
   }).format(value);

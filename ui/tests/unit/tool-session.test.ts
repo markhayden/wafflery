@@ -16,6 +16,7 @@ test("session reading distinguishes an uncapped allowance from a zero balance", 
 });
 test("USD display preserves small reported charges", () => {
   expect(usd(0)).toBe("$0.00");
+  expect(usd(0.00000001)).toBe("< $0.000001");
   expect(usd(0.000001)).toBe("$0.000001");
   expect(usd(1.8)).toBe("$1.80");
 });
