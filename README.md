@@ -36,8 +36,12 @@ flags. Editing the draft never changes a saved run.
 **Tool setup** opens the shared drawer with the selected action's declared credential requirements
 and live session spending: limit, remaining allowance, reported spend and active reservations.
 Refresh reads the running tool without executing an action or resetting its budget. Credential
-names do not prove a key is configured or valid; provider connection and paid execution await the
-shared interfaces described in the [C1 handoff](docs/handoffs/C1-paid-setup.md).
+names do not prove a key is configured or valid. **Restart tool session** requires confirmation
+and an idle tool; it reprobes the selected config and starts a new spending ledger. Earlier runs
+and unknown charges remain in history. The drawer reports the new session ID, and other tabs
+refresh their setup observations. A failed restart leaves recovery available in the same drawer.
+Environment changes require quitting and relaunching Wafflery from the updated terminal.
+Paid execution remains disabled until the estimate and cap controls are complete.
 
 **Clean up library** previews selected runs/examples and reclaimable image bytes. Shared examples
 retain their images; deleting a baseline run clears its pin. Cleanup requires idle tools, rechecks

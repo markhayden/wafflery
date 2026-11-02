@@ -186,3 +186,102 @@ test.describe("live readiness", () => {
     await expect(page.getByRole("slider", { name: "Before and after divider" })).toBeVisible();
   });
 });
+
+test("restart confirmation preserves drafts and publishes a fresh session to both tabs", async ({ page, context, host }, testInfo) => {
+  await host.open(page);
+  const label = page.getByLabel("Label *", { exact: true });
+  await label.click(); await label.fill("Keep across restart");
+  await expect(label).toHaveValue("Keep across restart");
+  const other = await context.newPage(); await host.open(other);
+  for (const tab of [page, other]) await tab.getByRole("button", { name: "Tool setup", exact: true }).click();
+  const drawer = page.getByRole("dialog", { name: "Tool setup", exact: true });
+  const otherDrawer = other.getByRole("dialog", { name: "Tool setup", exact: true });
+  const spending = drawer.getByRole("region", { name: "Session spending" });
+  await expect(spending).toContainText("Uncapped");
+  await spending.getByText("Session identity", { exact: true }).click();
+  const before = await spending.locator("code").innerText();
+  let restarts = 0, attempts = 0;
+  page.on("request", request => {
+    if (request.method() !== "POST") return;
+    if (new URL(request.url()).pathname.endsWith("/restart")) restarts++;
+    if (new URL(request.url()).pathname === "/api/attempts") attempts++;
+  });
+  await drawer.getByRole("button", { name: "Restart tool session", exact: true }).click();
+  await expect(drawer).toContainText("new spending ledger");
+  await expect(drawer.getByRole("button", { name: "Keep current session", exact: true })).toBeFocused();
+  await page.screenshot({ path: testInfo.outputPath("restart-confirmation.png") });
+  await drawer.getByRole("button", { name: "Keep current session", exact: true }).click();
+  expect(restarts).toBe(0);
+  await expect(drawer.getByRole("button", { name: "Restart tool session", exact: true })).toBeFocused();
+  await expect(spending.locator("code")).toHaveText(before);
+  await drawer.getByRole("button", { name: "Restart tool session", exact: true }).click();
+  await drawer.getByRole("button", { name: "Confirm restart", exact: true }).click();
+  const restarted = drawer.getByRole("region", { name: "Restart tool" });
+  await expect(restarted).toContainText("Tool restarted");
+  const after = await restarted.locator("code").innerText();
+  expect(after).not.toBe(before);
+  const otherSpending = otherDrawer.getByRole("region", { name: "Session spending" });
+  await expect(otherSpending).toContainText("Uncapped");
+  await otherSpending.getByText("Session identity", { exact: true }).click();
+  await expect(otherSpending.locator("code")).toHaveText(after);
+  await page.keyboard.press("Escape");
+  await expect(label).toHaveValue("Keep across restart");
+  expect(restarts).toBe(1); expect(attempts).toBe(0);
+  await other.close();
+});
+
+test.describe("restart during work", () => {
+  test.use({ hostScenario: "held" });
+  test("setup explains why an active session cannot restart", async ({ page, host }) => {
+    await host.open(page);
+    await page.locator("input[type=file]").setInputFiles("tests/fixtures/sample.png");
+    await page.getByLabel("Label *", { exact: true }).fill("Held run");
+    await page.getByRole("button", { name: "Run", exact: true }).click();
+    await expect(page.getByRole("button", { name: "Cancel run", exact: true })).toBeVisible();
+    await page.getByRole("button", { name: "Tool setup", exact: true }).click();
+    const drawer = page.getByRole("dialog", { name: "Tool setup", exact: true });
+    await expect(drawer.getByRole("button", { name: "Restart tool session", exact: true })).toBeDisabled();
+    await expect(drawer).toContainText("active or unconfirmed work");
+    await writeFile(join(host.root, "..", "tool", "release-run"), "");
+    await expect(drawer.getByRole("button", { name: "Restart tool session", exact: true })).toBeEnabled();
+  });
+});
+
+test("failed restart keeps deliberate recovery reachable in setup", async ({ page, host }) => {
+  await host.open(page);
+  await page.getByRole("button", { name: "Tool setup", exact: true }).click();
+  const drawer = page.getByRole("dialog", { name: "Tool setup", exact: true });
+  await page.route("**/api/tools/sample/restart", route => route.fulfill({ status: 422, contentType: "application/json", body: JSON.stringify({ error: { message: "Replacement initialization failed" } }) }));
+  await page.route("**/api/state", async route => {
+    const response = await route.fetch(); const value = await response.json();
+    value.tools = value.tools.map((tool: {id: string}) => ({ ...tool, declaration: null, error: "Disconnected after failed restart" }));
+    await route.fulfill({ response, json: value });
+  });
+  await drawer.getByRole("button", { name: "Restart tool session", exact: true }).click();
+  await drawer.getByRole("button", { name: "Confirm restart", exact: true }).click();
+  await expect(drawer).toContainText("Replacement initialization failed");
+  await expect(drawer).not.toContainText("Uncapped");
+  await page.unrouteAll({ behavior: "wait" });
+  await drawer.getByRole("button", { name: "Restart tool session", exact: true }).click();
+  await drawer.getByRole("button", { name: "Confirm restart", exact: true }).click();
+  await expect(drawer.getByRole("region", { name: "Restart tool" })).toContainText("Tool restarted");
+});
+
+
+test("restart stories fit small screens and explain busy or disconnected states", async ({ page }, testInfo) => {
+  await page.goto("http://127.0.0.1:6006/iframe.html?id=workspace-restarttool--idle&viewMode=story");
+  await page.getByRole("button", { name: "Restart tool session", exact: true }).click();
+  for (const width of [320, 768, 1440]) {
+    await page.setViewportSize({ width, height: 900 });
+    await expect(page.getByRole("button", { name: "Confirm restart", exact: true })).toBeVisible();
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+    if (width === 320) await page.screenshot({ path: testInfo.outputPath("restart-small-screen.png") });
+  }
+  await page.goto("http://127.0.0.1:6006/iframe.html?id=workspace-restarttool--busy&viewMode=story");
+  await expect(page.getByRole("button", { name: "Restart tool session", exact: true })).toBeDisabled();
+  await page.goto("http://127.0.0.1:6006/iframe.html?id=workspace-restarttool--disconnected&viewMode=story");
+  await page.getByRole("button", { name: "Restart tool session", exact: true }).click();
+  await page.getByRole("button", { name: "Confirm restart", exact: true }).click();
+  await expect(page.getByRole("alert")).toContainText("could not initialize");
+  await expect(page.getByRole("button", { name: "Restart tool session", exact: true })).toBeEnabled();
+});

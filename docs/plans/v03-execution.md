@@ -234,3 +234,28 @@ The final matrix passed under the shared lock: formatting, clippy, 105 Rust test
 typecheck, 18 UI unit tests, two asset tests, Storybook, byte-identical UI builds, release build
 and 78 browser cases (four real-tool skips). The focused setup test also passed 40 repeats
 with the observable input precondition. Lockfiles and embedded assets were unchanged.
+
+## V05b execution boundary
+
+Place deliberate restart in the existing setup drawer. Keep its controls mounted independently
+of a missing declaration so failed replacement can be retried explicitly. The action explains
+that a new session has a fresh spending ledger and preserves prior unknown charges/history.
+Require confirmation, disable while active, and never trigger restart from refresh or an error.
+Invalidate setup observations on the published session ID, including in another attached tab.
+Keep saved evidence and draft values separate from the replacement lifecycle.
+
+Browser coverage: cancel without a request, one confirmed restart, two-tab session identity,
+draft preservation, no action execution, active-work refusal, failed restart and deliberate
+recovery. Stories cover idle, busy and disconnected states. Rollback restores the existing
+refresh-only drawer; V05a's authenticated restart API can remain independently usable.
+
+The initial restart browser cases failed against the missing controls. With implementation, all
+24 setup cases pass across Chromium/WebKit, including confirmation focus, two-tab identity and
+320/768/1440-pixel layouts. Reviewed desktop and small-screen screenshots. Review approved; local
+per-tool pending state also disables restart after closing/reopening setup before its busy
+snapshot arrives. Controls remain available after a failed replacement without a declaration.
+
+V05b full matrix passed under the shared lock: formatting, clippy, 105 Rust tests (three ignored),
+typecheck, 18 UI unit tests, two asset tests, Storybook, byte-identical UI builds, release build
+and 86 browser cases (four real-tool skips). Embedded UI assets were regenerated and verified.
+No provider calls, sibling edits, push or tags.

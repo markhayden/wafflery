@@ -1,3 +1,4 @@
+import { RestartTool } from "./RestartTool";
 import { ToolSetup } from "./ToolSetup";
 import { readToolSession } from "../../api/tool-session";
 import { Cleanup } from "./Cleanup";
@@ -63,6 +64,22 @@ export function Workspace({
   }, [api, client, toolId]);
   const tool = snapshot.tools.find((tool) => tool.id === toolId);
   const declaration = tool?.declaration;
+  const sessionId = object(declaration?.tool_session)?.id;
+  const [restartingTools, setRestartingTools] = useState<Set<string>>(() => new Set());
+  const restarting = restartingTools.has(toolId);
+  const restartToolSession = useCallback(async () => {
+    setRestartingTools(current => new Set(current).add(toolId));
+    try {
+      const restarted = await client.restart(toolId);
+      const id = object(restarted.tool_session)?.id;
+      if (typeof id !== "string") throw new Error("The new session could not be identified.");
+      return id;
+    } finally {
+      // Only ordered snapshots publish declarations, including a failed replacement.
+      try { await updateSnapshot(); }
+      finally { setRestartingTools(current => { const next = new Set(current); next.delete(toolId); return next; }); }
+    }
+  }, [client, toolId, updateSnapshot]);
   const [actionId, setActionId] = useState(
     declaration?.document.actions[0]?.name ?? "",
   );
@@ -351,10 +368,10 @@ export function Workspace({
           }))}
         />
       </div>
-      {declaration && (
+      {tool && (
         <div className={styles.toolContext}>
-          <p className={styles.note}>{declaration.document.tool.purpose}</p>
-          <Button disabled={!action} onClick={event => setDrawer({ opener: event.currentTarget, view: "setup" })}>Tool setup</Button>
+          <p className={styles.note}>{declaration?.document.tool.purpose ?? "Tool setup is unavailable."}</p>
+          <Button onClick={event => setDrawer({ opener: event.currentTarget, view: "setup" })}>Tool setup</Button>
         </div>
       )}
       {!tool && toolId && (
@@ -616,16 +633,19 @@ export function Workspace({
         }
       >
         {drawer?.view === "setup" ? (
-          declaration && action ? (
-            <ToolSetup
-              key={`${toolId}:${actionId}`}
-              tool={declaration.document.tool}
-              action={action}
-              loadSession={loadToolSession}
-            />
-          ) : (
-            <p role="status">Setup is unavailable because this tool or action is no longer available.</p>
-          )
+          <>
+            {restarting ? <p role="status">Checking the replacement session…</p> : declaration && action ? (
+              <ToolSetup
+                key={`${toolId}:${actionId}:${sessionId}`}
+                tool={declaration.document.tool}
+                action={action}
+                loadSession={loadToolSession}
+              />
+            ) : (
+              <p role="status">Setup is unavailable because this tool or action is no longer available.</p>
+            )}
+            {tool && <RestartTool key={toolId} busy={tool.busy || restarting} onRestart={restartToolSession} />}
+          </>
         ) : drawer?.view === "history" ? (
           <History client={client} onOpen={openAttempt} />
         ) : drawer?.view === "examples" ? (

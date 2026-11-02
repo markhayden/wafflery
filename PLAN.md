@@ -522,7 +522,7 @@ Files: coordinator/session lifecycle, host API, lifecycle tests, race tests, ENG
 Verify submit-versus-restart races, stuck child, initialization failure and retained old evidence.
 Depends: V04b. Commit: `feat: replace idle tool sessions atomically`.
 
-**V05b — Present deliberate session restart.** Add setup restart confirmation that explains the
+**V05b — Present deliberate session restart. Complete.** Add setup restart confirmation that explains the
 fresh ledger, shows the new UUID and invalidates descriptions. Publish the new session boundary
 that V09–V12 use to invalidate preparations/estimates when those exist. No automatic
 restart for credential, cap or budget errors. Retain the old session's unresolved history.

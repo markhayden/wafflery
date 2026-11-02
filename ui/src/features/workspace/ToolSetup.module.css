@@ -15,3 +15,6 @@
 .identity dd { margin: 0 0 .5rem; font-size: .8125rem; }
 .setup summary { font-size: .875rem; cursor: pointer; }
 @media (max-width: 24rem) { .amounts { grid-template-columns: minmax(0, 1fr); } }
+
+.restart { margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid var(--color-line); }
+.actions { display: flex; flex-wrap: wrap; gap: .75rem; }

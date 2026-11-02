@@ -14,7 +14,7 @@
     "ui/src/api/examples.ts": "ac29ab8bd91da377bd783d7e118b1791c1599784ad0ab92874293c31b0a0bac4",
     "ui/src/api/session.ts": "216dfa6b5e809fcb0c1f97f1cf47850455646b1382826a2eb83c5fad475f96fb",
     "ui/src/api/tool-session.ts": "c5aef0a8b3e85559e0db1b9d84c93a80e38c6fdcc7c5b5f1ce86e1eb585bf1bd",
-    "ui/src/api/workspace.ts": "d7f74d485e58288af93ff75d167709c5f605300088df0394bb6466e2c29c0fcf",
+    "ui/src/api/workspace.ts": "1bae9f7dc7b6c3dc96f2e87b21ef4d26336ddfb926cd19c4790b98be508387e8",
     "ui/src/assets/wafflery-mark.svg": "51bc8a040e26b897a948238598b8cabdf69bf4687c2b1a70613b542de1c99f1f",
     "ui/src/components/Button.module.css": "1ce502acb9d2561471ba7dffe4536d78bd51553a169a36a8fa230502499a9d1a",
     "ui/src/components/Button.stories.tsx": "489b0b293bbeb9f5813829a79bc9e78c5ddffa0116d71b0582985750716136fa",
@@ -44,21 +44,23 @@
     "ui/src/features/workspace/History.tsx": "020455e1cf9685dc9bba7d3489169fd4f2c95d05e2a84a2e8eacefdd7e6e123d",
     "ui/src/features/workspace/Inspector.tsx": "b2d9c8945f3988dfffd764ae358af384ec1d1c41b669e8a9c8e2017379bca624",
     "ui/src/features/workspace/Pipeline.tsx": "fd0d600ef9ec88ae147d1c65df8a3fa36cfd757048f33762f14ae909fa4603c7",
+    "ui/src/features/workspace/RestartTool.stories.tsx": "527a6334ece7bbbcb57c4bbed5ea54915dcc7fa6bdd6dab93910d845fef95ebe",
+    "ui/src/features/workspace/RestartTool.tsx": "d6a2a40b7bf7935b90972e3945f6563b4dafda26a5865b7329f47406eb466c85",
     "ui/src/features/workspace/SavedComparison.tsx": "8a02acee808c1f7df4de346272875c90a65719c132286f3b394bfeb017e007c0",
-    "ui/src/features/workspace/ToolSetup.module.css": "261603e116399f737c4d299b42b8ba110a4a01a7363188828b3efb6a94ad8b64",
+    "ui/src/features/workspace/ToolSetup.module.css": "8bbcd85b8be8a7ca0765b8cfac3bc386f2f8ded0c852cfb08dfa297cfe434ae9",
     "ui/src/features/workspace/ToolSetup.stories.tsx": "7c59a58dadaa4df7ae67093510199b64d8e59717ded0e783a2f2cff29969696f",
     "ui/src/features/workspace/ToolSetup.tsx": "cb2a276feb49bcf6beec67845313e6c79539fed57dd6489f36bfe45306d024e8",
     "ui/src/features/workspace/Workspace.module.css": "361e7bcd908349eeab575c460663b28de162ce1f1d7527d805d27ef6f3fd74a3",
-    "ui/src/features/workspace/Workspace.tsx": "86ec3ad3c8f12aae5e8d50bc591bdf182496462ef076aa929b79d358686259b6",
+    "ui/src/features/workspace/Workspace.tsx": "5e06371f91a45c7cbac73eb1de14154e467c56dda174a650980667700bfe1b04",
     "ui/src/main.tsx": "03b2482769b6e395650dff286faa5e047805a68788a2d0c019ca79ca59b5cadf",
     "ui/src/tokens.css": "c3b0eee13fac143223d12e52a63497a6dab95065469028a0c3e49e4532b603ef",
     "ui/tsconfig.json": "cb18bc2ac7dda71c2c6b1688c5af0722292143bafb109a84a1d8464e28733ffe",
     "ui/vite.config.ts": "3aec7d6174ffca99d4d5288bea2f837d5e91335cbd7135a9682e6d18a40476b4"
   },
   "outputs": {
-    "assets/index-B6rf4Sff.js": "66ff9765598d96a7dafbd68ae9fa5a16d5a00e0d4101b5c1f5ac94f92d5395be",
-    "assets/index-DnUq7qD5.css": "2bdfb2feba693dc4a03a52cd8df38aae327c9f0e494d89dca033e621d53dc247",
+    "assets/index-B6XGmmYT.js": "959f62a9d958cfa3f132937f3e9cd73681e8691a1dbaf8a9dfd1a91825794c97",
+    "assets/index-DuQbatEM.css": "f09cf8623ec61e42154ffbd59c6229c58a34353d283d037640d1bdaf435c7886",
     "assets/wafflery-mark-CML0EpfM.svg": "51bc8a040e26b897a948238598b8cabdf69bf4687c2b1a70613b542de1c99f1f",
-    "index.html": "d937c5672ff9e56dc79d62b417d2dd32404fb4c41d92d53001e89038af3754c6"
+    "index.html": "a46834087b6d3ba1141f591e298b3e929feecb242689d1fbdbf96486e518b2c1"
   }
 }
