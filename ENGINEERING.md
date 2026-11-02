@@ -308,7 +308,16 @@ V10b1 implements the estimate-validation boundary: strict structuredContent/sche
 serving-session attribution, shared ledger consistency, expiry and cap/decision checks. Valid
 readiness refusals retain unknown prices and configuration; they never authorize dispatch. The
 opaque binding remains server-side evidence. The independent peer and contradictory fixtures
-exercise this boundary; live request ownership, deadline and API integration remain V10b2–V10b3.
+exercise this boundary. V10b2 adds the owned Rust estimate service; browser routes and retained
+quotes remain V10b3. At most one estimate reader runs per tool, outside its execution permit.
+The 30-second deadline includes ledger-lock acquisition. A timed-out dispatched request keeps
+its input lease and estimate slot until its original reply completes or child exit is confirmed;
+there is no automatic retry. The ledger mutex is released at the deadline, and a late reply
+cannot replace newer observations. Requester cancellation cannot abandon this worker.
+Discarded/expired drafts become unavailable immediately, but leased copies still count against
+retention limits and block library cleanup until the reader ends. Shutdown closes owned children
+before joining these workers. A returned quote must still match the same prepared object,
+current declaration and owned client. No browser endpoint or paid authorization is added yet.
 Controls do not wait for
 an execution slot. The former Squint behavior that created estimate runs describes v0.2 integration
 history only: v0.3 prohibits it. Until the approved paid slice lands, dispatch stays offline-only.

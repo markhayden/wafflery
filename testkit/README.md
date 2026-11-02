@@ -195,3 +195,14 @@ an RPC error after reporting and saving a run. These are host recovery probes, n
 execution examples. None dispatches a provider or spends money.
 `queued-resource-error` additionally fails runs-list recovery with a plain RPC error; this must
 never be mistaken for a refusal of the original action.
+
+### Estimate ownership probes
+
+The `estimates` scenario exposes a paid `price_test` control target beside a held, free
+`mark_band` run. It never calls a provider. `estimate-started`, `release-estimate` and
+`estimate-read` coordinate the reader with the test; `estimates.ndjson` records only controls,
+not runs. Labels choose a held response, invalid session, plain or structured refusal, or a
+broken transport. The latter plus `hold-after-eof` deliberately keeps the test child alive so
+shutdown tests distinguish a disconnected pipe from confirmed process exit. The host must
+retain its prepared inputs through that boundary. `release-run` completes the independent
+free run; none of these controls creates an attempt or changes spending.

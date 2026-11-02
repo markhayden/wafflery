@@ -210,7 +210,7 @@ pub fn execute(
         if scenario == "exit-during-call" {
             std::process::exit(0);
         }
-        if scenario == "held" {
+        if matches!(scenario.as_str(), "held" | "estimates") {
             notify("Waiting in the offline test tool");
             let mut heartbeat = Instant::now();
             loop {

@@ -3,6 +3,8 @@ use super::{Error, Result, session::validate_observation, validate_contract, val
 use serde_json::{Value, json};
 use time::{Duration, OffsetDateTime, format_description::well_known::Rfc3339};
 
+mod control;
+
 const USD_TOLERANCE: f64 = 1e-6;
 
 /// An attributed observation, not a reservation or permission to dispatch by itself.

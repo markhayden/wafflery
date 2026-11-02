@@ -16,12 +16,24 @@ pub struct Preparation {
     pub bytes: u64,
 }
 struct Draft {
-    call: PreparedCall,
+    call: Arc<PreparedCall>,
     receipt: Preparation,
     expires: Instant,
 }
+struct Tracked {
+    call: std::sync::Weak<PreparedCall>,
+    bytes: u64,
+}
 struct State {
     drafts: BTreeMap<String, Draft>,
+    tracked: BTreeMap<String, Tracked>,
+}
+impl State {
+    fn prune(&mut self, now: Instant) {
+        self.drafts.retain(|_, draft| draft.expires > now);
+        self.tracked
+            .retain(|_, tracked| tracked.call.strong_count() > 0);
+    }
 }
 pub(crate) struct Retained {
     state: Arc<Mutex<State>>,
@@ -36,6 +48,7 @@ impl Retained {
     fn with_limits(count: usize, bytes: u64, ttl: Duration) -> Self {
         let state = Arc::new(Mutex::new(State {
             drafts: BTreeMap::new(),
+            tracked: BTreeMap::new(),
         }));
         let weak = Arc::downgrade(&state);
         tokio::spawn(async move {
@@ -47,8 +60,7 @@ impl Retained {
                 state
                     .lock()
                     .unwrap_or_else(|e| e.into_inner())
-                    .drafts
-                    .retain(|_, draft| draft.expires > Instant::now());
+                    .prune(Instant::now());
             }
         });
         Self {
@@ -60,24 +72,22 @@ impl Retained {
     }
     fn lock(&self) -> MutexGuard<'_, State> {
         let mut state = self.state.lock().unwrap_or_else(|e| e.into_inner());
-        state
-            .drafts
-            .retain(|_, draft| draft.expires > Instant::now());
+        state.prune(Instant::now());
         state
     }
     #[cfg(test)]
     fn expire_at(&self, now: Instant) {
-        self.lock().drafts.retain(|_, draft| draft.expires > now);
+        self.lock().prune(now);
     }
     // The coordinator holds submission across this check and materialization: only one
     // preparation can be in progress, so its count/bytes cannot be consumed by another tab.
     pub fn capacity(&self, bytes: u64) -> Result<()> {
         let state = self.lock();
-        if state.drafts.len() >= self.count
+        if state.tracked.len() >= self.count
             || bytes
                 > self
                     .bytes
-                    .saturating_sub(state.drafts.values().map(|d| d.receipt.bytes).sum())
+                    .saturating_sub(state.tracked.values().map(|d| d.bytes).sum())
         {
             return Err(Error::Conflict(
                 "Draft preparation limit reached. Discard an unused draft first.",
@@ -96,7 +106,7 @@ impl Retained {
             .sum();
         self.capacity(bytes)?;
         let mut state = self.lock();
-        if state.drafts.contains_key(&call.request.id) {
+        if state.tracked.contains_key(&call.request.id) {
             return Err(Error::Conflict("Preparation ID is already in use"));
         }
         let receipt = Preparation {
@@ -111,6 +121,14 @@ impl Retained {
                 + self.ttl)
                 .as_millis() as u64,
         };
+        let call = Arc::new(call);
+        state.tracked.insert(
+            receipt.id.clone(),
+            Tracked {
+                call: Arc::downgrade(&call),
+                bytes,
+            },
+        );
         state.drafts.insert(
             receipt.id.clone(),
             Draft {
@@ -151,6 +169,36 @@ impl Retained {
         }
         Ok(Some(draft.receipt.clone()))
     }
+    pub fn lease(
+        &self,
+        id: &str,
+        current: &Declaration,
+        session: &str,
+    ) -> Result<Arc<PreparedCall>> {
+        let mut state = self.lock();
+        let draft = state
+            .drafts
+            .get(id)
+            .ok_or(Error::Missing("Preparation is missing or expired"))?;
+        if !matches(&draft.call, current, session) {
+            state.drafts.remove(id);
+            return Err(Error::Conflict(
+                "Preparation belongs to an outdated tool session or declaration",
+            ));
+        }
+        Ok(draft.call.clone())
+    }
+    pub fn is_current(
+        &self,
+        call: &Arc<PreparedCall>,
+        current: &Declaration,
+        session: &str,
+    ) -> bool {
+        self.lock()
+            .drafts
+            .get(&call.request.id)
+            .is_some_and(|draft| Arc::ptr_eq(&draft.call, call) && matches(call, current, session))
+    }
     pub fn take(
         &self,
         request: &Submission,
@@ -159,11 +207,19 @@ impl Retained {
     ) -> Result<PreparedCall> {
         self.existing(request, current, session)?
             .ok_or(Error::Missing("Preparation is missing or expired"))?;
-        self.lock()
+        let mut state = self.lock();
+        let draft = state
             .drafts
-            .remove(&request.id)
-            .map(|draft| draft.call)
-            .ok_or(Error::Missing("Preparation is missing or expired"))
+            .get(&request.id)
+            .ok_or(Error::Missing("Preparation is missing or expired"))?;
+        if Arc::strong_count(&draft.call) != 1 {
+            return Err(Error::Conflict(
+                "An estimate is still reading these prepared inputs",
+            ));
+        }
+        let draft = state.drafts.remove(&request.id).unwrap();
+        Arc::try_unwrap(draft.call)
+            .map_err(|_| Error::Conflict("Prepared inputs still have a reader"))
     }
     pub fn discard(&self, id: &str) {
         self.lock().drafts.remove(id);
@@ -177,7 +233,7 @@ impl Retained {
         });
     }
     pub fn is_empty(&self) -> bool {
-        self.lock().drafts.is_empty()
+        self.lock().tracked.is_empty()
     }
     pub fn clear(&self) {
         self.lock().drafts.clear();
@@ -303,5 +359,73 @@ mod tests {
             assert!(!assets.root().join("execution/prepared").exists());
             assets.database.shutdown().await.unwrap();
         }
+    }
+    #[tokio::test]
+    async fn invalidated_leases_keep_files_and_capacity_until_the_reader_finishes() {
+        for invalidate in ["discard", "expire", "restart", "reconcile", "clear"] {
+            let (_dir, assets, request, mut declaration) = super::super::tests::fixture().await;
+            let retained = Retained::with_limits(1, 1024 * 1024, Duration::from_secs(60));
+            retained
+                .insert(
+                    PreparedCall::new(&assets, request.clone(), &declaration, "session")
+                        .await
+                        .unwrap(),
+                )
+                .unwrap();
+            let lease = retained
+                .lease(&request.id, &declaration, "session")
+                .unwrap();
+            let path =
+                std::path::PathBuf::from(lease.arguments()["source"]["path"].as_str().unwrap());
+            let bytes = std::fs::read(&path).unwrap();
+            match invalidate {
+                "discard" => retained.discard(&request.id),
+                "expire" => retained.expire_at(Instant::now() + Duration::from_secs(61)),
+                "restart" => retained.invalidate_tool(&request.tool),
+                "reconcile" => {
+                    declaration.revision = "new".into();
+                    retained.reconcile(&request.tool, &declaration, "session");
+                }
+                _ => retained.clear(),
+            }
+            assert!(retained.get(&request.id).is_err(), "{invalidate}");
+            assert!(retained.take(&request, &declaration, "session").is_err());
+            assert_eq!(std::fs::read(&path).unwrap(), bytes);
+            assert!(
+                retained.capacity(0).is_err(),
+                "leased bytes/count must still be charged"
+            );
+            assert!(
+                !retained.is_empty(),
+                "cleanup must not wait behind an invisible leased read guard"
+            );
+            drop(lease);
+            assert!(!path.exists());
+            assert!(retained.capacity(0).is_ok());
+            assert!(retained.is_empty());
+            assets.database.shutdown().await.unwrap();
+        }
+    }
+    #[tokio::test]
+    async fn dispatch_cannot_take_paths_from_an_active_estimate_reader() {
+        let (_dir, assets, request, declaration) = super::super::tests::fixture().await;
+        let retained = Retained::new();
+        retained
+            .insert(
+                PreparedCall::new(&assets, request.clone(), &declaration, "session")
+                    .await
+                    .unwrap(),
+            )
+            .unwrap();
+        let lease = retained
+            .lease(&request.id, &declaration, "session")
+            .unwrap();
+        assert!(retained.take(&request, &declaration, "session").is_err());
+        assert!(retained.get(&request.id).is_ok());
+        drop(lease);
+        let call = retained.take(&request, &declaration, "session").unwrap();
+        drop(call);
+        assert!(!assets.root().join("execution/prepared").exists());
+        assets.database.shutdown().await.unwrap();
     }
 }

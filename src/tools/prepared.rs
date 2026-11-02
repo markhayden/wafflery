@@ -59,6 +59,9 @@ impl PreparedCall {
                 .await?;
         Ok(prepared)
     }
+    pub fn request(&self) -> &Submission {
+        &self.request
+    }
     pub fn arguments(&self) -> &Value {
         &self.arguments
     }
@@ -87,7 +90,7 @@ impl Drop for PreparedCall {
                 .canonicalize()
                 .is_ok_and(|actual| actual == *directory)
         {
-            // No tool has seen this unclaimed directory; it contains only our temporary copies.
+            // All estimate reader leases have ended; only our temporary copies remain.
             let _ = std::fs::remove_dir_all(directory);
         }
     }

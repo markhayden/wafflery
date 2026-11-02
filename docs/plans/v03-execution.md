@@ -543,3 +543,30 @@ UI or dispatch change in this slice.
 V10b1 passed review and the full locked matrix: 150 Rust tests (three ignored), 27 UI unit tests,
 two asset tests, 100 browser cases (four opt-in skips), fmt, clippy, typecheck, Storybook,
 reproducible UI assets and release build. Lockfiles and generated UI assets remain unchanged.
+
+### V10b2 request ownership boundary
+
+Preparations now have reader leases. Removing a draft's availability does not remove an active
+reader's copies, free its capacity charge or let cleanup wait behind an invisible storage guard.
+Dispatch cannot take paths while an estimate reads them. Late completion must match the same
+prepared object, declaration and process session before a quote can be accepted.
+
+The estimate deadline includes waiting for the ledger mutex. No request is sent if that wait
+uses the deadline. Once sent, a timed-out RPC continues in an owned worker with its input lease
+and per-tool estimate slot. Its late reply is discarded without reacquiring the ledger mutex;
+transport loss instead retains ownership until the child has exited. The requester receives a
+bounded timeout, with no automatic retry. Shutdown closes clients before joining these workers.
+
+The lease tests failed before implementation, then passed for discard, expiry, restart,
+declaration changes and shutdown invalidation. Live peer tests failed before the control service
+existed and now cover exact copied inputs during a held free run, abandoned requesters,
+per-tool estimate limits, the actual 30-second deadline, malformed replies, plain/named errors,
+and graceful/forced shutdown. A disconnected peer deliberately survives EOF: files remain until
+its owned child is confirmed stopped. The late-ledger test advances Tokio's test clock only after
+the external peer's started marker, avoiding a scheduling-dependent short deadline. Tokio's
+existing pinned version enables test-util only as a dev feature; no version/lockfile change.
+
+V10b2 passed final review and the full shared-lock matrix: 160 Rust tests (three ignored),
+27 UI unit tests, two asset tests, 100 browser cases (four opt-in skips), fmt, clippy, typecheck,
+Storybook, reproducible UI assets and release build. No lockfile or generated UI asset changed.
+Rollback this ownership slice as a unit; V10b1's standalone validation may remain.

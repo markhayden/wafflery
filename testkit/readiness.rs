@@ -4,6 +4,14 @@ use std::path::Path;
 
 pub fn description(root: &Path, scenario: &str) -> Value {
     let mut document = super::scenarios::description(scenario);
+    if scenario == "estimates" {
+        let mut paid = document["actions"][0].clone();
+        paid["name"] = json!("price_test");
+        paid["cost"] = json!({"may_spend":true,"basis":"estimated"});
+        paid["params_schema"]["properties"]["max_spend_usd"] =
+            json!({"type":"number","exclusiveMinimum":0});
+        document["actions"].as_array_mut().unwrap().push(paid);
+    }
     if !scenario.starts_with("readiness") {
         return document;
     }

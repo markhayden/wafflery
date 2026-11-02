@@ -680,9 +680,13 @@ Commit: `feat: request bound cost estimates`.
 V10b execution slices (same acceptance criteria; full matrix and review per slice):
 - **V10b1: Complete.** Strict estimate/refusal validation with the shared session validator and independent
   fixtures. No live request or paid-dispatch path yet. Commit: `feat: validate bound estimate observations`.
-- **V10b2:** Bounded control requests, serialized ledger observations and preparation leases.
+- **V10b2: Complete.** Bounded control requests, serialized ledger observations and preparation leases.
   A timeout returns no quote but retains input ownership until the response completes or the
   child exits; such leases still count against retention limits. Commit: `feat: own estimate requests through completion`.
+  The ownership slice spans prepared.rs/retained.rs, client.rs/estimate control, coordinator
+  wiring/service, independent peer wiring/readiness/estimates/held-run behavior and the live
+  estimate test. Review these together: splitting the reader lease from timeout and shutdown
+  handling would leave an unsafe intermediate control path. It exceeds the usual file budget.
 - **V10b3:** Authenticated estimate API, retained opaque bindings and snapshot publication;
   recheck preparation validity before accepting a response. Commit: `feat: expose prepared cost estimates`.
 Rollback in reverse order. V10b1's cohesive validation slice includes estimate module/tests,

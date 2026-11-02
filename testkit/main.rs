@@ -1,5 +1,6 @@
 //! Independent, line-delimited MCP peer. Deliberately does not import rmcp or wafflery.
 mod configuration;
+mod estimates;
 mod fixtures;
 mod readiness;
 mod scenarios;
@@ -105,6 +106,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             .read_until(b'\n', &mut line)?
             == 0
         {
+            while scenario == "estimates" && root.join("hold-after-eof").exists() {
+                std::thread::sleep(std::time::Duration::from_millis(10));
+            }
             break;
         }
         if line.len() > 32 * 1024 * 1024 {
@@ -213,6 +217,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     id,
                     json!({"content":[{"type":"text","text":description.to_string()}],"structuredContent":description,"isError":false}),
                 );
+            }
+            "tools/call"
+                if initialized && params["name"] == "estimate" && scenario == "estimates" =>
+            {
+                estimates::start(root.clone(), state.clone(), output.clone(), message.clone());
             }
             "tools/call" if initialized && params["name"] == "mark_band" => {
                 if let Some(correlation) = params["_meta"]["table-manners/client_run_id"].as_str() {
