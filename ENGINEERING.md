@@ -300,8 +300,12 @@ outside the host execution reservation. Estimates remain responsive while
 an action runs; they neither consume a run-dispatch permit nor create attempts. The exact allowed
 quote, positive cap and binding are checked again under the host's execution reservation before
 dispatch. Tool-side caps and budgets remain authoritative; a quote is not a reservation.
-Keep one active execution per tool and reject a second submission as busy. Controls do not wait
-for that slot. The former Squint behavior that created estimate runs describes v0.2 integration
+Keep one active execution per tool and reject a second submission as busy. The transport now
+exempts exactly reserved `describe` and `estimate` calls from its persisted execution permit;
+controls cannot consume a staged action permit, record attempt wire evidence or reset its
+progress association. All other tool calls still require matching action authorization.
+Host quote validation and the separate estimate deadline are V10b. Controls do not wait for
+an execution slot. The former Squint behavior that created estimate runs describes v0.2 integration
 history only: v0.3 prohibits it. Until the approved paid slice lands, dispatch stays offline-only.
 Changing config or restarting a tool invalidates estimates and ends its old budget session.
 Show new session boundaries explicitly; never restart automatically to replenish an allowance.

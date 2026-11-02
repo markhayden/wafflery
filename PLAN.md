@@ -629,7 +629,7 @@ Depends: V06a/V06b/V08. Implementation slices (each reviewed and full-matrix ver
 Rollback V09c before V09b before V09a. These slices do not change the shared contract; preparations are temporary
 host resources, not attempts or library examples.
 
-**V10a — Exempt estimate controls from the run transport gate.** Exempt exactly reserved
+**V10a — Complete: exempt estimate controls from the run transport gate.** Exempt exactly reserved
 `describe` and `estimate` from RecordedTransport's run permit lookup/consumption. All action
 calls still require their persisted permit. Neither control writes attempt evidence or touches
 run-progress association. Replace ENGINEERING.md's old busy-estimate policy: controls remain

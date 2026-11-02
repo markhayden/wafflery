@@ -500,3 +500,23 @@ authenticated controls and all execution/preparation targeted tests pass. Full m
 141 Rust tests (three ignored), 27 UI unit tests, two asset tests, 100 browser cases (four opt-in
 skips), fmt, clippy, typecheck, Storybook, reproducible assets and release build. No public contract,
 dependency, library schema or generated UI asset change.
+
+## V10 controls
+
+V10a keeps reserved estimate calls outside the persisted action gate. The staged-permit test
+failed because estimate took the action permit and then failed its argument check. The actual
+MCP client test independently failed with no dispatch authorization against the existing v0.3
+control peer. Only exact describe/estimate names are now exempt. Tests verify untouched permit,
+wire evidence, dispatch notification and progress association until the real action is sent;
+similarly named arbitrary calls remain blocked. The independent peer returns a quote without a
+run or action-call journal. No quote authorization or paid dispatch is introduced by this slice.
+
+The first full matrix exposed a pre-existing cancellation assertion that assumed child exit and
+worker cleanup completed within a 900 ms sleep. It now waits for observable tool availability
+within the same four-second lifecycle bound as the adjacent child-exit test. The immediate
+quit refusal and final quit success remain checked. Twenty consecutive runs passed under the
+shared lock; review approved the transport changes and this test correction.
+
+V10a's final full matrix passed: 143 Rust tests (three ignored), 27 UI unit tests, two asset
+tests, 100 browser cases (four opt-in skips), formatting, clippy, typecheck, Storybook,
+reproducible assets and release build. Lockfiles and generated UI assets are unchanged.

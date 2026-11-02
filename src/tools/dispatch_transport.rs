@@ -49,7 +49,11 @@ impl<T: Transport<RoleClient, Error = io::Error>> Transport<RoleClient> for Reco
         let wire = serde_json::to_value(&item).map_err(io::Error::other);
         let permit = match &wire {
             Ok(value)
-                if value["method"] == "tools/call" && value["params"]["name"] != "describe" =>
+                if value["method"] == "tools/call"
+                    && !matches!(
+                        value["params"]["name"].as_str(),
+                        Some("describe" | "estimate")
+                    ) =>
             {
                 Some(self.gate.lock().unwrap_or_else(|e| e.into_inner()).take())
             }
@@ -357,5 +361,104 @@ mod tests {
             gate.lock().unwrap().is_none(),
             "own unused authorization must be revoked"
         );
+    }
+    #[tokio::test]
+    async fn reserved_controls_leave_staged_dispatch_and_association_untouched() {
+        let dir = tempfile::tempdir().unwrap();
+        let assets = AssetStore::open(&dir.path().join("Library")).unwrap();
+        let store = AttemptStore::new(assets.database.clone());
+        let request: Submission = serde_json::from_value(json!({"id":"run","tool":"fixture","action":"op","revision":"r","params":{},"images":{}})).unwrap();
+        store
+            .create(request, json!({}), json!({}), json!({}))
+            .await
+            .unwrap();
+        let gate = Gate::default();
+        let (written, observed) = tokio::sync::watch::channel(false);
+        *gate.lock().unwrap() = Some(Permit {
+            discovery: Arc::new(tokio::sync::Mutex::new(())).lock_owned().await,
+            id: "run".into(),
+            store: store.clone(),
+            action: "op".into(),
+            arguments: json!({}),
+            generation: 0,
+            written,
+        });
+        let association = Arc::new(Mutex::new(super::super::association::ProgressAssociation {
+            request: "run".into(),
+            token: Some(json!(41)),
+            ..Default::default()
+        }));
+        let wire = Wire::default();
+        let sent = wire.0.clone();
+        let mut transport = RecordedTransport {
+            inner: wire,
+            gate: gate.clone(),
+            association: association.clone(),
+            generation: Arc::new(AtomicU64::new(0)),
+        };
+        for (id, name) in [(1, "estimate"), (2, "describe")] {
+            transport.send(serde_json::from_value(json!({"jsonrpc":"2.0","id":id,"method":"tools/call","params":{"name":name,"arguments":{},"_meta":{"progressToken":99}}})).unwrap()).await.unwrap();
+            assert!(gate.lock().unwrap().is_some());
+            assert!(!*observed.borrow());
+            assert!(store.get("run").await.unwrap().wire.is_none());
+            assert_eq!(association.lock().unwrap().token, Some(json!(41)));
+        }
+        let action = json!({"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"op","arguments":{},"_meta":{"table-manners/client_run_id":"run","progressToken":42}}});
+        transport
+            .send(serde_json::from_value(action.clone()).unwrap())
+            .await
+            .unwrap();
+        assert_eq!(store.get("run").await.unwrap().wire, Some(action));
+        assert!(*observed.borrow());
+        assert_eq!(association.lock().unwrap().token, Some(json!(42)));
+        assert_eq!(sent.lock().unwrap().len(), 3);
+        for name in ["estimate_more", "Describe", "other_action"] {
+            assert!(transport.send(serde_json::from_value(json!({"jsonrpc":"2.0","id":4,"method":"tools/call","params":{"name":name,"arguments":{}}})).unwrap()).await.is_err());
+        }
+        assert_eq!(sent.lock().unwrap().len(), 3);
+        assert_eq!(store.history(None, 50, None, None).await.unwrap().len(), 1);
+        assets.database.shutdown().await.unwrap();
+    }
+    #[tokio::test]
+    async fn reserved_estimate_control_reaches_independent_peer_without_a_dispatch_permit() {
+        let dir = tempfile::tempdir().unwrap();
+        use crate::tools::{client::ToolClient, registration::Descriptor};
+        let repository = std::path::Path::new(env!("CARGO_MANIFEST_DIR"));
+        assert!(
+            std::process::Command::new(env!("CARGO"))
+                .args(["build", "--locked", "--example", "sample-lab"])
+                .current_dir(repository)
+                .status()
+                .unwrap()
+                .success()
+        );
+        let mut client = ToolClient::spawn(Descriptor {
+            config: None,
+            id: "fixture".into(),
+            executable: repository.join("target/debug/examples/sample-lab"),
+            args: vec![
+                dir.path().join("runs").display().to_string(),
+                "v03-ready".into(),
+            ],
+            cwd: dir.path().to_owned(),
+            roots: vec![dir.path().to_owned()],
+        })
+        .unwrap();
+        client.initialize().await.unwrap();
+        client.describe().await.unwrap();
+        let request = serde_json::from_value(json!({"method":"tools/call","params":{"name":"estimate","arguments":{"action":"price_test","arguments":{"label":"Transport control probe","max_spend_usd":0.5}}}})).unwrap();
+        let response = tokio::time::timeout(
+            std::time::Duration::from_secs(5),
+            client.peer().unwrap().send_request(request),
+        )
+        .await;
+        let runs = client.read_resource("sample-lab://runs").await;
+        assert!(client.close().await.unwrap());
+        let response = serde_json::to_value(response.unwrap().unwrap()).unwrap();
+        assert_eq!(response["structuredContent"]["allowed"], true);
+        let runs: serde_json::Value =
+            serde_json::from_str(runs.unwrap()["contents"][0]["text"].as_str().unwrap()).unwrap();
+        assert!(runs["runs"].as_array().unwrap().is_empty());
+        assert!(!dir.path().join("runs/calls.ndjson").exists());
     }
 }

@@ -329,12 +329,16 @@ async fn a_cancelled_child_that_exits_later_does_not_hold_the_reservation() {
     }
     c.cancel("attempt-1").await.unwrap();
     assert!(!c.try_quit().await);
-    tokio::time::sleep(std::time::Duration::from_millis(900)).await;
-    assert!(
-        !c.snapshot().await.unwrap()["tools"][0]["busy"]
+    tokio::time::timeout(std::time::Duration::from_secs(4), async {
+        while c.snapshot().await.unwrap()["tools"][0]["busy"]
             .as_bool()
             .unwrap()
-    );
+        {
+            tokio::time::sleep(std::time::Duration::from_millis(20)).await;
+        }
+    })
+    .await
+    .expect("cancelled child's completed cleanup must release its reservation");
     assert!(c.try_quit().await);
     let saved = c.attempts.get("attempt-1").await.unwrap();
     if saved.execution == "cancelled" {
