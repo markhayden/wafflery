@@ -46,16 +46,19 @@ pub fn execute(
         "session_id":state.lock().unwrap().session["id"],"client_run_id":params["_meta"]["table-manners/client_run_id"]});
     run["started"] = json!(now());
     run["finished"] = Value::Null;
-    run["images"]["in"] =
-        json!([{"slot":"source","role":"source","image":arguments["source"]["expect"]}]);
-    for image in arguments["references"].as_array().into_iter().flatten() {
-        run["images"]["in"]
-            .as_array_mut()
-            .unwrap()
-            .push(json!({"slot":"references","role":"reference","image":image["expect"]}));
+    let roots = state.lock().unwrap().allow_dirs.clone();
+    let resolved = super::scenarios::prepare_images(arguments, &roots);
+    let input_error = resolved.as_ref().err().map(ToString::to_string);
+    run["images"]["in"] = resolved
+        .map(|(images, _, _)| images)
+        .unwrap_or_else(|_| json!([]));
+    let mut effective =
+        json!({"model":"offline-script","config_identity":format!("sha256:{}","1".repeat(64))});
+    if label == "paid-stale" {
+        effective["model"] = json!("changed-script");
     }
     run["notes"] = json!(["Synthetic spending observation; no provider or charge."]);
-    fs::write(directory.join("run.json"), run.to_string()).unwrap();
+    super::result_file::publish(&directory.join("run.json"), &run).unwrap();
     state.lock().unwrap().runs.push(run.clone());
     writeln!(
         OpenOptions::new()
@@ -75,13 +78,7 @@ pub fn execute(
             "progressToken":token,"progress":1,"message":"Checking synthetic spending limits","_meta":{"table-manners/run":reference}}}),
         );
     }
-    let effective =
-        json!({"model":"offline-script","config_identity":format!("sha256:{}","1".repeat(64))});
     let session = state.lock().unwrap().session.clone();
-    let mut effective = effective;
-    if label == "paid-stale" {
-        effective["model"] = json!("changed-script");
-    }
     let binding = estimates::binding(arguments, &run["tool"], &effective, &session);
     let mut ledger = state.lock().unwrap();
     let stale = params["_meta"]
@@ -101,7 +98,9 @@ pub fn execute(
         });
     let cap = arguments["max_spend_usd"].as_f64().unwrap_or(0.0);
     let remaining = ledger.session["remaining_usd"].as_f64().unwrap();
-    let error = if stale {
+    let error = if let Some(reason) = input_error.as_deref() {
+        Some(("invalid", "input", reason))
+    } else if stale {
         Some((
             "invalid",
             "stale_estimate",
@@ -156,7 +155,7 @@ pub fn execute(
         ),
     )
     .unwrap();
-    fs::write(directory.join("run.json"), run.to_string()).unwrap();
+    super::result_file::publish(&directory.join("run.json"), &run).unwrap();
     *ledger
         .runs
         .iter_mut()

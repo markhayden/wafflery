@@ -1801,8 +1801,16 @@ and 2 asset tests, Storybook, check-ui, release build and 226 browser tests (8 o
 **Following preparation slice — paid input resolution:** `testkit/paid.rs`, `tests/fake_wire.rs`,
 and this plan. Share actual grant, image/frame and fingerprint checks before any synthetic provider
 reservation. The regression already demonstrated that a mismatched fingerprint was accepted;
-its fix/test are held separately until the free-task slice merges. No live host behavior changes
-or additional version support is introduced by either slice.
+the free-task slice merged at `0ac13bc`, and the isolated paid regression fails on that revision.
+The paid path now records actual resolved references (including when no `expect` is supplied)
+and refuses mismatches before reserving or charging synthetic spend. An input failure takes
+precedence over a stale estimate when both apply. Running and terminal snapshots now use the
+shared atomic result writer; paid cancellation recovery is repeated before the full matrix.
+No live host behavior changes or additional version support is introduced by either slice.
+Both new regressions fail against the old implementation and pass with the shared resolver.
+Review approved the final three-file slice. Twenty paid cancellation repetitions passed, followed
+by the full matrix: fmt, clippy, 362 Rust tests (4 opt-in ignored), 55 UI unit tests, 2 asset tests,
+Storybook, reproducible check-ui builds, release build and 226 browser tests (8 opt-in skipped).
 
 **Checkpoint A file-budget exception (owner/coordinator, 2026-11-02):** one atomic final mechanical
 cutover commit may exceed five authored files. List its exact files here before building it. It may

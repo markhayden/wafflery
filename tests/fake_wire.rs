@@ -454,3 +454,67 @@ fn rejected_inputs_stay_invalid_when_cancelled_before_the_run_is_saved() {
             .is_err()
     );
 }
+
+#[test]
+fn paid_fake_checks_actual_source_and_reference_images_before_reserving_spend() {
+    for slot in ["source", "references"] {
+        let temp = tempfile::tempdir().unwrap();
+        let source = temp.path().join("source.png");
+        std::fs::write(&source, include_bytes!("../ui/tests/fixtures/sample.png")).unwrap();
+        let bad = json!({"path":source,"expect":{"file_sha256":"0".repeat(64),"width":160,"height":100,"projection":"flat","topology":"bounded"}});
+        let mut args =
+            json!({"source":{"path":source},"label":"paid input validation","max_spend_usd":0.5});
+        args[slot] = if slot == "references" {
+            json!([bad])
+        } else {
+            bad
+        };
+        let mut peer = Peer::start(temp.path(), "estimates");
+        peer.initialize();
+        let response = peer.call(
+            3,
+            "tools/call",
+            json!({"name":"price_test","arguments":args}),
+        );
+        let run = &response["result"]["structuredContent"];
+        assert_eq!(run["status"], "invalid", "{response}");
+        assert_eq!(run["error"]["code"], "input");
+        assert_eq!(run["spend"]["usd"], 0);
+        assert!(run["images"]["in"].as_array().unwrap().is_empty());
+        let response = peer.call(4, "resources/read", json!({"uri":"sample-lab://session"}));
+        let session: Value =
+            serde_json::from_str(response["result"]["contents"][0]["text"].as_str().unwrap())
+                .unwrap();
+        assert_eq!(session["spent_usd"], 0);
+        assert_eq!(session["reserved_usd"], 0);
+    }
+}
+
+#[test]
+fn paid_fake_records_resolved_image_identity_without_a_caller_expectation() {
+    use sha2::{Digest, Sha256};
+    let temp = tempfile::tempdir().unwrap();
+    let source = temp.path().join("source.png");
+    let bytes = include_bytes!("../ui/tests/fixtures/sample.png");
+    std::fs::write(&source, bytes).unwrap();
+    let mut peer = Peer::start(temp.path(), "estimates");
+    peer.initialize();
+    let response = peer.call(
+        3,
+        "tools/call",
+        json!({"name":"price_test","arguments":{
+        "source":{"path":source},"label":"paid input identity","max_spend_usd":0.5}}),
+    );
+    let run = &response["result"]["structuredContent"];
+    assert_eq!(run["status"], "completed", "{response}");
+    let expected_hash: String = Sha256::digest(bytes)
+        .iter()
+        .map(|b| format!("{b:02x}"))
+        .collect();
+    assert_eq!(
+        run["images"]["in"][0]["image"],
+        json!({"file_sha256":expected_hash,
+        "width":160,"height":100,"projection":"flat","topology":"bounded"})
+    );
+    assert_eq!(run["spend"]["usd"], 0.08);
+}
