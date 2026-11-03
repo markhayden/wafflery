@@ -17,7 +17,7 @@
     "ui/src/api/reports.ts": "5241156e5e9c94f7a20b77310c2430a3e04c9294e98f6b3e1ae6ff0412c69083",
     "ui/src/api/session.ts": "216dfa6b5e809fcb0c1f97f1cf47850455646b1382826a2eb83c5fad475f96fb",
     "ui/src/api/tool-session.ts": "26adaf12701541325177e2bb4f4e6e3c23df1382e814190b7dbe217e4f72a545",
-    "ui/src/api/workspace.ts": "b9d49aa42b5f3854bbbb03fb3cde50b4d03e57c1295d158968bc8d84c991ed05",
+    "ui/src/api/workspace.ts": "f66d4246ffcf941c9e11385ecc2461755ece49771bc7b1bded4b90ccaf905de2",
     "ui/src/assets/wafflery-mark.svg": "51bc8a040e26b897a948238598b8cabdf69bf4687c2b1a70613b542de1c99f1f",
     "ui/src/components/Button.module.css": "ab2357148b3b415f5fbb33988a2aa3a97162ca357a119775a31d8dd390aef44e",
     "ui/src/components/Button.stories.tsx": "489b0b293bbeb9f5813829a79bc9e78c5ddffa0116d71b0582985750716136fa",
@@ -97,8 +97,8 @@
   },
   "outputs": {
     "assets/index-CHLkY-3o.css": "8f6189913e393554b7a3aa248c446f4687254ad2d01c02099d3086fc3799f802",
-    "assets/index-DJpPjQ5j.js": "1d79804711fc826782fca6d98381471a16144f1aff17d2857500d10c80d474bd",
+    "assets/index-kfbiakgZ.js": "252fcd374390d37dfb44af35eaf1856af51104fb9a3e39a162ac5f2e2c92e166",
     "assets/wafflery-mark-CML0EpfM.svg": "51bc8a040e26b897a948238598b8cabdf69bf4687c2b1a70613b542de1c99f1f",
-    "index.html": "a230f2ca30c7720cc3183dd5a31e7450ff1faaacb77ad3f0394e05b8fb4465cb"
+    "index.html": "0a453e0b2c49003ed6a384ca0a8ed18c42a74221eb77adcc4ee5200c8fdca9ed"
   }
 }

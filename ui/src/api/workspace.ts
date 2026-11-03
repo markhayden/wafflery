@@ -128,6 +128,14 @@ function savedImage(value: unknown): value is SavedImage {
     typeof value.role === "string"
   );
 }
+function normalizedSubmission(request: Submission) {
+  return {
+    ...request,
+    frames: request.frames === undefined ? {} : request.frames,
+    bindings: request.bindings === undefined ? {} : request.bindings,
+    lineage: request.lineage === undefined ? {} : request.lineage,
+  };
+}
 function sameJson(left: unknown, right: unknown): boolean {
   if (left === right) return true;
   if (Array.isArray(left)) return Array.isArray(right) && left.length === right.length &&
@@ -261,8 +269,7 @@ export function workspaceClient(api: LocalApi) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(request),
       });
-      if (saved.id !== request.id || !sameJson({...saved.request,frames:saved.request.frames ?? {}},
-        {...request,frames:request.frames ?? {}}))
+      if (saved.id !== request.id || !sameJson(normalizedSubmission(saved.request),normalizedSubmission(request)))
         throw new Error("The acknowledgement belongs to a different submission. Retry the original submission.");
       return saved;
     },

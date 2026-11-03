@@ -27,10 +27,33 @@ test("wrong paid acknowledgements fail without retrying or accepting another att
     (value:ReturnType<typeof response>) => { value.request.params.max_spend_usd = 2; },
     (value:ReturnType<typeof response>) => { value.request.images.references!.reverse(); },
     (value:ReturnType<typeof response>) => { value.request.frames = {references:[{projection:"flat",topology:"bounded"}]}; },
+    (value:ReturnType<typeof response>) => { value.request.bindings = {mask:[{kind:"artifact",reference:{identity:"injected"}}]}; },
+    (value:ReturnType<typeof response>) => { value.request.lineage = {mask:[{attempt:"injected",port:"mask",occurrence:0}]}; },
   ]) {
     const value = response(); change(value);
     const api = new Reply(value);
     await expect(workspaceClient(api).submitPrepared(request)).rejects.toThrow("different submission");
     expect(api.calls).toHaveLength(1);
+  }
+});
+test("empty optional binding and lineage maps match their omitted saved form",async()=>{
+  const submitted={...request,bindings:{},lineage:{}};
+  const value=response();
+  await expect(workspaceClient(new Reply(value)).submitPrepared(submitted)).resolves.toMatchObject(value);
+});
+test("binding order and lineage occurrence remain part of the exact paid acknowledgement",async()=>{
+  const origin={attempt:"source",port:"mask",occurrence:0};
+  const submitted:Submission={...request,bindings:{masks:[{kind:"artifact",reference:{identity:"one"}},{kind:"artifact",reference:{identity:"two"}}]},lineage:{masks:[origin,{...origin,occurrence:1}]}};
+  for(const field of ["bindings","lineage"] as const){
+    const value={...response(),request:structuredClone(submitted)};
+    value.request[field]!.masks!.reverse();
+    await expect(workspaceClient(new Reply(value)).submitPrepared(submitted)).rejects.toThrow("different submission");
+  }
+});
+
+test("null optional acknowledgement maps are not treated as omitted maps",async()=>{
+  for(const field of ["frames","bindings","lineage"]){
+    const value={...response(),request:{...request,[field]:null}};
+    await expect(workspaceClient(new Reply(value)).submitPrepared(request)).rejects.toThrow("different submission");
   }
 });

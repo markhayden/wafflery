@@ -2566,6 +2566,18 @@ adapter tests; existing host image preparation tests exercise the resulting owne
 No provider calls were made. Hosted CI is the full gate. Native export/import and retained native
 bytes remain M5.10 onward; checkpoint C is the independent-reference loop, not a portable bundle.
 
+**CI correction after checkpoint C:** hosted run 41568546122 exposed a paid acknowledgement
+regression from additive port bindings: the browser sent an empty bindings map, while serde omitted
+it in the saved response. Exact comparison mistook that accepted run for an uncertain acknowledgement.
+The comparison now normalizes only the three optional empty maps (frames, bindings, lineage);
+nonempty values, list order, origins, parameters and IDs remain exact. Regression tests cover omitted
+maps and changed binding/lineage order. Workspace input/run changes now include every paid-*.spec.ts
+in targeted browser verification, as a coordinator process update. The downloaded failure artifacts
+confirm the saved runs existed while the browser displayed a mismatched-acknowledgement alert.
+All 34 paid browser cases passed across Chromium/WebKit; 5 acknowledgement unit tests, UI typecheck
+and clippy passed. Null maps are rejected, and changed list order/lineage still fails exact matching.
+Hosted CI remains the full gate.
+
 #### M5.10 — Store native bytes with reference-aware ownership
 
 - [ ] Add a bounded opaque blob store and versioned library links for native exports, artifact
