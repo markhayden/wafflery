@@ -3208,16 +3208,16 @@ archive fingerprint is unchanged.
 
 #### M5.20 — Replay chains using fresh outputs
 
-- [ ] Use M5.19's manifest resolver to map each earlier-output input to this replay's output port and
+- [x] Use M5.19's manifest resolver to map each earlier-output input to this replay's output port and
   occurrence, never the old identity; report nondeterministic changes. Missing/ambiguous outputs stop the chain before a consumer
   runs. Include shared location refs in this rule; location values remain literal inputs. Fresh image
   outputs are copied through owned assets into the granted staging directory before consumption, never
   passed directly from an evidence-only run directory. Maintain explicit host lineage without modifying
   the contract bundle format.
-- [ ] Present ordered step progress in the shared drawer. Each step becomes its own ordinary attempt;
+- [x] Present ordered step progress in the shared drawer. Each step becomes its own ordinary attempt;
   paid steps require a fresh estimate and explicit Run review after their inputs are known. No blanket
   reuse of a cap approval, automatic retry or silent reconstruction after a failure.
-- [ ] Stop/cancel prevents later steps, retains completed evidence and spend, and offers explicit resume
+- [x] Stop/cancel prevents later steps, retains completed evidence and spend, and offers explicit resume
   from verified saved outputs. A session restart invalidates pending preparation normally.
 
 **Depends:** M5.18–19. **Areas:** bounded replay state machine, draft/dispatch adapter, progress drawer.
@@ -3244,7 +3244,7 @@ Ordinary Run claims a versioned source context; preparation and dispatch require
 bindings and lineage. Stop and new staging invalidate this review's pending preparations/quotes,
 without touching independent drafts or resetting a tool session. Staging/import work and completed
 runs' native preservation remain owned until settled, including Stop races. Fresh public profiles are
-normalized once per producer with one total budget on a blocking worker; port/item lookup preserves
+normalized once per producer with one shared fresh-output budget on a blocking worker; port/item lookup preserves
 new order and never searches for the old identity. Host-only replacements bypass stale internal
 imports, while unresolved external inputs remain explicit. The private HTTP/drawer integration is
 M5.20b; this core commit does not enable a background action loop.
@@ -3261,7 +3261,31 @@ bytes are bounded and reverified. Progress exposes settling ownership. Many-inpu
 each connected fresh value and its actual producer lineage; external values remain user-editable.
 Core image and operation-port lineage are merged. Opening historical attempts/examples removes live
 replay context, producing an independent draft. The private API and reordered-input tests pass; the
-shared drawer and full task verification are the final part of M5.20b.
+shared drawer exposes ordered per-step progress and explicit Stop/resume, and opens ordinary drafts.
+
+**Review decisions:** independent review found no blocker. The store already verifies saved archive
+size against `MAX_TOTAL` before returning its file, so replay cannot reserve arbitrary recorded sizes.
+Manifest edge resolution and fresh-output normalization each have a separate one-million-work budget;
+all fresh producers share the latter. Reviews contain only explicit user runs, with two live reviews
+and sixteen steps each; full attempt history remains visible until dismissal. Completion waits while
+the chosen tool is busy, conservatively including unrelated runs on that installation. Stop invalidates
+preparations before requesting cancellation; a cancellation delivery/storage error remains visible
+rather than claiming it succeeded. The UI observes completed input progress before opening a draft.
+If a restart makes a native resource unavailable, resume blocks with the resource refusal; start a new
+review to rerun producers. It never substitutes archived native bytes or silently repeats a producer.
+Leaving a chain explicitly stops its review. These are exploration sessions, not crash recovery.
+
+**Task verification:** the full locked Rust workspace suite, formatting, all-target clippy with
+warnings denied, UI typecheck and all 94 UI unit tests passed. Seven guided native integration cases
+cover the strict private API, fresh connected inputs, explicit many-port reordering, paid approval,
+Stop during staging and preservation, and resumed context invalidation. The fresh-output planner's
+five cases cover owned images, missing evidence, changed/many outputs and a shared search budget.
+All 134 targeted Chromium/WebKit cases passed across the new guided journey/drawer and existing
+paid, imports, bundles, chains and examples. Twenty new changed-output/stopped/settling/blocked/
+completed region snapshots and eight updated shared drawer snapshots cover desktop/mobile. Visual
+inspection confirmed controls and content fit both widths. Independent review found no blocker;
+its boundedness, resource-lifetime and UI-copy decisions are recorded above. A final 58-case unchanged-baseline
+Chromium/WebKit run passed under the same shared visual policy with no local retries.
 
 **Checkpoint F:** fresh-store single and multi-step replay pass the independent fake, including a
 nondeterministic producer. Remove replay entry points before reverting orchestration; stop active work

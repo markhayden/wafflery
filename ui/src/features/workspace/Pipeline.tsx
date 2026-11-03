@@ -1,3 +1,4 @@
+import type {ReplayStatus} from "../../api/chain-replays";
 import type {BundleUpload} from "../../api/bundle-imports";
 import {InvocationBundles} from "./InvocationBundles";
 import {CommandHandoff} from "./CommandHandoff";
@@ -11,10 +12,14 @@ export function Pipeline({
   attempt,
   api,
   onOpenImported,
+  onOpenChain,
+  activeReplayId,
 }: {
   attempt: Attempt;
   api: LocalApi;
   onOpenImported?:((upload:BundleUpload)=>Promise<void>)|undefined;
+  onOpenChain?:((status:ReplayStatus)=>Promise<void>)|undefined;
+  activeReplayId?:string|undefined;
 }) {
   const [view, setView] = useState<"bundle"|"command"|"invocation"|"call" | "setup" | "archive">("command");
   const [images, setImages] = useState(true),
@@ -94,7 +99,7 @@ export function Pipeline({
           Evidence archive
         </Button>
       </nav>
-      {view==="bundle"?<InvocationBundles api={api} attempt={attempt} onOpenImported={onOpenImported}/>:view==="command"?<CommandHandoff id={attempt.id} api={api} tool={attempt.declaration.document?.tool} maySpend={attempt.declaration.document?.actions.find(action=>action.name===attempt.request.action)?.cost.may_spend} revision={JSON.stringify([attempt.execution,!!attempt.result,attempt.preservation.contract])}/>:view==="invocation"?<section><pre aria-label="Pipeline invocation">{JSON.stringify(savedInvocation(attempt.result),null,2)}</pre></section>:view !== "archive" ? (
+      {view==="bundle"?<InvocationBundles api={api} attempt={attempt} onOpenImported={onOpenImported} onOpenChain={onOpenChain} activeReplayId={activeReplayId}/>:view==="command"?<CommandHandoff id={attempt.id} api={api} tool={attempt.declaration.document?.tool} maySpend={attempt.declaration.document?.actions.find(action=>action.name===attempt.request.action)?.cost.may_spend} revision={JSON.stringify([attempt.execution,!!attempt.result,attempt.preservation.contract])}/>:view==="invocation"?<section><pre aria-label="Pipeline invocation">{JSON.stringify(savedInvocation(attempt.result),null,2)}</pre></section>:view !== "archive" ? (
         <>
           <p>
             {view === "call"

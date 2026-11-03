@@ -956,3 +956,13 @@ distinct fresh value and actual producer lineage. Missing external inputs remain
 image-slot lineage and operation-port lineage are combined rather than overwriting each other.
 Opening history or examples strips the archived live replay context and creates an independent
 draft; it does not rejoin or advance a chain.
+
+
+Guided replay is exposed in the shared invocation-bundle drawer. Starting or preparing a review
+never dispatches an action. The current step opens the ordinary workspace with verified fresh inputs;
+after its Run is claimed the same context cannot submit another attempt. Continue chain observes the
+saved outcome and offers the next step. Stop and resume are explicit, and closing the drawer leaves
+owned work running. Leaving a chain stops the review and removes its live context from the draft.
+Paid steps clear archived caps and always use current-session preparation, estimate and explicit Run.
+The drawer renders loading, changed-output, blocked, settling, stopped and completed states with the
+shared controls and visual policy. No new component library or automatic pipeline runner is added.

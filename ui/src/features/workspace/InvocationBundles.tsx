@@ -1,7 +1,9 @@
+import {ChainReplays,ChainSetup} from "./ChainReplays";
+import type {ReplayStatus} from "../../api/chain-replays";
 import type {BundleUpload} from "../../api/bundle-imports";
 import {ChainDependencies,ChainSelection} from "./BundleChain";
 import {BundleImports} from "./BundleImports";
-import {useEffect,useMemo,useRef,useState} from "react";
+import {useEffect,useMemo,useRef,useState,type ReactNode} from "react";
 import {bundleClient,cliBundleTool,type BundleRecord,type BundleSummary} from "../../api/bundles";
 import type {LocalApi} from "../../api/client";
 import type {Attempt} from "../../api/workspace";
@@ -19,8 +21,10 @@ function choices(attempt?:Attempt):string[]{
  }).map(p=>p.name);
 }
 const fileSize=(bytes:number)=>bytes<1024*1024?`${(bytes/1024).toFixed(1)} KB`:`${(bytes/1024/1024).toFixed(2)} MiB`;
-export function InvocationBundles({api,attempt,onOpenImported}:{api:LocalApi;attempt?:Attempt;onOpenImported?:((upload:BundleUpload)=>Promise<void>)|undefined}){
+export function InvocationBundles({api,attempt,onOpenImported,onOpenChain,activeReplayId}:{api:LocalApi;attempt?:Attempt;onOpenImported?:((upload:BundleUpload)=>Promise<void>)|undefined;onOpenChain?:((status:ReplayStatus)=>Promise<void>)|undefined;activeReplayId?:string|undefined}){
  const client=useMemo(()=>bundleClient(api),[api]);const generation=useRef(0);
+ const [replayOpen,setReplayOpen]=useState(!!activeReplayId),[replayMounted,setReplayMounted]=useState(!!activeReplayId),[chosenReplay,setChosenReplay]=useState(activeReplayId);
+ function started(status:ReplayStatus){setChosenReplay(status.id);setReplayMounted(true);setReplayOpen(true);}
  const [importOpen,setImportOpen]=useState(false);const [chainOpen,setChainOpen]=useState(false);
  const [items,setItems]=useState<BundleSummary[]>([]),[cursor,setCursor]=useState<number|null>(null),[selected,setSelected]=useState<BundleRecord>(),[busy,setBusy]=useState(true),[notice,setNotice]=useState(""),[omit,setOmit]=useState<string[]>([]);
  useEffect(()=>{
@@ -42,8 +46,9 @@ export function InvocationBundles({api,attempt,onOpenImported}:{api:LocalApi;att
  const omittable=choices(attempt);const ready=!!attempt?.result&&object(object(attempt.result)?.invocation)!==undefined&&attempt.preservation.contract!=="pending"&&attempt.preservation.native!=="preserving";
  return <section className={styles.bundles} aria-label="Invocation bundles">
   <p>Invocation bundles carry the recorded call and its exact preserved inputs. They are separate from evidence archives. Saving or downloading one never runs a tool.</p>
-  <details onToggle={event=>setImportOpen(event.currentTarget.open)}><summary>Import an invocation bundle</summary>{importOpen&&<BundleImports api={api} onOpen={onOpenImported}/>}</details>
+  <details onToggle={event=>setImportOpen(event.currentTarget.open)}><summary>Import an invocation bundle</summary>{importOpen&&<BundleImports api={api} onOpen={onOpenImported} onChainStarted={started}/>}</details>
   <details onToggle={event=>{if(event.currentTarget.open)setChainOpen(true);}}><summary>Build a bundle from saved runs</summary>{chainOpen&&<ChainSelection key={attempt?.id??"library"} api={api} disabled={busy} onBusy={setBusy} onSaved={async record=>{const current=generation.current;setSelected(record);const page=await client.list(attempt?.id);if(current===generation.current){setItems(page.items);setCursor(page.cursor);}}}/>}</details>
+  <details open={replayOpen} onToggle={event=>{setReplayOpen(event.currentTarget.open);if(event.currentTarget.open)setReplayMounted(true);}}><summary>Chain reviews</summary>{replayMounted&&<ChainReplays api={api} activeId={chosenReplay} onOpen={onOpenChain}/>}</details>
   {attempt&&<fieldset disabled={busy}><legend>New bundle from this saved run</legend>
    <p>Inputs are included by default. Omitting a whole slot or port makes the bundle workspace-dependent. Shared location values remain in the recorded invocation.</p>
    {omittable.map(name=><label key={name}><input type="checkbox" checked={!omit.includes(name)} onChange={e=>setOmit(previous=>e.target.checked?previous.filter(v=>v!==name):[...previous,name])}/> Include {name} inputs</label>)}
@@ -54,16 +59,16 @@ export function InvocationBundles({api,attempt,onOpenImported}:{api:LocalApi;att
   {!!items.length&&<section aria-label="Saved bundle list"><h3>{attempt?"Bundles linked to this run":"Saved bundles"}</h3><ul>{items.map(item=><li key={item.id}><Button disabled={busy} aria-pressed={selected?.id===item.id} onClick={()=>void open(item.id)}>Review {item.tool.name} / {item.action} · {item.id.slice(0,8)}</Button><span>{item.workspace_dependent?"Workspace-dependent":"Inputs included"} · {fileSize(item.size)}</span></li>)}</ul></section>}
   {!busy&&items.length===0&&<p>No invocation bundles are linked{attempt?" to this run":" in this library"}.</p>}
   {cursor!==null&&<Button disabled={busy} onClick={()=>void more()}>Load older bundles</Button>}
-  {selected&&<BundleReview bundle={selected} busy={busy} onDownload={()=>void download()}/>}
+  {selected&&<BundleReview bundle={selected} busy={busy} onDownload={()=>void download()}>{selected.manifest.steps.length>1&&<ChainSetup api={api} record={selected} onStarted={started}/>}</BundleReview>}
   {notice&&<p role="status">{notice}</p>}
  </section>;
 }
-export function BundleReview({bundle,busy=false,onDownload}:{bundle:BundleRecord;busy?:boolean;onDownload:()=>void}){
+export function BundleReview({bundle,busy=false,onDownload,children}:{bundle:BundleRecord;busy?:boolean;onDownload:()=>void;children?:ReactNode}){
  const cli=cliBundleTool(bundle.manifest,bundle.chain);const requirements=[...new Set(bundle.manifest.steps.flatMap(s=>s.invocation.requirements))];
  return <section className={styles.review} aria-label="Saved bundle review">
   <header><h3>{bundle.workspace_dependent?"Workspace-dependent bundle":"Inputs included"}</h3><p>Saved bundle · {bundle.id.slice(0,12)} · {fileSize(bundle.size)}</p></header>
   <p>{bundle.workspace_dependent?"Some inputs still need the original store or an explicitly supplied replacement. This bundle cannot be replayed as-is.":"Original input bytes and supported native exports are included. Install/configure the named tool and provide its requirements separately. Model judgments may change on replay."}</p>
-  <ChainDependencies bundle={bundle}/>
+  <ChainDependencies bundle={bundle}/>{children}
   <section aria-label="Bundle files"><h4>Included files</h4><ul><li><code>invocation.json</code> · Original invocation and result</li>{bundle.members.map(member=><li key={member.name}><code title={member.name} aria-label={member.name}>{member.name.replace(/([a-f0-9]{12})[a-f0-9]{52}/g,"$1…")}</code><span>{fileSize(member.bytes)} · {member.sha256.slice(0,12)}</span></li>)}</ul></section>
   <section><h4>Requirements</h4>{requirements.length?<ul>{requirements.map(name=><li key={name}>{name}</li>)}</ul>:<p>No additional requirements were recorded.</p>}<p>Credentials and tool configuration contents are not included. Replay uses the current tool session and requires fresh estimates and caps for paid actions.</p></section>
   {bundle.manifest.steps.map((step,index)=><section key={index} aria-label={`Bundle step ${index+1}`}><h4>{index+1}. {step.tool.name} / {step.invocation.action}</h4><p>Recorded tool version {step.tool.version}</p>

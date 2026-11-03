@@ -1,3 +1,4 @@
+import {chainReplays,type ReplayStatus} from "../../api/chain-replays";
 import {BundleSource} from "./BundleSource";
 import {importedDraft,type UnresolvedInput} from "./bundle-replay";
 import {bundleClient} from "../../api/bundles";
@@ -7,7 +8,7 @@ import {InvocationBundles} from "./InvocationBundles";
 import {useArtifactRestore} from "./useArtifactRestore";
 import {NativePreservation} from "./NativePreservation";
 import {useSavedArtifacts} from "./useSavedArtifacts";
-import {compatibleDestinations,transferBinding,encodePortBindings,savedSources,type ArtifactSource} from "./artifact-transfer";
+import {compatibleDestinations,transferBinding,encodePortBindings,encodeWorkspaceInputs,savedSources,type ArtifactSource} from "./artifact-transfer";
 import {ArtifactOutputs} from "./ArtifactOutputs";
 import {artifactOccurrences} from "./artifacts";
 import {PortEditor} from "../actions/PortEditor";
@@ -47,7 +48,7 @@ import {
   object,
   type Schema,
 } from "../actions/model";
-import { encodeSelection, restoreSelection, type ImageSelection } from "../actions/selection";
+import { restoreSelection, type ImageSelection } from "../actions/selection";
 import { ActionForm } from "../actions/ActionForm";
 import { Button } from "../../components/Button";
 import { Picker } from "../../components/Picker";
@@ -201,13 +202,13 @@ export function Workspace({
     void client
       .attempt(id)
       .then((attempt) => {
-        const restored = restoreSelection(attempt.inputs);
+        const restored = restoreSelection(attempt.inputs,attempt.request.lineage);
         setDraftRevision((value) => value + 1);
         setDraftExample(undefined);setUnresolvedImport([]);
         setToolId(attempt.request.tool);
         setActionId(attempt.request.action);
         setParams(structuredClone(attempt.request.params));
-        setBundleOrigin(attempt.request.source_bundle);
+        setBundleOrigin(attempt.request.source_bundle?{id:attempt.request.source_bundle.id,step:attempt.request.source_bundle.step}:undefined);
         setImages(attempt.declaration.document.actions.find(a=>a.name===attempt.request.action)?.kind === "operation" ? {} : restored);
         setPortBindings(Object.fromEntries(Object.entries(attempt.request.bindings??{}).map(([port,items])=>[port,items.map((item,index)=>({...structuredClone(item),...(attempt.request.lineage?.[port]?.[index]?{origin:attempt.request.lineage[port]![index]!}:{} )}))])));
         setBindingIssues([]);
@@ -239,9 +240,9 @@ export function Workspace({
       setDraftRevision(value=>value+1);
       setToolId(receiving.id);setActionId(example.request.action);
       setParams(structuredClone(example.request.params));
-      setImages(current.document.actions.find(action=>action.name===example.request.action)?.kind==="operation"?{}:restoreSelection(example.inputs));
+      setImages(current.document.actions.find(action=>action.name===example.request.action)?.kind==="operation"?{}:restoreSelection(example.inputs,example.request.lineage));
       setPortBindings(bindings);setBindingIssues([]);setSelectedId(null);setSelected(undefined);
-      setDraftExample(example);setBundleOrigin(example.request.source_bundle);setUnresolvedImport([]);setError(undefined);submitted.current=null;
+      setDraftExample(example);setBundleOrigin(example.request.source_bundle?{id:example.request.source_bundle.id,step:example.request.source_bundle.step}:undefined);setUnresolvedImport([]);setError(undefined);submitted.current=null;
     }finally{setBusy(false);}
   }
   async function openImportedBundle(upload:BundleUpload) {
@@ -250,9 +251,13 @@ export function Workspace({
     try {
       const latest=await bundleImports(api).read(upload.id),status=latest.import;
       if(!status||latest.record.id!==upload.record.id||status.step!==upload.import?.step||status.tool!==upload.import?.tool)throw Error("Import progress changed. Reopen the review before opening a draft.");
+      await installImportedDraft(latest,status.tool);
+    }finally {setBusy(false);}
+  }
+  async function installImportedDraft(latest:BundleUpload,receiving:string) {
       await bundleClient(api).read(latest.record.id);
-      const current=await client.refresh(status.tool);
-      const draft=await importedDraft(latest,status.tool,current,assets.metadata);
+      const current=await client.refresh(receiving);
+      const draft=await importedDraft(latest,receiving,current,assets.metadata);
       const saved=await assets.list();
       await updateSnapshot();
       setToolId(draft.tool);setActionId(draft.action);setParams(draft.params);
@@ -261,7 +266,21 @@ export function Workspace({
       setBundleOrigin(draft.source);setUnresolvedImport(draft.unresolved);setDraftExample(undefined);
       setSelectedId(null);setSelected(undefined);setError(undefined);submitted.current=null;
       setDraftRevision(value=>value+1);setDrawer(null);
-    }finally {setBusy(false);}
+  }
+  async function openChainStep(status:ReplayStatus) {
+    if(busy||cost.submission||working)throw Error("Finish or resolve the current submission before opening a chain step.");
+    setBusy(true);
+    try {
+      const latest=await chainReplays(api).read(status.id);
+      if(latest.phase!=="awaiting_run"||latest.generation!==status.generation||latest.step!==status.step||!latest.import)throw Error("Chain progress changed. Reopen its current step review.");
+      const record=await bundleClient(api).read(latest.bundle);
+      await installImportedDraft({id:latest.id,record,import:latest.import},latest.import.tool);
+    }finally{setBusy(false);}
+  }
+  async function leaveChain() {
+    if(!bundleOrigin?.replay||busy||working||cost.submission)return;
+    setBusy(true);try{await chainReplays(api).stop(bundleOrigin.replay.id);setBundleOrigin({id:bundleOrigin.id,step:bundleOrigin.step});setDraftRevision(v=>v+1);submitted.current=null;}
+    catch(error){setError(error instanceof Error?error.message:String(error));}finally{setBusy(false);}
   }
   function canResolveImport(name:string) {
     const imageSlot=action?.kind!=="operation"?action?.images?.find(slot=>slot.slot===name):undefined;
@@ -303,7 +322,7 @@ export function Workspace({
   }
   async function run(retry = false) {
     if (busy) return;
-    if (!retry && (!action || !declaration)) return;
+    if (!retry && (!action || !declaration || chainClaimed)) return;
     if (!retry && (cost.submission || (action?.cost.may_spend && !cost.canRun))) return;
     if(portImporting||unresolvedImport.length)return;
     setError(undefined);
@@ -319,18 +338,14 @@ export function Workspace({
       if (!action || !declaration) return;
       const portError=validatePorts(inputPorts,portBindings);if(portError){const invalid=inputPorts.find(port=>validatePorts([port],portBindings));if(invalid)document.querySelector<HTMLElement>(`[data-port="${CSS.escape(invalid.name)}"]`)?.focus();throw new Error(portError);}
       setBindingIssues([]);
-      const {images: bindings, frames} = encodeSelection(
-        declaration.document.contract, action.images ?? [], images,
-      );
+      const inputs = encodeWorkspaceInputs(declaration.document.contract, action.images ?? [], images,portBindings);
       const body = JSON.stringify({
         tool: toolId,
         action: actionId,
         revision: declaration.revision,
         params,
         ...(bundleOrigin?{source_bundle:bundleOrigin}:{}),
-        images: bindings,
-        ...encodePortBindings(portBindings),
-        frames,
+        ...inputs,
       });
       if (submitted.current?.body !== body)
         submitted.current = {
@@ -342,9 +357,7 @@ export function Workspace({
             revision: declaration.revision,
             params: structuredClone(params),
             ...(bundleOrigin?{source_bundle:bundleOrigin}:{}),
-            images: bindings,
-            ...encodePortBindings(portBindings),
-            frames,
+            ...inputs,
           },
         };
       const attempt = await client.submit(submitted.current.request);
@@ -366,20 +379,21 @@ export function Workspace({
   }
   const estimateKey = JSON.stringify({toolId,actionId,revision:declaration?.revision,sessionId,restarting,
     draftRevision,estimateEditRevision,params,portBindings,bundleOrigin,unresolvedImport,images:Object.fromEntries(Object.entries(images).map(([slot,items]) =>
-      [slot,items.map(image => ({id:image.id,coordinates:image.coordinates}))]))});
+      [slot,items.map(image => ({id:image.id,coordinates:image.coordinates,origin:image.origin}))]))});
   const cost = useEstimateDraft(api, estimateKey, typeof sessionId === "string" && !restarting ? sessionId : undefined, () => {
     if (!declaration || !action?.cost.may_spend) throw new Error("Choose a paid action before estimating.");
     if(unresolvedImport.length)throw new Error("Resolve imported inputs explicitly before estimating.");
     const cap = positiveCap(params.max_spend_usd);
     if (cap === undefined) throw new Error("Choose a positive spending cap before estimating.");
     const portError=validatePorts(inputPorts,portBindings);if(portError){const invalid=inputPorts.find(port=>validatePorts([port],portBindings));if(invalid)document.querySelector<HTMLElement>(`[data-port="${CSS.escape(invalid.name)}"]`)?.focus();throw new Error(portError);}
-    const bindings = encodeSelection(declaration.document.contract, action.images ?? [], images);
+    const bindings = encodeWorkspaceInputs(declaration.document.contract, action.images ?? [], images,portBindings);
     return {id:crypto.randomUUID(),tool:toolId,action:actionId,revision:declaration.revision,
-      params:{...structuredClone(params),max_spend_usd:cap},...(bundleOrigin?{source_bundle:bundleOrigin}:{}),...bindings,...encodePortBindings(portBindings)};
+      params:{...structuredClone(params),max_spend_usd:cap},...(bundleOrigin?{source_bundle:bundleOrigin}:{}),...bindings};
   }, updateSnapshot);
   let costSession;
   try { costSession = parseToolSession(declaration?.tool_session); } catch { /* No fabricated allowance. */ }
   const capText = typeof params.max_spend_usd === "string" || typeof params.max_spend_usd === "number" ? String(params.max_spend_usd) : "";
+  const chainClaimed=!!bundleOrigin?.replay&&selected?.request.source_bundle?.replay?.id===bundleOrigin.replay.id&&selected?.request.source_bundle?.replay?.generation===bundleOrigin.replay.generation;
   const noRun = selected?.execution === "rejected";
   const setupTool = snapshot.tools.find(tool => tool.id === setupToolId);
   const setupDeclaration = setupTool?.declaration;
@@ -443,7 +457,7 @@ export function Workspace({
             tabIndex={0}
             key={draftRevision}
           >
-            {bundleOrigin&&<BundleSource api={api} source={bundleOrigin} attempt={selected} unresolved={unresolvedImport} canResolve={canResolveImport} resolve={name=>setUnresolvedImport(values=>values.filter(value=>value.name!==name))}/>}
+            {bundleOrigin&&<BundleSource api={api} source={bundleOrigin} attempt={selected} unresolved={unresolvedImport} canResolve={canResolveImport} resolve={name=>setUnresolvedImport(values=>values.filter(value=>value.name!==name))} onContinue={opener=>setDrawer({opener,view:"bundles"})} onLeave={()=>void leaveChain()} leaveDisabled={busy||!!working||!!cost.submission} claimed={chainClaimed}/>}
             {draftExample && (
               <p className={styles.note}>
                 From example: {draftExample.name}{draftExample.workspace_dependent?" · Workspace-dependent":""}
@@ -502,7 +516,7 @@ export function Workspace({
               onCapChange={value => setParams(current => ({...current,max_spend_usd:value}))}
               onEstimate={() => { void cost.estimate(); }}
               onSetup={opener => setDrawer({opener,view:"setup"})}
-              disabled={busy || unresolvedImport.length>0 || !!cost.submission || restarting || typeof sessionId !== "string"}
+              disabled={chainClaimed || busy || unresolvedImport.length>0 || !!cost.submission || restarting || typeof sessionId !== "string"}
               {...(costSession ? {session:costSession} : {})} />}
             {cost.submission === "uncertain" && <div role="status">
               <p>The submission was not acknowledged. Retry sends the original reviewed inputs with
@@ -521,7 +535,7 @@ export function Workspace({
               type="submit"
               busy={busy}
               disabled={
-                portImporting || unresolvedImport.length>0 || !action ||
+                chainClaimed || portImporting || unresolvedImport.length>0 || !action ||
                 (action.cost.may_spend && !cost.canRun) ||
                 !!cost.submission ||
                 restarting ||
@@ -717,7 +731,7 @@ export function Workspace({
                   : ""
         }
       >
-        {drawer?.view === "bundles" ? <InvocationBundles api={api} onOpenImported={openImportedBundle}/> : drawer?.view === "setup" ? (
+        {drawer?.view === "bundles" ? <InvocationBundles api={api} onOpenImported={openImportedBundle} onOpenChain={openChainStep} activeReplayId={bundleOrigin?.replay?.id}/> : drawer?.view === "setup" ? (
           <>
             {setupRestarting ? <p role="status">Checking the replacement session…</p> : setupDeclaration && setupAction ? (
               <ToolSetup
@@ -741,7 +755,7 @@ export function Workspace({
             onOpen={openExample}
           />
         ) : drawer?.view === "pipeline" && selected ? (
-          <Pipeline attempt={selected} api={api} onOpenImported={openImportedBundle} />
+          <Pipeline attempt={selected} api={api} onOpenImported={openImportedBundle} onOpenChain={openChainStep} activeReplayId={bundleOrigin?.replay?.id} />
         ) : drawer?.view === "cleanup" ? (
           <Cleanup
             api={api}
