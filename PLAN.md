@@ -2990,6 +2990,18 @@ UI assets were rebuilt. The host fixture CI correction is included as its separa
 **Checkpoint E:** single-run invocation and bundle are reviewable, stable, and labelled accurately.
 Rollback can remove new export routes without deleting already downloaded files or retained evidence.
 
+**Hosted startup diagnostic follow-up (2026-11-02):** checkpoint E's local full Rust workspace
+suite, clippy/typecheck and both-engine browser checks passed before `516785a` was marked ready.
+Hosted run 41590851643 then failed the grants integration test during discovery, before any run.
+M5.14–16 changed no declaration validation or probe logic. The generic description lookup hid the
+recorded startup error. The failing assertion now reports that specific error and the grant-case
+variant, and closes the owned host before panicking; it prints no full snapshots, calls, inputs,
+configuration or credentials. This is diagnostic instrumentation, not a claimed root-cause fix.
+One hundred isolated grants runs, eighty four-way concurrent full-spec runs, the full Rust workspace
+suite and an additional CI-environment `--all-targets` run all passed locally. Independent review
+approved the diagnostic-only change. A repeated hosted failure will now distinguish actual schema,
+spawn, transport or probe-close failures. No schema relaxation, retry or timeout change was made.
+
 #### M5.17 — Validate bundles before importing
 
 - [ ] Parse uploaded bundles with bounded uncompressed archive validation: safe member names, regular

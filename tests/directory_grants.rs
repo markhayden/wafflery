@@ -191,7 +191,17 @@ async fn host_grants_only_staging_and_explicit_inputs_and_reads_only_evidence() 
             "evidence_dirs":if read_outputs { json!([tool]) } else { json!([]) }}))
         .unwrap();
         let host = Arc::new(Coordinator::open(assets, vec![descriptor]).await.unwrap());
-        let description = host.description("unrelated").await.unwrap();
+        let description = match host.description("unrelated").await {
+            Ok(description) => description,
+            Err(error) => {
+                let snapshot = host.snapshot().await.unwrap();
+                let diagnostic = snapshot["tools"][0]["error"].clone();
+                let _ = host.close().await;
+                panic!(
+                    "grant peer discovery failed (read_outputs={read_outputs}): {error}; startup diagnostic: {diagnostic}"
+                );
+            }
+        };
         let observed = host.snapshot().await.unwrap()["tools"][0]["directory_grants"].clone();
         let handshake: Value =
             serde_json::from_slice(&fs::read(tool.join("initialize.json")).unwrap()).unwrap();
