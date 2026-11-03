@@ -10,9 +10,9 @@ function isSession(value: unknown): value is { token: string; host_session: stri
     && "host_session" in value && typeof value.host_session === "string" && /^[a-f0-9]{64}$/.test(value.host_session);
 }
 
-async function initialize(): Promise<Connection | null> {
+async function initialize(given?: string): Promise<Connection | null> {
   const fragment = new URLSearchParams(window.location.hash.slice(1));
-  const bootstrap = fragment.get("bootstrap");
+  const bootstrap = fragment.get("bootstrap") ?? given;
   // Remove the fragment before starting any network request, including failed exchanges.
   if (window.location.hash) window.history.replaceState(window.history.state, "", window.location.pathname + window.location.search);
   try {
@@ -41,8 +41,35 @@ async function initialize(): Promise<Connection | null> {
   }
 }
 
+/** Development only: Vite's dev server asks the running host for a fresh bootstrap (ui/dev-host.ts). */
+async function devBootstrap(): Promise<string | null> {
+  const response = await fetch("/__wafflery/bootstrap", { credentials: "omit", cache: "no-store" }).catch(() => null);
+  if (!response?.ok) return null;
+  const body: unknown = await response.json().catch(() => null);
+  return body && typeof body === "object" && "bootstrap" in body && typeof body.bootstrap === "string" ? body.bootstrap : null;
+}
+
+/** Development only: join the host without a launcher link, and rejoin it after it restarts. */
+async function initializeDev(): Promise<Connection | null> {
+  let connection: Connection | null;
+  try {
+    connection = await initialize();
+  } catch (error) {
+    const bootstrap = await devBootstrap();
+    if (!bootstrap) throw error;
+    connection = await initialize(bootstrap);
+  }
+  if (!connection) {
+    const bootstrap = await devBootstrap();
+    connection = bootstrap ? await initialize(bootstrap) : null;
+  }
+  // A restarted host forgets its sessions; reloading rejoins it with a fresh bootstrap.
+  if (connection) connection.api.onSessionEnded = () => window.location.reload();
+  return connection;
+}
+
 // React StrictMode may mount twice. One document performs only one bootstrap exchange.
 export function connect(): Promise<Connection | null> {
-  connecting ??= initialize();
+  connecting ??= import.meta.env.DEV ? initializeDev() : initialize();
   return connecting;
 }

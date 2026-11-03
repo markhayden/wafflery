@@ -1,5 +1,6 @@
 import { execFileSync, spawn } from "node:child_process";
-import { mkdtemp, writeFile } from "node:fs/promises";
+import { existsSync } from "node:fs";
+import { mkdir, mkdtemp, readFile, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { root } from "./ui-manifest";
@@ -9,22 +10,33 @@ import { prepareOfflinePipeline } from "../ui/tests/browser/offline-pipeline";
 const [rascal, squint, ...flags] = process.argv.slice(2);
 if (!rascal || !squint) {
   throw new Error(
-    "Usage: bun run scripts/dev-pipeline.ts /absolute/rascal /absolute/testkit/squint [--start] [--no-open]",
+    "Usage: bun run scripts/dev-pipeline.ts /absolute/rascal /absolute/testkit/squint [--start] [--no-open] [--library <absolute dir>] [--register-only]",
   );
 }
 const options = pipelineOptions(flags);
-const temporary = await mkdtemp(join(tmpdir(), "wafflery-pipeline-"));
+// A persistent library keeps its tool setup and saved work between runs; the setup is made once.
+const temporary = options.library ?? await mkdtemp(join(tmpdir(), "wafflery-pipeline-"));
 const data = join(temporary, "data");
-const registrations = await prepareOfflinePipeline(temporary, rascal, squint);
-execFileSync(process.execPath, ["run", "scripts/build-ui.ts"], {
-  cwd: root,
-  stdio: "inherit",
-});
+const setup = join(temporary, "setup");
+const source = join(temporary, "registration.json");
+let registrations: Awaited<ReturnType<typeof prepareOfflinePipeline>>;
+if (options.library && existsSync(source)) {
+  registrations = JSON.parse(await readFile(source, "utf8"));
+} else {
+  await mkdir(setup, { recursive: true, mode: 0o700 });
+  registrations = await prepareOfflinePipeline(setup, rascal, squint);
+}
+// The dev UI server serves the UI source directly; only a packaged host needs the built UI.
+if (!options.registerOnly) {
+  execFileSync(process.execPath, ["run", "scripts/build-ui.ts"], {
+    cwd: root,
+    stdio: "inherit",
+  });
+}
 execFileSync("cargo", ["build", "--locked", "--bin", "wafflery"], {
   cwd: root,
   stdio: "inherit",
 });
-const source = join(temporary, "registration.json");
 await writeFile(source, JSON.stringify(registrations, null, 2), {
   mode: 0o600,
 });
@@ -33,6 +45,7 @@ execFileSync(host, ["--register", source, "--data-dir", data], {
   stdio: "inherit",
 });
 console.log(`Offline test library: ${data}`);
+if (options.registerOnly) process.exit(0);
 console.log(
   "Squint uses scripted verdicts, not a model judgment. Rascal has no filler. No keys or paid providers are supplied.",
 );

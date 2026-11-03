@@ -27,6 +27,8 @@ export class ApiError extends Error {
 /** Only the host origin receives credentials. Tool viewers use separate, uncredentialed URLs. */
 export class LocalApi {
   constructor(private readonly origin: string, private readonly token: string) {}
+  /** Called when the host rejects the session (development rejoins a restarted host with it). */
+  onSessionEnded?: () => void;
 
   async request(path: string, init: RequestInit = {}): Promise<Response> {
     const url = new URL(path, this.origin);
@@ -36,7 +38,10 @@ export class LocalApi {
     const headers = new Headers(init.headers);
     headers.set("Authorization", `Bearer ${this.token}`);
     const response = await fetch(url, { ...init, headers, credentials: "omit", mode: "same-origin", redirect: "error" });
-    if (response.status === 401) throw new ApiError("Your workspace session ended. Run wafflery to reopen it.", response.status);
+    if (response.status === 401) {
+      this.onSessionEnded?.();
+      throw new ApiError("Your workspace session ended. Run wafflery to reopen it.", response.status);
+    }
     if (!response.ok) {
       const payload: unknown = await response.json().catch(() => null);
       if (payload && typeof payload === "object" && "error" in payload && payload.error && typeof payload.error === "object" && "message" in payload.error && typeof payload.error.message === "string") {

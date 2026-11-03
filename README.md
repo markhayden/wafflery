@@ -250,6 +250,17 @@ cargo build --locked --release --bin wafflery
 
 Vite opens at `http://127.0.0.1:5173`; Storybook at `http://127.0.0.1:6006`.
 The connected development flow uses the host’s embedded UI through `dev-fake.ts`.
+
+**Developing against a real host.** With `WAFFLERY_DATA_DIR` set to the library a running
+`wafflery start` owns, `bun run --cwd ui dev` serves the UI source in front of that host
+(`ui/dev-host.ts`) with React Fast Refresh: an edited component or stylesheet updates in the open
+page and keeps its state. The bridge finds the host through its private control socket, forwards
+`/api` and `/views` to it under the host's own origin (the host keeps every check), and hands the
+page a fresh one-use bootstrap, so a restarted host is rejoined by itself (a reload, no launcher
+link). It exists only in the dev server; the built UI contains none of it. For a persistent
+offline library, register once with
+`bun run scripts/dev-pipeline.ts <rascal> <testkit squint> --library <absolute dir> --register-only`
+(later runs reuse its setup and saved work).
 Rust builds use `ui/prebuilt` without invoking JavaScript. Regenerate it after changing UI
 inputs; debug builds warn when stale, release/CI builds fail. `check-ui.ts` verifies the manifest
 and compares two clean builds. Keep prebuilt assets and their manifest in version control.

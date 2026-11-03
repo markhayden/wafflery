@@ -3629,3 +3629,15 @@ remain separate; no production release is implied. Product choices remain Q1–Q
 - [x] Picker logos 64 px (48 px under 30rem), up from 40 px; the sticker files re-encoded from 900 px
   (141 KB and 181 KB) to 128 px WebP (6.9 KB and 8.0 KB). The picker spec asserts 128 px natural
   width and a 16 KB ceiling per logo.
+
+### V24: development against a real host (owner, 2026-11-03)
+
+- [x] `ui/dev-host.ts`: with `WAFFLERY_DATA_DIR`, Vite's dev server fronts a running `wafflery start`
+  host (control socket for its origin and a one-use bootstrap; `/api` and `/views` forwarded under
+  the host's origin, its CSP naming the dev page as ancestor). React Fast Refresh in that mode
+  (`@vitejs/plugin-react` 6.1.2, dev server only). The production build is unchanged in behaviour
+  and carries no bridge code.
+- [x] The page rejoins a restarted host by itself (dev only): a rejected session reloads, and the
+  reload takes a fresh bootstrap.
+- [x] `scripts/dev-pipeline.ts --library <dir> --register-only`: a persistent offline library,
+  registered without starting a host. The hub's `scripts/dev.sh` runs the watchers over it.

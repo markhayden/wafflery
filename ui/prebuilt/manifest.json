@@ -4,15 +4,15 @@
     "scripts/build-ui.ts": "0fbdfa1de3a5f914b6e45f49ef034b5d27ae1ae6f7f759959f00604ac8f64ee3",
     "scripts/check-ui.ts": "2e8c821e6919740ab18b364b151cb2ea95e79423a919ee85d1966cb0fbf9e1d1",
     "scripts/ui-manifest.ts": "7d1f54ac5a1cd4164cbc61b5385b59c6138c01eda8e72ca18b2aa4f319284e89",
-    "ui/bun.lock": "d5cc1b7dc5b656221db9b406e184c0824d2e6f5e489a32f8998bb282bc422351",
+    "ui/bun.lock": "679ec6c72a69293464afa463c34602ca919969b31c6b266f89cdf5a429125453",
     "ui/index.html": "5c02ac5dea8f0cad33ab10f0c11d20cdc3152948d4d9fcf69f46c5472ca092b3",
-    "ui/package.json": "3aae554e483ff6d81698b993fd0ea98818d134da3d10d2056ad19e7e40388fa7",
+    "ui/package.json": "92bcb9d5be8c95d5e1f1053d31a2ba814d7e45fb5073600d0d8c15e1f0614397",
     "ui/src/App.tsx": "7ec34ba1e5b3273c3bbcb3731c2bb6f77362718d49b65fda460922294a3198da",
     "ui/src/api/assets.ts": "3f91d631d6d7f7977cfe331a11558187b9c66254d2ac0fc916f509e6ec0829e4",
     "ui/src/api/bundle-imports.ts": "bb4a55389da84ddec334a5b93828f45e253aa5b62ad4c4ede93309c9f5532784",
     "ui/src/api/bundles.ts": "e125938c750855dae46e8e716f7a45121041a5f4de13bdb84cb858688a507008",
     "ui/src/api/chain-replays.ts": "ab884d883fb1baea5569415ba1cd309bee4ad592980974c72e79cce33a76533d",
-    "ui/src/api/client.ts": "377de81e08ff7571a6b416343841fcc0447d2826ed1ae8f8ada0a114e3579141",
+    "ui/src/api/client.ts": "1dc02e02b6dd9a18b1d21f8e16bee9393cc1376b24c255267d2e5831d1bf3136",
     "ui/src/api/directory-grants.ts": "31443d86be6b40f9edc54884050455f3da28fc0549bdec059714d31f43fe5619",
     "ui/src/api/estimates.ts": "b3e4a64d781684bd75b03a81342b5784ae42c878d5ea16f1e82a0a40250bddb0",
     "ui/src/api/events.ts": "d6c4aa2983395573b58e2f0d099d73ace7e6d551e9831a368ec6a8db94ef277c",
@@ -20,7 +20,7 @@
     "ui/src/api/handoff.ts": "a83d9d926396b5be6c58250441ccea5ab9955a48b58591857826e3de78e81681",
     "ui/src/api/image-header.ts": "d2714727ed187a25588fc5f093b704dcaf94834f953a792dff6317cc5f41aa4e",
     "ui/src/api/reports.ts": "5241156e5e9c94f7a20b77310c2430a3e04c9294e98f6b3e1ae6ff0412c69083",
-    "ui/src/api/session.ts": "216dfa6b5e809fcb0c1f97f1cf47850455646b1382826a2eb83c5fad475f96fb",
+    "ui/src/api/session.ts": "22a57c63cccc806b23b8170f852ea091550787d04e89fc7df9d253a3df424f84",
     "ui/src/api/tool-session.ts": "26adaf12701541325177e2bb4f4e6e3c23df1382e814190b7dbe217e4f72a545",
     "ui/src/api/workspace.ts": "4472b372ba10d8082c1776eb65b9b3387bc5f7cca257dd0e841599bb73bd3d3b",
     "ui/src/assets/tools/rascal-sticker.webp": "f1cc408f231167aee5543f0f8c0683f3594a0e447c51dcccc4fb413913e0a803",
@@ -119,15 +119,15 @@
     "ui/src/features/workspace/useSavedArtifacts.ts": "ec42ccbc8b8a76dcde0ffaba45a7f76cdd8292150a403765cb156595d01defb9",
     "ui/src/main.tsx": "03b2482769b6e395650dff286faa5e047805a68788a2d0c019ca79ca59b5cadf",
     "ui/src/tokens.css": "d055793a026559d0db634ff4d199dbd0952ecce0569df2cc643505f138d83c3f",
-    "ui/tsconfig.json": "cb18bc2ac7dda71c2c6b1688c5af0722292143bafb109a84a1d8464e28733ffe",
-    "ui/vite.config.ts": "3aec7d6174ffca99d4d5288bea2f837d5e91335cbd7135a9682e6d18a40476b4"
+    "ui/tsconfig.json": "3fcd89fe837f1fe4d42988ab28bdbd534d231128c02705d0702f6812a05627ce",
+    "ui/vite.config.ts": "3d89f2648aaa35a01bea2ff2597d4977bbf6e78564214d054e23bad45016b570"
   },
   "outputs": {
-    "assets/index-CkwDFXeJ.js": "652e9f54fe5e50ae4d0c5bcda2faede2b1ed13322d5b80df34d4fdb9be1de424",
+    "assets/index-c1FrPbgC.js": "d3d233a01a918250faf9e54b4da6a46ff58af74862c02c326a72e0e4e9d378d2",
     "assets/index-cIoC95IY.css": "80bdb49e3156e2c61dfd43d545485cb210a97d41e570d0df67d4c5fd2f27adfb",
     "assets/rascal-sticker-CmExR_HL.webp": "f1cc408f231167aee5543f0f8c0683f3594a0e447c51dcccc4fb413913e0a803",
     "assets/squint-sticker-CLmixeCt.webp": "3986ab96e919e338a7f8e8d64b552912baa3f79774c863d1e5d14f6a9f02f173",
     "assets/wafflery-mark-CML0EpfM.svg": "51bc8a040e26b897a948238598b8cabdf69bf4687c2b1a70613b542de1c99f1f",
-    "index.html": "0521d27347ecec7bfc1ae92f60d328a9d26fa6a70419a7b0839a90352cd5adee"
+    "index.html": "45b3c6742e3f6dd765aaf2b4a040844cc9172b569cb107be57703d251f0d0e1d"
   }
 }
