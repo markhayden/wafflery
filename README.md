@@ -51,9 +51,9 @@ and unknown charges remain in history. The drawer reports the new session ID, an
 refresh their setup observations. A failed restart leaves recovery available in the same drawer.
 Environment changes require quitting and relaunching Wafflery from the updated terminal.
 **Folder access** separates requested input folders from folders Wafflery may read results from.
-Effective-grant validation and live display wiring remain staged for the next M5.03 slice;
-until then setup says **Not reported** and never treats the requested list as proof of access.
-Failed session refreshes show **Unavailable**.
+**Allowed by this session** shows the tool's validated effective input folders, which its
+configuration may narrow. An empty list means **No file paths allowed**. Refresh clears the old
+list while checking access; a failed refresh shows **Unavailable**, never an empty or inferred grant.
 Changing registration folders requires stopping Wafflery; changing the tool's configuration requires
 restarting that tool session. The session now carries the v0.4 `allowed_dirs` field.
 Paid actions expose explicit cap and estimate controls. Edits, declaration/session changes and

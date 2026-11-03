@@ -13,7 +13,6 @@ type Story = StoryObj<typeof meta>;
 export const Reported: Story = {};
 export const Narrowed: Story = {args: {effective: {state:"reported", allowed_dirs:["/work/reference images/approved"]}}};
 export const NoAccess: Story = {args: {grants:{requested_dirs:[],evidence_dirs:[]}, effective:{state:"reported",allowed_dirs:[]}}};
-export const NotReported: Story = {args:{effective:{state:"not_reported"}}};
 export const Loading: Story = {args:{effective:{state:"loading"}}};
 export const Unavailable: Story = {args:{grants:null,effective:{state:"unavailable"}}};
 const longPath = `/work/${"a-long-project-folder-".repeat(8)}/<literal> $(name)`;

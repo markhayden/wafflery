@@ -1,7 +1,7 @@
 import { test, expect } from "@playwright/test";
 const story = (name: string) => `http://127.0.0.1:6006/iframe.html?id=workspace-directoryaccess--${name}&viewMode=story`;
 
-test("folder access distinguishes requested, narrowed, denied and unreported permissions", async ({ page }) => {
+test("folder access distinguishes requested, narrowed, denied and unavailable permissions", async ({ page }) => {
   await page.goto(story("narrowed"));
   const panel = page.getByRole("region", { name: "Folder access" });
   const requested = panel.getByRole("group", { name: "Requested input folders" });
@@ -15,7 +15,6 @@ test("folder access distinguishes requested, narrowed, denied and unreported per
   await expect(effective).not.toContainText("/work/tool/results");
   for (const [name, expected] of [
     ["no-access", "No file paths allowed."],
-    ["not-reported", "Not reported"],
     ["loading", "Checking access…"],
     ["unavailable", "Unavailable"],
   ]) {

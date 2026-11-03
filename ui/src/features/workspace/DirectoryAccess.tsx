@@ -3,7 +3,7 @@ import styles from "./DirectoryAccess.module.css";
 
 export type EffectiveAccess =
   | { state: "reported"; allowed_dirs: string[] }
-  | { state: "not_reported" | "loading" | "unavailable" };
+  | { state: "loading" | "unavailable" };
 
 type Props = { grants: DirectoryGrants | null; effective: EffectiveAccess };
 function Folders({ paths, empty }: { paths: string[] | undefined; empty: string }) {
@@ -26,9 +26,7 @@ export function DirectoryAccess({ grants, effective }: Props) {
         ? <Folders paths={effective.allowed_dirs} empty="No file paths allowed." />
         : effective.state === "loading"
           ? <p role="status">Checking access…</p>
-          : effective.state === "unavailable"
-            ? <><p><strong>Unavailable</strong></p><p>Refresh setup to check the current tool session.</p></>
-            : <><p><strong>Not reported</strong></p><p>This tool session does not report its allowed input folders.</p></>}
+          : <><p><strong>Unavailable</strong></p><p>Refresh setup to check the current tool session.</p></>}
     </div>
     <div className={styles.group} role="group" aria-label="Result folders">
       <h4>Wafflery may read results from</h4>

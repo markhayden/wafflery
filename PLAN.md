@@ -1573,7 +1573,7 @@ and memory behavior must be measured before choosing a downscaled-decoding imple
   Remove Rascal-only grant injection from development descriptors in favor of the shared launcher.
 - [x] Child argv contains repeated `--allow-dir`; input/import staging is the only automatic grant.
   Preserve evidence/report read restrictions separately. No roots capability or roots/list remains.
-- [ ] Setup shows requested and effective `allowed_dirs`; no-grant, narrowed config, symlink escape,
+- [x] Setup shows requested and effective `allowed_dirs`; no-grant, narrowed config, symlink escape,
   invalid directory, restart and unchanged old-session spend have explicit tests and migration docs.
   Before changing real registrations, save their previous form; rollback restores that form only with
   the matching old binary/peers, never by translating live grants silently.
@@ -2078,7 +2078,7 @@ Configured access display and the remaining description/invocation/refusal check
   browsers. Use the existing directory-access component and responsive styles. Never select its
   obsolete `not_reported` state; a missing session is unavailable.
 - **b4d remove the obsolete display state:** `DirectoryAccess.tsx`, its stories,
-  `ui/tests/browser/directory-access.spec.ts`, and this plan. Remove `not_reported` after b4c
+  `ui/tests/browser/directory-access.spec.ts`, `README.md`, and this plan. Remove `not_reported` after b4c
   removes its final live caller. Retain loading, unavailable and reported (including deny-all).
   No v0.3 fallback remains.
 
@@ -2123,6 +2123,23 @@ wrap within the drawer and effective access remains distinct from requested/resu
 The full shared-lock matrix passed fmt/clippy, 383 Rust tests (4 ignored), typecheck, 57 UI tests,
 2 asset tests, Storybook, reproducible assets, release build and 230 browser tests (8 skipped).
 Generated assets are updated separately; lockfiles unchanged, temporary config removed.
+
+**b4d implementation:** remove the unreachable `not_reported` variant, its story and old
+browser case now that live v0.4 setup always requires the effective list. Existing tests retain
+reported/narrowed/deny-all/loading/unavailable coverage and literal-path responsiveness. This is
+dead-state removal, not a new behavior; the live display's failing-first regressions are in b4c.
+No unsupported-version fallback is added. Review found an outdated README staging note; this
+fifth authored file now describes the actual effective-list/loading/unavailable behavior. Final
+verification follows.
+
+**b4d checkpoint (2026-11-02):** review approved removal of the last obsolete state and
+identified the README note corrected in this slice. Full shared-lock verification passed fmt/clippy,
+383 Rust tests (4 ignored), typecheck, 57 UI tests, 2 asset tests, Storybook, reproducible assets,
+release build and 230 browser tests (8 skipped). Generated UI assets are refreshed separately;
+lockfiles unchanged and temporary config removed. M5.02's deferred effective-access acceptance is
+now complete: the b2/b3 boundaries and lifecycle tests plus b4's browser checks cover narrowed/empty
+access, invalid paths and escape refusal, refresh/restart and preserved old-session spend. Remaining
+M5.03 work concerns description/callable schemas, invocation/refusal wiring and real-peer preflight.
 
 **Checkpoint A:** merge M5.01–03 as a coherent cutover of validation, launch arguments and fake
 defaults; v0.4 is the only supported live contract afterward. Green matrix, an independent fake
