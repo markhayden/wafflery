@@ -1,5 +1,8 @@
 # V20 image import and derived previews
 
+Status: **complete, 2026-11-03.** The full hosted matrix passed on `7f1d236`,
+[run 41651505463](https://github.com/markhayden/wafflery/actions/runs/41651505463).
+
 Original files, dimensions and SHA-256 fingerprints remain authoritative. Header feedback is
 provisional: the browser reads at most 1 MiB of encoded PNG/JPEG header data without creating a
 raster. During upload/validation the input shows the filename, dimensions, estimated RGBA8 memory
@@ -124,7 +127,8 @@ Final verification: full locked Rust workspace suite; formatting and all-target 
 checks; all 100 UI unit tests; 58 zero-retry Chromium/WebKit browser cases, including paid specs;
 byte-identical clean UI builds/check-ui; release benchmark build. Pending/import-refusal region
 snapshots use the existing visual policy, masking only the native indeterminate progress animation.
-Independent review approved the required corrections. Hosted CI remains the full push gate.
+Independent review approved the required corrections. The full hosted matrix passed in the run
+linked above; the V20 verification gate is complete.
 
 ## Rollback
 

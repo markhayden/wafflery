@@ -1597,7 +1597,7 @@ malformed/truncated images must still fail validation before becoming usable. Co
 and memory behavior must be measured before choosing a downscaled-decoding implementation.
 
 
-**V20 as built (2026-11-03, complete locally):** release measurements established the baseline
+**V20 as built (2026-11-03, complete):** release measurements established the baseline
 before changing codecs. The browser now reads at most 1 MiB of PNG/JPEG header bytes without a
 raster, then shows provisional dimensions, estimated RGBA8 memory, filename and phase progress
 while full codec validation/owned publication continues. Tasks and operation ports use the same
@@ -1632,7 +1632,8 @@ native indeterminate progress is masked as variable content. Two clean UI builds
 check-ui passed and the final release benchmark built successfully. Independent review approved
 all required corrections. The [V20 review](docs/reviews/2026-11-03-image-import.md) records all eight
 owned fixture sizes/timings/memory, codec limitations and the intentional resized-copy deferral.
-Hosted CI remains the full task gate.
+The full hosted matrix passed on `7f1d236`,
+[run 41651505463](https://github.com/markhayden/wafflery/actions/runs/41651505463). V20 is complete.
 
 #### M5.02 — Separate input grants from evidence access
 
@@ -3518,7 +3519,7 @@ checkpoint to save time. No backward-compatibility shims are added for unrelease
 | Too much infrastructure before a working screen | M1 import loop and M2 execution loop are visible checkpoints; no speculative packages/services |
 
 M0–M3 and the V01–V19 client are complete. The R3 operations profile and C2 portable invocation
-contract are implemented under v0.4, with M5.21 real-peer acceptance verified. M5.22 records
-closeout passed hosted CI and M5 is complete. The adjacent V20 implementation is also complete
-locally, with its hosted push gate remaining. C3's v0.3 delivery is verified by V14–V18 against Rascal M12/Squint M9. R2 remains optional. Do not imply an Actions-only
-development build satisfies those release requirements. Product choices remain Q1–Q19.
+contract are implemented under v0.4, with M5.21 real-peer acceptance verified. M5 and the adjacent
+V20 image-import follow-up are complete, including hosted CI. C3's v0.3 delivery is verified by
+V14–V18 against Rascal M12/Squint M9. R2 remains optional. Distribution/release requirements
+remain separate; no production release is implied. Product choices remain Q1–Q19.
