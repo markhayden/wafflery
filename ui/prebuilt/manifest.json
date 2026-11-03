@@ -9,7 +9,7 @@
     "ui/package.json": "3aae554e483ff6d81698b993fd0ea98818d134da3d10d2056ad19e7e40388fa7",
     "ui/src/App.tsx": "7ec34ba1e5b3273c3bbcb3731c2bb6f77362718d49b65fda460922294a3198da",
     "ui/src/api/assets.ts": "7a6ad972558a4b9761d0a6ef791ef9f00c340eb0bbc1f65ec29721532d127aff",
-    "ui/src/api/client.ts": "2ee0bdb35786866ef6326806e7abd06aa0a118e797ad5443bc10ef81750918eb",
+    "ui/src/api/client.ts": "377de81e08ff7571a6b416343841fcc0447d2826ed1ae8f8ada0a114e3579141",
     "ui/src/api/directory-grants.ts": "31443d86be6b40f9edc54884050455f3da28fc0549bdec059714d31f43fe5619",
     "ui/src/api/estimates.ts": "b3e4a64d781684bd75b03a81342b5784ae42c878d5ea16f1e82a0a40250bddb0",
     "ui/src/api/events.ts": "d6c4aa2983395573b58e2f0d099d73ace7e6d551e9831a368ec6a8db94ef277c",
@@ -96,9 +96,9 @@
     "ui/vite.config.ts": "3aec7d6174ffca99d4d5288bea2f837d5e91335cbd7135a9682e6d18a40476b4"
   },
   "outputs": {
-    "assets/index-CBIR6Dj1.js": "0e30e32f227fcc298a63742b5d2a7438624079e8cf658dd5371ca07b118f1aca",
     "assets/index-CHLkY-3o.css": "8f6189913e393554b7a3aa248c446f4687254ad2d01c02099d3086fc3799f802",
+    "assets/index-JqY0x2Xa.js": "00b75eec79299f2f6aa06e71efd4e31bdcccc91924ebe869bd9c42552a7dc378",
     "assets/wafflery-mark-CML0EpfM.svg": "51bc8a040e26b897a948238598b8cabdf69bf4687c2b1a70613b542de1c99f1f",
-    "index.html": "023139f518f3e2585f29bbdccc2bb10afff4bb19a39a986f9757e4aa7a97c3e6"
+    "index.html": "87efe646b36509b722467fdcf0e1ba69897b2570ac6c59b94698642c124d8a94"
   }
 }

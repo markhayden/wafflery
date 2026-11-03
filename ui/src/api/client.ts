@@ -1,3 +1,11 @@
+export type ControlRefusal={reason:"invalid_arguments";run:null;error:{code:"usage"|"input";retryable:false;reason:string}};
+function controlRefusal(error:object):ControlRefusal|undefined{
+ if(!("code" in error)||error.code!=="artifact_refusal"||!("refusal" in error)||!error.refusal||typeof error.refusal!=="object")return;
+ const value=error.refusal as Record<string,unknown>,detail=value.error;
+ if(value.reason!=="invalid_arguments"||value.run!==null||!detail||typeof detail!=="object")return;
+ const body=detail as Record<string,unknown>;
+ if((body.code==="input"||body.code==="usage")&&body.retryable===false&&typeof body.reason==="string")return value as ControlRefusal;
+}
 export type BindingIssue = {port:string; index?:number; problem:"wrong_type"|"wrong_version"|"wrong_frame"|"unresolved"; expected:string; got:string; remedy?:string};
 export function bindingIssues(error: object): BindingIssue[] {
   if (!("code" in error) || error.code!=="binding" || !("bindings" in error) || !Array.isArray(error.bindings)) return [];
@@ -13,7 +21,7 @@ export function bindingIssues(error: object): BindingIssue[] {
   }) ? values : [];
 }
 export class ApiError extends Error {
-  constructor(message: string, readonly status: number, readonly bindings: BindingIssue[] = []) { super(message); }
+  constructor(message: string, readonly status: number, readonly bindings: BindingIssue[] = [], readonly refusal?:ControlRefusal) { super(message); }
 }
 
 /** Only the host origin receives credentials. Tool viewers use separate, uncredentialed URLs. */
@@ -32,7 +40,7 @@ export class LocalApi {
     if (!response.ok) {
       const payload: unknown = await response.json().catch(() => null);
       if (payload && typeof payload === "object" && "error" in payload && payload.error && typeof payload.error === "object" && "message" in payload.error && typeof payload.error.message === "string") {
-        throw new ApiError(payload.error.message, response.status, bindingIssues(payload.error));
+        throw new ApiError(payload.error.message, response.status, bindingIssues(payload.error),controlRefusal(payload.error));
       }
       throw new ApiError("The workspace could not complete that request.", response.status);
     }

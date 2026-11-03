@@ -2644,13 +2644,13 @@ UI assets rebuilt; hosted CI is the full gate.
 
 #### M5.11 — Add artifact export/import controls
 
-- [ ] Use reserved controls only when advertised by portable artifact types; controls remain responsive
+- [x] Use reserved controls only when advertised by portable artifact types; controls remain responsive
   during runs, create no attempts and do not take paid-run permits. Apply request size/concurrency bounds.
-- [ ] Read the exact exported file, verify declared bytes/hash/media type, then publish owned bytes.
+- [x] Read the exact exported file, verify declared bytes/hash/media type, then publish owned bytes.
   An export outside evidence_dirs is refused before opening, even with a correct advertised hash.
   For import, stage under an allowed directory or bounded inline form; verify returned artifact and
   already_present semantics. Wrong native format is never retried as a preview image.
-- [ ] Missing export refs and invalid imports surface structured refusal/remedy. Cancellation/disconnect
+- [x] Missing export refs and invalid imports surface structured refusal/remedy. Cancellation/disconnect
   leaves incomplete local state unpublished; an interrupted tool import is reconciled by idempotent retry,
   not falsely described as rolled back.
 
@@ -2671,6 +2671,29 @@ fault/hold modes to verify headers, cancellation, staging and concurrent control
 automatic artifact preservation remain subsequent tasks; these private APIs accept saved occurrence
 IDs and no arbitrary file path. The first control regression exposed the old run gate allowlist;
 only the two reserved names are added, with nearby names still requiring persisted dispatch.
+
+**M5.11 completion:** export/import accept saved occurrences only, validate advertised control
+schemas and exact response references, and preserve structured `binding`/`invalid_arguments`
+refusals through HTTP and the browser client. Published refusals must use -32602. JSON exports
+require application/json; bundle MIME is checked against the contract pattern and retained as the
+tool declares it, without inspecting its opaque format. Effective allowed paths are canonicalized
+before staging. Controls retain their own slots/files after a waiter disappears; import completion
+is never described as rolled back. Shutdown waits, and explicit force shutdown remains the way to
+stop an unresponsive owned child. A failed child inspection is unknown, not proof of exit.
+
+The interactive 10-second deadline is intentionally not an automatic-preservation deadline:
+M5.12 must use a queue-owned path that can finish a slower export without a browser waiter. An
+interrupted import is reconciled by explicit identity-based retry, including already_present.
+Publication and attachment now use internal leased operations under one storage read lease,
+closing M5.10's unowned-cleanup window. Complete files committed before acknowledgement loss
+remain valid; incomplete/cancelled work never publishes an artifact link.
+
+Task review approved; final targeted checks passed 19 operation integrations (9 control cases),
+all 130 Rust lib tests, clippy, UI typecheck, 9 client/paid acknowledgement unit tests, and 34 paid
+browser cases in Chromium/WebKit. Tests cover concurrent running work, strict control names,
+unsafe path/hash/media, unportable/missing references, native-format refusal, slot bounds,
+restart/cleanup refusal, staged-file lifetime, graceful shutdown, idempotent import and the API
+path boundary. UI assets rebuilt. Hosted CI is the full gate; automatic preservation follows.
 
 #### M5.12 — Preserve reusable artifacts after runs
 

@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test";
-import { LocalApi, ApiError, type BindingIssue } from "../../src/api/client";
+import { LocalApi, ApiError, type BindingIssue, type ControlRefusal } from "../../src/api/client";
 
 test("bearer credentials cannot be sent to a viewer or a path outside the host API", async () => {
   const api = new LocalApi("http://127.0.0.1:1234", "test-session");
@@ -25,4 +25,12 @@ test("malformed binding problems are not coerced into valid issues", async()=>{
   try {await new LocalApi("http://127.0.0.1:1234","fixture").request("/api/test");throw Error("Expected refusal");}
   catch(error) {expect((error as ApiError).bindings).toEqual([]);}
   finally {globalThis.fetch=original;}
+});
+test("artifact controls retain structured invalid-arguments refusal data",async()=>{
+ const original=globalThis.fetch;
+ const refusal:ControlRefusal={reason:"invalid_arguments",run:null,error:{code:"input",retryable:false,reason:"Not a complete native bundle."}};
+ globalThis.fetch=(async()=>Response.json({error:{code:"artifact_refusal",message:refusal.error.reason,refusal}},{status:422})) as unknown as typeof fetch;
+ try{await new LocalApi("http://127.0.0.1:1234","fixture").request("/api/attempts/source/artifacts/out/0/import");throw Error("Expected refusal");}
+ catch(error){expect(error).toBeInstanceOf(ApiError);expect((error as ApiError).refusal).toEqual(refusal);}
+ finally{globalThis.fetch=original;}
 });
