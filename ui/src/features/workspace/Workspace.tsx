@@ -208,32 +208,30 @@ export function Workspace({
       })
       .catch((failure) => setError(String(failure)));
   }
-  function openExample(example: Example) {
-    setDraftRevision((value) => value + 1);
-    const current = snapshot.tools.find(
-      (tool) => tool.id === example.request.tool,
-    )?.declaration;
-    if (
-      !current?.document.actions.some(
-        (action) => action.name === example.request.action,
-      )
-    )
-      throw new Error(
-        "This example needs a tool action that is not currently available.",
-      );
-    const restored = restoreSelection(example.inputs);
-    setToolId(example.request.tool);
-    setActionId(example.request.action);
-    setParams(structuredClone(example.request.params));
-    setImages(current?.document.actions.find(a=>a.name===example.request.action)?.kind==="operation"?{}:restored);
-    setPortBindings(Object.fromEntries(Object.entries(example.request.bindings??{}).map(([port,items])=>[port,items.map((item,index)=>({...structuredClone(item),...(example.request.lineage?.[port]?.[index]?{origin:example.request.lineage[port]![index]!}:{} )}))])));
-    setBindingIssues([]);
-    setSelectedId(null);
-    setSelected(undefined);
-    setDraftExample(example);
-    setError(undefined);
-    submitted.current = null;
-    setDrawer(null);
+  async function openExample(example: Example) {
+    const candidates=snapshot.tools.filter(tool=>tool.declaration?.document.tool.name===example.declaration.document?.tool.name&&tool.declaration.document.actions.some(action=>action.name===example.request.action));
+    const receiving=candidates.find(tool=>tool.id===example.request.tool)??candidates.find(tool=>tool.id===toolId)??(candidates.length===1?candidates[0]:undefined);
+    if(!receiving?.declaration)throw Error("Choose an installed compatible tool before opening this example.");
+    const current=receiving.declaration;
+    setBusy(true);setDrawer(null);
+    try{
+      const bindings:PortBindings={};
+      for(const [port,items] of Object.entries(example.request.bindings??{})){
+        bindings[port]=[];
+        for(const [index,item] of items.entries()){
+          const candidate={...structuredClone(item),origin:{example:example.id,port,occurrence:index}};
+          const resolved=await artifactRestore.choose(candidate,receiving.id);
+          if(!resolved)return;
+          bindings[port]!.push(resolved);
+        }
+      }
+      setDraftRevision(value=>value+1);
+      setToolId(receiving.id);setActionId(example.request.action);
+      setParams(structuredClone(example.request.params));
+      setImages(current.document.actions.find(action=>action.name===example.request.action)?.kind==="operation"?{}:restoreSelection(example.inputs));
+      setPortBindings(bindings);setBindingIssues([]);setSelectedId(null);setSelected(undefined);
+      setDraftExample(example);setError(undefined);submitted.current=null;
+    }finally{setBusy(false);}
   }
   function chooseTool(id: string) {
     setDraftRevision((value) => value + 1);
@@ -408,7 +406,7 @@ export function Workspace({
           >
             {draftExample && (
               <p className={styles.note}>
-                From example: {draftExample.name}
+                From example: {draftExample.name}{draftExample.workspace_dependent?" · Workspace-dependent":""}
                 {draftExample.notes ? ` · ${draftExample.notes}` : ""}
               </p>
             )}

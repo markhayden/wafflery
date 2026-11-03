@@ -7,6 +7,9 @@ export type Example = {
   notes: string;
   request: Submission;
   inputs: Attempt["inputs"];
+  declaration: Attempt["declaration"];
+  input_artifacts: import("../features/actions/model").Schema[];
+  workspace_dependent: boolean;
 };
 export type ExampleSummary = {
   id: string;
@@ -14,6 +17,7 @@ export type ExampleSummary = {
   name: string;
   tool: string;
   action: string;
+  workspace_dependent: boolean;
 };
 export function exampleClient(api: LocalApi) {
   async function read(response: Response): Promise<Example> {
@@ -26,7 +30,10 @@ export function exampleClient(api: LocalApi) {
       !("request" in value) ||
       !("inputs" in value) ||
       !("name" in value) ||
-      typeof value.name !== "string"
+      typeof value.name !== "string" ||
+      !("workspace_dependent" in value) || typeof value.workspace_dependent!=="boolean" ||
+      !("input_artifacts" in value) || !Array.isArray(value.input_artifacts) ||
+      !("declaration" in value) || !value.declaration || typeof value.declaration!=="object"
     )
       throw new Error("Example could not be read.");
     return value as Example;
@@ -44,7 +51,7 @@ export function exampleClient(api: LocalApi) {
         !Array.isArray(value.items) ||
         !value.items.every(
           (item) =>
-            typeof item.id === "string" && typeof item.name === "string",
+            typeof item.id === "string" && typeof item.name === "string" && typeof item.workspace_dependent==="boolean",
         )
       )
         throw new Error("Examples could not be read.");
@@ -52,12 +59,12 @@ export function exampleClient(api: LocalApi) {
     },
     open: async (id: string) =>
       read(await api.request(`/api/examples/${encodeURIComponent(id)}`)),
-    save: async (attempt_id: string, name: string, notes: string) =>
+    save: async (attempt_id: string, name: string, notes: string, allow_workspace_dependent=false) =>
       read(
         await api.request("/api/examples", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ attempt_id, name, notes }),
+          body: JSON.stringify({ attempt_id, name, notes, allow_workspace_dependent }),
         }),
       ),
   };

@@ -13,7 +13,7 @@ export function Examples({
 }: {
   client: ReturnType<typeof exampleClient>;
   selectedId?: string | undefined;
-  onOpen: (example: Example) => void;
+  onOpen: (example: Example) => void|Promise<void>;
 }) {
   const [items, setItems] = useState<ExampleSummary[]>([]),
     [cursor, setCursor] = useState<number | null>(null);
@@ -21,6 +21,7 @@ export function Examples({
     [notes, setNotes] = useState("");
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
+  const [allowDependent,setAllowDependent]=useState(false);
   const [listError, setListError] = useState<string>();
   const [saveError, setSaveError] = useState<string>();
   const [saveNotice, setSaveNotice] = useState<string>();
@@ -45,13 +46,15 @@ export function Examples({
       active = false;
     };
   }, [client]);
+  useEffect(()=>setAllowDependent(false),[selectedId]);
   async function save() {
     if (!selectedId) return;
     setBusy(true);
     setSaveError(undefined);
     setSaveNotice(undefined);
+    let saved:Example;
     try {
-      await client.save(selectedId, name, notes);
+      saved=await client.save(selectedId, name, notes,allowDependent);
     } catch (failure) {
       setSaveError(String(failure));
       setBusy(false);
@@ -59,16 +62,16 @@ export function Examples({
     }
     // Saving succeeded even if the following list refresh is unavailable.
     setName("");
-    setNotes("");
+    setNotes("");setAllowDependent(false);
     try {
       const page = await client.list();
       setItems(page.items);
       setCursor(page.cursor);
       setListError(undefined);
-      setSaveNotice("Example saved.");
+      setSaveNotice(saved.workspace_dependent?"Saved as workspace-dependent.":"Example saved.");
     } catch (failure) {
       setListError(String(failure));
-      setSaveNotice("Example saved. The list could not be refreshed.");
+      setSaveNotice(`${saved.workspace_dependent?"Workspace-dependent example saved.":"Example saved."} The list could not be refreshed.`);
     } finally {
       setBusy(false);
     }
@@ -76,7 +79,7 @@ export function Examples({
   async function open(id: string) {
     setOpenError(undefined);
     try {
-      onOpen(await client.open(id));
+      await onOpen(await client.open(id));
     } catch (failure) {
       setOpenError({id,message:String(failure)});
     }
@@ -107,7 +110,7 @@ export function Examples({
         {items.map((item) => (
           <li key={item.id}>
             <Button className={styles.entry} aria-label={`Open ${item.name}`} onClick={() => void open(item.id)}>
-              <span><strong>{item.name}</strong><small>{item.tool} / {item.action}</small></span>
+              <span><strong>{item.name}</strong><small>{item.tool} / {item.action}{item.workspace_dependent?" · Workspace-dependent":""}</small></span>
               <span aria-hidden="true">→</span>
             </Button>
             {openError?.id === item.id && <p role="alert">{openError.message}</p>}
@@ -148,6 +151,7 @@ export function Examples({
               onChange={(event) => setNotes(event.target.value)}
             />
           </label>
+          <label><input type="checkbox" checked={allowDependent} onChange={event=>setAllowDependent(event.target.checked)}/> Allow a workspace-dependent example if native inputs are not preserved</label>
           {saveError && <p role="alert">{saveError}</p>}
           {saveNotice && <p role="status">{saveNotice}</p>}
           <Button type="submit" busy={busy}>

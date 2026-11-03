@@ -4,7 +4,7 @@ import { isAsset, type Asset } from "./assets";
 import type { Declaration, Json, Readiness, Schema } from "../features/actions/model";
 import type { Coordinates } from "../components/comparison";
 export type SavedImage = { asset: Asset; image: Coordinates; role: string };
-export type BindingOrigin={attempt:string;port:string;occurrence:number};
+export type BindingOrigin=({attempt:string}|{example:string})&{port:string;occurrence:number};
 export type InputBinding = (
   | {kind: "image"; asset: string; frame?: {projection:"flat"|"equirectangular";topology:"bounded"|"wrap"}}
   | {kind: "artifact"; reference: Schema}
@@ -17,7 +17,7 @@ export type Submission = {
   params: Schema;
   images: Record<string, string[]>;
   bindings?: Record<string, InputBinding[]>;
-  lineage?:Record<string,({attempt:string;port:string;occurrence:number}|null)[]>;
+  lineage?:Record<string,(BindingOrigin|null)[]>;
   frames?: Record<
     string,
     { projection: "flat" | "equirectangular"; topology: "bounded" | "wrap" }[]
@@ -176,6 +176,9 @@ export function workspaceClient(api: LocalApi) {
     async artifact(id:string,index:number,target?:string):Promise<Json>{return (await api.request(`/api/attempts/${encodeURIComponent(id)}/artifacts/out/${index}${target?`?${new URLSearchParams({target_tool:target})}`:""}`)).json();},
     async importArtifact(id:string,index:number,target?:string):Promise<Json>{return (await api.request(`/api/attempts/${encodeURIComponent(id)}/artifacts/out/${index}/import`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({target_tool:target})})).json();},
     preserveNative:(id:string)=>getAttempt(`/api/attempts/${encodeURIComponent(id)}/native-preservation`,{method:"POST",headers:{"Content-Type":"application/json"},body:"{}"}),
+    async exampleArtifact(id:string,port:string,index:number,target:string):Promise<Json>{return (await api.request(`/api/examples/${encodeURIComponent(id)}/artifacts/${encodeURIComponent(port)}/${index}?${new URLSearchParams({target_tool:target})}`)).json();},
+    async importExampleArtifact(id:string,port:string,index:number,target:string):Promise<Json>{return (await api.request(`/api/examples/${encodeURIComponent(id)}/artifacts/${encodeURIComponent(port)}/${index}/import`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({target_tool:target})})).json();},
+    async exampleNativeState(id:string,port:string,index:number):Promise<string>{const saved:unknown=await (await api.request(`/api/examples/${encodeURIComponent(id)}`)).json();if(!record(saved)||!Array.isArray(saved.input_artifacts))return "unavailable";const item=saved.input_artifacts.filter((item:unknown)=>record(item)&&item.port===port)[index];return record(item)&&typeof item.native_state==="string"?item.native_state:"workspace-dependent";},
     async snapshot(): Promise<Snapshot> {
       const value: unknown = await (await api.request("/api/state")).json();
       if (

@@ -2760,11 +2760,11 @@ correction; M5.12's targeted browser results remain applicable.
 
 #### M5.13 — Save reusable operation examples
 
-- [ ] Examples retain typed bindings, parameters, owned artifact/image references and source occurrence
+- [x] Examples retain typed bindings, parameters, owned artifact/image references and source occurrence
   metadata independently from the original attempt. Opening fills a draft and never executes anything.
-- [ ] Missing resources, importable owned bytes and genuinely unportable bindings are distinguished;
+- [x] Missing resources, importable owned bytes and genuinely unportable bindings are distinguished;
   saving partial preservation requires an explicit workspace-dependent label, not a silent success claim.
-- [ ] Deleting the source run and restarting leaves a preserved example usable. Moving the tool store
+- [x] Deleting the source run and restarting leaves a preserved example usable. Moving the tool store
   uses its new registration/resource identity; the host never searches old folders.
 
 **Depends:** M5.09,12. **Areas:** examples persistence/API, Examples drawer, cleanup UI.
@@ -2796,7 +2796,24 @@ validated example provenance, registered-store reads/imports and verified save p
 place. Historical workspace-dependent examples can resolve a live reference without a preserved
 occurrence snapshot; import still requires the example's exact occurrence and owned bytes. The
 schema-6 migration/backup regression and native deletion/restart/new-registration cases pass.
-Examples UI and updated assets follow in the second commit of this task.
+The second commit completes the Examples UI and updated assets.
+
+**M5.13 complete / checkpoint D:** opening an example targets a compatible installed registration,
+checks native references, offers explicit owned-byte restoration when needed, and fills a new draft
+without dispatch. Changed parameters produce only the requested action; frozen provenance no longer
+requires deleted source runs. Missing/unportable inputs have explicit workspace-dependent labelling,
+and partial-save confirmation resets per save/selection. Corrupt owned bytes fail save integrity
+checks even when partial saving is allowed. Historical examples retain live-store use without a false
+portable import claim. The UI displays partial-save success explicitly and keeps current-draft edits
+out of saved examples.
+
+Task review approved after fixing the historical live-store lookup. Full local Rust workspace tests,
+clippy (all targets, warnings as errors), UI typecheck and format checks passed. Targeted browser
+checks passed 52 cases including the paid specs; 20 final reviewed cases cover Examples, cleanup,
+restore, explicit partial confirmation and the existing responsive visual suite in both engines.
+Four save-failure region baselines were updated for the confirmation control and inspected at narrow
+width. UI assets rebuilt. No provider calls, public release or pushes performed. Hosted CI is the full
+gate. Rollback retains the pre-schema-7 backup and never silently downgrades the library.
 
 **Checkpoint D:** preserved native examples survive deletion/restart; tool control failures cannot
 change run outcomes or accounting. Back up the database before schema adoption; binary rollback
