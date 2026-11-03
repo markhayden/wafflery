@@ -154,6 +154,16 @@ pub fn startup_access(
     Ok((directories, identity))
 }
 
+/// Deliberately malformed wire observations for independent host-boundary tests.
+/// This never changes the peer's actual grants or ledger.
+pub fn session_response(root: &Path, channel: &str, actual: &Value) -> Value {
+    let mut response = actual.clone();
+    if let Ok(bytes) = fs::read(root.join(format!("{channel}-grants.json"))) {
+        response["allowed_dirs"] = serde_json::from_slice(&bytes).unwrap_or(Value::Null);
+    }
+    response
+}
+
 #[cfg(test)]
 mod access_tests {
     use super::*;

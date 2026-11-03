@@ -450,6 +450,16 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 match content {
                     Some(mut content) => {
                         content["uri"] = json!(uri);
+                        if scenario == "estimates"
+                            && lookup == format!("{}://session", fixtures::TOOL)
+                        {
+                            let actual: Value =
+                                serde_json::from_str(content["text"].as_str().unwrap()).unwrap();
+                            content["text"] = json!(
+                                configuration::session_response(&root, "resource", &actual)
+                                    .to_string()
+                            );
+                        }
                         if lookup == format!("{}://runs", fixtures::TOOL) {
                             let mut state = state.lock().unwrap();
                             state.resource_reads += 1;

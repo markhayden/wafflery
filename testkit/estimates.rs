@@ -105,7 +105,7 @@ pub fn start(
             value["effective"]["config_identity"] = json!(state.lock().unwrap().config_identity);
         }
         value["effective"]["x-sample-lab"] = json!({"path":path,"binding":"internal-debug"});
-        value["session"] = session.clone();
+        value["session"] = super::configuration::session_response(&root, "estimate", &session);
         if label != "readiness" {
             value["readiness"] = ready;
         }

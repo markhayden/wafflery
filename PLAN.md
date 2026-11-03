@@ -2038,6 +2038,29 @@ shared-lock matrix passed fmt/clippy, 380 Rust tests (4 opt-in ignored), typeche
 The following wire slice must still prove a real running child freezes these settings and that
 host publication and saved spending survive malformed observations and directory removal.
 
+**b3b wire lifecycle inventory (before building):** `testkit/configuration.rs`, `testkit/main.rs`,
+`testkit/estimates.rs`, new `tests/session_access.rs`, and this plan. Add explicit test-only response
+overrides for the resource and estimate session grant lists without mutating the peer's actual
+frozen grants/ledger. Through Coordinator, verify configured narrowing and requested/effective
+separation; edits remain frozen until explicit restart; deny-all refuses copied file inputs without
+an attempt; invalid resource/estimate observations cannot replace the last valid session; a granted
+directory disappearing during held synthetic work does not hide reservation or final spend; restart
+creates a new ledger while the serialized saved attempt remains unchanged. Use observable
+provider/idle/shutdown signals, not a terminal database record as a teardown-completion assumption.
+This is test infrastructure and live-boundary evidence; effective-access UI remains separate.
+
+**b3b lifecycle checkpoint (2026-11-02):** three Coordinator tests cover running-child
+configuration freeze, explicit restart, requested/effective separation, denied copied inputs,
+rejected grant observations, recovery of the valid ledger, and directory disappearance during a
+held synthetic call. The hostile-observation test failed before response overrides existed.
+All three passed 20 repetitions under the shared lock. Independent review approved; the final
+reservation-release assertion compares JSON numbers numerically (the peer emits `0.0`). Saved
+attempt serialization is unchanged after restart; this is not a claim about raw database bytes.
+The final full matrix passed fmt/clippy, 383 Rust tests (4 opt-in ignored), typecheck, 56 UI tests,
+2 asset tests, Storybook, byte-identical check-ui builds, release build and 226 browser tests
+(8 opt-in skipped). Temporary browser config is removed; lockfiles/prebuilt assets are unchanged.
+Configured access display and the remaining description/invocation/refusal checks are still open.
+
 **Checkpoint A:** merge M5.01–03 as a coherent cutover of validation, launch arguments and fake
 defaults; v0.4 is the only supported live contract afterward. Green matrix, an independent fake
 task run and the published exact dependency pin are required.
