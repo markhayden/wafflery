@@ -62,6 +62,16 @@ test("run a real offline action and inspect immutable evidence after editing the
   await expect(drawer.getByLabel("Saved evidence")).not.toContainText(
     "Unsubmitted draft",
   );
+  await drawer.getByRole("button", { name: "Resolved invocation", exact: true }).click();
+  const resolvedEvidence = drawer.getByLabel("Resolved invocation", { exact: true });
+  await expect(resolvedEvidence).toContainText("Saved first experiment");
+  await expect(resolvedEvidence).not.toContainText("Unsubmitted draft");
+  const savedInvocation = JSON.parse((await resolvedEvidence.textContent())!);
+  expect(savedInvocation.action).toBe("mark_band");
+  expect(savedInvocation.arguments.source.expect.width).toBe(160);
+  expect(savedInvocation.arguments.source).not.toHaveProperty("path");
+  expect(savedInvocation.arguments).not.toHaveProperty("return_images");
+  expect(savedInvocation.requirements).toEqual([]);
   await drawer.getByRole("button", { name: "Recorded call" }).click();
   await expect(drawer.getByLabel("Saved evidence")).toContainText(
     "progressToken",
@@ -78,6 +88,13 @@ test("run a real offline action and inspect immutable evidence after editing the
     path: testInfo.outputPath("offline-result.png"),
     fullPage: true,
   });
+  await page.getByRole("button", { name: "History", exact: true }).click();
+  await page.getByRole("dialog", { name: "History", exact: true })
+    .getByRole("button", { name: /sample \/ mark_band/ }).click();
+  await page.getByRole("button", { name: "Inspect run" }).click();
+  await drawer.getByRole("button", { name: "Resolved invocation", exact: true }).click();
+  expect(JSON.parse((await resolvedEvidence.textContent())!)).toEqual(savedInvocation);
+  await drawer.getByRole("button", { name: "Close" }).click();
   await host.stop();
   // An older library record is evidence to inspect, not a live v0.2 tool declaration.
   const legacy = spawnSync("/usr/bin/sqlite3", [join(host.root, "Library", "library.sqlite3"),
@@ -104,6 +121,9 @@ test("run a real offline action and inspect immutable evidence after editing the
   await page.getByRole("button", { name: "Inspect run" }).click();
   await drawer.getByRole("button", { name: "Raw result" }).click();
   await expect(drawer.getByLabel("Saved evidence")).toContainText('"contract": "0.2.0"');
+  await drawer.getByRole("button", { name: "Resolved invocation", exact: true }).click();
+  await expect(drawer.getByText("No resolved invocation is available for this saved attempt.", { exact: true })).toBeVisible();
+  await expect(resolvedEvidence).toHaveCount(0);
   await drawer.getByRole("button", { name: "Close" }).click();
   expect(errors).toEqual([]);
 });

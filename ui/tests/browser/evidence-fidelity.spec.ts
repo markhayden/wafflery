@@ -10,7 +10,7 @@ for (const width of [1440,390]) {
     await expect(first).toBeVisible();
     expect((await first.boundingBox())!.y).toBe((await last.boundingBox())!.y);
     await first.focus();
-    for(let i=0;i<5;i++) await page.keyboard.press(browserName==='webkit' && process.platform==='darwin'?'Alt+Tab':'Tab');
+    for(let i=0, steps=await nav.getByRole('button').count()-1;i<steps;i++) await page.keyboard.press(browserName==='webkit' && process.platform==='darwin'?'Alt+Tab':'Tab');
     await expect(last).toBeFocused();
     await expect(last).toBeInViewport();
     await first.focus();
@@ -40,3 +40,27 @@ test('drawer close control scales with larger text', async ({page}) => {
   expect(box.width).toBeGreaterThanOrEqual(66);
   expect(box.width).toBe(box.height);
 });
+
+for (const width of [1440,390]) {
+  for (const [state, story, message] of [
+    ['resolved','run-details','The tool’s resolved arguments, effective settings and requirement names for this saved run.'],
+    ['unresolved','unresolved-invocation','The tool rejected the inputs before resolving an invocation.'],
+    ['unavailable','unavailable-invocation','No resolved invocation is available for this saved attempt.'],
+  ] as const) {
+    test(`saved invocation ${state} at ${width}px`, async ({page}) => {
+      await page.setViewportSize({width,height:900});
+      await page.goto(`http://127.0.0.1:6006/iframe.html?id=workspace-evidence--${story}&viewMode=story`);
+      const drawer=page.getByRole('dialog');
+      await drawer.getByRole('button',{name:'Resolved invocation',exact:true}).click();
+      await expect(drawer.getByText(message,{exact:true})).toBeVisible();
+      const evidence=drawer.getByLabel('Resolved invocation',{exact:true});
+      if(state==='resolved') await expect(evidence).toContainText('"strength": 0.5');
+      if(state==='unresolved') await expect(evidence).toHaveText('null');
+      if(state==='unavailable') await expect(evidence).toHaveCount(0);
+      await drawer.getByRole('heading',{name:'Run details',exact:true}).click();
+      await page.mouse.move(0,0);
+      await expect(drawer).toHaveScreenshot(`invocation-${state}-${width}.png`,visualPolicy);
+      expect(await drawer.evaluate(node=>node.scrollWidth<=node.clientWidth)).toBe(true);
+    });
+  }
+}

@@ -1191,11 +1191,26 @@ progress, cancellation, reports and saved evidence retain the v0.3 behavior.
 
 Each unchecked item below is implementation work, not a claim that a peer or host feature has
 shipped. File lists name primary areas, not exemptions from tests, stories or documentation.
-Budget each implementation commit to at most five authored files; generated assets/snapshots
-are reported separately. If wiring exceeds that budget, add named `.a/.b` sub-tasks with their
-own checks **before** building. Every code slice uses failing behavioral tests first, targeted
-verification, the full matrix and review before local merge. Listed commit subjects describe the parent
-intent; named sub-slices use scope-specific subjects and types. No unnumbered tooling follow-ups.
+From M5.04 onward, aim for one or two commits per acceptance item and about fifteen authored
+files per commit; generated assets/snapshots are reported separately. Split genuinely independent
+parts, not mechanical wiring solely to meet the former five-file budget. Start with failing behavioral
+tests. Run targeted tests, cargo check/clippy and UI typecheck locally, with one independent review
+per completed task before local merge and ready-to-push reporting. Hosted CI is the full-matrix gate;
+do not run the full matrix locally.
+Listed commit subjects describe the parent intent; named sub-slices use scope-specific subjects and
+types. No unnumbered tooling follow-ups.
+
+### As built — M5 process
+
+**Coordinator process change (2026-11-02, effective M5.04 onward):** the owner requested faster
+progress after M5.03. The approximately fifteen-authored-file budget replaces the five-file limit;
+one or two commits per acceptance item is the target. Targeted tests and cargo check/clippy plus UI
+typecheck gate intermediate slices; one independent review gates the task. The coordinator subsequently
+tightened this rule on the owner’s direction: drop the local full matrix entirely. Hosted CI on push
+is the full gate; if red, fix forward in the next push. Stress repetitions are reserved for known
+races. Merge/report at task boundaries or coherent multi-commit batches, without waiting idle for CI. Earlier per-slice
+inventories/checkpoints below are historical records, not requirements for future work. This applies
+to V20 too. Failing tests first, contract boundaries, accurate docs and no attribution remain required.
 
 #### M5.01 — Establish an independent v0.4 peer
 
@@ -1560,8 +1575,8 @@ dimensions and fingerprints remain authoritative; thumbnails never replace run i
   never automatically resize fidelity inputs or overwrite the original.
 
 **Build slices:** V20a measure/header/progress; V20b bounded preview pipeline; optional V20c
-explicit copy. Each needs failing behavioral tests, a five-file implementation budget split
-as needed, stories/browser evidence, full matrix and review. Header feedback is provisional;
+explicit copy. Use the M5 process above: failing behavioral tests and targeted checks per slice,
+stories/browser evidence, then one independent review for the task; hosted CI runs the full matrix. Header feedback is provisional;
 malformed/truncated images must still fail validation before becoming usable. Codec support
 and memory behavior must be measured before choosing a downscaled-decoding implementation.
 
@@ -2287,11 +2302,11 @@ together, never mix wire versions.
 
 #### M5.04 — Preserve resolved invocations
 
-- [ ] Snapshot result invocation on every terminal outcome and show it in the existing inspection
+- [x] Snapshot result invocation on every terminal outcome and show it in the existing inspection
   drawer alongside, and distinctly from, the recorded request. Null invalid invocation is explicit.
-- [ ] Preserve defaults, resolved effective settings, caps and requirement names exactly; no host
+- [x] Preserve defaults, resolved effective settings, caps and requirement names exactly; no host
   inference from UI labels, no credential values, no substituting current draft state for a saved run.
-- [ ] Older attempts remain viewable with invocation unavailable; any storage migration is additive,
+- [x] Older attempts remain viewable with invocation unavailable; any storage migration is additive,
   versioned and tested against a pre-M5 library before the new binary opens real user data. Back up
   the database and registration state before the first real-data upgrade here or in any later task;
   document compatible-binary/backup rollback and refuse unsafe downgrade, without deleting newer evidence.
@@ -2327,6 +2342,26 @@ bundled UI bytes. Final shared-lock matrix passed fmt/clippy, 405 Rust tests (4 
 60 UI tests, 2 asset tests, Storybook, reproducible assets, release build and 230 browser tests
 (8 skipped). Lockfiles unchanged; temporary config removed. Generated manifest is a separate commit.
 History selection and Inspector integration remain M5.04b; no migration or real library upgrade.
+
+**M5.04b exact inventory (before building):** five authored files: `Inspector.tsx`,
+`Evidence.stories.tsx`, `workspace.spec.ts`, `evidence-fidelity.spec.ts` (under their existing UI
+folders), and this plan. Add the saved-invocation view without changing the shared drawer layout;
+verify selected history and edited-draft isolation, explicit null-invalid state and unavailable
+older/missing evidence. Keep keyboard navigation working as the evidence tab count grows. Refresh
+only the inspector baselines affected by its added tab, and add drawer-region snapshots for the
+three invocation states at 390/1440 in both engines. These generated PNG baselines and prebuilt
+assets are committed separately from authored files after visual inspection and the full matrix.
+
+**M5.04 complete (2026-11-02):** the browser regression first failed on the missing invocation
+view. It now verifies saved defaults and portable arguments, draft-edit isolation, history reopening
+and unavailable older evidence. Stories cover resolved, explicit null-invalid and unavailable states;
+keyboard traversal and drawer snapshots pass at 390/1440 in both engines. Independent task review
+approved, with the affected inspector baselines refreshed and visually inspected. Targeted local
+checks passed clippy, typecheck, 5 storage tests, 3 invocation unit tests and 24 browser tests.
+The in-flight full matrix was stopped when the coordinator replaced it with hosted CI as the full
+gate; no completed local matrix is claimed for this UI slice. No migration or real-library access.
+The next push also includes the coordinator-requested CI trigger-only change: ignore `**/*.md` and
+`docs/**` for push/pull_request; manual runs and every job remain unchanged.
 
 #### M5.05 — Present the declared activity hierarchy
 
@@ -2672,10 +2707,11 @@ Safari manual coverage separately, never substitute WebKit as proof of Safari.
 
 The owner approved `plan-m5-v04` on 2026-11-02, including the published v0.4 pin update.
 The coordinator supplied the main revisions recorded above. Merge this plan locally, then follow
-the dependency order above on short branches. Every coherent slice runs the
-full matrix under `../wafflemaker/scripts/heavy.sh wafflery <command>` and receives review before
-local merge; the coordinator alone scans, pushes and watches hosted CI. A red main takes precedence
-before subsequent merges. UI slices include Storybook, keyboard/error states and Playwright regions
+the dependency order above on short branches. From M5.04 onward, use targeted tests, cargo
+check/clippy and UI typecheck locally under `../wafflemaker/scripts/heavy.sh wafflery <command>`,
+and independent review once per task before local merge. Do not run the local full matrix. The
+coordinator alone scans, pushes and watches hosted CI, which is the full gate. Fix red CI forward
+in the next push; keep working between task boundaries. UI slices include Storybook, keyboard/error states and Playwright regions
 using the existing shared visual policy; do not loosen tolerances to hide layout changes. Update
 matching docs in each code commit, not only at closeout. Plan-only edits use diff/link/consistency
 checks rather than rerunning unchanged code.
