@@ -49,8 +49,8 @@
     "ui/src/features/workspace/CostReview.stories.tsx": "272c0680a46b164d62ac511ba31f6b2cc99c1b3ae0b60adb35e31b1809a39da9",
     "ui/src/features/workspace/CostReview.tsx": "19ad02be306c4b9ace0c92ee91bc5fcf44b0cd2af78c04dfde459af63e9adbb9",
     "ui/src/features/workspace/DirectoryAccess.module.css": "bc156decd8538c047f9239d354c4b462e2a84bf55d81ae9a3fea013f9070fedf",
-    "ui/src/features/workspace/DirectoryAccess.stories.tsx": "dd941a39928a0497bc0d6dd62198abe0c2ea2a441ced27fa28fb072be5442ce1",
-    "ui/src/features/workspace/DirectoryAccess.tsx": "26f2392b8622528610d92ba1e922508436718416fb7b542312af9a722b99a3df",
+    "ui/src/features/workspace/DirectoryAccess.stories.tsx": "2cf138b50231a129f6fe92adbb3b953c7e677c66b690e1d321b51b01937925d0",
+    "ui/src/features/workspace/DirectoryAccess.tsx": "bd533667523a0cca085dbf9b30b086f5fb2bc3ed484a7492cfcf027323c9cf30",
     "ui/src/features/workspace/Evidence.module.css": "5cd3657dc000a9d8a705f31f6d1b6a396243926b6ef1d76c58c09067c76c5bef",
     "ui/src/features/workspace/Evidence.stories.tsx": "4166497db31166006c54f2f76a8dfc62ffdbc6f5c6ddaf06a46be142e87644a4",
     "ui/src/features/workspace/Examples.stories.tsx": "5f2b2faeb7708ef7509ababc33ab5b144b26626c923c7eb7f1801ba37619f05c",
@@ -84,8 +84,8 @@
   },
   "outputs": {
     "assets/index-CMr7uhzP.css": "ed5dea8d80c96048c6d655212ff283f085f8f1d5608faa125556060fbeb34034",
-    "assets/index-CSccWn61.js": "5a0f0a1deae6d25dc0245c3c621727754c5a8e725dcbdeecb58efa7726a787e7",
+    "assets/index-oj6RgxfT.js": "def1d70dda17e0a27789df6fae969a904505e8c7a28d42e16a9a8c36e4cf5a4c",
     "assets/wafflery-mark-CML0EpfM.svg": "51bc8a040e26b897a948238598b8cabdf69bf4687c2b1a70613b542de1c99f1f",
-    "index.html": "13781095034ac94549976c2ac3692eeed5b0aa7df1a8709dd4635f5d12a12cb3"
+    "index.html": "ffda116c45adb68443bb07241a5d6e6c3f2acbe450466944dd5a7518f156057a"
   }
 }
