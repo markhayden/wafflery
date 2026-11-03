@@ -4,10 +4,11 @@ import { isAsset, type Asset } from "./assets";
 import type { Declaration, Json, Readiness, Schema } from "../features/actions/model";
 import type { Coordinates } from "../components/comparison";
 export type SavedImage = { asset: Asset; image: Coordinates; role: string };
-export type InputBinding =
+export type BindingOrigin={attempt:string;port:string;occurrence:number};
+export type InputBinding = (
   | {kind: "image"; asset: string; frame?: {projection:"flat"|"equirectangular";topology:"bounded"|"wrap"}}
   | {kind: "artifact"; reference: Schema}
-  | {kind: "location"; value: Schema};
+  | {kind: "location"; value: Schema}) & {origin?:BindingOrigin};
 export type Submission = {
   id: string;
   tool: string;
@@ -16,6 +17,7 @@ export type Submission = {
   params: Schema;
   images: Record<string, string[]>;
   bindings?: Record<string, InputBinding[]>;
+  lineage?:Record<string,({attempt:string;port:string;occurrence:number}|null)[]>;
   frames?: Record<
     string,
     { projection: "flat" | "equirectangular"; topology: "bounded" | "wrap" }[]

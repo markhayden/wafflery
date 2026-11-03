@@ -6,7 +6,7 @@ import {Button} from "../../components/Button";
 import {moveBinding,type Port,type PortBindings} from "./ports";
 import type {Schema} from "./model";
 import styles from "./ActionForm.module.css";
-export type ArtifactChoice={id:string;label:string;reference:Schema};
+export type ArtifactChoice={id:string;label:string;reference:Schema;binding?:InputBinding};
 type Props={ports:Port[];value:PortBindings;onChange:(value:PortBindings)=>void;assets:Asset[];upload:(file:File)=>Promise<Asset>;artifacts?:ArtifactChoice[];issues?:BindingIssue[];disabled?:boolean;onBusy?:((busy:boolean)=>void)|undefined};
 export function PortEditor({ports,value,onChange,assets,upload,artifacts=[],issues=[],disabled=false,onBusy}:Props){
  const latest=useRef({value,onChange});useLayoutEffect(()=>{latest.current={value,onChange};});
@@ -36,7 +36,7 @@ function PortRow({port,value,onChange,assets,upload,artifacts,issues,disabled,on
  {port.type==="image"&&<><label className={styles.field}>Saved image<select value="" onChange={event=>{if(event.target.value)add({kind:"image",asset:event.target.value,frame:{projection:"flat",topology:"bounded"}});}}><option value="">Choose image…</option>{assets.map(asset=><option key={asset.id} value={asset.id}>{asset.width} × {asset.height} · {asset.id.slice(0,8)}</option>)}</select></label>
  <label className={styles.field}>Import image<input type="file" accept="image/png,image/jpeg" onChange={async event=>{const file=event.target.files?.[0];if(!file)return;event.target.value="";setPending(true);onBusy?.(true);try{const asset=await upload(file);if(!alive.current)return;add({kind:"image",asset:asset.id,frame:{projection:"flat",topology:"bounded"}});}catch(failure){if(alive.current)setError(String(failure));}finally{if(alive.current){setPending(false);onBusy?.(false);}}}}/></label></>}
  {port.type==="location"&&<div className={styles.field}><label htmlFor={locationId}>Shared location JSON</label><textarea id={locationId} value={location} onChange={event=>setLocation(event.target.value)} rows={4}/><Button type="button" onClick={()=>{try{const parsed:unknown=JSON.parse(location);if(!parsed||typeof parsed!=="object"||Array.isArray(parsed))throw Error("Enter a location object.");add({kind:"location",value:parsed as Schema});setLocation("");}catch(failure){setError(String(failure));}}}>Add location</Button></div>}
- <label className={styles.field}>Saved artifact<select value="" onChange={event=>{const choice=choices.find(item=>item.id===event.target.value);if(choice)add({kind:"artifact",reference:structuredClone(choice.reference)});}}><option value="">{choices.length?"Choose artifact…":"No saved artifacts of this type"}</option>{choices.map(item=><option key={item.id} value={item.id}>{item.label}</option>)}</select></label>
+ <label className={styles.field}>Saved artifact<select value="" onChange={event=>{const choice=choices.find(item=>item.id===event.target.value);if(choice)add(choice.binding?structuredClone(choice.binding):{kind:"artifact",reference:structuredClone(choice.reference)});}}><option value="">{choices.length?"Choose artifact…":"No saved artifacts of this type"}</option>{choices.map(item=><option key={item.id} value={item.id}>{item.label}</option>)}</select></label>
  </>}
  {pending&&<p role="status">Importing image…</p>}{error&&<p role="alert">{error}</p>}
  {(issues??[]).filter(issue=>issue.index===undefined).map((issue,i)=><p role="alert" key={i}>{issue.problem}: expected {issue.expected}; got {issue.got}. {issue.remedy}</p>)}

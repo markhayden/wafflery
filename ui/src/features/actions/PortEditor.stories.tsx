@@ -13,3 +13,4 @@ export const DeferredImport:Story={render:args=>{
  return <><PortEditor {...args} value={value} onChange={setValue} upload={()=>new Promise(resolve=>setFinish(()=>()=>resolve({id:"a".repeat(32),sha256:"b".repeat(64),width:16,height:8,size:10,media_type:"image/png"})))}/><button type="button" disabled={!finish} onClick={()=>finish?.()}>Finish import</button><pre data-testid="bindings">{JSON.stringify(value)}</pre></>;
 }};
 export const ImportFailure:Story={args:{upload:async()=>{throw Error("Image could not be read.");}}};
+export const SavedChain:Story={args:{ports:[{name:"mask",type:"study:Mask",required:true,many:true}],value:{mask:[{kind:"artifact",reference,origin:{attempt:"upstream",port:"mask",occurrence:0}},{kind:"artifact",reference,origin:{attempt:"upstream",port:"mask",occurrence:1}}]},artifacts:[{id:"first",label:"Upstream / mask / item 1",reference,binding:{kind:"artifact",reference,origin:{attempt:"upstream",port:"mask",occurrence:0}}}]}};

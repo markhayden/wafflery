@@ -2516,11 +2516,11 @@ record interpretation, store reconstruction, provider work or automatic retry is
 
 #### M5.09 — Connect outputs to new drafts
 
-- [ ] Send to and the saved-artifact picker use declared compatible ports; choosing among multiple
+- [x] Send to and the saved-artifact picker use declared compatible ports; choosing among multiple
   destinations is explicit. Carry source attempt, output port and occurrence as host lineage metadata.
-- [ ] Fill the destination draft without Run, hidden import or upstream work. Preserve list ordering
+- [x] Fill the destination draft without Run, hidden import or upstream work. Preserve list ordering
   and duplicate occurrences; a wrong frame stays a tool refusal on the exact receiving port.
-- [ ] Shared image transfers use owned bytes/expect when a receiving store cannot resolve the ref;
+- [x] Shared image transfers use owned bytes/expect when a receiving store cannot resolve the ref;
   location transfers use the shared contract representation or explicit supported import. Never send
   a foreign native type or parse an opaque record to fabricate a shared value.
 
@@ -2532,6 +2532,39 @@ no hidden calls; stories and snapshots. **Commit:** `feat: send saved artifacts 
 can be selected after host restart; missing tool-store data is honest and never triggers reconstruction.
 Rollback removes the UI route first, retaining immutable references and previews; apply the
 first-migration backup/downgrade rule from M5.04.
+
+**As built / checkpoint C:** saved outputs feed a paged catalogue and explicit destination drawer,
+using declared operation ports. Each occurrence is selectable independently, including repeated
+identities; labels name the source port, item and attempt. Choosing a destination fills a new draft
+without any dispatch, import or reconstruction. The normal Run remains explicit. Native references
+stay with their owning tool. Cross-tool image transfers use matching owned asset bytes and saved
+coordinates; location transfers use the shared found value only when one location output and one
+found value make the association unambiguous. Foreign references are refused before materialization;
+the UI converts supported shared types to values. No opaque record is read for a transfer.
+
+Origin metadata follows each editable list item, then is stripped into Submission.lineage (source
+attempt, output port and occurrence), never MCP arguments. The host checks counts, source occurrence,
+port and value/fingerprint under the submission lock; accepted-attempt and preparation idempotency
+lookups precede source validation. Existing accepted submissions still acknowledge after source
+cleanup. Missing origins give an explicit remedy. Origin metadata does not retain upstream runs:
+source deletion can leave historical lineage pointing at an unavailable record; retained references
+remain immutable, and no upstream work is triggered to reconstruct them.
+
+Task review caught ambiguous location provenance and pre-lock/idempotency ordering; both have
+regressions. Existing type/version/frame errors within the owning tool remain the contract's
+indexed binding refusal rather than host interpretation. The catalogue refresh key ignores progress
+noise and tolerates removed attempts. Reopen restores origin metadata, and saved refusal comparison
+uses encoded bindings. Distinct sibling keys prevent obsolete input rows after a destination change.
+Send-to is disabled while a run/submission is active.
+
+Targeted verification passed 10 operation integrations, the ambiguous-location helper regression,
+4 UI artifact/transfer units, clippy and UI typecheck. Chromium/WebKit passed the four-step
+locate → stamp → soften → collect chain with exactly four history entries, plus editor/inspection
+regressions (16 browser cases total); desktop/narrow saved-chain stories have four screenshot
+baselines, visually inspected. Shared image transfers and multiple destination ports are covered by
+adapter tests; existing host image preparation tests exercise the resulting owned-byte binding.
+No provider calls were made. Hosted CI is the full gate. Native export/import and retained native
+bytes remain M5.10 onward; checkpoint C is the independent-reference loop, not a portable bundle.
 
 #### M5.10 — Store native bytes with reference-aware ownership
 

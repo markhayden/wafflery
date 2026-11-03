@@ -5,7 +5,7 @@ import {object,type Json} from "../actions/model";
 import {artifactOccurrences} from "./artifacts";
 import {Button} from "../../components/Button";
 import styles from "./Workspace.module.css";
-export function ArtifactOutputs({attempt,inspect,onSend,load}:{attempt:Pick<Attempt,"id"|"result"|"outputs">;inspect:(index:number)=>Promise<Json>;onSend?:(index:number)=>void;load?:(asset:Asset)=>Promise<Blob>}){
+export function ArtifactOutputs({attempt,inspect,onSend,load,disabled=false}:{attempt:Pick<Attempt,"id"|"result"|"outputs">;inspect:(index:number)=>Promise<Json>;onSend?:(index:number)=>void;disabled?:boolean;load?:(asset:Asset)=>Promise<Blob>}){
  const [view,setView]=useState<{index:number;data?:Json;error?:string}>();
  const generation=useRef(0);useEffect(()=>{generation.current++;setView(undefined);return()=>{generation.current++;};},[attempt.id]);
  async function open(index:number){const current=++generation.current;setView({index});try{const data=await inspect(index);if(current===generation.current)setView({index,data});}catch(error){if(current===generation.current)setView({index,error:error instanceof Error?error.message:"Artifact unavailable."});}}
@@ -15,7 +15,7 @@ export function ArtifactOutputs({attempt,inspect,onSend,load}:{attempt:Pick<Atte
  {item.preview&&<ArtifactPreview saved={attempt.outputs.find(output=>output.asset.sha256===object(item.preview?.image)?.file_sha256)} load={load} />}
  <p>{item.preview?"Preview is a visual aid; the reference identifies this artifact.":"No preview supplied."}</p>
  <Button type="button" onClick={()=>void open(item.index)}>Inspect {item.port} item {item.index+1}</Button>
- {onSend&&<Button type="button" onClick={()=>onSend(item.index)}>Send {item.port} item {item.index+1} to…</Button>}
+ {onSend&&<Button type="button" disabled={disabled} onClick={()=>onSend(item.index)}>Send {item.port} item {item.index+1} to…</Button>}
  {view?.index===item.index&&(view.error?<p role="alert">{view.error} The saved reference remains available; no run was started.</p>:view.data?<details open><summary>Artifact resource · native record is opaque</summary><pre style={{whiteSpace:"pre-wrap",overflowWrap:"anywhere"}}>{JSON.stringify(view.data,null,2)}</pre></details>:<p role="status">Resolving saved artifact…</p>)}
  </article>)}</section>;
 }

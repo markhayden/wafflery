@@ -1,3 +1,5 @@
+import {useSavedArtifacts} from "./useSavedArtifacts";
+import {compatibleDestinations,transferBinding,encodePortBindings,savedSources,type ArtifactSource} from "./artifact-transfer";
 import {ArtifactOutputs} from "./ArtifactOutputs";
 import {artifactOccurrences} from "./artifacts";
 import {PortEditor} from "../actions/PortEditor";
@@ -54,6 +56,7 @@ export function Workspace({
   initial: Snapshot;
 }) {
   const [snapshot, setSnapshot] = useState(initial);
+  const [sendSource,setSendSource]=useState<ArtifactSource>();
   const [connection, setConnection] = useState("");
   const client = useMemo(() => workspaceClient(api), [api]),
     assets = useMemo(() => assetClient(api), [api]);
@@ -123,8 +126,9 @@ export function Workspace({
   const [images, setImages] = useState<ImageSelection>({});
   const [savedImages, setSavedImages] = useState<Asset[]>([]);
   const [selected, setSelected] = useState<Attempt | undefined>();
+  const libraryArtifacts=useSavedArtifacts(api,snapshot,JSON.stringify([selected?.id,selected?.preservation,selected?.outputs.length]));
   const savedRefusal=object(object(selected?.observations)?.refusal);
-  const savedBindingIssues=selected?.request.action===actionId && JSON.stringify(selected.request.params)===JSON.stringify(params) && JSON.stringify(selected.request.bindings??{})===JSON.stringify(portBindings) && savedRefusal ? parseBindingIssues({code:"binding",bindings:savedRefusal.bindings}) : [];
+  const savedBindingIssues=selected?.request.action===actionId && JSON.stringify(selected.request.params)===JSON.stringify(params) && JSON.stringify(selected.request.bindings??{})===JSON.stringify(encodePortBindings(portBindings).bindings) && savedRefusal ? parseBindingIssues({code:"binding",bindings:savedRefusal.bindings}) : [];
   const recent = snapshot.attempts;
   const [selectedId, setSelectedId] = useState<string | null>();
   const [busy, setBusy] = useState(false),
@@ -191,7 +195,7 @@ export function Workspace({
         setActionId(attempt.request.action);
         setParams(structuredClone(attempt.request.params));
         setImages(attempt.declaration.document.actions.find(a=>a.name===attempt.request.action)?.kind === "operation" ? {} : restored);
-        setPortBindings(structuredClone(attempt.request.bindings??{}));
+        setPortBindings(Object.fromEntries(Object.entries(attempt.request.bindings??{}).map(([port,items])=>[port,items.map((item,index)=>({...structuredClone(item),...(attempt.request.lineage?.[port]?.[index]?{origin:attempt.request.lineage[port]![index]!}:{} )}))])));
         setBindingIssues([]);
         submitted.current = null;
         setSelectedId(id);
@@ -218,7 +222,7 @@ export function Workspace({
     setActionId(example.request.action);
     setParams(structuredClone(example.request.params));
     setImages(current?.document.actions.find(a=>a.name===example.request.action)?.kind==="operation"?{}:restored);
-    setPortBindings(structuredClone(example.request.bindings??{}));
+    setPortBindings(Object.fromEntries(Object.entries(example.request.bindings??{}).map(([port,items])=>[port,items.map((item,index)=>({...structuredClone(item),...(example.request.lineage?.[port]?.[index]?{origin:example.request.lineage[port]![index]!}:{} )}))])));
     setBindingIssues([]);
     setSelectedId(null);
     setSelected(undefined);
@@ -287,7 +291,7 @@ export function Workspace({
         revision: declaration.revision,
         params,
         images: bindings,
-        bindings: portBindings,
+        ...encodePortBindings(portBindings),
         frames,
       });
       if (submitted.current?.body !== body)
@@ -300,7 +304,7 @@ export function Workspace({
             revision: declaration.revision,
             params: structuredClone(params),
             images: bindings,
-            bindings: structuredClone(portBindings),
+            ...encodePortBindings(portBindings),
             frames,
           },
         };
@@ -331,7 +335,7 @@ export function Workspace({
     const portError=validatePorts(action.ports?.in??[],portBindings);if(portError){const invalid=(action.ports?.in??[]).find(port=>validatePorts([port],portBindings));if(invalid)document.querySelector<HTMLElement>(`[data-port="${CSS.escape(invalid.name)}"]`)?.focus();throw new Error(portError);}
     const bindings = encodeSelection(declaration.document.contract, action.images ?? [], images);
     return {id:crypto.randomUUID(),tool:toolId,action:actionId,revision:declaration.revision,
-      params:{...structuredClone(params),max_spend_usd:cap},...bindings,bindings:structuredClone(portBindings)};
+      params:{...structuredClone(params),max_spend_usd:cap},...bindings,...encodePortBindings(portBindings)};
   }, updateSnapshot);
   let costSession;
   try { costSession = parseToolSession(declaration?.tool_session); } catch { /* No fabricated allowance. */ }
@@ -404,7 +408,8 @@ export function Workspace({
                 {draftExample.notes ? ` · ${draftExample.notes}` : ""}
               </p>
             )}
-            {action?.kind==="operation" && action.ports && <PortEditor key={`${toolId}/${actionId}/${draftRevision}/${declaration?.revision}`} ports={action.ports.in} value={portBindings} onBusy={setPortImporting} onChange={value=>{setPortBindings(value);setBindingIssues([]);}} assets={savedImages} issues={cost.state.kind==="error"?cost.state.bindings??bindingIssues:bindingIssues.length?bindingIssues:savedBindingIssues} upload={async file=>{const asset=await assets.upload(file);setSavedImages(await assets.list());return asset;}} disabled={busy||!!working||portImporting} />}
+            {action?.kind==="operation" && action.ports && <PortEditor key={`ports/${toolId}/${actionId}/${draftRevision}/${declaration?.revision}`} ports={action.ports.in} value={portBindings} onBusy={setPortImporting} onChange={value=>{setPortBindings(value);setBindingIssues([]);}} assets={savedImages} artifacts={libraryArtifacts.sources.flatMap((source,index)=>{const binding=transferBinding(source,declaration!.document.tool.name);return binding?[{id:String(index),label:`${source.port} item ${(source.index??0)+1} · ${source.attempt?.slice(0,8)} · ${String(source.reference.type)}`,reference:source.reference,binding}]:[];})} issues={cost.state.kind==="error"?cost.state.bindings??bindingIssues:bindingIssues.length?bindingIssues:savedBindingIssues} upload={async file=>{const asset=await assets.upload(file);setSavedImages(await assets.list());return asset;}} disabled={busy||!!working||portImporting} />}
+            {action?.kind==="operation" && <><p role="status">{libraryArtifacts.loading?"Loading saved artifacts…":libraryArtifacts.error??"Saved references are checked by the tool on Run."}</p>{libraryArtifacts.more&&<Button type="button" onClick={libraryArtifacts.loadMore}>Load older artifacts</Button>}</>}
             {action ? (
               <ActionForm
                 key={`${toolId}/${actionId}/${draftRevision}/${declaration?.revision}`}
@@ -537,7 +542,7 @@ export function Workspace({
                   onSetup={event => setDrawer({opener:event.currentTarget,
                   view:"setup",tool:selected.request.tool,action:selected.request.action})} />
                 {!noRun && <>
-                <ArtifactOutputs attempt={selected} load={assets.preview} inspect={index=>client.artifact(selected.id,index)} />
+                <ArtifactOutputs attempt={selected} load={assets.preview} inspect={index=>client.artifact(selected.id,index)} disabled={busy||!!working} onSend={index=>setSendSource(savedSources(selected).find(source=>source.index===index))} />
                 {(!artifactOccurrences(selected.result).length || selected.outputs.some(output=>output.role!=="preview")) && <SavedComparison
                   attempt={selected}
                   client={client}
@@ -615,6 +620,17 @@ export function Workspace({
           ))}
         </section>
       )}
+      <Drawer open={!!sendSource} title="Send artifact to" description="Choose a destination port. This fills a new draft without running any tool." onClose={()=>setSendSource(undefined)}>
+        {sendSource && compatibleDestinations(sendSource,snapshot.tools).map(destination=><Button key={`${destination.tool}/${destination.action}/${destination.port}`} onClick={()=>{
+          const target=snapshot.tools.find(tool=>tool.id===destination.tool)?.declaration;
+          const action=target?.document.actions.find(action=>action.name===destination.action);
+          if(!target||!action)return;
+          const binding=transferBinding(sendSource,target.document.tool.name);if(!binding)return;
+          chooseTool(destination.tool);setActionId(destination.action);setParams(initialParameters(action.params_schema));
+          setPortBindings({[destination.port]:[binding]});setSelectedId(null);setSelected(undefined);setSendSource(undefined);
+        }}>{destination.title}</Button>)}
+        {sendSource&&!compatibleDestinations(sendSource,snapshot.tools).length&&<p>No installed operation declares a compatible receiving port. No tool was run.</p>}
+      </Drawer>
       <Drawer
         open={drawer !== null}
         opener={drawer?.opener ?? null}
