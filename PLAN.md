@@ -2593,11 +2593,11 @@ integration tests, clippy and UI typecheck passed; the storage work remains isol
 
 #### M5.10 — Store native bytes with reference-aware ownership
 
-- [ ] Add a bounded opaque blob store and versioned library links for native exports, artifact
+- [x] Add a bounded opaque blob store and versioned library links for native exports, artifact
   occurrences and future bundles; digest-check publication and deduplicate bytes without decoding them.
-- [ ] Attempts/examples/bundles own references independently. Deletion preview identifies bytes
+- [x] Attempts/examples/bundles own references independently. Deletion preview identifies bytes
   actually eligible for removal; deleting one attempt never removes another owner's artifact inputs.
-- [ ] Migration/reopen and interrupted publication tests preserve existing assets/history. Cleanup
+- [x] Migration/reopen and interrupted publication tests preserve existing assets/history. Cleanup
   touches only host-owned blobs, never a tool workspace or returned export file.
 
 **Depends:** M5.08. **Areas:** library migration, blob publication, examples/cleanup reference accounting.
@@ -2610,6 +2610,37 @@ integration tests, clippy and UI typecheck passed; the storage work remains isol
   tests.
 - **M5.10b: ownership and cleanup integration** — acceptance 2 and cleanup portion of 3;
   shared-ownership/deletion tests.
+
+**As built:** schema 6 adds content-addressed native blobs and immutable occurrence links for
+attempts, examples and future bundle owners. Native bytes are never decoded. Publication/read are
+bounded at 128 MiB, SHA-256 checked, privately staged, synced and published without clobbering;
+existing bytes are reverified. Metadata is committed after publication. A metadata failure leaves
+an unlinked owned file that an idempotent publication reconciles; no tool export file is removed.
+The schema 5 upgrade uses the existing backup-before-migration transaction. Reopen tests retain a
+real image asset, its attempt reference and readable history, as well as opaque bytes.
+
+Attempt/example owner triggers reject absent records and release only deleted owners. Saving an
+example copies its input links transactionally. Bundle IDs currently reserve ownership links;
+actual bundle records remain later work. Links retain media type/reference separately from byte
+identity and cannot be overwritten by a different artifact. Attaching verifies the bytes, so stale
+metadata after an interrupted deletion cannot turn missing data into successful preservation.
+Direction checks keep bundle and input/output links distinct. Each owner is capped at 1,000
+occurrences, so the bounded link listing cannot silently truncate an accepted owner. Cleanup previews include native
+candidates/usage, exclude all surviving owners, revalidate the token under the storage write lock,
+and unlink only host-owned digest paths. External exports and symlink targets remain untouched.
+
+Task review approved the storage layer; the missing-byte attachment case and owner/direction check
+were tightened from its notes. M5.11 must hold publication and attachment under one lease and bound
+control concurrency; separate calls currently fail safely if unused cleanup wins between them.
+Orphan files from a never-retried interrupted publication are not swept automatically, matching the
+existing image publication policy. Native tool export/import and automatic preservation remain
+M5.11–12; this task does not claim those operations already run.
+
+Targeted verification: 11 native-storage/ownership tests, 6 existing database tests, existing cleanup
+integration, clippy and UI typecheck; Chromium/WebKit cleanup/example flows passed 4 browser cases.
+Regressions include hash mismatch, dedup, bounds, DB failure after publication, schema5 backup,
+shared attempt/example/bundle ownership, immutable links, stale metadata and symlink-safe cleanup.
+UI assets rebuilt; hosted CI is the full gate.
 
 #### M5.11 — Add artifact export/import controls
 

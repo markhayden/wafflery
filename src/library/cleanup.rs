@@ -18,6 +18,8 @@ pub struct Preview {
     pub token: String,
     pub selection: Selection,
     pub assets: Vec<Asset>,
+    pub native_blobs: Vec<super::blobs::Blob>,
+    pub total_native_bytes: u64,
     pub reclaimable_bytes: u64,
     pub total_asset_bytes: u64,
     pub baselines_cleared: usize,
@@ -35,7 +37,7 @@ impl Cleanup {
     }
     pub async fn confirm(&self, selection: Selection, token: String) -> Result<Outcome> {
         let _storage = self.0.storage.write().await;
-        let assets = self
+        let (assets, native_blobs) = self
             .0
             .database
             .call(move |db| {
@@ -55,7 +57,7 @@ impl Cleanup {
                     [serde_json::to_string(&current.selection.examples)?],
                 )?;
                 tx.commit()?;
-                Ok(current.assets)
+                Ok((current.assets, current.native_blobs))
             })
             .await?;
         let mut outcome = Outcome {
@@ -86,6 +88,9 @@ impl Cleanup {
                     .push(format!("Image {} could not be removed: {error}", asset.id)),
             }
         }
+        let (bytes, failures) = super::blob_cleanup::reclaim(&self.0, native_blobs).await?;
+        outcome.reclaimed_bytes += bytes;
+        outcome.failures.extend(failures);
         Ok(outcome)
     }
 }
@@ -138,9 +143,21 @@ fn preview(db: &Connection, mut selection: Selection) -> Result<Preview> {
         [&attempts],
         |r| r.get(0),
     )?;
+    let native_blobs = super::blob_cleanup::candidates(db, &selection)?;
+    let total_native_bytes: i64 = db.query_row(
+        "SELECT coalesce(sum(size),0) FROM native_blobs",
+        [],
+        |row| row.get(0),
+    )?;
     let mut preview = Preview {
         token: String::new(),
-        reclaimable_bytes: assets.iter().map(|a| u64::from(a.size)).sum(),
+        reclaimable_bytes: assets.iter().map(|a| u64::from(a.size)).sum::<u64>()
+            + native_blobs
+                .iter()
+                .map(|blob| u64::from(blob.size))
+                .sum::<u64>(),
+        native_blobs,
+        total_native_bytes: total_native_bytes.max(0) as u64,
         assets,
         selection,
         total_asset_bytes: total_asset_bytes.max(0) as u64,

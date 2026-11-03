@@ -31,7 +31,7 @@ pub struct AssetStore {
     decoder: Arc<tokio::sync::Semaphore>,
 }
 
-fn private_directory(path: &Path) -> Result<()> {
+pub(super) fn private_directory(path: &Path) -> Result<()> {
     fs::DirBuilder::new()
         .recursive(true)
         .mode(0o700)
@@ -52,7 +52,13 @@ impl AssetStore {
     pub fn open(root: &Path) -> Result<Self> {
         private_directory(root)?;
         let root = root.canonicalize()?;
-        for directory in ["assets", "assets/sha256", "staging"] {
+        for directory in [
+            "assets",
+            "assets/sha256",
+            "staging",
+            "blobs",
+            "blobs/sha256",
+        ] {
             private_directory(&root.join(directory))?;
         }
         let database = Database::open(&root.join("library.sqlite3"))?;

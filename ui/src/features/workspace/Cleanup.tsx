@@ -14,6 +14,7 @@ type Preview = {
   selection: Selection;
   reclaimable_bytes: number;
   total_asset_bytes: number;
+  total_native_bytes:number;
   baselines_cleared: number;
 };
 const empty: Selection = { attempts: [], examples: [], unused_assets: false };
@@ -62,7 +63,7 @@ export function Cleanup({
           setRunCursor(history.cursor);
           setExamples(page.items);
           setCursor(page.cursor);
-          setUsage(usage.total_asset_bytes);
+          setUsage(usage.total_asset_bytes+usage.total_native_bytes);
         }
       })
       .catch((failure) => {
@@ -90,7 +91,7 @@ export function Cleanup({
         selection,
       )) as Preview;
       setPreview(value);
-      setUsage(value.total_asset_bytes);
+      setUsage(value.total_asset_bytes+value.total_native_bytes);
     } catch (failure) {
       setNotice(String(failure));
     } finally {
@@ -152,12 +153,12 @@ export function Cleanup({
     <div className={styles.library}>
       <p>
         {usage === undefined
-          ? "Reading local image usage…"
-          : `Saved image storage: ${mib(usage)}.`}{" "}
+          ? "Reading local library usage…"
+          : `Saved image and native storage: ${mib(usage)}.`}{" "}
         SQLite metadata and backups use additional space.
       </p>
       <p>
-        Shared images stay while a surviving run or example references them.
+        Shared bytes stay while a surviving run, example or bundle references them.
         Tool workspaces are separate: their size is excluded and nothing there
         is deleted.
       </p>
@@ -206,11 +207,11 @@ export function Cleanup({
             }));
           }}
         />{" "}
-        Include unreferenced saved images, including images only selected in
+        Include unreferenced native files and saved images, including images only selected in
         drafts
       </label>
       <p>
-        Up to 1,000 image files per cleanup. History never expires
+        Up to 1,000 image files and 1,000 native files per cleanup. History never expires
         automatically.
       </p>
       <Button busy={busy} onClick={() => void review()}>
@@ -224,8 +225,8 @@ export function Cleanup({
             {preview.baselines_cleared} baseline pins will clear.
           </p>
           <p>
-            Reclaimable image bytes: {mib(preview.reclaimable_bytes)}. Shared
-            image bytes are excluded.
+            Reclaimable image and native bytes: {mib(preview.reclaimable_bytes)}. Shared
+            bytes owned by surviving records are excluded.
           </p>
           <Button disabled={busy} onClick={() => void confirm()}>
             Confirm cleanup

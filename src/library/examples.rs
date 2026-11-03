@@ -44,7 +44,7 @@ impl ExampleStore {
                 let record: Option<String> = tx
                     .query_row(
                         "SELECT record FROM attempts WHERE id=?1",
-                        [attempt_id],
+                        [&attempt_id],
                         |r| r.get(0),
                     )
                     .optional()?;
@@ -71,6 +71,7 @@ impl ExampleStore {
                         params![example.id, asset],
                     )?;
                 }
+                tx.execute("INSERT INTO native_links(owner_kind,owner_id,direction,occurrence,sha256,media_type,artifact) SELECT 'example',?1,direction,occurrence,sha256,media_type,artifact FROM native_links WHERE owner_kind='attempt' AND owner_id=?2 AND direction='in'",params![example.id,attempt_id])?;
                 tx.execute(
                     "UPDATE examples SET record=?1 WHERE id=?2",
                     params![serde_json::to_string(&example)?, example.id],

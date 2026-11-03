@@ -216,6 +216,10 @@ owned assets. Recheck references under the host's storage lock before unlinking.
 can leave reclaimable files; it must not break surviving runs/examples. Baselines do not prevent
 an explicit run deletion; the UI explains that the pin will clear. Examples retain their assets.
 
+Schema 6 stores opaque native files under `Library/blobs/sha256`, with occurrence links owned
+independently by attempts, examples and future bundles. Publication and reads verify the digest;
+cleanup includes only blobs with no surviving owner. Native files are not decoded by the host.
+
 Never recursively delete unknown tool workspace files. Cleanup of native tool stores needs a
 declared ownership/deletion interface. Show opaque tool storage separately in disk usage;
 reclaimable bytes must not include space Wafflery cannot safely release.

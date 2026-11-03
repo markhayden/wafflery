@@ -1,6 +1,9 @@
 pub mod assets;
 pub mod attempts;
 pub mod baselines;
+mod blob_cleanup;
+pub mod blob_links;
+pub mod blobs;
 pub mod cleanup;
 pub mod db;
 pub mod examples;
