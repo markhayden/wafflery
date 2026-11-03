@@ -12,7 +12,7 @@ test("pipeline drawer copies and downloads the selected saved evidence", async (
     page.getByText("Contract evidence: complete.", { exact: false }).first(),
   ).toBeVisible();
   await page
-    .getByLabel("Label *", { exact: true })
+    .getByLabel("Label", { exact: true })
     .fill("Do not export this draft");
   await page
     .getByRole("button", { name: "Use in your pipeline", exact: true })

@@ -13,7 +13,7 @@ test.describe("native artifact preservation",()=>{
   await expect(page.getByRole("region",{name:"Native preservation"})).toContainText("Native artifacts · preserved");
   const tool=join(dirname(host.root),"tool");
   await rm(join(tool,"artifacts"),{recursive:true});
-  await page.getByRole("button",{name:"Send marker item 1 to…",exact:true}).click();
+  await page.getByRole("button",{name:"Use marker item 1 in another action",exact:true}).click();
   await page.getByRole("dialog",{name:"Send artifact to"}).getByRole("button",{name:/stamp marker.*marker/}).click();
   const restore=page.getByRole("dialog",{name:"Restore saved artifact"});
   await expect(restore).toContainText("Verified native bytes");
@@ -34,6 +34,6 @@ test.describe("native artifact preservation",()=>{
 test("preservation failures expose an explicit retry without changing the run outcome",async({page})=>{
  await page.goto("http://127.0.0.1:6006/iframe.html?id=workspace-nativepreservation--failed&viewMode=story");
  await expect(page.getByRole("region",{name:"Native preservation"})).toContainText("original action will not be replayed");
- await page.getByRole("button",{name:"Retry native preservation"}).click();
- await expect(page.getByRole("button",{name:"Retry native preservation"})).toBeEnabled();
+ await page.getByRole("button",{name:"Try again"}).click();
+ await expect(page.getByRole("button",{name:"Try again"})).toBeEnabled();
 });

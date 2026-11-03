@@ -46,7 +46,7 @@ for (const width of [1440, 390]) {
         * { scrollbar-width: auto !important; }
         *::-webkit-scrollbar { width: 24px; height: 24px; }
       `});
-      const settings = page.getByRole('region',{name:'Input settings'});
+      const settings = page.getByRole('region',{name:'Config settings'});
       expect(await settings.evaluate(node => (node as HTMLElement).offsetWidth - node.clientWidth)).toBe(24);
       for (const [name,region] of Object.entries(regions)) {
         await expect(region).toHaveScreenshot(`workspace-${name}-${width}.png`,visualPolicy);

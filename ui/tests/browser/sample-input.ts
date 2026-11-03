@@ -13,7 +13,7 @@ export async function prepareSampleInput(page: Page, text: string) {
  * Native keyboard behavior is covered separately in draft-edit.spec.ts.
  */
 export async function editSampleLabel(page: Page, text: string) {
-  const label = page.getByLabel("Label *", { exact: true });
+  const label = page.getByLabel("Label", { exact: true });
   await expect(label).toBeEnabled();
   await label.evaluate((node: HTMLInputElement, value) => {
     const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")?.set;

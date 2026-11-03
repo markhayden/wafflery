@@ -8,11 +8,11 @@ test.describe("owned operation examples",()=>{
   await page.getByRole("dialog",{name:"Choose workspace"}).getByRole("button",{name:new RegExp("^Operations ")}).click();
   await page.getByLabel("Import image",{exact:true}).setInputFiles("tests/fixtures/sample.png");
   await expect(page.getByText(/Image ·/)).toBeVisible();await page.getByRole("button",{name:"Run",exact:true}).click();
-  await page.getByRole("button",{name:"Send marker item 1 to…",exact:true}).click();
+  await page.getByRole("button",{name:"Use marker item 1 in another action",exact:true}).click();
   await page.getByRole("dialog",{name:"Send artifact to"}).getByRole("button",{name:/stamp marker.*marker/}).click();
   await page.getByRole("combobox",{name:"Saved image",exact:true}).selectOption({index:1});
   await page.getByRole("button",{name:"Run",exact:true}).click();
-  await page.getByRole("button",{name:"Send token item 1 to…",exact:true}).click();
+  await page.getByRole("button",{name:"Use token item 1 in another action",exact:true}).click();
   await page.getByRole("dialog",{name:"Send artifact to"}).getByRole("button",{name:/soften token.*token/}).click();
   await page.getByRole("button",{name:"Run",exact:true}).click();
   await expect(page.getByRole("region",{name:"Native preservation"})).toContainText("Native artifacts · preserved");
@@ -36,7 +36,7 @@ test.describe("owned operation examples",()=>{
   await expect(restore).toContainText("Verified native bytes");
   await restore.getByRole("button",{name:"Import saved copy",exact:true}).click();
   await expect(page.getByRole("region",{name:"Result",exact:true})).toContainText("Example loaded: Reusable soften");
-  await page.getByLabel("amount",{exact:true}).fill("0.5");
+  await page.getByLabel("Amount",{exact:true}).fill("0.5");
   await page.getByRole("button",{name:"Run",exact:true}).click();
   await expect(page.getByText("Contract evidence: complete.",{exact:false})).toBeVisible();
   const runRoot=join(dirname(host.root),"tool/runs");

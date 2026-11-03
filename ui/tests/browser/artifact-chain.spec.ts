@@ -4,17 +4,17 @@ test.describe("independent operation chains",()=>{test.use({hostScenario:"v04-op
  await page.getByRole("dialog",{name:"Choose workspace"}).getByRole("button",{name:new RegExp("^Operations ")}).click();
  await page.getByLabel("Import image",{exact:true}).setInputFiles("tests/fixtures/sample.png");
  await expect(page.getByText(/Image ·/)).toBeVisible();await page.getByRole("button",{name:"Run",exact:true}).click();
- await page.getByRole("button",{name:"Send marker item 1 to…",exact:true}).click();
+ await page.getByRole("button",{name:"Use marker item 1 in another action",exact:true}).click();
  await page.getByRole("dialog",{name:"Send artifact to"}).getByRole("button",{name:/stamp marker.*marker/}).click();
  await expect(page.getByRole("button",{name:/^Operation stamp marker/})).toBeVisible();
  await expect(page.getByRole("region",{name:"Operation outputs"})).toHaveCount(0);
  await page.getByRole("combobox",{name:"Saved image",exact:true}).selectOption({index:1});
  await page.getByRole("button",{name:"Run",exact:true}).click();
- await page.getByRole("button",{name:"Send token item 1 to…",exact:true}).click();
+ await page.getByRole("button",{name:"Use token item 1 in another action",exact:true}).click();
  await page.getByRole("dialog",{name:"Send artifact to"}).getByRole("button",{name:/soften token.*token/}).click();
  await expect(page.getByRole("button",{name:/^Operation soften token/})).toBeVisible();
  await page.getByRole("button",{name:"Run",exact:true}).click();
- await page.getByRole("button",{name:"Send token item 1 to…",exact:true}).click();
+ await page.getByRole("button",{name:"Use token item 1 in another action",exact:true}).click();
  await page.getByRole("dialog",{name:"Send artifact to"}).getByRole("button",{name:/collect tokens.*tokens/}).click();
  await expect(page.getByRole("button",{name:/^Operation collect tokens/})).toBeVisible();
  const tokens=page.locator("fieldset").filter({has:page.locator("legend",{hasText:"tokens"})});
@@ -42,7 +42,7 @@ test.describe("asynchronous destination selection",()=>{
   await page.getByRole("dialog",{name:"Choose workspace"}).getByRole("button",{name:new RegExp("^Operations ")}).click();
   await page.getByLabel("Import image",{exact:true}).setInputFiles("tests/fixtures/sample.png");
   await expect(page.getByText(/Image ·/)).toBeVisible();await page.getByRole("button",{name:"Run",exact:true}).click();
-  await page.getByRole("button",{name:"Send marker item 1 to…",exact:true}).click();
+  await page.getByRole("button",{name:"Use marker item 1 in another action",exact:true}).click();
   let release!:()=>void,started!:()=>void,finished!:()=>void;
   const held=new Promise<void>(resolve=>{release=resolve;}),seen=new Promise<void>(resolve=>{started=resolve;}),drained=new Promise<void>(resolve=>{finished=resolve;});
   await page.route(/\/api\/attempts\/[^/]+\/artifacts\/out\/0\?target_tool=sample$/,async route=>{

@@ -25,7 +25,7 @@ test("real Rascal runs offline and preserves browser evidence across restart", a
     .getByRole("combobox", { name: "image coordinates", exact: true })
     .selectOption("equirectangular");
   await page
-    .getByLabel("projection", { exact: true })
+    .getByLabel("Projection", { exact: true })
     .selectOption({ label: "equirectangular" });
   await page.getByRole("button", { name: "Run", exact: true }).click();
   await expect(
@@ -110,7 +110,7 @@ test("real Rascal runs offline and preserves browser evidence across restart", a
     .getByRole("button", { name: "Save example", exact: true })
     .click();
   await examples.getByRole("button", { name: "Open Real seam mask" }).click();
-  await expect(page.getByLabel("projection", { exact: true })).toHaveValue(
+  await expect(page.getByLabel("Projection", { exact: true })).toHaveValue(
     '"equirectangular"',
   );
   expect((await readdir(resolve(host.root, "../tool/runs"))).sort()).toEqual(

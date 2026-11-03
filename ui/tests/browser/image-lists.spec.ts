@@ -28,7 +28,7 @@ test("ordered references can be edited, restored from history and omitted", asyn
     await refs.getByRole("combobox").first().scrollIntoViewIfNeeded();
     await page.screenshot({path:testInfo.outputPath(`image-list-${width}.png`),fullPage:true});
   }
-  const label = page.getByLabel("Label *", {exact:true});
+  const label = page.getByLabel("Label", {exact:true});
   await label.click(); await label.fill("Ordered references");
   await expect(label).toHaveValue("Ordered references");
   await page.getByRole("button", {name:"Run",exact:true}).click();
@@ -63,7 +63,7 @@ test("duplicate image coordinates follow reorder and survive a saved example", a
   await refs.getByRole("button", {name:"Move image 2 earlier"}).click();
   await expect(frame(1)).toHaveValue("equirectangular");
   await expect(frame(2)).toHaveValue("flat");
-  const label = page.getByLabel("Label *", {exact:true});
+  const label = page.getByLabel("Label", {exact:true});
   await label.click(); await label.fill("Distinct duplicate frames");
   await expect(label).toHaveValue("Distinct duplicate frames");
   await page.getByRole("button", {name:"Run",exact:true}).click();
@@ -95,7 +95,7 @@ test("an import preserves saved-image insertions and cannot overwrite a restored
   await expect(source.getByRole("img")).toBeVisible();
   await refs.locator("input[type=file]").setInputFiles("tests/fixtures/sample.png");
   await expect(refs.getByRole("img")).toBeVisible();
-  const label = page.getByLabel("Label *", {exact:true});
+  const label = page.getByLabel("Label", {exact:true});
   await label.click(); await label.fill("Saved before import");
   await expect(label).toHaveValue("Saved before import");
   await page.getByRole("button", {name:"Run",exact:true}).click();

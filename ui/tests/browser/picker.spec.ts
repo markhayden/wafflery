@@ -35,15 +35,15 @@ test("declared form keeps arrays as JSON and invalid edits block submission", as
   await page.goto(
     "http://127.0.0.1:6006/iframe.html?id=inputs-actionform--declared&viewMode=story",
   );
-  await page.getByLabel("prompt *").fill("A seam");
-  await page.getByLabel("enabled").selectOption("true");
-  await page.getByLabel("tags").fill('["one","two"]');
+  await page.getByLabel("Prompt").fill("A seam");
+  await page.getByLabel("Enabled").selectOption("true");
+  await page.getByLabel("Tags").fill('["one","two"]');
   await page.getByRole("button", { name: "Validate form" }).click();
   await expect(page.locator("output")).toHaveText(
     '{"prompt":"A seam","enabled":true,"tags":["one","two"]}',
   );
-  await page.getByLabel("tags").fill('["broken"');
-  await page.getByLabel("prompt *").fill("Changed");
+  await page.getByLabel("Tags").fill('["broken"');
+  await page.getByLabel("Prompt").fill("Changed");
   await page.getByRole("button", { name: "Validate form" }).click();
   await expect(page.locator("output")).not.toContainText("Changed");
   await expect(page.getByRole("alert")).toBeVisible();

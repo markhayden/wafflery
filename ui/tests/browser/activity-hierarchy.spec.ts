@@ -12,7 +12,7 @@ test.describe("live operations hierarchy",()=>{
     await expect(picker.getByText("locate",{exact:true})).toBeVisible();
     await expect(picker.getByText("shape",{exact:true})).toBeVisible();
     await picker.getByRole("button",{name:/^soften token/}).click();
-    const amount=page.getByLabel("amount",{exact:true});
+    const amount=page.getByLabel("Amount",{exact:true});
     await amount.fill("0.8");
     await page.getByRole("button",{name:"Workspace Operations",exact:true}).click();
     await page.getByRole("dialog",{name:"Choose workspace"}).getByRole("button",{name:new RegExp("^Utilities ")}).click();

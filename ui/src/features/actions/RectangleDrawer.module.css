@@ -1,0 +1,31 @@
+.drawer { display: grid; gap: 0.75rem; min-width: 0; }
+.hint { margin: 0; color: var(--color-muted); font-size: 0.8125rem; }
+.surface {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-control);
+  background: var(--color-background);
+  cursor: crosshair;
+  touch-action: none;
+  user-select: none;
+}
+.surface img { display: block; width: 100%; height: 100%; object-fit: fill; pointer-events: none; }
+.box {
+  position: absolute;
+  border: 2px solid var(--color-focus);
+  background: color-mix(in srgb, var(--color-focus) 18%, transparent);
+  box-shadow: 0 0 0 9999px #0006;
+  pointer-events: none;
+}
+.exact { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0.5rem; border: 0; padding: 0; margin: 0; }
+.exact legend { grid-column: 1 / -1; padding: 0; margin-bottom: 0.25rem; color: var(--color-muted); font-size: 0.8125rem; }
+.exact label { display: grid; gap: 0.25rem; font-size: 0.8125rem; color: var(--color-muted); min-width: 0; }
+.exact input { width: 100%; padding: 0.5rem; border: 1px solid var(--color-line); border-radius: var(--radius-control); background: var(--color-background); color: var(--color-text); }
+.actions { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+@media (max-width: 30rem) { .exact { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.paint { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+.paint polyline { fill: none; stroke: color-mix(in srgb, var(--color-focus) 70%, transparent); stroke-linecap: round; stroke-linejoin: round; }
+.brush { display: grid; gap: 0.375rem; font-size: 0.8125rem; color: var(--color-muted); }
+.brush input { width: 100%; accent-color: var(--color-focus); }

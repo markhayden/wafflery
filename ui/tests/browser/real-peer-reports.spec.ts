@@ -37,7 +37,7 @@ for (const tool of ["rascal", "squint"] as const) {
     if (tool === "rascal") {
       await page.locator("input[type=file]").setInputFiles("tests/fixtures/panorama.png");
       await page.getByRole("combobox", { name: "image coordinates", exact: true }).selectOption("equirectangular");
-      await page.getByLabel("projection", { exact: true }).selectOption({ label: "equirectangular" });
+      await page.getByLabel("Projection", { exact: true }).selectOption({ label: "equirectangular" });
     } else {
       await page.getByRole("region", { name: "candidate", exact: true })
         .locator("input[type=file]").setInputFiles("tests/fixtures/sample.png");
@@ -63,7 +63,7 @@ for (const tool of ["rascal", "squint"] as const) {
       await page.getByRole("region", { name: "references · reference", exact: true })
         .getByRole("button", { name: "Remove image 1", exact: true }).click();
     } else {
-      await page.getByLabel("projection", { exact: true }).selectOption({ label: "flat" });
+      await page.getByLabel("Projection", { exact: true }).selectOption({ label: "flat" });
     }
     const reports = tool === "rascal" ? [["dash", "Live viewer"], ["page", "Document"]] : [["report", "Live viewer"], ["export", "Document"]];
     async function inspect(name: string, kind: string) {

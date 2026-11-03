@@ -1,5 +1,5 @@
 import type {InputBinding} from "../../api/workspace";
-export type Port={name:string;type:string;required?:boolean;many?:boolean};
+export type Port={name:string;type:string;required?:boolean;many?:boolean;kinds?:string[]};
 export type PortBindings=Record<string,InputBinding[]>;
 export function moveBinding(items:InputBinding[],index:number,direction:number):InputBinding[]{
  const next=[...items],target=index+direction;

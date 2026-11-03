@@ -22,7 +22,7 @@ test("paid draft estimates exact inputs without attempts and edits discard the q
     if (path === "/api/preparations" && request.method() === "POST") preparations.push(request.postDataJSON().id);
   });
   await host.open(page); await paidDraft(page);
-  await expect(page.getByLabel("max_spend_usd",{exact:true})).toHaveCount(0);
+  await expect(page.getByLabel("Max spend (USD)",{exact:true})).toHaveCount(0);
   expect(preparations).toHaveLength(0);
   await estimate(page).click();
   await expect(cost(page)).toContainText("Estimate within cap.");
@@ -222,6 +222,6 @@ test("a refreshed declaration invalidates its quote without losing draft inputs"
   await expect(cost(page)).toContainText("Estimate again");
   await expect(cost(page)).not.toContainText("Worst case");
   await expect(page.getByRole("button",{name:"Run",exact:true})).toBeDisabled();
-  await expect(page.getByLabel("Label *",{exact:true})).toHaveValue("declaration");
+  await expect(page.getByLabel("Label",{exact:true})).toHaveValue("declaration");
   expect((await readFile(resolve(host.root,"../tool/estimates.ndjson"),"utf8")).trim().split("\n")).toHaveLength(1);
 });

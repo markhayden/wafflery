@@ -13,7 +13,7 @@ test("an example owns saved inputs and opens a draft without execution", async (
   await expect(
     page.getByText("Contract evidence: complete.", { exact: false }).first(),
   ).toBeVisible();
-  await page.getByLabel("Label *", { exact: true }).fill("Unsubmitted edits");
+  await page.getByLabel("Label", { exact: true }).fill("Unsubmitted edits");
   await page.getByLabel("Tags", { exact: true }).fill("invalid draft JSON");
   await page.getByRole("button", { name: "Examples", exact: true }).click();
   const drawer = page.getByRole("dialog", { name: "Examples", exact: true });
@@ -27,7 +27,7 @@ test("an example owns saved inputs and opens a draft without execution", async (
     .getByRole("button", { name: "Save example", exact: true })
     .click();
   await drawer.getByRole("button", { name: "Open My first example" }).click();
-  await expect(page.getByLabel("Label *", { exact: true })).toHaveValue(
+  await expect(page.getByLabel("Label", { exact: true })).toHaveValue(
     "Saved example input",
   );
   await expect(page.getByLabel("Tags", { exact: true })).toHaveValue(

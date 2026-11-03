@@ -1,6 +1,5 @@
 import { execFileSync, spawn } from "node:child_process";
-import { existsSync } from "node:fs";
-import { mkdir, mkdtemp, readFile, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { root } from "./ui-manifest";
@@ -14,18 +13,20 @@ if (!rascal || !squint) {
   );
 }
 const options = pipelineOptions(flags);
-// A persistent library keeps its tool setup and saved work between runs; the setup is made once.
+// A persistent library keeps its saved work between runs; the tool setup is remade each time.
 const temporary = options.library ?? await mkdtemp(join(tmpdir(), "wafflery-pipeline-"));
 const data = join(temporary, "data");
 const setup = join(temporary, "setup");
 const source = join(temporary, "registration.json");
-let registrations: Awaited<ReturnType<typeof prepareOfflinePipeline>>;
-if (options.library && existsSync(source)) {
-  registrations = JSON.parse(await readFile(source, "utf8"));
-} else {
-  await mkdir(setup, { recursive: true, mode: 0o700 });
-  registrations = await prepareOfflinePipeline(setup, rascal, squint);
-}
+// The tools run with their own config, data and cache homes inside the library, never the user's
+// (no real keys or settings reach the offline demo). Rascal exports native artifacts there.
+const homes = Object.fromEntries(["XDG_CONFIG_HOME", "XDG_DATA_HOME", "XDG_CACHE_HOME"].map((name) =>
+  [name, join(temporary, "homes", name.toLowerCase())]));
+for (const path of Object.values(homes)) await mkdir(path, { recursive: true, mode: 0o700 });
+await rm(setup, { recursive: true, force: true });
+await mkdir(setup, { recursive: true, mode: 0o700 });
+const registrations = await prepareOfflinePipeline(setup, rascal, squint, false, join(homes.XDG_DATA_HOME!, "rascal", "exports"));
+await writeFile(join(temporary, "homes.env"), Object.entries(homes).map(([name, path]) => `${name}=${path}`).join("\n") + "\n", { mode: 0o600 });
 // The dev UI server serves the UI source directly; only a packaged host needs the built UI.
 if (!options.registerOnly) {
   execFileSync(process.execPath, ["run", "scripts/build-ui.ts"], {
@@ -41,7 +42,8 @@ await writeFile(source, JSON.stringify(registrations, null, 2), {
   mode: 0o600,
 });
 const host = join(root, "target/debug/wafflery");
-execFileSync(host, ["--register", source, "--data-dir", data], {
+// A persistent library is re-registered every run (its setup is remade), so the old entry is replaced.
+execFileSync(host, ["--register", source, ...(options.library ? ["--replace-registration"] : []), "--data-dir", data], {
   stdio: "inherit",
 });
 console.log(`Offline test library: ${data}`);
@@ -54,6 +56,7 @@ console.log(
 );
 const environment = {
   ...process.env,
+  ...homes,
   WAFFLERY_BIN: host,
   WAFFLERY_DATA_DIR: data,
 };

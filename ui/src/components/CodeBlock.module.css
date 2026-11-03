@@ -1,0 +1,33 @@
+.block { position: relative; min-width: 0; }
+.block .code {
+  margin: 0;
+  max-height: 24rem;
+  overflow: auto;
+  padding: 0.75rem 1rem;
+  padding-right: 4.5rem;
+  white-space: pre;
+  overflow-wrap: normal;
+  word-break: normal;
+  text-wrap: nowrap;
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: 0.75rem;
+  line-height: 1.55;
+  color: var(--color-text);
+  background: var(--color-background);
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-control);
+  tab-size: 2;
+}
+.code:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; }
+.copy {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  padding: 0.25rem 0.625rem;
+  font-size: 0.75rem;
+  color: var(--color-muted);
+  background: var(--color-surface);
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-control);
+}
+.copy:hover { color: var(--color-text); }

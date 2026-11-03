@@ -217,3 +217,18 @@
 .toolHeading .note { max-width: 44rem; line-height: 1.5; }
 .site { color: var(--color-text); text-decoration: underline; text-underline-offset: 0.2em; white-space: nowrap; }
 .site:hover { color: var(--color-focus); }
+.outputs { display: grid; gap: 0.5rem; }
+.outputsTitle { margin: 0; font-size: 0.875rem; font-weight: 500; color: var(--color-muted); }
+.output { display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; padding: 0.75rem 1rem; border: 1px solid var(--color-line); border-radius: var(--radius-control); }
+.outputActions { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+.preserve, .preserveFailed { display: grid; gap: 0.375rem; padding: 0.75rem 1rem; border: 1px solid var(--color-line); border-radius: var(--radius-control); font-size: 0.8125rem; }
+.preserve h3, .preserveFailed h3 { margin: 0; font-size: 0.875rem; font-weight: 500; }
+.preserve p, .preserveFailed p { margin: 0; color: var(--color-muted); }
+.preserveFailed { border-color: color-mix(in srgb, #e5a50a 45%, var(--color-line)); }
+.hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.switch { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.5rem 0.75rem; color: var(--color-text); background: transparent; border: 1px solid transparent; border-radius: var(--radius-control); font-size: 0.875rem; }
+.switch:hover { background: var(--color-fill); }
+.track { position: relative; width: 2rem; height: 1.125rem; border-radius: 999px; background: var(--color-line); transition: background 0.15s; }
+.track span { position: absolute; top: 0.1875rem; left: 0.1875rem; width: 0.75rem; height: 0.75rem; border-radius: 999px; background: var(--color-muted); transition: transform 0.15s, background 0.15s; }
+.switch[aria-checked="true"] .track { background: var(--color-focus); }
+.switch[aria-checked="true"] .track span { transform: translateX(0.875rem); background: var(--color-background); }

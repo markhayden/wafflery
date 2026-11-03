@@ -4,7 +4,7 @@ import {visualPolicy} from "./visual-policy";
 test("a bundle reviews the selected saved inputs and still downloads after source cleanup",async({page,host},testInfo)=>{
  await host.open(page);await prepareSampleInput(page,"Frozen bundle label");await page.getByRole("button",{name:"Run",exact:true}).click();
  await expect(page.getByText("Contract evidence: complete.",{exact:false}).first()).toBeVisible();
- await page.getByLabel("Label *",{exact:true}).fill("Draft changed later");
+ await page.getByLabel("Label",{exact:true}).fill("Draft changed later");
  await page.getByRole("button",{name:"Use in your pipeline",exact:true}).click();
  const drawer=page.getByRole("dialog",{name:"Use in your pipeline",exact:true});
  await drawer.getByRole("button",{name:"Invocation bundle",exact:true}).click();

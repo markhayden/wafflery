@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import type { Asset } from "../api/assets";
 import { Button } from "./Button";
 import { canWipe, type Coordinates } from "./comparison";
@@ -8,6 +8,8 @@ type Props = {
   left?: CompareImage | undefined;
   right?: CompareImage | undefined;
   load: (asset: Asset) => Promise<Blob>;
+  /** Extra controls in the toolbar, such as a toggle for what the right side shows. */
+  controls?: ReactNode;
 };
 function useImage(asset: Asset | undefined, load: Props["load"]) {
   const [state, setState] = useState<{ url?: string; error?: string }>({});
@@ -36,7 +38,7 @@ function useImage(asset: Asset | undefined, load: Props["load"]) {
   }, [asset, load]);
   return state;
 }
-export function ImageCompare({ left, right, load }: Props) {
+export function ImageCompare({ left, right, load, controls }: Props) {
   const before = useImage(left?.asset, load),
     after = useImage(right?.asset, load);
   const [mode, setMode] = useState<"wipe" | "side">("wipe"),
@@ -67,6 +69,7 @@ export function ImageCompare({ left, right, load }: Props) {
       <div className={styles.toolbar}>
         <span>Compare</span>
         <div>
+          {controls}
           <Button
             aria-pressed={mode === "wipe" && compatible}
             disabled={!compatible}

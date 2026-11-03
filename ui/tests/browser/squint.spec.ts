@@ -106,7 +106,7 @@ test("Squint scripted evidence survives export, examples, tool switching and res
     .getByRole("combobox", { name: "image coordinates", exact: true })
     .selectOption("equirectangular");
   await page
-    .getByLabel("projection", { exact: true })
+    .getByLabel("Projection", { exact: true })
     .selectOption({ label: "equirectangular" });
   await page.getByRole("button", { name: "Run", exact: true }).click();
   await expect(

@@ -11,3 +11,5 @@
 .details strong { font-weight: 500; }
 .actions { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-2); }
 @media (max-width: 35rem) { .image { grid-template-columns: minmax(0, 1fr); } .preview { height: 12rem; } }
+
+.title { display: inline-flex; align-items: center; gap: 0.5rem; }
