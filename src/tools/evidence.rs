@@ -57,8 +57,31 @@ pub fn check_association(attempt: &Attempt, result: &Value) -> Result<Vec<String
                 .iter()
                 .find(|action| action["name"] == attempt.request.action)
         });
+    super::coordinator::artifacts::validate_occurrences(
+        &attempt.declaration["document"],
+        &attempt.request.action,
+        result,
+        &attempt.request.bindings,
+    )?;
     let operation = action.is_some_and(|action| action["kind"] == "operation");
     let mut notices = Vec::new();
+    for direction in ["in", "out"] {
+        for occurrence in result["artifacts"][direction]
+            .as_array()
+            .into_iter()
+            .flatten()
+        {
+            let preview = &occurrence["preview"];
+            if !preview.is_null()
+                && !result["images"]["out"]
+                    .as_array()
+                    .is_some_and(|outputs| outputs.contains(preview))
+            {
+                notices.push("An artifact preview was not reported among the output images; preview preservation is incomplete.".into());
+            }
+        }
+    }
+
     let mut expected_inputs = attempt.inputs.clone();
     if let Some(action) = action.filter(|_| operation) {
         for port in action["ports"]["in"]
@@ -332,7 +355,7 @@ mod tests {
         let attempt = serde_json::from_value(json!({
             "id":"request", "sequence":1, "created_ms":0,
             "request":{"id":"request","tool":"fixture","action":"mark","revision":"r","params":{},"images":{}},
-            "arguments":{},"declaration":{"document":{"tool":{"name":"fixture","version":"1"},"profiles":["images"]},"tool_session":{"id":"session"}},"inputs":inputs,"wire":null,
+            "arguments":{},"declaration":{"document":{"tool":{"name":"fixture","version":"1"},"profiles":["images"],"actions":[{"name":"mark","kind":"task"}]},"tool_session":{"id":"session"}},"inputs":inputs,"wire":null,
             "execution":"running","result":null,"preservation":{},"outputs":[],"journal":null,"notices":[]
         })).unwrap();
         let result = json!({"tool":{"name":"fixture","version":"1"},"action":"mark","run":{"id":"run","resource":"fixture://run/run/run.json","session_id":"session","client_run_id":"request"},"status":"completed","images":{"in":[

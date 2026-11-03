@@ -365,3 +365,44 @@ async fn port_dispatch_reports_progress_and_cancels_through_the_normal_owner() {
     assert_eq!(saved.result.as_ref().unwrap()["status"], "cancelled");
     h.close().await;
 }
+
+#[tokio::test]
+async fn artifact_inspection_reads_only_a_saved_output_reference() {
+    let h = Host::new().await;
+    h.c.submit(
+        h.request(
+            "inspect",
+            "locate_marker",
+            json!({"image":[{"kind":"image","asset":h.image.id}]}),
+        )
+        .await,
+    )
+    .await
+    .unwrap();
+    let saved = h.settled("inspect").await;
+    let resource = h.c.inspect_artifact("inspect", "out", 0).await.unwrap();
+    assert_eq!(
+        resource["artifact"],
+        saved.result.as_ref().unwrap()["artifacts"]["out"][0]["artifact"]
+    );
+    assert!(resource["record"].is_object());
+    h.c.restart("peer", true).await.unwrap();
+    assert_eq!(
+        h.c.inspect_artifact("inspect", "out", 0).await.unwrap()["artifact"],
+        resource["artifact"]
+    );
+    assert!(h.c.inspect_artifact("inspect", "out", 1).await.is_err());
+    assert!(h.c.inspect_artifact("inspect", "forged", 0).await.is_err());
+    std::fs::remove_dir_all(h.root.path().join("peer/artifacts")).unwrap();
+    let error = h.c.inspect_artifact("inspect", "out", 0).await.unwrap_err();
+    assert!(error.to_string().contains("current tool store"), "{error}");
+    assert_eq!(
+        h.c.attempts
+            .history(None, 100, None, None)
+            .await
+            .unwrap()
+            .len(),
+        1
+    );
+    h.close().await;
+}

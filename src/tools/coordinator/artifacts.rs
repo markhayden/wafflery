@@ -1,0 +1,209 @@
+use super::{Coordinator, Error, Result};
+use crate::tools::{evidence::resource_content, validate_contract};
+use serde_json::Value;
+impl Coordinator {
+    /// Resolve only an occurrence already saved in this library; callers cannot supply URIs.
+    pub async fn inspect_artifact(
+        &self,
+        attempt: &str,
+        direction: &str,
+        index: usize,
+    ) -> Result<Value> {
+        if !matches!(direction, "in" | "out") {
+            return Err(Error::Invalid("Unknown artifact direction".into()));
+        }
+        let saved = self.attempts.get(attempt).await?;
+        let reference = saved
+            .result
+            .as_ref()
+            .and_then(|result| result["artifacts"][direction].get(index))
+            .map(|entry| &entry["artifact"])
+            .ok_or_else(|| Error::Missing("Saved artifact occurrence is unavailable"))?;
+        let entry = self
+            .tools
+            .get(&saved.request.tool)
+            .ok_or_else(|| Error::Missing("The artifact's tool is not installed"))?;
+        let client = entry
+            .client()
+            .ok_or_else(|| Error::Missing("The artifact's tool session is unavailable"))?;
+        let declaration = entry
+            .state
+            .read()
+            .unwrap_or_else(|e| e.into_inner())
+            .declaration
+            .clone()
+            .ok_or_else(|| Error::Missing("The artifact's declaration is unavailable"))?;
+        validate_reference(reference, &declaration.document)?;
+        let uri = reference["resource"].as_str().unwrap();
+        let response = match client.read_resource(uri).await {
+            Ok(response) => response,
+            Err(Error::Mcp(rmcp::ServiceError::McpError(error))) => {
+                if let Some(data) = &error.data {
+                    let (_, schema) = table_manners::SCHEMAS
+                        .iter()
+                        .find(|(id, _)| *id == "urn:table-manners:core:refusal")
+                        .unwrap();
+                    let valid =
+                        crate::tools::validator(&serde_json::from_str(schema)?)?.is_valid(data);
+                    if valid
+                        && data["reason"] == "binding"
+                        && data["run"].is_null()
+                        && data["bindings"].as_array().is_some_and(|items| {
+                            !items.is_empty()
+                                && items.iter().all(|item| {
+                                    item["port"].is_null() && item["problem"] == "unresolved"
+                                })
+                        })
+                    {
+                        let remedies = data["bindings"]
+                            .as_array()
+                            .unwrap()
+                            .iter()
+                            .filter_map(|item| item["remedy"].as_str())
+                            .collect::<Vec<_>>()
+                            .join(" ");
+                        return Err(Error::Invalid(format!(
+                            "Artifact is unavailable in the current tool store. {remedies}"
+                        )));
+                    }
+                }
+                return Err(Error::Mcp(rmcp::ServiceError::McpError(error)));
+            }
+            Err(error) => return Err(error),
+        };
+        if entry
+            .client()
+            .is_none_or(|current| current.session != client.session)
+        {
+            return Err(Error::Conflict(
+                "The artifact tool session changed; inspect again explicitly",
+            ));
+        }
+        let (_, bytes) = resource_content(&response, uri, 4 * 1024 * 1024)?;
+        let document: Value = serde_json::from_slice(&bytes)?;
+        validate_contract("urn:table-manners:operations:artifact", &document)?;
+        if document["artifact"] != *reference
+            || document["tool"]["name"] != declaration.document["tool"]["name"]
+            || document["tool"]["version"] != declaration.document["tool"]["version"]
+        {
+            return Err(Error::Invalid(
+                "Artifact resource conflicts with its saved reference or tool".into(),
+            ));
+        }
+        // Native record remains opaque. The host only validates the shared envelope.
+        Ok(document)
+    }
+}
+pub(super) fn validate_reference(reference: &Value, description: &Value) -> Result<()> {
+    let (_, schema) = table_manners::SCHEMAS
+        .iter()
+        .find(|(id, _)| *id == "urn:table-manners:operations:artifact-ref")
+        .unwrap();
+    crate::tools::validator(&serde_json::from_str(schema)?)?
+        .validate(reference)
+        .map_err(|error| Error::Invalid(format!("Invalid artifact reference: {error}")))?;
+    let tool = reference["tool"].as_str().unwrap();
+    let identity = reference["identity"].as_str().unwrap();
+    if reference["resource"] != format!("{tool}://artifact/{identity}")
+        || reference["tool"] != description["tool"]["name"]
+    {
+        return Err(Error::Invalid(
+            "Artifact resource address conflicts with its identity or registered tool".into(),
+        ));
+    }
+    if reference["type"] != "image"
+        && !description["artifact_types"]
+            .as_array()
+            .into_iter()
+            .flatten()
+            .any(|kind| {
+                kind["type"] == reference["type"]
+                    && kind["schema_versions"]
+                        .as_array()
+                        .is_some_and(|versions| versions.contains(&reference["schema_version"]))
+            })
+    {
+        return Err(Error::Invalid(
+            "Artifact type or version is not advertised by this tool".into(),
+        ));
+    }
+    Ok(())
+}
+
+pub(crate) fn validate_occurrences(
+    description: &Value,
+    action: &str,
+    result: &Value,
+    bindings: &std::collections::BTreeMap<String, Vec<crate::library::attempts::InputBinding>>,
+) -> Result<()> {
+    let Some(action) = description["actions"]
+        .as_array()
+        .and_then(|actions| actions.iter().find(|item| item["name"] == action))
+    else {
+        return Err(Error::Invalid("Artifact action is unavailable".into()));
+    };
+    if action["kind"] != "operation" {
+        return Ok(());
+    }
+    for direction in ["in", "out"] {
+        let mut indices = std::collections::BTreeMap::<String, usize>::new();
+        for occurrence in result["artifacts"][direction]
+            .as_array()
+            .into_iter()
+            .flatten()
+        {
+            let reference = &occurrence["artifact"];
+            validate_reference(reference, description)?;
+            let port = occurrence["port"]
+                .as_str()
+                .ok_or_else(|| Error::Invalid("Missing artifact port".into()))?;
+            let index = indices.entry(port.to_owned()).or_default();
+            if direction == "in"
+                && let Some(crate::library::attempts::InputBinding::Artifact {
+                    reference: expected,
+                }) = bindings.get(port).and_then(|values| values.get(*index))
+                && expected != reference
+            {
+                return Err(Error::Invalid(
+                    "Artifact input identity or order differs from the submitted binding".into(),
+                ));
+            }
+            *index += 1;
+
+            if !action["ports"][direction]
+                .as_array()
+                .into_iter()
+                .flatten()
+                .any(|port| port["name"] == occurrence["port"] && port["type"] == reference["type"])
+            {
+                return Err(Error::Invalid(
+                    "Artifact occurrence conflicts with its declared port".into(),
+                ));
+            }
+        }
+    }
+    Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde_json::json;
+    #[test]
+    fn artifact_addresses_types_and_versions_are_checked_without_reading_native_records() {
+        let description = json!({"tool":{"name":"study"},"artifact_types":[{"type":"study:Mask","schema_versions":[1]}]});
+        let identity = format!("sha256:{}", "a".repeat(64));
+        let reference = json!({"type":"study:Mask","schema_version":1,"tool":"study","identity":identity,"frame":null,"resource":format!("study://artifact/{identity}")});
+        validate_reference(&reference, &description).unwrap();
+        for (key, value) in [
+            ("resource", json!("other://artifact/forged")),
+            ("identity", json!(format!("sha256:{}", "b".repeat(64)))),
+            ("schema_version", json!(2)),
+            ("tool", json!("other")),
+        ] {
+            let mut forged = reference.clone();
+            forged[key] = value;
+            assert!(validate_reference(&forged, &description).is_err());
+        }
+    }
+}

@@ -163,6 +163,7 @@ export function workspaceClient(api: LocalApi) {
     return value;
   }
   return {
+    async artifact(id:string,index:number):Promise<Json>{return (await api.request(`/api/attempts/${encodeURIComponent(id)}/artifacts/out/${index}`)).json();},
     async snapshot(): Promise<Snapshot> {
       const value: unknown = await (await api.request("/api/state")).json();
       if (

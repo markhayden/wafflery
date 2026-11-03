@@ -31,6 +31,10 @@ pub fn router(coordinator: Arc<Coordinator>) -> Router {
         .route("/api/attempts", get(list).post(submit))
         .route("/api/attempts/{id}", get(attempt))
         .route("/api/attempts/{id}/cancel", post(cancel))
+        .route(
+            "/api/attempts/{id}/artifacts/{direction}/{index}",
+            get(inspect_artifact),
+        )
         .route("/api/baselines", get(baseline).post(pin))
         .with_state(coordinator.clone())
         .merge(super::event_api::router(coordinator.events.clone()))
@@ -237,6 +241,13 @@ async fn estimate(
     Path(id): Path<String>,
 ) -> Result<Json<crate::tools::coordinator::PreparedEstimate>, ApiError> {
     Ok(Json(c.prepared_estimate(&id).await?))
+}
+
+async fn inspect_artifact(
+    State(c): State<Arc<Coordinator>>,
+    Path((id, direction, index)): Path<(String, String, usize)>,
+) -> Result<Json<serde_json::Value>, ApiError> {
+    Ok(Json(c.inspect_artifact(&id, &direction, index).await?))
 }
 
 #[cfg(test)]

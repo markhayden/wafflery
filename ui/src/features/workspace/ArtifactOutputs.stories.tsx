@@ -1,0 +1,10 @@
+import type {Meta,StoryObj} from "@storybook/react-vite";
+import type {Json} from "../actions/model";
+import {ArtifactOutputs} from "./ArtifactOutputs";
+const reference={type:"study:Mask",schema_version:1,tool:"study",identity:`sha256:${"a".repeat(64)}`,resource:`study://artifact/sha256:${"a".repeat(64)}`,frame:null};
+const meta={title:"Workspace/ArtifactOutputs",component:ArtifactOutputs,args:{attempt:{id:"saved",outputs:[],result:{artifacts:{out:[{port:"masks",artifact:reference,preview:null},{port:"masks",artifact:reference,preview:null}]}}},inspect:async():Promise<Json>=>({artifact:reference,record:{opaque:"Tool-owned native data"}})},} satisfies Meta<typeof ArtifactOutputs>;
+export default meta;type Story=StoryObj<typeof meta>;
+export const Previewless:Story={};
+export const MissingStore:Story={args:{inspect:async()=>{throw Error("Artifact unavailable. Import the saved bundle into this tool store.");}}};
+export const Resolving:Story={args:{inspect:()=>new Promise(()=>{})}};
+export const MissingPreview:Story={args:{attempt:{id:"missing-preview",outputs:[],result:{artifacts:{out:[{port:"mask",artifact:reference,preview:{image:{file_sha256:"b".repeat(64)}}}]}}}}};

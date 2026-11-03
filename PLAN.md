@@ -2480,12 +2480,12 @@ scalar/list dispatch and shared-location route through the independent peer. No 
 
 #### M5.08 — Index output references and inspect artifacts
 
-- [ ] Preserve `artifacts.in/out` occurrence order, references and preview assets independently;
+- [x] Preserve `artifacts.in/out` occurrence order, references and preview assets independently;
   enforce tool/resource/identity consistency and advertised type/version rules. Reconcile duplicate
   images/locations profile entries without duplicating owned image bytes or presenting phantom outputs.
-- [ ] Read only the advertised artifact resource and preview, with bounded parsing and clear missing,
+- [x] Read only the advertised artifact resource and preview, with bounded parsing and clear missing,
   stale-session and malformed-resource states. Display native record as opaque data; never decode it.
-- [ ] Output cards support multiple ports and previewless outputs, including salvaged error/cancelled
+- [x] Output cards support multiple ports and previewless outputs, including salvaged error/cancelled
   outputs. Preview failures affect preservation, not the tool's result or the native artifact identity.
 
 **Depends:** M5.04,06–07. **Areas:** artifact resource client, evidence/persistence, result cards/Inspector.
@@ -2498,6 +2498,21 @@ missing preview and multiple same-port outputs.
 - **M5.08a: artifact evidence and resource access** — acceptance 1–2; persistence/resource/refusal
   tests.
 - **M5.08b: output cards and inspection** — acceptance 3; stories and result browser tests.
+
+**As built:** immutable result artifacts keep input/output occurrence order and repeated identities;
+preview bytes reuse existing image assets. Association checks advertised ports, types, versions,
+resource/identity consistency and submitted reference order. Missing preview entries add preservation
+notices without changing the tool outcome. The inspection API accepts only a saved attempt,
+direction and occurrence, reads that exact advertised resource (4 MiB bound), validates its envelope
+and complete reference, and returns the native record unchanged. A replacement session invalidates
+an in-flight read; a deliberate later read can resolve the same reference after restart. Null-port
+unresolved refusals retain the tool remedy. Output cards distinguish previewless/missing-preview,
+resolving and unavailable resources and suppress phantom preview-only comparison outputs. Stories
+cover those states. Task review found the old evidence fixture lacked its action declaration;
+that fixture was corrected. Targeted checks: 8 operation integration tests, existing evidence tests,
+forged-resource/type/version unit test, occurrence-order UI unit, clippy/typecheck and 4 browser
+cases passed across Chromium/WebKit, including restart and unavailable-resource cards. No native
+record interpretation, store reconstruction, provider work or automatic retry is introduced.
 
 #### M5.09 — Connect outputs to new drafts
 

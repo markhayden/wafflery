@@ -1,3 +1,5 @@
+import {ArtifactOutputs} from "./ArtifactOutputs";
+import {artifactOccurrences} from "./artifacts";
 import {PortEditor} from "../actions/PortEditor";
 import {validatePorts,type PortBindings} from "../actions/ports";
 import {ApiError,bindingIssues as parseBindingIssues,type BindingIssue} from "../../api/client";
@@ -535,12 +537,13 @@ export function Workspace({
                   onSetup={event => setDrawer({opener:event.currentTarget,
                   view:"setup",tool:selected.request.tool,action:selected.request.action})} />
                 {!noRun && <>
-                <SavedComparison
+                <ArtifactOutputs attempt={selected} load={assets.preview} inspect={index=>client.artifact(selected.id,index)} />
+                {(!artifactOccurrences(selected.result).length || selected.outputs.some(output=>output.role!=="preview")) && <SavedComparison
                   attempt={selected}
                   client={client}
                   load={assets.preview}
                   revision={snapshot}
-                />
+                />}
                 <p className={styles.note}>
                   Contract evidence: {selected.preservation.contract}. Editing
                   the inputs starts a new draft.
