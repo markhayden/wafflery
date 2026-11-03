@@ -112,3 +112,14 @@ snapshot did not make it usable. The shared test helper now waits for run settle
 a fresh snapshot with native preservation complete. New assertions reproduced the pending evidence
 locally before the fix. All live bundle import/replay source callers share that helper; static fixtures
 and real-peer probes were checked separately. Product refusal and worker lifetimes remain unchanged.
+
+## Closed chooser descriptions
+
+[Hosted run 41641952288](https://github.com/markhayden/wafflery/actions/runs/41641952288)
+passed Rust, then found the refreshed form purpose twice: once in the form and once in a closed
+chooser's retained hidden choices. Choices now mount only while the chooser is open. This keeps
+full descriptive choice text when selecting, the current purpose in the input form and the compact
+closed trigger. A regression failed in both engines before the correction and verifies selection
+removes hidden choices. The same run found two readiness cases using an obsolete combined
+choice label; those now select the stable title inside the chooser. Native focus restoration and
+open/close behavior remain covered; no timing or retry policy changed.

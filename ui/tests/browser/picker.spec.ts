@@ -6,6 +6,7 @@ test("focused picker searches a long list, selects and restores focus", async ({
     "http://127.0.0.1:6006/iframe.html?id=components-picker--long-list&viewMode=story",
   );
   const trigger = page.locator("button[aria-haspopup=dialog]");
+  await expect(page.locator("dialog button[aria-pressed]")).toHaveCount(0);
   await trigger.click();
   await expect(page.getByRole("dialog")).toBeVisible();
   await expect(
@@ -16,11 +17,14 @@ test("focused picker searches a long list, selects and restores focus", async ({
   await expect(page.getByRole("dialog")).not.toBeVisible();
   await expect(trigger).toBeFocused();
   await expect(trigger).toContainText("Action 47");
+  await expect(page.locator("dialog button[aria-pressed]")).toHaveCount(0);
   await trigger.click();
   await page.keyboard.press("Escape");
   await expect(trigger).toBeFocused();
+  await expect(page.locator("dialog button[aria-pressed]")).toHaveCount(0);
   await page.setViewportSize({ width: 320, height: 640 });
   await trigger.click();
+  await expect(page.getByRole("dialog").locator("button[aria-pressed]")).toHaveCount(60);
   expect(
     await page.evaluate(() => document.documentElement.scrollWidth),
   ).toBeLessThanOrEqual(320);

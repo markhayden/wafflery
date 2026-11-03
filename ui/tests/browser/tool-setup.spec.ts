@@ -131,7 +131,7 @@ test.describe("live readiness", () => {
   test("refresh changes readiness and revision while retaining the selected action and draft", async ({ page, host }) => {
     await host.open(page);
     await page.getByRole("button", { name: "Action Add a test band" }).click();
-    await page.getByRole("button", { name: /Price a scripted call Parameters/ }).click();
+    await page.getByRole("dialog", {name:"Choose action"}).getByRole("button", { name: /^Price a scripted call/ }).click();
     await page.getByLabel("label *", { exact: true }).fill("Keep this paid draft");
     let attempts = 0;
     page.on("request", request => { if (request.method() === "POST" && new URL(request.url()).pathname === "/api/attempts") attempts++; });
@@ -157,7 +157,7 @@ test.describe("live readiness", () => {
   test("a delayed setup response cannot restore stale readiness after another tab refreshes", async ({ page, context, host }) => {
     await host.open(page);
     await page.getByRole("button", { name: "Action Add a test band" }).click();
-    await page.getByRole("button", { name: /Price a scripted call Parameters/ }).click();
+    await page.getByRole("dialog", {name:"Choose action"}).getByRole("button", { name: /^Price a scripted call/ }).click();
     await page.getByRole("button", { name: "Tool setup", exact: true }).click();
     const drawer = page.getByRole("dialog", { name: "Tool setup", exact: true });
     await expect(drawer.getByText("Present · not validated", { exact: true })).toBeVisible();
@@ -176,7 +176,7 @@ test.describe("live readiness", () => {
       await writeFile(join(host.root, "..", "tool", "credential-state"), "valid");
       await host.open(other);
       await other.getByRole("button", { name: "Action Add a test band" }).click();
-      await other.getByRole("button", { name: /Price a scripted call Parameters/ }).click();
+      await other.getByRole("dialog", {name:"Choose action"}).getByRole("button", { name: /^Price a scripted call/ }).click();
       await other.getByRole("button", { name: "Tool setup", exact: true }).click();
       await expect(other.getByRole("dialog").getByText("Validated", { exact: true })).toBeVisible();
       await expect(drawer.getByText("Validated", { exact: true })).toBeVisible();

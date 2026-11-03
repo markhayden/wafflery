@@ -37,7 +37,7 @@
     "ui/src/components/ImageInput.tsx": "216dad25eef1214284a2f01170e52c05d2fcb6d70384474435d0303c63b6b501",
     "ui/src/components/Picker.module.css": "b86c77e8b6353139b9c1b17f3548e96f5edced538cd854eefa4cc9eefcae5093",
     "ui/src/components/Picker.stories.tsx": "cee576edfab6a1c25fb1be678e376fb53174da19294265ad13eac2c95a3b293d",
-    "ui/src/components/Picker.tsx": "4aa7ea887f2e453d08a7372e663a80c57aee95031dcbb65c687c9b67ae34b96f",
+    "ui/src/components/Picker.tsx": "136b720be0129b25013b0dd0a0dfcd4a0f8b44d531d3b9dfae93d68a27bc6e86",
     "ui/src/components/Shutdown.module.css": "1e2087405b4c401f8b10415ef2c56a6955662f6f0eeb39135c58b39927d1acf1",
     "ui/src/components/Shutdown.tsx": "0921c658b03088c98f6c8c285ffbc4efcb57d911a94cb1c8f523d9755d0278ad",
     "ui/src/components/WorkspaceFrame.stories.tsx": "15e8991d431983d9ba389a208f9f995961e17a9de4e62c6cc476c9df5225f7a6",
@@ -118,9 +118,9 @@
     "ui/vite.config.ts": "3aec7d6174ffca99d4d5288bea2f837d5e91335cbd7135a9682e6d18a40476b4"
   },
   "outputs": {
-    "assets/index-Cfmv4YXP.js": "774a449cfb0fb116be84142da755c471d29b00483463099c4a0df187709f4265",
+    "assets/index-BSahEaka.js": "f93f3b9a54b9a3b420398f6eaac883820526acedf5c80feec6a715963081b79b",
     "assets/index-DCHMTYQi.css": "6a224f74b18aad359b1476686070586dd8db42fd90dfca21fdf1e66f9c673b95",
     "assets/wafflery-mark-CML0EpfM.svg": "51bc8a040e26b897a948238598b8cabdf69bf4687c2b1a70613b542de1c99f1f",
-    "index.html": "ee1ad6877f56a2697c976d49275e0550abbaa16a2b63311dd5619527f686782e"
+    "index.html": "9e5fac88cec90fa4e1ac461b567da32130bdbddaa3e6c705a22804bc5bbd0752"
   }
 }

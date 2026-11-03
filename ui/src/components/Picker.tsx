@@ -23,6 +23,7 @@ export function Picker({ label, value, choices, onChange, disabled, compact = fa
   const search = useRef<HTMLInputElement>(null);
   const dialog = useRef<HTMLDialogElement>(null);
   const [query, setQuery] = useState("");
+  const [open, setOpen] = useState(false);
   const selected = choices.find((choice) => choice.id === value);
   const matches = choices.filter((choice) =>
     `${choice.title} ${choice.description ?? ""} ${choice.group ?? ""}`
@@ -40,9 +41,11 @@ export function Picker({ label, value, choices, onChange, disabled, compact = fa
         className={styles.trigger}
         aria-labelledby={`${id} ${id}-value`}
         aria-haspopup="dialog"
+        aria-expanded={open}
         disabled={disabled}
         onClick={() => {
           setQuery("");
+          setOpen(true);
           dialog.current?.showModal();
           search.current?.focus();
         }}
@@ -57,7 +60,9 @@ export function Picker({ label, value, choices, onChange, disabled, compact = fa
       </button>
       <dialog
         ref={dialog}
-        onClose={() => trigger.current?.focus()}
+        onClose={() => {
+          if (!dialog.current?.open) { setOpen(false); trigger.current?.focus(); }
+        }}
         className={styles.dialog}
         aria-label={`Choose ${label.toLowerCase()}`}
       >
@@ -73,7 +78,7 @@ export function Picker({ label, value, choices, onChange, disabled, compact = fa
           onChange={(event) => setQuery(event.target.value)}
         />
         <div className={styles.options}>
-          {matches.map((choice, index) => (
+          {open && matches.map((choice, index) => (
             <div key={choice.id}>
               {choice.group && choice.group !== matches[index - 1]?.group && (
                 <p className={styles.group}>{choice.group}</p>
@@ -92,7 +97,7 @@ export function Picker({ label, value, choices, onChange, disabled, compact = fa
               </button>
             </div>
           ))}
-          {matches.length === 0 && <p>No matches. Try another search.</p>}
+          {open && matches.length === 0 && <p>No matches. Try another search.</p>}
         </div>
       </dialog>
     </div>

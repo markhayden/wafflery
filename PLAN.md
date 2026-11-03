@@ -3397,6 +3397,19 @@ bundle refusal, native worker lifetime and deadlines are unchanged. All 44 opera
 clippy and UI typecheck passed. Twenty repetitions of the three chain bundle tests passed, and
 independent review approved the correction; M5.22 still awaits green hosted CI.
 
+**M5.22 focused-picker correction:** hosted run `41641952288` passed Rust and exposed six
+browser failures (three cases in both engines). The chooser retained closed menu descriptions in
+its hidden DOM, duplicating the current form purpose for strict text queries. Choices now mount
+only while the native chooser is open; full purpose remains in the open chooser and the form,
+while the closed trigger keeps its compact signature. A regression failed in both engines before
+the fix and checks hidden choices are removed after selection. Native close/Escape restores focus
+and clears expanded state; a queued close event cannot clear a chooser that has already reopened.
+Readiness tests also selected the obsolete combined `Price a scripted call Parameters` text;
+they now select the stable title inside the open chooser. No description or readiness data is
+removed, and no deadline/retry was relaxed. All 106 targeted Chromium/WebKit checks passed, with two additional native Escape/reopen
+checks, full locked Rust workspace tests, formatting, all-target clippy and UI typecheck. Independent
+review approved the correction; hosted CI remains the M5.22 gate.
+
 ### Approval, checks and remaining coordination
 
 The owner approved `plan-m5-v04` on 2026-11-02, including the published v0.4 pin update.
