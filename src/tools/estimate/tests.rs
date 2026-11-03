@@ -111,6 +111,9 @@ fn malformed_estimates_never_become_quotes() {
 
 #[test]
 fn distinguishes_plain_invalid_params_from_the_exact_named_estimate_refusal() {
+    let validate_refusal = |error: &rmcp::model::ErrorData| {
+        super::validate_refusal(error, &json!({"kind":"task"}), &json!({}))
+    };
     use rmcp::model::{ErrorCode, ErrorData};
     let refusal = fixtures::refusal("invalid_arguments");
     for data in [None, Some(refusal.clone())] {
@@ -180,4 +183,37 @@ fn requires_successful_structured_estimates_instead_of_text_or_run_results() {
             .is_err()
         );
     }
+}
+
+#[test]
+fn estimate_binding_refusals_match_the_requested_operation_and_exact_list_item() {
+    let action = json!({"kind":"operation","ports":{"in":[{"name":"masks","many":true}]}});
+    let artifact = json!({"type":"sample-lab:Mask","schema_version":1,"tool":"sample-lab",
+        "identity":format!("sha256:{}","1".repeat(64)), "frame":null,
+        "resource":"sample-lab://artifact/example"});
+    let arguments = json!({"masks":[artifact.clone(),artifact]});
+    let data = json!({"reason":"binding","run":null,"bindings":[{"port":"masks","index":1,
+        "problem":"unresolved","expected":"sample-lab:Mask v1","got":"missing", "remedy":"Import its bundle."}]});
+    let error = |data| rmcp::ErrorData::invalid_params("Cannot bind", Some(data));
+    validate_refusal(&error(data.clone()), &action, &arguments).unwrap();
+    assert!(validate_refusal(&error(data.clone()), &json!({"kind":"task"}), &arguments).is_err());
+    for supplied in [
+        json!({}),
+        json!({"masks":[arguments["masks"][0]]}),
+        json!({"masks":[arguments["masks"][0],{"path":"/image.png"}]}),
+    ] {
+        assert!(validate_refusal(&error(data.clone()), &action, &supplied).is_err());
+    }
+    for (field, value) in [
+        ("port", json!("unknown")),
+        ("index", json!(null)),
+        ("index", json!(2)),
+    ] {
+        let mut invalid = data.clone();
+        invalid["bindings"][0][field] = value;
+        assert!(validate_refusal(&error(invalid), &action, &arguments).is_err());
+    }
+    let mut known_run = data;
+    known_run["run"] = json!({"id":"allocated"});
+    assert!(validate_refusal(&error(known_run), &action, &arguments).is_err());
 }

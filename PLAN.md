@@ -1661,13 +1661,13 @@ live v0.4 effective grants and verifies narrowing/restart with retained old-sess
 
 #### M5.03 — Cut over live validation to v0.4
 
-- [ ] Adopt published `table-manners = "=0.4.0"` directly and update the lockfile. Verify the packaged
+- [x] Adopt published `table-manners = "=0.4.0"` directly and update the lockfile. Verify the packaged
   schemas/fixtures against reviewed tag `v0.4.0` at `d1c49a7`; report any packaging discrepancy before
   cutover. No path, git or temporary source pin is needed in development or CI.
-- [ ] Validate kinds/groups/ports/artifact types, result invocation, session grants and new refusals.
+- [x] Validate kinds/groups/ports/artifact types, result invocation, session grants and new refusals.
   Reject inconsistent metadata and schema collisions before presenting an executable action. Reserved describe/estimate/export/import
   controls cannot appear as runnable actions.
-- [ ] Existing task-only fake flows, paid preparation and current-contract report viewers still
+- [x] Existing task-only fake flows, paid preparation and current-contract report viewers still
   work. Old saved evidence remains readable/exportable; launching a renderer is a live operation
   and requires v0.4 saved declarations/results. After checkpoint A, only v0.4 live peers are supported. Point opt-in real-peer harnesses and
   development instructions at the approved M10 revisions with explicit version preflight; incompatible
@@ -2253,6 +2253,29 @@ checks. Full shared-lock matrix passed fmt/clippy, 403 Rust tests (4 ignored), t
 2 asset tests, Storybook, reproducible assets, release build and 230 browser tests (8 skipped).
 Lockfiles/assets unchanged; temporary config removed. M5.06's actual port dispatch will exercise
 this path end to end; this slice does not claim that the operation workspace is enabled.
+
+**b8b exact inventory (before building):** `src/tools/estimate.rs`,
+`src/tools/estimate/control.rs`, `src/tools/estimate/tests.rs`, `docs/integration-sources.md`, and
+this plan. Estimate binding refusals must match the requested action and materialized arguments;
+plain invalid params and invalid_arguments remain accepted, while not_ready/reuse/known-run or
+malformed/context-conflicting errors remain invalid estimate evidence. No attempt or quote is
+created by a refusal. Record final approved-peer preflight and close the M5.03 checklist after the
+full matrix; no change to artifact-read/export controls or operation dispatch in this slice.
+
+**b8b / M5.03 checkpoint (2026-11-02):** the first estimate-binding test failed with
+`Unexpected estimate refusal reason`. The estimate boundary now validates the requested action,
+exact submitted artifact item and refusal schema. Valid binding errors remain control failures;
+invalid contexts, direct inputs, missing/out-of-range indices and non-null run data are rejected.
+The existing invalid-arguments/readiness/reuse distinctions remain tested. Independent review
+approved the change. All estimate unit tests, ten bound-estimate regressions and four opt-in peer
+checks passed on this build. The four peer checks use isolated approved Rascal `eed6397` and
+Squint `6dd1e3a` builds with no real provider calls; the source inventory records their scope.
+Full shared-lock matrix passed fmt/clippy, 404 Rust tests (4 ignored), typecheck, 57 UI tests,
+2 asset tests, Storybook, reproducible assets, release build and 230 browser tests (8 skipped).
+Lockfiles/prebuilt assets unchanged; temporary config removed. M5.03's checklist is complete.
+M5.06–07 still own end-to-end operation dispatch/estimate context and field-level refusal display;
+these boundary checks do not expose an operation workflow early. No invocation-storage migration
+or real user library upgrade has occurred.
 
 **Checkpoint A:** merge M5.01–03 as a coherent cutover of validation, launch arguments and fake
 defaults; v0.4 is the only supported live contract afterward. Green matrix, an independent fake

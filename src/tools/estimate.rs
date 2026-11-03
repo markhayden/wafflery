@@ -172,9 +172,13 @@ impl ValidatedEstimate {
     }
 }
 
-/// The only named estimate failure is invalid_arguments. Missing setup is a quote refusal,
-/// not not_ready, and an estimate cannot claim or reuse a client run ID.
-pub fn validate_refusal(error: &rmcp::model::ErrorData) -> Result<()> {
+/// Estimates may refuse invalid arguments or artifact bindings before any run exists.
+/// Missing setup is a quote refusal, not not_ready; estimates never claim a client run ID.
+pub fn validate_refusal(
+    error: &rmcp::model::ErrorData,
+    action: &Value,
+    arguments: &Value,
+) -> Result<()> {
     if error.code != rmcp::model::ErrorCode::INVALID_PARAMS {
         return Err(Error::Invalid("Unexpected estimate RPC error code".into()));
     }
@@ -182,8 +186,13 @@ pub fn validate_refusal(error: &rmcp::model::ErrorData) -> Result<()> {
         validator(&json!({"$ref":"urn:table-manners:core:refusal"}))?
             .validate(data)
             .map_err(|_| Error::Invalid("Malformed estimate refusal".into()))?;
-        if data["reason"] != "invalid_arguments" {
-            return Err(Error::Invalid("Unexpected estimate refusal reason".into()));
+        match data["reason"].as_str() {
+            Some("invalid_arguments") => {}
+            Some("binding") => {
+                use super::binding_refusal_semantics::{Context, validate};
+                validate(data, Context::Operation { action, arguments })?;
+            }
+            _ => return Err(Error::Invalid("Unexpected estimate refusal reason".into())),
         }
     }
     Ok(())

@@ -53,7 +53,11 @@ impl ToolClient {
             Err(error) => {
                 drop(previous);
                 if let rmcp::ServiceError::McpError(ref rpc) = error {
-                    validate_refusal(rpc)?;
+                    let declared = declaration.document["actions"]
+                        .as_array()
+                        .and_then(|actions| actions.iter().find(|item| item["name"] == action))
+                        .ok_or(Error::Missing("Estimate action is not declared"))?;
+                    validate_refusal(rpc, declared, arguments)?;
                 } else {
                     // A broken pipe or SDK error does not prove the tool stopped reading.
                     self.wait_estimate_child_exit().await;

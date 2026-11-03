@@ -7,10 +7,23 @@ schemas and contract/source files match reviewed tag `v0.4.0` at `d1c49a7`; the 
 excludes fixtures. There is no sibling pin, second contract dependency or live-version fallback.
 Older saved evidence remains readable. The independent peer is the required offline check target.
 
-Approved M10 integration snapshots are Rascal `eed6397` and Squint `6dd1e3a`. M5.03's remaining
-preflight work and M5.21's real-peer checks use those snapshots with explicit `--allow-dir` grants.
-No sibling files are modified. The V18 results below describe the earlier v0.3 build, not live
-compatibility with this cutover; their evidence is retained in [checkpoint V18](plans/v03-real-peer-checkpoint.md).
+Approved M10 integration snapshots are Rascal `eed6397` and Squint `6dd1e3a`. Both were built from
+isolated committed-source archives with locked dependencies, `testkit` and a separate target
+directory. No sibling files were modified. All four M5.03 opt-in preflight checks pass through the
+v0.4 host with explicit `--allow-dir` grants and isolated XDG folders:
+
+- Rascal offline seam: contract 0.4.0, complete zero-spend evidence, original bytes unchanged, and
+  both report kinds open and close. Its scripted filler also passes cap/budget, estimate binding,
+  selected-config freeze and restart/new-ledger checks using synthetic charges only.
+- Squint scripted reference-consistency: contract 0.4.0, ordered/repeated reference evidence,
+  zero spend, original bytes unchanged and both report kinds. Default/selected configuration and
+  missing-credential estimates pass without allocating a run or calling a provider.
+
+The same checks pass after composed parameter/callable namespace validation and contextual refusal
+adoption. These are current task/setup/report preflight checks, not certification of operation
+chains or invocation bundles; M5.21 owns those real-peer journeys. No credentials or paid-provider
+calls were used. The V18 results below describe the earlier v0.3 build; their evidence is retained
+in [checkpoint V18](plans/v03-real-peer-checkpoint.md).
 
 ### V18 real-peer runs and reports — 2026-11-02
 
