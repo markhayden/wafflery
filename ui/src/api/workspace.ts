@@ -9,7 +9,8 @@ export type InputBinding = (
   | {kind: "image"; asset: string; frame?: {projection:"flat"|"equirectangular";topology:"bounded"|"wrap"}}
   | {kind: "artifact"; reference: Schema}
   | {kind: "location"; value: Schema}) & {origin?:BindingOrigin};
-export type BundleSource={id:string;step:number};
+export type ReplayContext={id:string;generation:number};
+export type BundleSource={id:string;step:number;replay?:ReplayContext};
 export type Submission = {
   id: string;
   tool: string;

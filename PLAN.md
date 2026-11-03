@@ -3255,6 +3255,14 @@ changed IDs, many-output ordering, duplicate consumers, missing/failed evidence,
 search limits, explicit paid quotes, stopped draft invalidation, staging ownership and native
 preservation before resume. Task review/full Rust/browser checks remain at the M5.20 boundary.
 
+**As built — M5.20b API and draft metadata:** creation accepts retained bundle or uploaded review
+identities plus receiving installations only. A slot is acquired before reading a saved archive;
+bytes are bounded and reverified. Progress exposes settling ownership. Many-input reordering keeps
+each connected fresh value and its actual producer lineage; external values remain user-editable.
+Core image and operation-port lineage are merged. Opening historical attempts/examples removes live
+replay context, producing an independent draft. The private API and reordered-input tests pass; the
+shared drawer and full task verification are the final part of M5.20b.
+
 **Checkpoint F:** fresh-store single and multi-step replay pass the independent fake, including a
 nondeterministic producer. Remove replay entry points before reverting orchestration; stop active work
 and preserve partial attempts/charges. Do not label a partially executed import/replay transactional.

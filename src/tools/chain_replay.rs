@@ -164,6 +164,7 @@ pub struct ReplayRun {
 }
 #[derive(Clone, Debug, Serialize)]
 pub struct ReplayStatus {
+    pub settling: bool,
     pub id: String,
     pub bundle: String,
     pub tools: Vec<String>,

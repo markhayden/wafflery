@@ -52,7 +52,12 @@ struct State {
 }
 impl Replay {
     fn snapshot(&self, s: &State) -> ReplayStatus {
+        let import = s.import.as_ref().map(|job| job.snapshot());
+        let settling = s.staging
+            || s.active.is_some()
+            || import.as_ref().is_some_and(|job| job.phase == "importing");
         ReplayStatus {
+            settling,
             id: self.id.clone(),
             bundle: self.bundle.sha256().into(),
             tools: self.tools.clone(),
@@ -61,7 +66,7 @@ impl Replay {
             generation: s.generation,
             phase: s.phase.clone(),
             attempts: s.attempts.clone(),
-            import: s.import.as_ref().map(|job| job.snapshot()),
+            import,
             error: s.error.clone(),
         }
     }
@@ -97,15 +102,69 @@ impl Coordinator {
         tools: Vec<String>,
     ) -> Result<ReplayStatus> {
         let c = self.clone();
-        self.owned_replay(async move { c.start_chain_owned(bundle, tools).await })
+        self.owned_replay(async move {
+            let slot = c.replay_slot()?;
+            c.start_chain_owned(bundle, tools, slot).await
+        })
+        .await
+    }
+    fn replay_slot(&self) -> Result<OwnedSemaphorePermit> {
+        self.replays.slots.clone().try_acquire_owned().map_err(|_| {
+            Error::Conflict(
+                "Two chain reviews are already open. Stop and dismiss one before starting another.",
+            )
+        })
+    }
+    pub async fn start_saved_chain_replay(
+        self: &Arc<Self>,
+        id: &str,
+        tools: Vec<String>,
+    ) -> Result<ReplayStatus> {
+        let c = self.clone();
+        let id = id.to_owned();
+        self.owned_replay(async move {
+            if tools.is_empty() || tools.len() > chain_edges::MAX_STEPS {
+                return Err(Error::Invalid(
+                    "Select at most 16 receiving installations".into(),
+                ));
+            }
+            let slot = c.replay_slot()?;
+            let (file, size) = crate::library::bundle_store::BundleStore(c.assets.clone())
+                .open(&id)
+                .await?;
+            let bundle = tokio::task::spawn_blocking(move || -> Result<_> {
+                use std::io::Read;
+                let mut bytes = Vec::new();
+                bytes
+                    .try_reserve_exact(size as usize)
+                    .map_err(|_| Error::Invalid("Not enough memory to open this chain".into()))?;
+                file.take(crate::library::bundle_archive::MAX_TOTAL + 1)
+                    .read_to_end(&mut bytes)?;
+                if bytes.len() as u64 != size {
+                    return Err(Error::Invalid(
+                        "Saved chain size changed during verification".into(),
+                    ));
+                }
+                let bundle = crate::tools::bundle_reader::read(bytes)?;
+                if bundle.sha256() != id {
+                    return Err(Error::Invalid(
+                        "Saved chain fingerprint changed during verification".into(),
+                    ));
+                }
+                Ok(Arc::new(bundle))
+            })
             .await
+            .map_err(|_| Error::Invalid("Saved chain review worker stopped".into()))??;
+            c.start_chain_owned(bundle, tools, slot).await
+        })
+        .await
     }
     async fn start_chain_owned(
         &self,
         bundle: Arc<ValidatedBundle>,
         tools: Vec<String>,
+        slot: OwnedSemaphorePermit,
     ) -> Result<ReplayStatus> {
-        let slot=self.replays.slots.clone().try_acquire_owned().map_err(|_|Error::Conflict("Two chain reviews are already open. Stop and dismiss one before starting another."))?;
         let steps = bundle.manifest()["steps"].as_array().unwrap();
         if steps.is_empty() || steps.len() > chain_edges::MAX_STEPS || tools.len() != steps.len() {
             return Err(Error::Invalid(
@@ -425,41 +484,58 @@ impl Coordinator {
                 "Wait for chain inputs to finish before Run",
             ));
         }
+        // User-reviewed many-port edits may reorder inputs. Require a distinct fresh occurrence
+        // for every connected edge, while preserving the caller's actual order and lineage.
+        let mut ports = BTreeMap::<String, BTreeMap<String, usize>>::new();
         for input in progress
             .inputs
             .iter()
             .filter(|input| input.source.is_some())
         {
-            let binding = request
-                .bindings
-                .get(&input.name)
-                .and_then(|items| items.get(input.index))
-                .cloned()
-                .or_else(|| {
-                    request
-                        .images
+            if !ports.contains_key(&input.name) {
+                let bindings = request
+                    .bindings
+                    .get(&input.name)
+                    .cloned()
+                    .unwrap_or_else(|| {
+                        request
+                            .images
+                            .get(&input.name)
+                            .into_iter()
+                            .flatten()
+                            .enumerate()
+                            .map(|(index, asset)| InputBinding::Image {
+                                asset: asset.clone(),
+                                frame: request
+                                    .frames
+                                    .get(&input.name)
+                                    .and_then(|frames| frames.get(index))
+                                    .cloned()
+                                    .unwrap_or_default(),
+                            })
+                            .collect()
+                    });
+                let mut counts = BTreeMap::new();
+                for (index, binding) in bindings.iter().enumerate() {
+                    if let Some(source) = request
+                        .lineage
                         .get(&input.name)
-                        .and_then(|images| images.get(input.index))
-                        .map(|asset| InputBinding::Image {
-                            asset: asset.clone(),
-                            frame: request
-                                .frames
-                                .get(&input.name)
-                                .and_then(|frames| frames.get(input.index))
-                                .cloned()
-                                .unwrap_or_default(),
-                        })
-                });
-            let lineage = request
-                .lineage
-                .get(&input.name)
-                .and_then(|items| items.get(input.index))
-                .and_then(Option::as_ref);
-            if binding.as_ref() != input.binding.as_ref() || lineage != input.source.as_ref() {
-                return Err(Error::Conflict(
-                    "A connected chain input changed. Reopen the step to use its fresh producer output, or leave the chain for an independent experiment.",
-                ));
+                        .and_then(|items| items.get(index))
+                        .and_then(Option::as_ref)
+                    {
+                        *counts
+                            .entry(serde_json::to_string(&(binding, source))?)
+                            .or_insert(0usize) += 1;
+                    }
+                }
+                ports.insert(input.name.clone(), counts);
             }
+            let binding = input.binding.as_ref().ok_or(Error::Conflict(
+                "A connected chain input has not finished staging",
+            ))?;
+            let key = serde_json::to_string(&(binding, input.source.as_ref().unwrap()))?;
+            let count=ports.get_mut(&input.name).unwrap().get_mut(&key).filter(|count|**count>0).ok_or(Error::Conflict("A connected chain input changed. Reopen the step to use its fresh producer output, or leave the chain for an independent experiment."))?;
+            *count -= 1;
         }
         Ok(())
     }

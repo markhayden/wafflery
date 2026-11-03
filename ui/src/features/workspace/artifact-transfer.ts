@@ -1,3 +1,5 @@
+import {encodeSelection,type ImageSelection} from "../actions/selection";
+import type {ImageSlot} from "../actions/model";
 import type {Asset} from "../../api/assets";
 import type {InputBinding,RegisteredTool,Attempt} from "../../api/workspace";
 import {object,type Schema} from "../actions/model";
@@ -31,4 +33,9 @@ export function encodePortBindings(bindings:Record<string,InputBinding[]>){
  if(items.some(item=>item.origin))lineage[port]=items.map(item=>item.origin??null);
  return [port,items.map(({origin:_,...value})=>value)];
  }));return {bindings:values,lineage};
+}
+
+export function encodeWorkspaceInputs(version:string,slots:ImageSlot[],images:ImageSelection,ports:Record<string,InputBinding[]>){
+ const selected=encodeSelection(version,slots,images),bound=encodePortBindings(ports);
+ return {...selected,...bound,lineage:{...selected.lineage,...bound.lineage}};
 }

@@ -34,3 +34,15 @@ test("a paid imported draft requires a newly chosen cap instead of the archive a
  const upload=review();upload.import!.params.max_spend_usd=100;const current=structuredClone(declaration);current.document.actions[0]!.cost.may_spend=true;
  const draft=await importedDraft(upload,"installed",current,async()=>image);expect(draft.params).not.toHaveProperty("max_spend_usd");expect(upload.import!.params.max_spend_usd).toBe(100);
 });
+test("guided replay preserves fresh origins in operations and core image slots while ordinary imports stay independent",async()=>{
+ const upload=review();upload.import!.inputs.pop();const origin={attempt:"fresh-producer",port:"picture",occurrence:2};upload.import!.replay={id:"e".repeat(32),generation:3};upload.import!.inputs[0]!.source=origin;upload.import!.inputs[0]!.changed=true;
+ const draft=await importedDraft(upload,"installed",declaration,async()=>image);expect(draft.source.replay).toEqual(upload.import!.replay);expect(draft.bindings.pictures?.[0]?.origin).toEqual(origin);
+ const current=structuredClone(declaration);current.document.actions[0]={...action,kind:"task",images:[{slot:"pictures",role:"source",required:true,many:true}]};delete current.document.actions[0]!.ports;
+ const task=await importedDraft(upload,"installed",current,async()=>image);expect(task.images.pictures?.[0]?.origin).toEqual(origin);
+});
+import {encodeWorkspaceInputs} from "../../src/features/workspace/artifact-transfer";
+test("core image and operation origins merge without losing either provenance map",()=>{
+ const origin={attempt:"fresh-producer",port:"picture",occurrence:2};const other={attempt:"marker-producer",port:"marker",occurrence:0};
+ const value=encodeWorkspaceInputs("0.4.0",[{slot:"source",role:"source",required:true}],{source:[{...image,origin}]},{region:[{kind:"location",value:{kind:"line"},origin:other}]});
+ expect(value.lineage).toEqual({source:[origin],region:[other]});expect(value.bindings.region?.[0]).not.toHaveProperty("origin");expect(value.images.source).toEqual([image.id]);
+});

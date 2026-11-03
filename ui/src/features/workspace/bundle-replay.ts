@@ -14,7 +14,7 @@ export async function importedDraft(upload:BundleUpload,tool:string,declaration:
  if(!action)throw Error("The imported action is no longer declared by this installation.");
  const operation=action.kind==="operation";
  const definitions=operation?action.ports?.in??[]:[...(action.images??[]).map(s=>({name:s.slot,type:"image",required:s.required,many:s.many})),...(action.locations??[]).map(s=>({name:s.slot,type:"location",required:s.required,many:false}))];
- const draft:ImportedDraft={source:{id:upload.record.id,step:status.step},tool,action:status.action,params:structuredClone(status.params),bindings:{},images:{},assets:[],unresolved:[]};
+ const draft:ImportedDraft={source:{id:upload.record.id,step:status.step,...(status.replay?{replay:structuredClone(status.replay)}:{})},tool,action:status.action,params:structuredClone(status.params),bindings:{},images:{},assets:[],unresolved:[]};
  if(action.cost.may_spend)delete draft.params.max_spend_usd;
  const metadata=new Map<string,Asset>(),counts=new Map<string,number>();
  for(const item of status.inputs){
@@ -28,11 +28,12 @@ export async function importedDraft(upload:BundleUpload,tool:string,declaration:
    continue;
   }
   const binding=structuredClone(item.binding);delete binding.origin;
+  if(status.replay&&item.source)binding.origin=structuredClone(item.source);
   if(binding.kind==="image"){
    if(definition.type!=="image")throw Error("Imported image conflicts with its input type.");
    let asset=metadata.get(binding.asset);if(!asset){asset=await readAsset(binding.asset);metadata.set(binding.asset,asset);}
    if(operation)(draft.bindings[item.name]??=[]).push(binding);
-   else(draft.images[item.name]??=[]).push({...asset,coordinates:binding.frame??{projection:"flat",topology:"bounded"}});
+   else(draft.images[item.name]??=[]).push({...asset,coordinates:binding.frame??{projection:"flat",topology:"bounded"},...(binding.origin?{origin:binding.origin}:{})});
   }else if(binding.kind==="location"){
    if(definition.type!=="location")throw Error("Imported shared location conflicts with its input type.");
    (draft.bindings[item.name]??=[]).push(binding);

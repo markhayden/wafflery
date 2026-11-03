@@ -2,12 +2,20 @@ use super::chain_bundle_cases::{seed, soften};
 use super::*;
 use wafflery::tools::{bundle_reader::ValidatedBundle, bundles, chain_replay::ReplayStatus};
 async fn original() -> Arc<ValidatedBundle> {
+    original_with_external(false).await
+}
+async fn original_with_external(mixed: bool) -> Arc<ValidatedBundle> {
     let h = Host::native(&[]).await;
     let seed = seed(&h, "original-seed").await;
     let a = soften(&h, "original-producer", &seed).await;
     let reference = a.result.as_ref().unwrap()["artifacts"]["out"][0]["artifact"].clone();
-    let mut request=h.request("original-consumer","collect_tokens",json!({"tokens":[{"kind":"artifact","reference":reference},{"kind":"artifact","reference":reference}]})).await;
-    request.lineage=serde_json::from_value(json!({"tokens":[{"attempt":a.id,"port":"token","occurrence":0},{"attempt":a.id,"port":"token","occurrence":0}]})).unwrap();
+    let second = if mixed {
+        seed.result.as_ref().unwrap()["artifacts"]["out"][0]["artifact"].clone()
+    } else {
+        reference.clone()
+    };
+    let mut request=h.request("original-consumer","collect_tokens",json!({"tokens":[{"kind":"artifact","reference":reference},{"kind":"artifact","reference":second}]})).await;
+    request.lineage=serde_json::from_value(json!({"tokens":[{"attempt":a.id,"port":"token","occurrence":0},if mixed{Value::Null}else{json!({"attempt":a.id,"port":"token","occurrence":0})}]})).unwrap();
     h.c.submit(request).await.unwrap();
     let b = super::bundle_import_cases::owned(&h, "original-consumer").await;
     h.settled(&b.id).await;
@@ -330,4 +338,189 @@ async fn resume_waits_for_a_completed_runs_owned_native_preservation_instead_of_
         resumed.is_err(),
         "A still-owned producer must settle before resume can advance or reprepare its step"
     );
+}
+#[tokio::test]
+async fn private_chain_api_uses_retained_ids_and_keeps_stop_resume_and_dismiss_explicit() {
+    use axum::{
+        body::{Body, to_bytes},
+        http::{Request, StatusCode},
+    };
+    use tower::ServiceExt;
+    use wafflery::host::{api, auth::Auth};
+    let h = Host::native(&[]).await;
+    let bundle = original().await;
+    let record = wafflery::tools::bundle_import::retain(&h.c.assets, &bundle)
+        .await
+        .unwrap();
+    let auth = Auth::new().unwrap();
+    let token = auth
+        .exchange(&auth.issue().unwrap())
+        .unwrap()
+        .unwrap()
+        .token;
+    let (quit, _) = tokio::sync::watch::channel(false);
+    let app = api::router_with_tools(
+        "http://127.0.0.1:45678",
+        auth,
+        quit,
+        h.c.assets.clone(),
+        Some(h.c.clone()),
+    );
+    let request = |method: &str, path: &str, body: Value, authorized: bool| {
+        let mut r = Request::builder()
+            .method(method)
+            .uri(path)
+            .header("host", "127.0.0.1:45678")
+            .header("origin", "http://127.0.0.1:45678")
+            .header("content-type", "application/json");
+        if authorized {
+            r = r.header("authorization", format!("Bearer {token}"));
+        }
+        r.body(Body::from(body.to_string())).unwrap()
+    };
+    let input = json!({"bundle":record.id,"tools":["peer","peer"]});
+    assert_eq!(
+        app.clone()
+            .oneshot(request("POST", "/api/chain-replays", input.clone(), false))
+            .await
+            .unwrap()
+            .status(),
+        StatusCode::UNAUTHORIZED
+    );
+    let mut wrong = input.clone();
+    wrong["path"] = json!("/unrelated");
+    assert_eq!(
+        app.clone()
+            .oneshot(request("POST", "/api/chain-replays", wrong, true))
+            .await
+            .unwrap()
+            .status(),
+        StatusCode::UNPROCESSABLE_ENTITY
+    );
+    let response = app
+        .clone()
+        .oneshot(request("POST", "/api/chain-replays", input, true))
+        .await
+        .unwrap();
+    assert_eq!(response.status(), StatusCode::CREATED);
+    let status: Value =
+        serde_json::from_slice(&to_bytes(response.into_body(), 1_000_000).await.unwrap()).unwrap();
+    let id = status["id"].as_str().unwrap();
+    let path = format!("/api/chain-replays/{id}");
+    assert_eq!(status["phase"], "ready");
+    assert_eq!(
+        app.clone()
+            .oneshot(request("POST", &format!("{path}/stage"), json!({}), true))
+            .await
+            .unwrap()
+            .status(),
+        StatusCode::ACCEPTED
+    );
+    let ready = waiting(&h, id).await;
+    assert!(ready.import.unwrap().replay.is_some());
+    assert_eq!(
+        app.clone()
+            .oneshot(request("DELETE", &path, json!({}), true))
+            .await
+            .unwrap()
+            .status(),
+        StatusCode::CONFLICT
+    );
+    assert_eq!(
+        app.clone()
+            .oneshot(request("POST", &format!("{path}/stop"), json!({}), true))
+            .await
+            .unwrap()
+            .status(),
+        StatusCode::OK
+    );
+    assert_eq!(
+        app.clone()
+            .oneshot(request("POST", &format!("{path}/stage"), json!({}), true))
+            .await
+            .unwrap()
+            .status(),
+        StatusCode::CONFLICT
+    );
+    assert_eq!(
+        app.clone()
+            .oneshot(request(
+                "POST",
+                &format!("{path}/stage"),
+                json!({"resume":true}),
+                true
+            ))
+            .await
+            .unwrap()
+            .status(),
+        StatusCode::ACCEPTED
+    );
+    waiting(&h, id).await;
+    app.clone()
+        .oneshot(request("POST", &format!("{path}/stop"), json!({}), true))
+        .await
+        .unwrap();
+    assert_eq!(
+        app.clone()
+            .oneshot(request("DELETE", &path, json!({}), true))
+            .await
+            .unwrap()
+            .status(),
+        StatusCode::NO_CONTENT
+    );
+    assert_eq!(
+        app.clone()
+            .oneshot(request("GET", &path, json!({}), true))
+            .await
+            .unwrap()
+            .status(),
+        StatusCode::NOT_FOUND
+    );
+    assert!(
+        h.c.attempts
+            .history(None, 100, None, None)
+            .await
+            .unwrap()
+            .is_empty()
+    );
+    assert!(
+        wafflery::library::bundle_store::BundleStore(h.c.assets.clone())
+            .get(&record.id)
+            .await
+            .is_ok()
+    );
+    h.close().await;
+}
+
+#[tokio::test]
+async fn explicitly_reordering_a_many_port_keeps_fresh_edges_and_records_the_new_order() {
+    let h = Host::native(&[]).await;
+    let state =
+        h.c.start_chain_replay(
+            original_with_external(true).await,
+            vec!["peer".into(), "peer".into()],
+        )
+        .await
+        .unwrap();
+    h.c.stage_chain_replay(&state.id, false).await.unwrap();
+    let ready = waiting(&h, &state.id).await;
+    let mut first = request(&h, "order-producer", &ready).await;
+    first.params["amount"] = json!(0.75);
+    h.c.submit(first).await.unwrap();
+    let producer = super::bundle_import_cases::owned(&h, "order-producer").await;
+    h.settled("order-producer").await;
+    h.c.chain_replay(&state.id).await.unwrap();
+    h.c.stage_chain_replay(&state.id, false).await.unwrap();
+    let ready = waiting(&h, &state.id).await;
+    let mut next = request(&h, "order-consumer", &ready).await;
+    next.bindings.get_mut("tokens").unwrap().reverse();
+    next.lineage.get_mut("tokens").unwrap().reverse();
+    h.c.submit(next).await.unwrap();
+    let result = super::bundle_import_cases::owned(&h, "order-consumer").await;
+    h.settled("order-consumer").await;
+    assert_eq!(
+        result.result.as_ref().unwrap()["invocation"]["arguments"]["tokens"][1],
+        producer.result.as_ref().unwrap()["artifacts"]["out"][0]["artifact"]
+    );
+    h.close().await;
 }

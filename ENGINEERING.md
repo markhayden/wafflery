@@ -945,4 +945,14 @@ before resume/dismiss can proceed. Completed evidence is reloaded and verified o
 missing outputs, changed/missing public ports or an unavailable native resource block the consumer.
 Replay reviews are session-local; this is not crash recovery. Historical runs and archives remain
 saved. Rollback must keep the optional context parser when removing replay entry points, and must
-stop/drain owned work before reverting orchestration. API/drawer wiring follows in M5.20b.
+stop/drain owned work before reverting orchestration.
+
+The private chain API accepts only retained bundle/review IDs and receiving installation IDs. It
+acquires a registry slot before reading a saved archive, verifies its bytes again, and retains the
+archive independently of its source review. Progress reports whether staging/import/run preservation
+is still settling; Stop is available while those owners drain, and resume/dismiss remain blocked.
+Connected many-input bindings may be explicitly reordered, but every connected edge must retain a
+distinct fresh value and actual producer lineage. Missing external inputs remain explicit. Core
+image-slot lineage and operation-port lineage are combined rather than overwriting each other.
+Opening history or examples strips the archived live replay context and creates an independent
+draft; it does not rejoin or advance a chain.

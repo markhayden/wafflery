@@ -1,3 +1,4 @@
+import type {BindingOrigin} from "../../api/workspace";
 import type { Asset } from "../../api/assets";
 import { encodeBindings, type ImageSlot } from "./model";
 
@@ -5,19 +6,19 @@ export type ImageFrame = {
   projection: "flat" | "equirectangular";
   topology: "bounded" | "wrap";
 };
-export type SelectedImage = Asset & { coordinates?: ImageFrame };
+export type SelectedImage = Asset & { coordinates?: ImageFrame;origin?:BindingOrigin };
 export type ImageSelection = Record<string, SelectedImage[]>;
 const flat: ImageFrame = { projection: "flat", topology: "bounded" };
 
-export function restoreSelection(inputs: Record<string, {asset: Asset; image: {projection:string;topology:string}}[]>): ImageSelection {
+export function restoreSelection(inputs: Record<string, {asset: Asset; image: {projection:string;topology:string}}[]>,origins?:Record<string,(BindingOrigin|null)[]>): ImageSelection {
   return Object.fromEntries(Object.entries(inputs).map(([slot, entries]) => [slot,
-    entries.map(({asset, image}) => {
+    entries.map(({asset, image},index) => {
       const {projection, topology} = image;
       if ((projection !== "flat" && projection !== "equirectangular")
         || (topology !== "bounded" && topology !== "wrap")
         || (projection === "equirectangular" && topology !== "wrap"))
         throw new Error("Saved image coordinates are not supported.");
-      return {...asset, coordinates: {projection, topology}};
+      return {...asset, coordinates: {projection, topology},...(origins?.[slot]?.[index]?{origin:origins[slot]![index]!}:{})};
     }),
   ]));
 }
@@ -36,5 +37,7 @@ export function encodeSelection(version: string, slots: ImageSlot[], selected: I
       return {...(item.coordinates ?? flat)};
     });
   }
-  return {images, frames};
+  const lineage:Record<string,(BindingOrigin|null)[]>={};
+  for(const slot of Object.keys(images)){if(selected[slot]!.some(image=>image.origin))lineage[slot]=selected[slot]!.map(image=>image.origin??null);}
+  return {images, frames,...(Object.keys(lineage).length?{lineage}:{})};
 }

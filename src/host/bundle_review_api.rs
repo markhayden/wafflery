@@ -78,6 +78,7 @@ pub fn router(coordinator: Arc<Coordinator>) -> Router {
         .route("/api/bundle-reviews/{id}", get(read).delete(remove))
         .route("/api/bundle-reviews/{id}/progress", get(progress))
         .route("/api/bundle-reviews/{id}/import", post(import))
+        .route("/api/bundle-reviews/{id}/replay", post(start_replay))
         .with_state(Reviews {
             coordinator,
             slots: Arc::new(Semaphore::new(2)),
@@ -259,4 +260,36 @@ async fn import(
     let status = job.snapshot();
     current.job = Some(job);
     Ok((StatusCode::ACCEPTED, Json(status)))
+}
+
+#[derive(serde::Deserialize)]
+#[serde(deny_unknown_fields)]
+struct ChainTools {
+    tools: Vec<String>,
+}
+async fn start_replay(
+    State(state): State<Reviews>,
+    Path(id): Path<String>,
+    Json(request): Json<ChainTools>,
+) -> Result<(StatusCode, Json<crate::tools::chain_replay::ReplayStatus>), ApiError> {
+    let review = lookup(&state, &id).await?;
+    let current = review.state.lock().await;
+    if current.closed {
+        return Err(Error::Missing("Bundle review was dismissed").into());
+    }
+    if current
+        .job
+        .as_ref()
+        .is_some_and(|job| job.snapshot().phase == "importing")
+    {
+        return Err(Error::Conflict(
+            "Wait for this review's current import before starting a chain",
+        )
+        .into());
+    }
+    let status = state
+        .coordinator
+        .start_chain_replay(review.bundle.clone(), request.tools)
+        .await?;
+    Ok((StatusCode::CREATED, Json(status)))
 }
