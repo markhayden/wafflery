@@ -153,3 +153,51 @@ fn malformed_descriptions_are_rejected_before_relationship_checks() {
     value["actions"][0]["ports"]["in"][0]["name"] = json!(null);
     assert!(validate_contract("urn:table-manners:core:description", &value).is_err());
 }
+
+#[test]
+fn composed_referenced_and_pattern_parameters_cannot_shadow_profile_inputs() {
+    for fragment in [
+        json!({"allOf":[{"properties":{"image":{"type":"string"}}}]}),
+        json!({"$defs":{"inputs":{"properties":{"image":{}}}},"$ref":"#/$defs/inputs"}),
+        json!({"patternProperties":{"^image$":{}}}),
+        json!({"dependentRequired":{"gate":["image"]}}),
+        json!({"anyOf":[{"required":["image"]},{"properties":{"safe":{}}}]}),
+    ] {
+        let mut value = fixtures::description("test-prism");
+        value["actions"][0]["params_schema"]
+            .as_object_mut()
+            .unwrap()
+            .extend(fragment.as_object().unwrap().clone());
+        refused(value, "Port image in locate_marker shadows a parameter");
+    }
+    let mut value = fixtures::description("test-prism");
+    value["actions"][0]["params_schema"]["allOf"] = json!([{"properties":{"return_images":{}}}]);
+    refused(
+        value,
+        "Action locate_marker parameter shadows profile argument return_images",
+    );
+    let mut value = fixtures::description("test-prism");
+    value["actions"][4]["params_schema"]["allOf"] = json!([{"properties":{"source":{}}}]);
+    refused(value, "Input source in make_token shadows a parameter");
+}
+
+#[test]
+fn nested_values_and_unused_definitions_do_not_shadow_profile_inputs() {
+    let mut value = fixtures::description("test-prism");
+    value["actions"][0]["params_schema"]["properties"] = json!({
+        "settings":{"properties":{"image":{},"return_images":{}}}
+    });
+    value["actions"][0]["params_schema"]["$defs"] = json!({
+        "unused":{"properties":{"image":{},"return_images":{}}}
+    });
+    shape(&value);
+    validate_contract("urn:table-manners:core:description", &value).unwrap();
+}
+
+#[test]
+fn unresolvable_parameter_schema_names_the_action() {
+    let mut value = fixtures::description("test-prism");
+    value["actions"][0]["params_schema"]["$ref"] =
+        json!("https://example.invalid/unavailable.json");
+    refused(value, "Action locate_marker parameter schema");
+}

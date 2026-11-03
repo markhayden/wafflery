@@ -2185,6 +2185,22 @@ passed fmt/clippy, 393 Rust tests (4 ignored), typecheck, 57 UI tests, 2 asset t
 reproducible assets, release build and 230 browser tests (8 skipped). Lockfiles/prebuilt assets
 unchanged; temporary config removed. This helper remains test-only until b6b.
 
+**b6b exact inventory (before building):** `src/tools/mod.rs` enables the reviewed helper;
+`src/tools/description_semantics.rs` replaces direct-key checks with per-action namespace inspection
+and action-specific schema diagnostics; `tests/description_semantics.rs` proves composed/referenced/
+pattern collisions are refused while nested values and unused definitions remain valid; this plan
+records results. Four authored files; no callable-schema equivalence claim or dispatch changes.
+
+**b6b checkpoint (2026-11-02):** the live tests initially accepted an `allOf` port/parameter
+collision and an unresolved parameter reference. All ten description tests now pass; new coverage
+also includes local references, patterns, dependent/conditional names, profile arguments, task slots,
+and nested/unused names that remain valid. Independent review approved the live boundary. Full
+shared-lock matrix passed fmt/clippy, 396 Rust tests (4 ignored), typecheck, 57 UI tests, 2 asset tests,
+Storybook, reproducible assets, release build and 230 browser tests (8 skipped). Lockfiles/assets
+unchanged; temporary config removed. Saved evidence remains readable; launching a renderer still
+revalidates its v0.4 declaration, so an earlier saved inconsistent declaration cannot launch a view.
+Callable-name/profile relationships, contextual refusals and peer preflight remain open.
+
 **Checkpoint A:** merge M5.01–03 as a coherent cutover of validation, launch arguments and fake
 defaults; v0.4 is the only supported live contract afterward. Green matrix, an independent fake
 task run and the published exact dependency pin are required.

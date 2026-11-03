@@ -1,14 +1,10 @@
 //! Cross-field relationships checked after the published description schema.
-use super::{Error, Result};
+use super::{Error, Result, parameter_names::ParameterNames};
 use serde_json::Value;
 use std::collections::BTreeSet;
 
 fn entries(value: &Value) -> &[Value] {
     value.as_array().map(Vec::as_slice).unwrap_or_default()
-}
-fn parameter(schema: &Value, name: &str) -> bool {
-    schema["properties"].get(name).is_some()
-        || entries(&schema["required"]).iter().any(|item| item == name)
 }
 fn invalid(message: impl Into<String>) -> Error {
     Error::Invalid(message.into())
@@ -42,10 +38,11 @@ pub fn description(document: &Value) -> Result<()> {
         {
             return Err(invalid(format!("Action {name} names an undeclared group")));
         }
-        let params = &action["params_schema"];
+        let params = ParameterNames::new(&action["params_schema"])
+            .map_err(|error| invalid(format!("Action {name} parameter schema: {error}")))?;
         if images {
             for option in ["return_images", "image_blocks"] {
-                if parameter(params, option) {
+                if params.contains(option) {
                     return Err(invalid(format!(
                         "Action {name} parameter shadows profile argument {option}"
                     )));
@@ -66,7 +63,7 @@ pub fn description(document: &Value) -> Result<()> {
                     if kind != "image" && !types.contains(kind) {
                         return Err(invalid(format!("Undeclared port type in {name}: {kind}")));
                     }
-                    if parameter(params, port_name) {
+                    if params.contains(port_name) {
                         return Err(invalid(format!(
                             "Port {port_name} in {name} shadows a parameter"
                         )));
@@ -90,7 +87,7 @@ pub fn description(document: &Value) -> Result<()> {
                         "Duplicate input name in {name}: {slot_name}"
                     )));
                 }
-                if parameter(params, slot_name) {
+                if params.contains(slot_name) {
                     return Err(invalid(format!(
                         "Input {slot_name} in {name} shadows a parameter"
                     )));

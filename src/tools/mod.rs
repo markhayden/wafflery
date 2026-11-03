@@ -12,7 +12,6 @@ mod environment;
 pub mod estimate;
 mod invocation_semantics;
 mod materialized;
-#[cfg(test)]
 mod parameter_names;
 mod prepared;
 mod probe;
