@@ -79,7 +79,7 @@
     "ui/src/features/workspace/ToolSetup.stories.tsx": "d1161c54443e8bcf831c17fc4681d406a450b431453ce8fb919cf24f705691ad",
     "ui/src/features/workspace/ToolSetup.tsx": "36f016aa0b2716041e2619972fcdc3a97cff1cf59d3f35bf09052cff66f67d6e",
     "ui/src/features/workspace/Workspace.module.css": "31a95af1a46b2d19a9aa6120da64ec023f3834e675e26351f8449a14062e6545",
-    "ui/src/features/workspace/Workspace.tsx": "f527cc7d9496b988f87d31cd50b110b6fbf18188646c5e75fa3fcf8ed1cf5bc8",
+    "ui/src/features/workspace/Workspace.tsx": "bea0264ec8f61c7423688b8e80d7cbcd693a7e0052de755e3b899582bbff26ce",
     "ui/src/features/workspace/activities.ts": "5b42ff07ca099a1b31eb5231877879ec009bd421574479bdf09e3879eb7040fc",
     "ui/src/features/workspace/invocation.ts": "cad8ce6a2ad9a9ac6e3ebd56501a396a18b49748389a8161ca73258937ab5403",
     "ui/src/features/workspace/report-owner.ts": "ebabc35cd81b37c83126eb54327fd1c8a6ed8370fab21c981518eaa0f2d68857",
@@ -92,8 +92,8 @@
   },
   "outputs": {
     "assets/index-CKot8Rkz.css": "fac29c6de21295f2ddb5b487cefa3d92ae92a5fb66888331d9df5eb8ca3bf17f",
-    "assets/index-VkRoqwKc.js": "b4901766207482ea223527b8aa483aa050dd83cd30db79725d182036f4eb66f5",
+    "assets/index-D6bBo63l.js": "f8d663593fd4b6539481330d914226b67dff26fb3fe09f497ba98c835d535098",
     "assets/wafflery-mark-CML0EpfM.svg": "51bc8a040e26b897a948238598b8cabdf69bf4687c2b1a70613b542de1c99f1f",
-    "index.html": "2f5306feed47e8112e668d2a67ee01006e9a9e4dc68e62dee11778bd2b5f33ff"
+    "index.html": "77beae33b05d8d35153b830caccd91c1e1f059d1600e26588b5e39242b1d053c"
   }
 }

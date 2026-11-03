@@ -116,6 +116,7 @@ export function Workspace({
   );
   const [portImporting,setPortImporting]=useState(false);
   const [portBindings,setPortBindings]=useState<PortBindings>({});
+  useEffect(()=>setPortImporting(false),[toolId,actionId,draftRevision,declaration?.revision]);
   const [bindingIssues,setBindingIssues]=useState<BindingIssue[]>([]);
   const [images, setImages] = useState<ImageSelection>({});
   const [savedImages, setSavedImages] = useState<Asset[]>([]);
