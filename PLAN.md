@@ -1212,6 +1212,11 @@ races. Merge/report at task boundaries or coherent multi-commit batches, without
 inventories/checkpoints below are historical records, not requirements for future work. This applies
 to V20 too. Failing tests first, contract boundaries, accurate docs and no attribution remain required.
 
+**Coordinator check adjustment after M5.12 CI (2026-11-02):** run the full local Rust suite
+(`cargo test --workspace`) before each ready-to-push task boundary, in addition to check/clippy and
+UI typecheck. Browser checks stay targeted; hosted CI remains the full matrix gate. This supersedes
+the earlier Rust-lib-only rule for bindings/dispatch changes, without restoring the local full matrix.
+
 #### M5.01 — Establish an independent v0.4 peer
 
 - [x] Add schema-validated core/operations fixtures from the pinned contract, plus independently
@@ -2737,6 +2742,21 @@ Targeted checks passed 26 operation integrations, all 132 Rust lib tests, clippy
 cases after review. The shutdown regression fails with the submission lock held while joining a
 worker and passes when released; 40 shutdown repetitions passed in Chromium/WebKit. Restore drawer
 screenshots inspected and UI assets rebuilt. Hosted CI is the full gate. M5.12 complete.
+
+**M5.12 CI correction:** hosted run 41579131992 exposed an old assertion expecting `unsupported`
+for a run declaring no non-image artifacts. `not-needed` is the intended terminal state for that
+case, independent of success/failure preserving image evidence. The result-state test now asserts
+both `not-needed` and the empty native-occurrence list. The UI omits native status when not needed;
+history stores the state unchanged and evidence export carries the preservation object without
+rewriting it. Historical unsupported records remain visibly unsupported until explicit preservation
+is requested. The full Rust suite also found a wire-test assertion that counted the new synthetic control-call
+diagnostic log as a run side effect. That test now permits exactly that one log, verifies its two
+control names, and still asserts unchanged session accounting, an empty run list and no artifacts.
+No outcome or accounting behavior changed.
+
+Review approved. The full local `cargo test --locked --workspace`, clippy (all targets, warnings
+as errors), UI typecheck and format check passed. No product/browser behavior changed in this
+correction; M5.12's targeted browser results remain applicable.
 
 #### M5.13 — Save reusable operation examples
 

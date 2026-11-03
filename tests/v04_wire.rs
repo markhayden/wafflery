@@ -423,7 +423,18 @@ fn artifact_control_refusals_are_errors_not_runs_or_results() {
     assert_eq!(peer.read("test-prism://session"), session);
     assert_eq!(peer.read("test-prism://runs")["runs"], json!([]));
     peer.close();
-    assert_eq!(std::fs::read_dir(root.path()).unwrap().count(), 0);
+    // Control-call diagnostics are not runs or artifact exports. No other file may appear.
+    let names = std::fs::read_dir(root.path())
+        .unwrap()
+        .map(|entry| entry.unwrap().file_name())
+        .collect::<Vec<_>>();
+    assert_eq!(names, vec![std::ffi::OsString::from("control-calls.jsonl")]);
+    let log = std::fs::read_to_string(root.path().join("control-calls.jsonl")).unwrap();
+    let calls = log
+        .lines()
+        .map(|line| serde_json::from_str::<Value>(line).unwrap()["name"].clone())
+        .collect::<Vec<_>>();
+    assert_eq!(calls, vec![json!("export"), json!("import")]);
 }
 
 fn source_image() -> Value {

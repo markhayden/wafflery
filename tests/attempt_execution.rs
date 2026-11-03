@@ -208,7 +208,10 @@ async fn terminal_evidence_is_verified_and_save_failure_does_not_change_tool_out
                     "incomplete"
                 }
             );
-            assert_eq!(saved.preservation["native"], "unsupported");
+            // These task fixtures declare no non-image native artifacts. Image evidence is
+            // checked separately, including the digest and missing-output failure cases.
+            assert_eq!(saved.preservation["native"], "not-needed");
+            assert_eq!(saved.observations["native_artifacts"], json!([]));
             if scenario == "normal" {
                 assert_eq!(saved.outputs.len(), 1);
                 assert!(saved.journal.is_some());
