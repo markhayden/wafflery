@@ -35,6 +35,7 @@ impl Coordinator {
         {
             return Ok(existing);
         }
+        self.validate_lineage(&request).await?;
         // Reserve under submission before creating any copies; duplicated bindings each count.
         if request.bound_images().len() > 32 {
             return Err(Error::Invalid(

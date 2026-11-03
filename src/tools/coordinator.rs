@@ -197,6 +197,7 @@ impl Coordinator {
         if let Some(attempt) = self.attempts.find(&request).await? {
             return Ok(attempt);
         }
+        self.validate_lineage(&request).await?;
         let entry = self
             .tools
             .get(&request.tool)

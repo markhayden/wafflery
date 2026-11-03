@@ -185,10 +185,88 @@ pub(crate) fn validate_occurrences(
     Ok(())
 }
 
+impl Coordinator {
+    pub(super) async fn validate_lineage(
+        &self,
+        request: &crate::library::attempts::Submission,
+    ) -> Result<()> {
+        use crate::library::attempts::InputBinding;
+        for (port, sources) in &request.lineage {
+            let bindings = request
+                .bindings
+                .get(port)
+                .ok_or_else(|| Error::Invalid("Lineage has no receiving port".into()))?;
+            if sources.len() != bindings.len() {
+                return Err(Error::Invalid(
+                    "Lineage occurrence count differs from bindings".into(),
+                ));
+            }
+            for (binding, source) in bindings.iter().zip(sources) {
+                let Some(source) = source else {
+                    continue;
+                };
+                let saved = self.attempts.get(&source.attempt).await.map_err(|_|Error::Invalid("The lineage source attempt is unavailable. Remove this binding and select a current saved input.".into()))?;
+                let result = saved
+                    .result
+                    .as_ref()
+                    .ok_or_else(|| Error::Invalid("Lineage source has no result".into()))?;
+                let output = result["artifacts"]["out"]
+                    .get(source.occurrence)
+                    .ok_or_else(|| Error::Invalid("Lineage source occurrence is missing".into()))?;
+                if output["port"] != source.port {
+                    return Err(Error::Invalid("Lineage source port differs".into()));
+                }
+                let valid = match binding {
+                    InputBinding::Artifact { reference } => *reference == output["artifact"],
+                    InputBinding::Image { asset, .. } => {
+                        output["artifact"]["type"] == "image"
+                            && output["artifact"]["identity"]
+                                == format!("sha256:{}", self.assets.metadata(asset).await?.sha256)
+                    }
+                    InputBinding::Location { value } => {
+                        unique_shared_location(output, result, value)
+                    }
+                };
+                if !valid {
+                    return Err(Error::Invalid(
+                        "Lineage does not identify the submitted value".into(),
+                    ));
+                }
+            }
+        }
+        Ok(())
+    }
+}
+
+fn unique_shared_location(output: &Value, result: &Value, value: &Value) -> bool {
+    output["artifact"]["type"] == "location"
+        && result["artifacts"]["out"].as_array().is_some_and(|items| {
+            items
+                .iter()
+                .filter(|item| item["artifact"]["type"] == "location")
+                .count()
+                == 1
+        })
+        && result["locations"]["found"]
+            .as_array()
+            .is_some_and(|values| values.len() == 1 && values.contains(value))
+}
 #[cfg(test)]
 mod tests {
     use super::*;
     use serde_json::json;
+    #[test]
+    fn shared_location_lineage_requires_one_unambiguous_occurrence() {
+        let output = json!({"artifact":{"type":"location"}});
+        let value = json!({"kind":"line"});
+        let mut result = json!({"artifacts":{"out":[output]},"locations":{"found":[value]}});
+        assert!(unique_shared_location(&output, &result, &value));
+        result["artifacts"]["out"] = json!([output, output]);
+        assert!(!unique_shared_location(&output, &result, &value));
+        result["artifacts"]["out"] = json!([output]);
+        result["locations"]["found"] = json!([value, value]);
+        assert!(!unique_shared_location(&output, &result, &value));
+    }
     #[test]
     fn artifact_addresses_types_and_versions_are_checked_without_reading_native_records() {
         let description = json!({"tool":{"name":"study"},"artifact_types":[{"type":"study:Mask","schema_versions":[1]}]});

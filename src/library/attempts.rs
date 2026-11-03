@@ -17,6 +17,8 @@ pub struct Submission {
     pub frames: BTreeMap<String, Vec<ImageFrame>>,
     #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
     pub bindings: BTreeMap<String, Vec<InputBinding>>,
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    pub lineage: BTreeMap<String, Vec<Option<BindingSource>>>,
 }
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
 #[serde(tag = "kind", rename_all = "snake_case", deny_unknown_fields)]
@@ -57,6 +59,13 @@ impl Submission {
             }))
             .collect()
     }
+}
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
+#[serde(deny_unknown_fields)]
+pub struct BindingSource {
+    pub attempt: String,
+    pub port: String,
+    pub occurrence: usize,
 }
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
 #[serde(deny_unknown_fields)]

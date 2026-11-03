@@ -42,6 +42,9 @@ pub(super) async fn materialize(
             let (id, frame) = match item {
                 InputBinding::Image { asset, frame } => (asset, frame),
                 InputBinding::Artifact { reference } => {
+                    if reference["tool"] != declaration.document["tool"]["name"] {
+                        return Err(Error::Invalid("Artifact references cannot be sent to another tool; select owned image bytes or a shared location value instead".into()));
+                    }
                     values.push(reference.clone());
                     continue;
                 }

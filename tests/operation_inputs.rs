@@ -406,3 +406,88 @@ async fn artifact_inspection_reads_only_a_saved_output_reference() {
     );
     h.close().await;
 }
+
+#[tokio::test]
+async fn lineage_is_saved_as_host_metadata_and_cannot_forge_an_output_occurrence() {
+    let h = Host::new().await;
+    h.c.submit(
+        h.request(
+            "upstream",
+            "locate_marker",
+            json!({"image":[{"kind":"image","asset":h.image.id}]}),
+        )
+        .await,
+    )
+    .await
+    .unwrap();
+    let upstream = h.settled("upstream").await;
+    let reference = upstream.result.as_ref().unwrap()["artifacts"]["out"][0]["artifact"].clone();
+    let mut next=h.request("downstream","stamp_marker",json!({"image":[{"kind":"image","asset":h.image.id}],"marker":[{"kind":"artifact","reference":reference}]})).await;
+    next.lineage = serde_json::from_value(
+        json!({"marker":[{"attempt":"upstream","port":"marker","occurrence":9}]}),
+    )
+    .unwrap();
+    assert!(h.c.prepare(next.clone()).await.is_err());
+    next.lineage = serde_json::from_value(
+        json!({"marker":[{"attempt":"upstream","port":"marker","occurrence":0}]}),
+    )
+    .unwrap();
+    for source in [
+        json!({"attempt":"upstream","port":"wrong","occurrence":0}),
+        json!({"attempt":"missing","port":"marker","occurrence":0}),
+    ] {
+        let mut invalid = next.clone();
+        invalid.lineage = serde_json::from_value(json!({"marker":[source]})).unwrap();
+        assert!(h.c.prepare(invalid).await.is_err());
+    }
+    let mut invalid = next.clone();
+    invalid.lineage = serde_json::from_value(json!({"marker":[]})).unwrap();
+    assert!(h.c.prepare(invalid).await.is_err());
+    h.c.submit(next.clone()).await.unwrap();
+    let saved = h.settled("downstream").await;
+    assert_eq!(saved.request.lineage, next.lineage);
+    let selection = wafflery::library::cleanup::Selection {
+        attempts: vec!["upstream".into()],
+        ..Default::default()
+    };
+    let preview = wafflery::library::cleanup::Cleanup(h.c.assets.clone())
+        .preview(selection.clone())
+        .await
+        .unwrap();
+    h.c.cleanup(selection, preview.token).await.unwrap();
+    assert_eq!(h.c.submit(next.clone()).await.unwrap().id, "downstream");
+
+    assert!(saved.arguments.get("lineage").is_none());
+    assert_eq!(
+        h.c.attempts
+            .history(None, 100, None, None)
+            .await
+            .unwrap()
+            .len(),
+        1
+    );
+    h.close().await;
+}
+
+#[tokio::test]
+async fn native_references_cannot_cross_tool_boundaries_before_dispatch() {
+    let h = Host::new().await;
+    let reference = fixtures::artifact("foreign-lab", "foreign-lab:Token")["artifact"].clone();
+    let request = h
+        .request(
+            "foreign",
+            "collect_tokens",
+            json!({"tokens":[{"kind":"artifact","reference":reference}]}),
+        )
+        .await;
+    let error = h.c.prepare(request).await.err().unwrap();
+    assert!(error.to_string().contains("another tool"));
+    assert!(
+        h.c.attempts
+            .history(None, 100, None, None)
+            .await
+            .unwrap()
+            .is_empty()
+    );
+    h.close().await;
+}
