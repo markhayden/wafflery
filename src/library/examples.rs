@@ -5,7 +5,7 @@ use super::{
 };
 use rusqlite::{OptionalExtension, params};
 use serde::{Deserialize, Serialize};
-use serde_json::Value;
+use serde_json::{Value, json};
 
 #[derive(Clone, Serialize, Deserialize)]
 pub struct Example {
@@ -16,9 +16,12 @@ pub struct Example {
     pub request: Submission,
     pub inputs: Value,
     pub declaration: Value,
+    pub input_artifacts: Vec<Value>,
+    pub workspace_dependent: bool,
 }
 #[derive(Serialize)]
 pub struct ExampleSummary {
+    pub workspace_dependent: bool,
     pub id: String,
     pub sequence: i64,
     pub name: String,
@@ -29,6 +32,16 @@ pub struct ExampleSummary {
 pub struct ExampleStore(pub Database);
 impl ExampleStore {
     pub async fn save(&self, attempt_id: String, name: String, notes: String) -> Result<Example> {
+        self.save_with_options(attempt_id, name, notes, false).await
+    }
+    /// Metadata transaction only; the coordinator verifies files under the storage lease first.
+    pub async fn save_with_options(
+        &self,
+        attempt_id: String,
+        name: String,
+        notes: String,
+        allow_workspace_dependent: bool,
+    ) -> Result<Example> {
         let name = name.trim().to_owned();
         if name.is_empty() || name.chars().count() > 120 || notes.chars().count() > 4000 {
             return Err(Error::Conflict(
@@ -51,6 +64,10 @@ impl ExampleStore {
                 let attempt: Attempt = serde_json::from_str(
                     &record.ok_or(Error::Missing("Saved attempt not found"))?,
                 )?;
+                let (input_artifacts,workspace_dependent)=native_inputs(&tx,&attempt,&attempt_id)?;
+                if workspace_dependent && !allow_workspace_dependent {
+                    return Err(Error::Conflict("Some native inputs are not preserved. Confirm saving a workspace-dependent example explicitly."));
+                }
                 let mut example = Example {
                     id,
                     sequence: 0,
@@ -59,6 +76,8 @@ impl ExampleStore {
                     request: attempt.request,
                     inputs: attempt.inputs,
                     declaration: attempt.declaration,
+                    input_artifacts,
+                    workspace_dependent,
                 };
                 tx.execute(
                     "INSERT INTO examples(id,record) VALUES(?1,?2)",
@@ -97,9 +116,60 @@ impl ExampleStore {
     }
     pub async fn list(&self, before: Option<i64>) -> Result<Vec<ExampleSummary>> {
         self.0.call(move |db| {
-            let mut query=db.prepare("SELECT id,seq,json_extract(record,'$.name'),json_extract(record,'$.request.tool'),json_extract(record,'$.request.action') FROM examples WHERE seq<?1 ORDER BY seq DESC LIMIT 20")?;
-            let rows=query.query_map([before.unwrap_or(i64::MAX)],|r|Ok(ExampleSummary{id:r.get(0)?,sequence:r.get(1)?,name:r.get(2)?,tool:r.get(3)?,action:r.get(4)?}))?;
+            let mut query=db.prepare("SELECT id,seq,json_extract(record,'$.name'),json_extract(record,'$.request.tool'),json_extract(record,'$.request.action'),json_extract(record,'$.workspace_dependent') FROM examples WHERE seq<?1 ORDER BY seq DESC LIMIT 20")?;
+            let rows=query.query_map([before.unwrap_or(i64::MAX)],|r|Ok(ExampleSummary{id:r.get(0)?,sequence:r.get(1)?,name:r.get(2)?,tool:r.get(3)?,action:r.get(4)?,workspace_dependent:r.get(5)?}))?;
             rows.map(|row|Ok(row?)).collect()
         }).await
     }
+}
+
+fn native_inputs(
+    db: &rusqlite::Connection,
+    attempt: &Attempt,
+    id: &str,
+) -> Result<(Vec<Value>, bool)> {
+    let mut snapshot = attempt
+        .result
+        .as_ref()
+        .and_then(|result| result["artifacts"]["in"].as_array())
+        .cloned()
+        .unwrap_or_default();
+    let mut dependent = false;
+    for (port, bindings) in &attempt.request.bindings {
+        let occurrences = snapshot
+            .iter()
+            .enumerate()
+            .filter_map(|(index, item)| (item["port"] == *port).then_some(index))
+            .collect::<Vec<_>>();
+        for (index, binding) in bindings.iter().enumerate() {
+            let super::attempts::InputBinding::Artifact { reference } = binding else {
+                continue;
+            };
+            let linked = if let Some(occurrence) = occurrences.get(index) {
+                // Owned bytes alone cannot make a foreign reference importable into this tool.
+                let same_reference = snapshot[*occurrence]["artifact"] == *reference;
+                let same_tool =
+                    reference["tool"] == attempt.declaration["document"]["tool"]["name"];
+                same_reference
+                    && same_tool
+                    && db.query_row(
+                        "SELECT EXISTS(SELECT 1 FROM native_links WHERE owner_kind='attempt'
+                     AND owner_id=?1 AND direction='in' AND occurrence=?2 AND artifact=?3)",
+                        params![id, *occurrence as i64, serde_json::to_string(reference)?],
+                        |row| row.get::<_, bool>(0),
+                    )?
+            } else {
+                false
+            };
+            if let Some(occurrence) = occurrences.get(index) {
+                snapshot[*occurrence]["native_state"] = json!(if linked {
+                    "preserved"
+                } else {
+                    "workspace-dependent"
+                });
+            }
+            dependent |= !linked;
+        }
+    }
+    Ok((snapshot, dependent))
 }

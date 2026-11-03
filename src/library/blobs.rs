@@ -110,6 +110,10 @@ impl BlobStore {
     }
     pub async fn read(&self, digest: &str) -> Result<Vec<u8>> {
         let _storage = self.0.storage.read().await;
+        self.read_leased(digest).await
+    }
+    /// Caller retains the storage lease through ownership publication.
+    pub(crate) async fn read_leased(&self, digest: &str) -> Result<Vec<u8>> {
         let digest = digest.to_owned();
         valid_digest(&digest)?;
         let expected = self.metadata(&digest).await?;

@@ -2771,6 +2771,33 @@ correction; M5.12's targeted browser results remain applicable.
 **Verify:** saved Feather inputs with changed sigma run without upstream calls; missing-store import flow.
 **Commit:** `feat: save independent operation examples`.
 
+**As built approach — M5.13 (before implementation):** save a frozen input-artifact occurrence
+snapshot with the example, copy only its native input links and image ownership, and record explicit
+workspace dependence when a needed input has no owned native form. Partial saves require an explicit
+confirmation. Example provenance becomes a distinct host binding source, validated against the saved
+example's port occurrence rather than an upstream attempt that can be deleted. Example-origin
+inspection/import use the same registered-tool, exact-identity and owned-byte controls as saved runs;
+opening a draft checks availability and offers explicit import before binding missing native inputs.
+A selected compatible registration takes precedence when the original registration no longer exists;
+ambiguous choices ask the user to choose the receiving tool. No filesystem search or upstream replay.
+Build in two coherent parts: owned snapshot/lineage/control support, then Examples UI/restore wiring,
+with task-wide targeted checks and one review. Schema adoption retains the normal backup checkpoint.
+
+The schema 7 migration labels historical artifact-bearing examples workspace-dependent when no
+input occurrence snapshot exists. Native input state is frozen at save time, and save verifies owned
+images/native files under a storage lease before committing ownership. Controls remain separately
+owned transfers and never allocate a run. Example input refs are re-read in the selected compatible
+registration; import is explicit and uses only that example's owned input links. Image references
+without owned bytes and unsupported/foreign native imports remain workspace-dependent, without
+substituting previews or decoding native records.
+
+**Backend slice complete:** schema 7 and example-owned input snapshots/links, independently
+validated example provenance, registered-store reads/imports and verified save preflight are in
+place. Historical workspace-dependent examples can resolve a live reference without a preserved
+occurrence snapshot; import still requires the example's exact occurrence and owned bytes. The
+schema-6 migration/backup regression and native deletion/restart/new-registration cases pass.
+Examples UI and updated assets follow in the second commit of this task.
+
 **Checkpoint D:** preserved native examples survive deletion/restart; tool control failures cannot
 change run outcomes or accounting. Back up the database before schema adoption; binary rollback
 requires compatible schema or the matching backup, never a silent downgrade or ledger reset.

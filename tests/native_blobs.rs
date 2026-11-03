@@ -152,7 +152,7 @@ async fn a_pre_native_database_is_backed_up_and_migrated_without_losing_history(
             entry
                 .file_name()
                 .to_string_lossy()
-                .starts_with("before-v6-")
+                .starts_with("before-v7-")
         })
         .unwrap();
     let old = rusqlite::Connection::open(backup.path()).unwrap();

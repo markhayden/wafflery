@@ -61,11 +61,18 @@ impl Submission {
     }
 }
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
-#[serde(deny_unknown_fields)]
-pub struct BindingSource {
-    pub attempt: String,
-    pub port: String,
-    pub occurrence: usize,
+#[serde(untagged, deny_unknown_fields)]
+pub enum BindingSource {
+    Attempt {
+        attempt: String,
+        port: String,
+        occurrence: usize,
+    },
+    Example {
+        example: String,
+        port: String,
+        occurrence: usize,
+    },
 }
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
 #[serde(deny_unknown_fields)]

@@ -217,7 +217,10 @@ can leave reclaimable files; it must not break surviving runs/examples. Baseline
 an explicit run deletion; the UI explains that the pin will clear. Examples retain their assets.
 
 Schema 6 stores opaque native files under `Library/blobs/sha256`, with occurrence links owned
-independently by attempts, examples and future bundles. Publication and reads verify the digest;
+independently by attempts, examples and future bundles. Schema 7 adds frozen input-artifact
+occurrences and explicit workspace-dependence labels to example records, with the normal database
+backup before adoption. Historical examples lacking native input occurrences cannot claim portable
+restoration. Example-origin lineage validates saved port occurrences independently of deleted runs. Publication and reads verify the digest;
 cleanup includes only blobs with no surviving owner. Native files are not decoded by the host.
 
 Artifact export/import have a separate two-slot registry and never take a paid-run permit or

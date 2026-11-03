@@ -29,9 +29,17 @@ impl Coordinator {
             .and_then(|result| result["artifacts"][direction].get(index))
             .map(|entry| &entry["artifact"])
             .ok_or_else(|| Error::Missing("Saved artifact occurrence is unavailable"))?;
+        self.inspect_reference_at(reference, target.unwrap_or(&saved.request.tool))
+            .await
+    }
+    pub(super) async fn inspect_reference_at(
+        &self,
+        reference: &Value,
+        target: &str,
+    ) -> Result<Value> {
         let entry = self
             .tools
-            .get(target.unwrap_or(&saved.request.tool))
+            .get(target)
             .ok_or_else(|| Error::Missing("The artifact's tool is not installed"))?;
         let client = entry
             .client()
@@ -45,7 +53,7 @@ impl Coordinator {
             .ok_or_else(|| Error::Missing("The artifact's declaration is unavailable"))?;
         if reference["tool"] != declaration.document["tool"]["name"] {
             return Err(Error::Invalid(
-                "This input belongs to another tool. Inspect its originating saved run instead."
+                "This reference belongs to another tool. Choose owned image bytes or a shared location value for the receiving tool."
                     .into(),
             ));
         }
@@ -237,15 +245,52 @@ impl Coordinator {
                 let Some(source) = source else {
                     continue;
                 };
-                let saved = self.attempts.get(&source.attempt).await.map_err(|_|Error::Invalid("The lineage source attempt is unavailable. Remove this binding and select a current saved input.".into()))?;
+                if let crate::library::attempts::BindingSource::Example {
+                    example,
+                    port: source_port,
+                    occurrence,
+                } = source
+                {
+                    let saved =
+                        crate::library::examples::ExampleStore(self.assets.database.clone())
+                            .get(example.clone())
+                            .await?;
+                    let expected = saved
+                        .request
+                        .bindings
+                        .get(source_port)
+                        .and_then(|items| items.get(*occurrence));
+                    let same = match (expected, binding) {
+                        (
+                            Some(InputBinding::Image { asset: left, .. }),
+                            InputBinding::Image { asset: right, .. },
+                        ) => left == right,
+                        _ => expected == Some(binding),
+                    };
+                    if !same {
+                        return Err(Error::Invalid(
+                            "Example lineage does not identify the submitted input".into(),
+                        ));
+                    }
+                    continue;
+                }
+                let crate::library::attempts::BindingSource::Attempt {
+                    attempt,
+                    port: source_port,
+                    occurrence,
+                } = source
+                else {
+                    unreachable!()
+                };
+                let saved = self.attempts.get(attempt).await.map_err(|_|Error::Invalid("The lineage source attempt is unavailable. Remove this binding and select a current saved input.".into()))?;
                 let result = saved
                     .result
                     .as_ref()
                     .ok_or_else(|| Error::Invalid("Lineage source has no result".into()))?;
                 let output = result["artifacts"]["out"]
-                    .get(source.occurrence)
+                    .get(*occurrence)
                     .ok_or_else(|| Error::Invalid("Lineage source occurrence is missing".into()))?;
-                if output["port"] != source.port {
+                if output["port"] != *source_port {
                     return Err(Error::Invalid("Lineage source port differs".into()));
                 }
                 let valid = match binding {

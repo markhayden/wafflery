@@ -504,3 +504,6 @@ mod artifact_control_cases;
 
 #[path = "native_preservation/cases.rs"]
 mod native_preservation_cases;
+
+#[path = "operation_examples/cases.rs"]
+mod operation_examples_cases;

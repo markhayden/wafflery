@@ -21,8 +21,16 @@ use std::{
     },
     time::Duration,
 };
+struct Source {
+    owner: Owner,
+    direction: String,
+    index: u32,
+    reference: Value,
+    registration: String,
+    run_dir: Option<PathBuf>,
+}
 struct Context {
-    owner: String,
+    owner: Owner,
     direction: String,
     index: u32,
     reference: Value,
@@ -58,7 +66,27 @@ impl Coordinator {
             .get(index)
             .map(|entry| entry["artifact"].clone())
             .ok_or(Error::Missing("Saved artifact occurrence is unavailable"))?;
-        let tool = target.unwrap_or(&saved.request.tool);
+        let source = Source {
+            owner: Owner::Attempt(id.into()),
+            direction: direction.into(),
+            index: u32::try_from(index)
+                .map_err(|_| Error::Invalid("Artifact occurrence exceeds the host limit".into()))?,
+            reference,
+            registration: saved.request.tool,
+            run_dir: result["run"]["dir"].as_str().map(PathBuf::from),
+        };
+        self.artifact_context_from(source, control, slot, target)
+            .await
+    }
+    async fn artifact_context_from(
+        &self,
+        source: Source,
+        control: &str,
+        slot: Option<tokio::sync::OwnedSemaphorePermit>,
+        target: Option<&str>,
+    ) -> Result<Context> {
+        let tool = target.unwrap_or(&source.registration);
+        let reference = source.reference;
         let entry = self
             .tools
             .get(tool)
@@ -92,17 +120,104 @@ impl Coordinator {
             None => self.artifact_jobs.start(tool)?,
         };
         Ok(Context {
-            owner: id.into(),
-            direction: direction.into(),
-            index: u32::try_from(index)
-                .map_err(|_| Error::Invalid("Artifact occurrence exceeds the host limit".into()))?,
+            owner: source.owner,
+            direction: source.direction,
+            index: source.index,
             reference,
             portable,
             declaration,
             client,
-            run_dir: result["run"]["dir"].as_str().map(PathBuf::from),
+            run_dir: source.run_dir,
             _job: job,
         })
+    }
+    async fn example_source(&self, id: &str, port: &str, index: usize) -> Result<Source> {
+        let saved = crate::library::examples::ExampleStore(self.assets.database.clone())
+            .get(id.into())
+            .await?;
+        let reference = match saved
+            .request
+            .bindings
+            .get(port)
+            .and_then(|items| items.get(index))
+        {
+            Some(crate::library::attempts::InputBinding::Artifact { reference }) => {
+                reference.clone()
+            }
+            _ => {
+                return Err(Error::Invalid(
+                    "The saved example input is not an artifact reference".into(),
+                ));
+            }
+        };
+        let (occurrence, item) = saved
+            .input_artifacts
+            .iter()
+            .enumerate()
+            .filter(|(_, item)| item["port"] == port)
+            .nth(index)
+            .ok_or(Error::Missing(
+                "Saved example artifact occurrence is unavailable",
+            ))?;
+        if item["artifact"] != reference {
+            return Err(Error::Invalid(
+                "Saved example artifact differs from its input binding".into(),
+            ));
+        }
+        Ok(Source {
+            owner: Owner::Example(id.into()),
+            direction: "in".into(),
+            index: u32::try_from(occurrence)
+                .map_err(|_| Error::Invalid("Example occurrence exceeds the host limit".into()))?,
+            reference,
+            registration: saved.request.tool,
+            run_dir: None,
+        })
+    }
+    pub async fn inspect_example_artifact(
+        &self,
+        id: &str,
+        port: &str,
+        index: usize,
+        target: &str,
+    ) -> Result<Value> {
+        // Historical workspace-dependent examples still carry their original binding. Reading
+        // that live resource needs no preservation occurrence; importing owned bytes does.
+        let saved = crate::library::examples::ExampleStore(self.assets.database.clone())
+            .get(id.into())
+            .await?;
+        let reference = match saved
+            .request
+            .bindings
+            .get(port)
+            .and_then(|items| items.get(index))
+        {
+            Some(crate::library::attempts::InputBinding::Artifact { reference }) => reference,
+            _ => {
+                return Err(Error::Invalid(
+                    "The saved example input is not an artifact reference".into(),
+                ));
+            }
+        };
+        self.inspect_reference_at(reference, target).await
+    }
+    pub async fn import_example_artifact(
+        self: &Arc<Self>,
+        id: &str,
+        port: &str,
+        index: usize,
+        target: &str,
+    ) -> Result<Value> {
+        let _submission = self.submission.lock().await;
+        if self.stopping.load(Ordering::Acquire) {
+            return Err(Error::Conflict("The host is shutting down"));
+        }
+        let source = self.example_source(id, port, index).await?;
+        let context = self
+            .artifact_context_from(source, "import", None, Some(target))
+            .await?;
+        drop(_submission);
+        self.start_import(context).await
     }
     pub(super) async fn preserve_artifact(
         &self,
@@ -172,7 +287,7 @@ impl Coordinator {
         blobs.publish_leased(bytes, link.sha256.clone()).await?;
         check_publication(&context, &cancelled)?;
         blobs
-            .attach_leased(Owner::Attempt(context.owner.clone()), link.clone())
+            .attach_leased(context.owner.clone(), link.clone())
             .await?;
         self.events.changed();
         Ok(link)
@@ -195,6 +310,9 @@ impl Coordinator {
         let context = self
             .artifact_context(id, direction, index, "import", None, target)
             .await?;
+        self.start_import(context).await
+    }
+    async fn start_import(self: &Arc<Self>, context: Context) -> Result<Value> {
         let waiter = Waiter::new();
         let cancelled = waiter.0.clone();
         let coordinator = self.clone();
@@ -212,7 +330,7 @@ impl Coordinator {
         cancelled: Arc<AtomicBool>,
     ) -> Result<Value> {
         let blobs = BlobStore(self.assets.clone());
-        let link=blobs.links(Owner::Attempt(context.owner.clone())).await?.into_iter().find(|link|link.direction==context.direction&&link.occurrence==context.index&&link.artifact==context.reference).ok_or(Error::Missing("No owned native export is available for this artifact. Export it before importing."))?;
+        let link=blobs.links(context.owner.clone()).await?.into_iter().find(|link|link.direction==context.direction&&link.occurrence==context.index&&link.artifact==context.reference).ok_or(Error::Missing("No owned native export is available for this artifact. Export it before importing."))?;
         let bytes = blobs.read(&link.sha256).await?;
         let inline_limit = context.declaration.document["limits"]["inline_bytes"]
             .as_u64()
