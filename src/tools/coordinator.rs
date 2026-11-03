@@ -1,5 +1,6 @@
 mod artifact_controls;
 pub(super) mod artifacts;
+mod bundle_imports;
 mod estimates;
 mod native_preservation;
 mod preparation;

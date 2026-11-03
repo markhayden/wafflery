@@ -851,3 +851,14 @@ artifact identity. Current tool descriptions must establish typed port coverage/
 publication/import: arbitrary uploaded result fields are not authenticated proof that all required
 inputs are present. References to unstored earlier outputs require the later chain edge resolver;
 this reader currently requires files or explicit dependency records for such inputs.
+
+
+M5.17b's private upload API keeps at most two uncompressed archives (256 MiB each) in memory with
+30-second bounded uploads. Validation has no filesystem/RPC effects. A separate explicit selected-step
+import checks the current public description before publication, retains the exact original archive,
+and performs only input import controls. Its tracked worker outlives dropped HTTP waiters and drawer
+closure; group ownership blocks restart between controls. Per-input progress retains partial success.
+Native files remain opaque and use granted file staging because no export MIME type is in the
+manifest. The receiver verifies native contents; the host rereads each imported resource. Imports do
+not create attempts or authorize paid calls. Uploaded reviews are session-local; explicitly retained
+archives and bundle-owned image inputs survive restart. Drawer wiring is the next M5.17b change.

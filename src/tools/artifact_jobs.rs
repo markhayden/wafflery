@@ -41,6 +41,12 @@ impl Jobs {
         Ok(self.start_reserved(tool, slot))
     }
     pub fn start_reserved(self: &Arc<Self>, tool: &str, slot: OwnedSemaphorePermit) -> Job {
+        self.mark(tool, Some(slot))
+    }
+    pub fn group(self: &Arc<Self>, tool: &str) -> Job {
+        self.mark(tool, None)
+    }
+    fn mark(self: &Arc<Self>, tool: &str, slot: Option<OwnedSemaphorePermit>) -> Job {
         *self
             .active
             .lock()
@@ -51,7 +57,7 @@ impl Jobs {
         Job {
             jobs: self.clone(),
             tool: tool.into(),
-            slot: Some(slot),
+            slot,
         }
     }
     pub fn count(&self) -> usize {

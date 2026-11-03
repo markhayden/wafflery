@@ -8,6 +8,20 @@ use std::{
     ops::Range,
     sync::Arc,
 };
+#[derive(Clone, Debug, serde::Serialize)]
+pub struct InputClaim {
+    pub name: String,
+    pub index: usize,
+    pub input: Input,
+}
+#[derive(Clone, Debug, serde::Serialize)]
+#[serde(tag = "kind", rename_all = "snake_case")]
+pub enum Input {
+    Image { member: String, image: Value },
+    Artifact { member: String, reference: Value },
+    Location { value: Value },
+    Unresolved { reason: String },
+}
 #[derive(Clone)]
 pub struct Member {
     sha256: String,
@@ -30,6 +44,12 @@ impl Member {
     }
 }
 impl ValidatedBundle {
+    pub fn input_claims(&self, index: usize) -> Result<Vec<InputClaim>> {
+        let step = self.manifest["steps"]
+            .get(index)
+            .ok_or(Error::Missing("Bundle step is unavailable"))?;
+        claims(step)
+    }
     pub fn manifest(&self) -> &Value {
         &self.manifest
     }
@@ -256,7 +276,7 @@ fn validate_step<'a>(
         }
         named.insert(key.as_str());
     }
-    claims(step)
+    claims(step).map(|_| ())
 }
 fn name(item: &Value) -> &str {
     item["port"]
@@ -276,7 +296,8 @@ fn image_matches(value: &Value, image: &Value) -> bool {
                 == format!("sha256:{}", image["file_sha256"].as_str().unwrap_or(""))
     }
 }
-fn claims(step: &Value) -> Result<()> {
+fn claims(step: &Value) -> Result<Vec<InputClaim>> {
+    let mut claims = Vec::new();
     let mut names = BTreeMap::new();
     for field in ["inputs", "artifacts", "unportable", "reference_only"] {
         for item in step[field].as_array().unwrap() {
@@ -340,6 +361,24 @@ fn claims(step: &Value) -> Result<()> {
                     "Omitted bundle input has conflicting included occurrences",
                 ));
             }
+            let reason = step["reference_only"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .find(|item| name(item) == input)
+                .unwrap()["why"]
+                .as_str()
+                .unwrap()
+                .to_owned();
+            for index in 0..values.len() {
+                claims.push(InputClaim {
+                    name: input.into(),
+                    index,
+                    input: Input::Unresolved {
+                        reason: reason.clone(),
+                    },
+                });
+            }
             continue;
         }
         let mut used = vec![false; values.len()];
@@ -372,6 +411,24 @@ fn claims(step: &Value) -> Result<()> {
                     schema("urn:table-manners:operations:artifact-ref", value)?;
                     reference(value)?;
                 }
+                let source = match field {
+                    "inputs" => Input::Image {
+                        member: item["member"].as_str().unwrap().into(),
+                        image: item["image"].clone(),
+                    },
+                    "artifacts" => Input::Artifact {
+                        member: item["member"].as_str().unwrap().into(),
+                        reference: item["artifact"].clone(),
+                    },
+                    _ => Input::Unresolved {
+                        reason: item["reason"].as_str().unwrap().into(),
+                    },
+                };
+                claims.push(InputClaim {
+                    name: input.into(),
+                    index,
+                    input: source,
+                });
                 used[index] = true;
                 after = index + 1;
             }
@@ -385,10 +442,18 @@ fn claims(step: &Value) -> Result<()> {
                 }
                 // Literal shared locations stay in the frozen invocation and require no native export.
                 schema("urn:table-manners:images:location", value)?;
+                claims.push(InputClaim {
+                    name: input.into(),
+                    index,
+                    input: Input::Location {
+                        value: (*value).clone(),
+                    },
+                });
             }
         }
     }
-    Ok(())
+    claims.sort_by(|a, b| (&a.name, a.index).cmp(&(&b.name, b.index)));
+    Ok(claims)
 }
 mod unique_json {
     use serde::{

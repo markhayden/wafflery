@@ -3019,8 +3019,24 @@ spawn, transport or probe-close failures. No schema relaxation, retry or timeout
 **Planned build slices** (ordered, each with its own targeted checks and matching docs):
 
 - **M5.17a: Complete — bounded archive reader** — reader portion of acceptance 1; malformed archives cause no effects. Public upload wiring follows in M5.17b.
-- **M5.17b: import review and orchestration** — acceptance 2–3; drawer and partial/idempotent import
-  tests.
+- **M5.17b: import review and orchestration** — acceptance 2–3; two coherent commits: current-tool
+  preflight, archive retention, owned controls and private upload API; then the drawer, stories and
+  browser checks. Task review and the Rust workspace suite gate the final merge.
+
+**M5.17b server as built:** upload reviews retain at most two bounded immutable archives in memory;
+closing the drawer does not dismiss them. Upload parsing verifies declared files without publishing
+files, calling tools or creating attempts. Explicitly importing one selected step first checks the
+installed tool name, action, current typed ports, cardinality, supported native versions and parameter
+schema. Required ports cannot disappear by editing the archived result. Omissions remain unresolved.
+
+An owned import group prevents tool restart between input controls and remains visible to shutdown.
+Native payloads use file locators in the granted execution directory: manifests do not carry the
+export MIME type, so the host never guesses an inline type or poisons its native-byte cache. Repeated
+identical native occurrences share one control call per import; explicit retries reconcile by
+identity. Resource rereads confirm successful imports. The original archive is retained only after
+explicit import, without inventing a source attempt. Imported images gain bundle ownership; partial
+failures retain completed inputs and the original archive, with no automatic retry or action dispatch.
+The drawer wiring and task verification follow before M5.17 is marked complete.
 
 **M5.17a as built:** a bounded, side-effect-free reader retains immutable archive bytes with checked
 member offsets. It reads raw ustar entries (so GNU/PAX extension entries cannot be hidden), requires

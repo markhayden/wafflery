@@ -16,7 +16,7 @@ fn tar(entries: Vec<(String, Vec<u8>)>) -> Vec<u8> {
     }
     tar.into_inner().unwrap()
 }
-async fn exported() -> (tempfile::TempDir, AssetStore, Vec<u8>) {
+pub(super) async fn exported() -> (tempfile::TempDir, AssetStore, Vec<u8>) {
     let (root, assets, attempt, _) = fixture().await;
     let built = bundles::build(&assets, &attempt, &Options::default())
         .await

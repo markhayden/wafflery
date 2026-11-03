@@ -291,3 +291,52 @@ async fn source_deletion_between_assembly_and_commit_is_a_friendly_conflict_with
     );
     assets.database.shutdown().await.unwrap();
 }
+
+#[tokio::test]
+async fn an_explicitly_imported_archive_is_retained_without_inventing_an_attempt() {
+    let (_source_root, source, bytes) = super::reader::exported().await;
+    let parsed = wafflery::tools::bundle_reader::read(bytes.clone()).unwrap();
+    let root = tempfile::tempdir().unwrap();
+    let target = AssetStore::open(&root.path().join("Library")).unwrap();
+    let saved = wafflery::tools::bundle_import::retain(&target, &parsed)
+        .await
+        .unwrap();
+    let again = wafflery::tools::bundle_import::retain(&target, &parsed)
+        .await
+        .unwrap();
+    assert_eq!(saved, again);
+    assert_eq!(saved.id, hash(&bytes));
+    let (mut file, _) = BundleStore(target.clone()).open(&saved.id).await.unwrap();
+    let mut retained = vec![];
+    file.read_to_end(&mut retained).unwrap();
+    assert_eq!(retained, bytes);
+    assert!(
+        AttemptStore::new(target.database.clone())
+            .history(None, 10, None, None)
+            .await
+            .unwrap()
+            .is_empty()
+    );
+    assert_eq!(
+        BundleStore(target.clone())
+            .list(None, None)
+            .await
+            .unwrap()
+            .items
+            .len(),
+        1
+    );
+    assert!(
+        target
+            .database
+            .call(|db| Ok(
+                db.query_row("SELECT count(*) FROM bundle_attempts", [], |r| r
+                    .get::<_, u32>(0))?
+            ))
+            .await
+            .unwrap()
+            == 0
+    );
+    source.database.shutdown().await.unwrap();
+    target.database.shutdown().await.unwrap();
+}

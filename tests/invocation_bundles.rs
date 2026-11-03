@@ -481,3 +481,8 @@ async fn in_flight_preservation_and_nonexistent_or_literal_only_omissions_are_no
 mod reader;
 #[path = "invocation_bundles/store.rs"]
 mod store;
+
+#[path = "invocation_bundles/review_api.rs"]
+mod review_api;
+#[path = "invocation_bundles/step.rs"]
+mod step;

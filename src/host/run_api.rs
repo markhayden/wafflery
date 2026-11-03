@@ -53,6 +53,7 @@ pub fn router(coordinator: Arc<Coordinator>) -> Router {
         .merge(super::example_api::router(coordinator.clone()))
         .merge(super::export_api::router(coordinator.clone()))
         .merge(super::bundle_api::router(coordinator.clone()))
+        .merge(super::bundle_review_api::router(coordinator.clone()))
         .merge(super::cleanup_api::router(coordinator))
 }
 pub struct ApiError(pub Error);

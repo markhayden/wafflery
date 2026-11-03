@@ -21,15 +21,15 @@ use std::{
     },
     time::Duration,
 };
-struct Source {
-    owner: Owner,
-    direction: String,
-    index: u32,
-    reference: Value,
-    registration: String,
-    run_dir: Option<PathBuf>,
+pub(super) struct Source {
+    pub(super) owner: Owner,
+    pub(super) direction: String,
+    pub(super) index: u32,
+    pub(super) reference: Value,
+    pub(super) registration: String,
+    pub(super) run_dir: Option<PathBuf>,
 }
-struct Context {
+pub(super) struct Context {
     owner: Owner,
     direction: String,
     index: u32,
@@ -78,7 +78,7 @@ impl Coordinator {
         self.artifact_context_from(source, control, slot, target)
             .await
     }
-    async fn artifact_context_from(
+    pub(super) async fn artifact_context_from(
         &self,
         source: Source,
         control: &str,
@@ -332,13 +332,28 @@ impl Coordinator {
         let blobs = BlobStore(self.assets.clone());
         let link=blobs.links(context.owner.clone()).await?.into_iter().find(|link|link.direction==context.direction&&link.occurrence==context.index&&link.artifact==context.reference).ok_or(Error::Missing("No owned native export is available for this artifact. Export it before importing."))?;
         let bytes = blobs.read(&link.sha256).await?;
+        self.import_bytes_owned(context, bytes, Some(&link.media_type), cancelled)
+            .await
+    }
+    pub(super) async fn import_bytes_owned(
+        &self,
+        context: Context,
+        bytes: Vec<u8>,
+        media: Option<&str>,
+        cancelled: Arc<AtomicBool>,
+    ) -> Result<Value> {
+        use sha2::{Digest, Sha256};
+        let sha256: String = Sha256::digest(&bytes)
+            .iter()
+            .map(|byte| format!("{byte:02x}"))
+            .collect();
         let inline_limit = context.declaration.document["limits"]["inline_bytes"]
             .as_u64()
             .unwrap_or(0)
             .min(1024 * 1024);
         let mut staging = None;
-        let arguments = if bytes.len() as u64 <= inline_limit {
-            json!({"inline":{"media_type":link.media_type,"data":STANDARD.encode(&bytes)},"sha256":link.sha256})
+        let arguments = if let Some(media) = media.filter(|_| bytes.len() as u64 <= inline_limit) {
+            json!({"inline":{"media_type":media,"data":STANDARD.encode(&bytes)},"sha256":sha256})
         } else {
             let root = self.assets.root().join("execution").canonicalize()?;
             if !context.declaration.tool_session["allowed_dirs"]
@@ -359,7 +374,7 @@ impl Coordinator {
             let path = directory.path().join("artifact.native");
             tokio::fs::write(&path, &bytes).await?;
             staging = Some(directory);
-            json!({"file":{"path":path},"sha256":link.sha256})
+            json!({"file":{"path":path},"sha256":sha256})
         };
         validate_input(&context, "import", &arguments)?;
         check_publication(&context, &cancelled)?;

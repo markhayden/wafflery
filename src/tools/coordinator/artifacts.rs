@@ -118,7 +118,7 @@ impl Coordinator {
         Ok(document)
     }
 }
-pub(super) fn validate_reference(reference: &Value, description: &Value) -> Result<()> {
+pub(in crate::tools) fn validate_reference(reference: &Value, description: &Value) -> Result<()> {
     validate_reference_for_input(reference, description, false)
 }
 fn validate_reference_for_input(

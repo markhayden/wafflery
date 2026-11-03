@@ -3,6 +3,7 @@ mod asset_api;
 pub mod assets;
 pub mod auth;
 mod bundle_api;
+mod bundle_review_api;
 mod cleanup_api;
 pub mod control;
 mod event_api;

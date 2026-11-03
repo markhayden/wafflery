@@ -99,24 +99,32 @@ fn verify(mut file: File, id: &str, size: u64) -> Result<File> {
 }
 impl BundleStore {
     pub async fn save(&self, attempt: &str, bundle: Bundle) -> Result<Record> {
+        self.publish(Some(attempt), bundle).await
+    }
+    /// Explicitly accepted foreign archives have no source attempt in this library.
+    pub async fn save_imported(&self, bundle: Bundle) -> Result<Record> {
+        self.publish(None, bundle).await
+    }
+    async fn publish(&self, attempt: Option<&str>, bundle: Bundle) -> Result<Record> {
         // Revalidate under the write lease: cleanup may have run after assembly's read lease ended.
         let _storage = self.0.storage.write().await;
-        let source = attempt.to_owned();
-        let exists = self
-            .0
-            .database
-            .call(move |db| {
-                Ok(db.query_row(
-                    "SELECT EXISTS(SELECT 1 FROM attempts WHERE id=?1)",
-                    [source],
-                    |row| row.get::<_, bool>(0),
-                )?)
-            })
-            .await?;
-        if !exists {
-            return Err(Error::Conflict(
-                "The source run was deleted before this bundle was saved. Reopen a retained run.",
-            ));
+        if let Some(source) = attempt.map(str::to_owned) {
+            let exists = self
+                .0
+                .database
+                .call(move |db| {
+                    Ok(db.query_row(
+                        "SELECT EXISTS(SELECT 1 FROM attempts WHERE id=?1)",
+                        [source],
+                        |row| row.get::<_, bool>(0),
+                    )?)
+                })
+                .await?;
+            if !exists {
+                return Err(Error::Conflict(
+                    "The source run was deleted before this bundle was saved. Reopen a retained run.",
+                ));
+            }
         }
         valid(&bundle.sha256)?;
         for id in &bundle.input_assets {
@@ -165,13 +173,15 @@ impl BundleStore {
         .await
         .map_err(|_| Error::Unavailable)??;
         let saved = record.clone();
-        let attempt = attempt.to_owned();
+        let attempt = attempt.map(str::to_owned);
         let result=self.0.database.call(move|db|{
             let tx=db.transaction()?;
             tx.execute("INSERT INTO invocation_bundles(id,record) VALUES(?1,?2) ON CONFLICT(id) DO NOTHING",params![saved.id,serde_json::to_string(&saved)?])?;
             let existing:String=tx.query_row("SELECT record FROM invocation_bundles WHERE id=?1",[&saved.id],|row|row.get(0))?;
             if serde_json::from_str::<Record>(&existing)?!=saved{return Err(Error::Conflict("Saved invocation bundle metadata conflicts with its contents"));}
-            tx.execute("INSERT OR IGNORE INTO bundle_attempts(bundle_id,attempt_id) VALUES(?1,?2)",params![saved.id,attempt])?;
+            if let Some(attempt) = attempt {
+                tx.execute("INSERT OR IGNORE INTO bundle_attempts(bundle_id,attempt_id) VALUES(?1,?2)",params![saved.id,attempt])?;
+            }
             for id in bundle.input_assets {tx.execute("INSERT OR IGNORE INTO bundle_assets(bundle_id,asset_id) VALUES(?1,?2)",params![saved.id,id])?;}
             for (index,link) in bundle.native_links.into_iter().enumerate(){
                 tx.execute("INSERT OR IGNORE INTO native_links(owner_kind,owner_id,direction,occurrence,sha256,media_type,artifact) VALUES('bundle',?1,'bundle',?2,?3,?4,?5)",params![saved.id,index as u32,link.sha256,link.media_type,serde_json::to_string(&link.artifact)?])?;
@@ -186,6 +196,37 @@ impl BundleStore {
                 .map_err(|_| Error::Unavailable)??;
         }
         result
+    }
+    pub async fn attach_input(&self, bundle: &str, asset: &str) -> Result<()> {
+        let _storage = self.0.storage.read().await;
+        let saved = self.get(bundle).await?;
+        let (image, _) = self.0.read(asset).await?;
+        if !saved.manifest["steps"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|step| {
+                step["inputs"]
+                    .as_array()
+                    .unwrap()
+                    .iter()
+                    .any(|input| input["image"]["file_sha256"] == image.sha256)
+            })
+        {
+            return Err(Error::InvalidAsset("Image does not belong to this bundle"));
+        }
+        let bundle = bundle.to_owned();
+        let asset = asset.to_owned();
+        self.0
+            .database
+            .call(move |db| {
+                db.execute(
+                    "INSERT OR IGNORE INTO bundle_assets(bundle_id,asset_id) VALUES(?1,?2)",
+                    params![bundle, asset],
+                )?;
+                Ok(())
+            })
+            .await
     }
     pub async fn get(&self, id: &str) -> Result<Record> {
         valid(id)?;
