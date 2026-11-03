@@ -8,8 +8,8 @@ Squint independently. Pixel, cross-tool workflows, and batch evaluations follow 
 
 This directory contains the Rust/React development application, its reviewed plans, and an earlier
 interactive mock. The application runs real offline MCP actions, preserves evidence, reopens
-history, compares baselines, saves examples and exports recorded calls/evidence. Production tool
-installation and portable replay bundles remain later integration work. Saved runs preserve declared
+history, compares baselines, saves examples, and exports recorded calls/evidence and invocation bundles.
+Production tool installation and in-app bundle replay remain later integration work. Saved runs preserve declared
 portable native artifacts and can explicitly restore them into a compatible tool store or open declared tool reports.
 The authenticated prepared-call API can execute paid actions only from a current owned estimate;
 its automated verification uses synthetic spend, without provider charges.
@@ -288,3 +288,22 @@ accepted single-library experience without automatic job recovery.
 
 M0–M3 implementation was approved on 2026-10-31. The plan retains verification and commit
 checkpoints; actual macOS/browser support remains subject to runtime verification.
+
+
+Saved invocation bundles
+------------------------
+
+Open **Use in your pipeline → Invocation bundle**, keep the inputs you want, and choose **Save bundle
+for review**. Review files, requirements and any workspace dependencies before downloading the
+uncompressed `.tar`. This carries the original resolved call, result and supported input bytes; it
+is separate from the evidence archive. Saving, opening and downloading never run the tool.
+
+**Bundles** reopens saved reviews even after the source run is deleted. Their shared input bytes
+remain owned by the library and are excluded from source-run cleanup. Bundles do not expire; dedicated
+bundle deletion is not available yet. Downloads return the same verified archive bytes.
+
+A bundle with omitted or unpreserved inputs is labelled **Workspace-dependent**. Native previews are
+never substituted. Complete single-tool bundles show a standard `call --bundle` example with paths
+to replace after download. Install/configure the named tool and supply requirements separately;
+credentials/config contents are not included, paid replay needs new estimates/approval, and model
+judgments may differ. Bundle import/replay inside Wafflery is the next implementation step.

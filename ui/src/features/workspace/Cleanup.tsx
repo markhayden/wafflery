@@ -15,6 +15,8 @@ type Preview = {
   reclaimable_bytes: number;
   total_asset_bytes: number;
   total_native_bytes:number;
+  total_bundle_bytes:number;
+  bundle_count:number;
   baselines_cleared: number;
 };
 const empty: Selection = { attempts: [], examples: [], unused_assets: false };
@@ -32,7 +34,8 @@ export function Cleanup({
     [preview, setPreview] = useState<Preview>();
   const [examples, setExamples] = useState<ExampleSummary[]>([]),
     [cursor, setCursor] = useState<number | null>(null);
-  const [usage, setUsage] = useState<number>(),
+  const [bundleCount,setBundleCount] = useState(0),
+    [usage, setUsage] = useState<number>(),
     [busy, setBusy] = useState(false),
     [notice, setNotice] = useState("");
   async function request(path: string, body: unknown) {
@@ -63,7 +66,8 @@ export function Cleanup({
           setRunCursor(history.cursor);
           setExamples(page.items);
           setCursor(page.cursor);
-          setUsage(usage.total_asset_bytes+usage.total_native_bytes);
+          setUsage(usage.total_asset_bytes+usage.total_native_bytes+usage.total_bundle_bytes);
+          setBundleCount(usage.bundle_count);
         }
       })
       .catch((failure) => {
@@ -91,7 +95,8 @@ export function Cleanup({
         selection,
       )) as Preview;
       setPreview(value);
-      setUsage(value.total_asset_bytes+value.total_native_bytes);
+      setUsage(value.total_asset_bytes+value.total_native_bytes+value.total_bundle_bytes);
+      setBundleCount(value.bundle_count);
     } catch (failure) {
       setNotice(String(failure));
     } finally {
@@ -154,8 +159,10 @@ export function Cleanup({
       <p>
         {usage === undefined
           ? "Reading local library usage…"
-          : `Saved image and native storage: ${mib(usage)}.`}{" "}
+          : `Saved image, native and bundle storage: ${mib(usage)}.`}{" "}
         SQLite metadata and backups use additional space.
+        {bundleCount>0&&<> {bundleCount} saved invocation bundles retain their included input bytes.
+        Deleting source runs does not delete bundles or their shared inputs.</>}
       </p>
       <p>
         Shared bytes stay while a surviving run, example or bundle references them.

@@ -1,3 +1,4 @@
+import {InvocationBundles} from "./InvocationBundles";
 import {CommandHandoff} from "./CommandHandoff";
 import {savedInvocation} from "./invocation";
 import styles from "./Evidence.module.css";
@@ -12,7 +13,7 @@ export function Pipeline({
   attempt: Attempt;
   api: LocalApi;
 }) {
-  const [view, setView] = useState<"command"|"invocation"|"call" | "setup" | "archive">("command");
+  const [view, setView] = useState<"bundle"|"command"|"invocation"|"call" | "setup" | "archive">("command");
   const [images, setImages] = useState(true),
     [busy, setBusy] = useState(false),
     [notice, setNotice] = useState("");
@@ -72,6 +73,7 @@ export function Pipeline({
     <div className={styles.inspector}>
       <nav aria-label="Pipeline views">
         <Button aria-pressed={view==="command"} onClick={()=>setView("command")}>Command</Button>
+        <Button aria-pressed={view==="bundle"} onClick={()=>setView("bundle")}>Invocation bundle</Button>
         <Button aria-pressed={view==="invocation"} onClick={()=>setView("invocation")}>Resolved invocation</Button>
         <Button aria-pressed={view === "call"} onClick={() => setView("call")}>
           Recorded MCP call
@@ -89,7 +91,7 @@ export function Pipeline({
           Evidence archive
         </Button>
       </nav>
-      {view==="command"?<CommandHandoff id={attempt.id} api={api} tool={attempt.declaration.document?.tool} maySpend={attempt.declaration.document?.actions.find(action=>action.name===attempt.request.action)?.cost.may_spend} revision={JSON.stringify([attempt.execution,!!attempt.result,attempt.preservation.contract])}/>:view==="invocation"?<section><pre aria-label="Pipeline invocation">{JSON.stringify(savedInvocation(attempt.result),null,2)}</pre></section>:view !== "archive" ? (
+      {view==="bundle"?<InvocationBundles api={api} attempt={attempt}/>:view==="command"?<CommandHandoff id={attempt.id} api={api} tool={attempt.declaration.document?.tool} maySpend={attempt.declaration.document?.actions.find(action=>action.name===attempt.request.action)?.cost.may_spend} revision={JSON.stringify([attempt.execution,!!attempt.result,attempt.preservation.contract])}/>:view==="invocation"?<section><pre aria-label="Pipeline invocation">{JSON.stringify(savedInvocation(attempt.result),null,2)}</pre></section>:view !== "archive" ? (
         <>
           <p>
             {view === "call"

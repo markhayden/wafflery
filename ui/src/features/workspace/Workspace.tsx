@@ -1,3 +1,4 @@
+import {InvocationBundles} from "./InvocationBundles";
 import {useArtifactRestore} from "./useArtifactRestore";
 import {NativePreservation} from "./NativePreservation";
 import {useSavedArtifacts} from "./useSavedArtifacts";
@@ -73,7 +74,7 @@ export function Workspace({
     opener: HTMLElement;
     tool?: string;
     action?: string;
-    view: "inspect" | "history" | "examples" | "pipeline" | "cleanup" | "setup";
+    view: "bundles" | "inspect" | "history" | "examples" | "pipeline" | "cleanup" | "setup";
   } | null>(null);
   const setupToolId = drawer?.view === "setup" ? drawer.tool ?? toolId : toolId;
   const snapshotReads = useRef<Promise<void>>(Promise.resolve());
@@ -368,6 +369,7 @@ export function Workspace({
         <nav className={styles.library} aria-label="Workspace library">
           <Button onClick={event => setDrawer({opener:event.currentTarget,view:"history"})}>History</Button>
           <Button onClick={event => setDrawer({opener:event.currentTarget,view:"examples"})}>Examples</Button>
+          <Button onClick={event => setDrawer({opener:event.currentTarget,view:"bundles"})}>Bundles</Button>
           <Button onClick={event => setDrawer({opener:event.currentTarget,view:"cleanup"})}>Clean up library</Button>
           {tool && <Button onClick={event => setDrawer({opener:event.currentTarget,view:"setup"})}>Tool setup</Button>}
         </nav>
@@ -648,7 +650,9 @@ export function Workspace({
         opener={drawer?.opener ?? null}
         onClose={() => setDrawer(null)}
         title={
-          drawer?.view === "setup"
+          drawer?.view === "bundles"
+            ? "Saved invocation bundles"
+            : drawer?.view === "setup"
             ? "Tool setup"
             : drawer?.view === "history"
             ? "History"
@@ -661,7 +665,9 @@ export function Workspace({
                   : "Run details"
         }
         description={
-          drawer?.view === "setup"
+          drawer?.view === "bundles"
+            ? "Saved locally. Opening a bundle never replays it."
+            : drawer?.view === "setup"
             ? `${setupDeclaration?.document.tool.name ?? setupToolId} · Requirements, folders and session spending`
             : drawer?.view === "history"
             ? "Saved local attempts. Opening a run never executes it."
@@ -674,7 +680,7 @@ export function Workspace({
                   : ""
         }
       >
-        {drawer?.view === "setup" ? (
+        {drawer?.view === "bundles" ? <InvocationBundles api={api}/> : drawer?.view === "setup" ? (
           <>
             {setupRestarting ? <p role="status">Checking the replacement session…</p> : setupDeclaration && setupAction ? (
               <ToolSetup
