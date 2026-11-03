@@ -514,3 +514,6 @@ mod operation_examples_cases;
 mod bundle_replay_cases;
 #[path = "invocation_bundles/chains.rs"]
 mod chain_bundle_cases;
+
+#[path = "invocation_bundles/chain_replay.rs"]
+mod guided_chain_cases;

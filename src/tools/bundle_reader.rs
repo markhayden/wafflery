@@ -17,10 +17,26 @@ pub struct InputClaim {
 #[derive(Clone, Debug, serde::Serialize)]
 #[serde(tag = "kind", rename_all = "snake_case")]
 pub enum Input {
-    Image { member: String, image: Value },
-    Artifact { member: String, reference: Value },
-    Location { value: Value },
-    Unresolved { reason: String },
+    Image {
+        member: String,
+        image: Value,
+    },
+    /// Host-only prepared replacement. The archive reader never constructs this variant.
+    Fresh {
+        binding: crate::library::attempts::InputBinding,
+        source: crate::library::attempts::BindingSource,
+        changed: bool,
+    },
+    Artifact {
+        member: String,
+        reference: Value,
+    },
+    Location {
+        value: Value,
+    },
+    Unresolved {
+        reason: String,
+    },
 }
 #[derive(Clone)]
 pub struct Member {

@@ -16,6 +16,24 @@ fn invalid(message: impl Into<String>) -> Error {
 }
 /// No tool calls or file publication. Original results are not authoritative input schemas.
 pub fn prepare(bundle: &ValidatedBundle, index: usize, description: &Value) -> Result<Plan> {
+    prepare_rebound(bundle, index, description, &[])
+}
+/// Replacements are verified fresh replay outputs, not caller-supplied archive claims.
+pub fn prepare_rebound(
+    bundle: &ValidatedBundle,
+    index: usize,
+    description: &Value,
+    replacements: &[super::chain_replay::FreshInput],
+) -> Result<Plan> {
+    let mut fresh = BTreeMap::new();
+    for input in replacements {
+        if fresh
+            .insert((input.name.clone(), input.index), input)
+            .is_some()
+        {
+            return Err(invalid("A replay input has duplicate fresh replacements"));
+        }
+    }
     validate_contract("urn:table-manners:core:description", description)?;
     let step = bundle.manifest()["steps"]
         .get(index)
@@ -96,7 +114,19 @@ pub fn prepare(bundle: &ValidatedBundle, index: usize, description: &Value) -> R
             vec![value]
         };
         for (index, value) in values.into_iter().enumerate() {
-            let claim = if let Some(claim) = claims.remove(&(name.to_owned(), index)) {
+            let key = (name.to_owned(), index);
+            let claim = if let Some(input) = fresh.remove(&key) {
+                claims.remove(&key);
+                InputClaim {
+                    name: name.into(),
+                    index,
+                    input: Input::Fresh {
+                        binding: input.binding.clone(),
+                        source: input.source.clone(),
+                        changed: input.changed,
+                    },
+                }
+            } else if let Some(claim) = claims.remove(&key) {
                 claim
             } else if definition["type"] == "location" && value.get("resource").is_none() {
                 validator(&json!({"$ref":"urn:table-manners:images:location"}))?
@@ -133,6 +163,28 @@ pub fn prepare(bundle: &ValidatedBundle, index: usize, description: &Value) -> R
                         )));
                     }
                 }
+                Input::Fresh { binding, .. } => {
+                    use crate::library::attempts::InputBinding;
+                    match binding {
+                        InputBinding::Image { .. } if definition["type"] == "image" => (),
+                        InputBinding::Location { value } if definition["type"] == "location" => {
+                            validate_contract("urn:table-manners:images:location", value)?;
+                        }
+                        InputBinding::Artifact { reference }
+                            if operation && reference["type"] == definition["type"] =>
+                        {
+                            super::coordinator::artifacts::validate_reference(
+                                reference,
+                                description,
+                            )?;
+                        }
+                        _ => {
+                            return Err(invalid(format!(
+                                "Fresh replay input {name} conflicts with the current input type"
+                            )));
+                        }
+                    }
+                }
                 Input::Unresolved { .. } => (),
                 _ => {
                     return Err(invalid(format!(
@@ -143,7 +195,7 @@ pub fn prepare(bundle: &ValidatedBundle, index: usize, description: &Value) -> R
             inputs.push(claim);
         }
     }
-    if !claims.is_empty() {
+    if !claims.is_empty() || !fresh.is_empty() {
         return Err(invalid(
             "Bundle names an input not declared by the installed action",
         ));

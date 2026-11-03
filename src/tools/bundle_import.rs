@@ -55,9 +55,12 @@ pub struct ImportedInput {
     pub status: String,
     pub binding: Option<InputBinding>,
     pub reason: Option<String>,
+    pub source: Option<crate::library::attempts::BindingSource>,
+    pub changed: bool,
 }
 #[derive(Clone, Debug, Serialize)]
 pub struct Progress {
+    pub replay: Option<crate::library::attempts::ReplayContext>,
     pub phase: String,
     pub bundle: String,
     pub step: usize,

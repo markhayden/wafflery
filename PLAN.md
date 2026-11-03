@@ -3231,6 +3231,30 @@ archive fingerprint is unchanged.
 - **M5.20b: step progress and resume UI** — presentation portion of 2–3; stories and keyboard/browser
   replay tests.
 
+**M5.20 implementation decision:** replay is guided, with an explicit normal Run for each step.
+The host stages one current step, rebinds its incoming edges from verified newly completed outputs
+by port/item, and preserves ordinary attempt lineage. A private replay context on the source-bundle
+metadata binds preparation and dispatch to that staged step; it carries no provider authorization.
+Paid steps always return to the normal fresh estimate/cap review. Stop blocks later preparation and
+cancels any current ordinary attempt; resuming is explicit and re-verifies completed outputs. No
+blanket Run, background action loop or automatic retry is introduced.
+
+**As built — M5.20a core:** the session-local registry owns at most two verified chain reviews.
+Ordinary Run claims a versioned source context; preparation and dispatch require exact fresh connected
+bindings and lineage. Stop and new staging invalidate this review's pending preparations/quotes,
+without touching independent drafts or resetting a tool session. Staging/import work and completed
+runs' native preservation remain owned until settled, including Stop races. Fresh public profiles are
+normalized once per producer with one total budget on a blocking worker; port/item lookup preserves
+new order and never searches for the old identity. Host-only replacements bypass stale internal
+imports, while unresolved external inputs remain explicit. The private HTTP/drawer integration is
+M5.20b; this core commit does not enable a background action loop.
+
+**Core checks:** 226 targeted Rust cases passed (full lib, operation inputs, invocation bundles,
+edge resolver and fresh-output planner), with current clippy and formatting clean. Coverage includes
+changed IDs, many-output ordering, duplicate consumers, missing/failed evidence, owned image bytes,
+search limits, explicit paid quotes, stopped draft invalidation, staging ownership and native
+preservation before resume. Task review/full Rust/browser checks remain at the M5.20 boundary.
+
 **Checkpoint F:** fresh-store single and multi-step replay pass the independent fake, including a
 nondeterministic producer. Remove replay entry points before reverting orchestration; stop active work
 and preserve partial attempts/charges. Do not label a partially executed import/replay transactional.

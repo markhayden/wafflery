@@ -3,6 +3,7 @@ pub mod bundle_reader;
 pub mod bundle_step;
 pub mod bundles;
 pub mod chain_edges;
+pub mod chain_replay;
 #[cfg(test)]
 #[allow(dead_code)]
 #[path = "../../testkit/control_fixtures.rs"]

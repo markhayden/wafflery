@@ -1,7 +1,7 @@
 use super::bundle_import_cases::owned;
 use super::*;
 use wafflery::tools::{bundle_reader, bundles, chain_edges};
-async fn seed(h: &Host, id: &str) -> Attempt {
+pub(super) async fn seed(h: &Host, id: &str) -> Attempt {
     let mut request = h.request(id, "make_token", json!({})).await;
     request
         .images
@@ -11,7 +11,7 @@ async fn seed(h: &Host, id: &str) -> Attempt {
     h.settled(id).await;
     saved
 }
-async fn soften(h: &Host, id: &str, source: &Attempt) -> Attempt {
+pub(super) async fn soften(h: &Host, id: &str, source: &Attempt) -> Attempt {
     let reference = source.result.as_ref().unwrap()["artifacts"]["out"][0]["artifact"].clone();
     let mut request = h
         .request(

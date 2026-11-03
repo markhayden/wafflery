@@ -20,6 +20,12 @@ use std::{
     },
 };
 
+#[derive(Default)]
+pub(super) struct ImportOptions {
+    pub fresh: Vec<crate::tools::chain_replay::FreshInput>,
+    pub cancelled: Arc<AtomicBool>,
+    pub replay: Option<crate::library::attempts::ReplayContext>,
+}
 impl Coordinator {
     pub(super) async fn validate_bundle_source(
         &self,
@@ -40,7 +46,7 @@ impl Coordinator {
                 "Source bundle step does not match this tool and action".into(),
             ));
         }
-        Ok(())
+        self.validate_chain_request(request).await
     }
     /// Explicit controls only. The owner survives an HTTP waiter or drawer being dropped.
     pub async fn start_bundle_import(
@@ -49,12 +55,37 @@ impl Coordinator {
         step: usize,
         tool: String,
     ) -> Result<Arc<ImportJob>> {
+        self.start_bundle_import_rebound(bundle, step, tool, ImportOptions::default())
+            .await
+    }
+    pub(super) async fn start_bundle_import_rebound(
+        self: &Arc<Self>,
+        bundle: Arc<ValidatedBundle>,
+        step: usize,
+        tool: String,
+        options: ImportOptions,
+    ) -> Result<Arc<ImportJob>> {
         let _submission = self.submission.lock().await;
+        if options.cancelled.load(Ordering::Acquire) {
+            return Err(Error::Conflict(
+                "Chain replay was stopped; no more inputs were started",
+            ));
+        }
         if self.stopping.load(Ordering::Acquire) {
             return Err(Error::Conflict("The host is shutting down"));
         }
         let declaration = self.description(&tool).await?;
-        let plan = bundle_step::prepare(&bundle, step, &declaration.document)?;
+        let mut plan =
+            bundle_step::prepare_rebound(&bundle, step, &declaration.document, &options.fresh)?;
+        if options.replay.is_some()
+            && declaration.document["actions"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .any(|action| action["name"] == plan.action && action["cost"]["may_spend"] == true)
+        {
+            plan.params.as_object_mut().unwrap().remove("max_spend_usd");
+        }
         let needs_files = plan
             .inputs
             .iter()
@@ -79,6 +110,7 @@ impl Coordinator {
         }
         let group = self.artifact_jobs.group(&tool);
         let job = Arc::new(ImportJob(RwLock::new(Progress {
+            replay: options.replay,
             phase: "importing".into(),
             bundle: bundle.sha256().into(),
             step,
@@ -89,6 +121,11 @@ impl Coordinator {
                 .inputs
                 .iter()
                 .map(|input| ImportedInput {
+                    source: match &input.input {
+                        Input::Fresh { source, .. } => Some(source.clone()),
+                        _ => None,
+                    },
+                    changed: matches!(&input.input, Input::Fresh { changed: true, .. }),
                     name: input.name.clone(),
                     index: input.index,
                     status: if matches!(input.input, Input::Unresolved { .. }) {
@@ -111,7 +148,7 @@ impl Coordinator {
         self.track_bundle_import(async move {
             let _group = group;
             let result = coordinator
-                .import_bundle_owned(&bundle, &tool, plan.inputs, &progress)
+                .import_bundle_owned(&bundle, &tool, plan.inputs, &progress, &options.cancelled)
                 .await;
             progress.update(|state| match result {
                 Ok(()) => state.phase = "completed".into(),
@@ -138,7 +175,7 @@ impl Coordinator {
         .await;
         Ok(job)
     }
-    async fn track_bundle_import(
+    pub(super) async fn track_bundle_import(
         &self,
         work: impl std::future::Future<Output = ()> + Send + 'static,
     ) {
@@ -161,12 +198,23 @@ impl Coordinator {
         tool: &str,
         inputs: Vec<bundle_step::InputClaim>,
         progress: &ImportJob,
+        cancelled: &Arc<AtomicBool>,
     ) -> Result<()> {
         self.check_import_lifetime()?;
+        if cancelled.load(Ordering::Acquire) {
+            return Err(Error::Conflict(
+                "Chain replay was stopped; remaining inputs were not started",
+            ));
+        }
         bundle_import::retain(&self.assets, bundle).await?;
         let mut imported = BTreeMap::<String, InputBinding>::new();
         for (ordinal, input) in inputs.into_iter().enumerate() {
             self.check_import_lifetime()?;
+            if cancelled.load(Ordering::Acquire) {
+                return Err(Error::Conflict(
+                    "Chain replay was stopped; remaining inputs were not started",
+                ));
+            }
             if matches!(input.input, Input::Unresolved { .. }) {
                 continue;
             }
@@ -206,6 +254,7 @@ impl Coordinator {
                         )?,
                     }
                 }
+                Input::Fresh { binding, .. } => binding,
                 Input::Location { value } => InputBinding::Location { value },
                 Input::Artifact { member, reference } => {
                     let key = format!("{}:{member}", serde_json::to_string(&reference)?);
@@ -214,6 +263,11 @@ impl Coordinator {
                     } else {
                         let slot = self.artifact_jobs.reserve().await?;
                         self.check_import_lifetime()?;
+                        if cancelled.load(Ordering::Acquire) {
+                            return Err(Error::Conflict(
+                                "Chain replay was stopped; remaining inputs were not started",
+                            ));
+                        }
                         let context = self
                             .artifact_context_from(
                                 Source {
@@ -234,12 +288,7 @@ impl Coordinator {
                             .ok_or(Error::Missing("Bundle native member is unavailable"))?
                             .to_vec();
                         let response = self
-                            .import_bytes_owned(
-                                context,
-                                bytes,
-                                None,
-                                Arc::new(AtomicBool::new(false)),
-                            )
+                            .import_bytes_owned(context, bytes, None, cancelled.clone())
                             .await?;
                         self.inspect_reference_at(&response["artifact"], tool)
                             .await?;

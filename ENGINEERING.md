@@ -922,3 +922,27 @@ lifetime; saved-record analysis also runs off the async runtime.
 Ordered selection and connection review live in the shared drawer. Collapsing selection keeps its
 observer mounted until the owned save resolves, so completion releases the drawer controls. The
 builder respects the parent busy gate as well as its own work, preventing overlapping save actions.
+
+
+M5.20a adds a bounded guided replay registry (two live reviews, up to 16 selected steps) and core Rust
+methods to stage one step without dispatch. The verified archive is retained, while normal workspace
+preparation, cost estimation and Run remain the only action paths. A replay context on source-bundle
+metadata carries its review ID/generation, outside tool arguments and the contract manifest. Both
+preparation and dispatch check the current staged context and every connected binding/lineage.
+Claiming a run or stopping/resuming invalidates only this review's other retained preparations;
+ordinary same-tool drafts, recorded spend and session identity remain unchanged.
+
+Fresh output planning normalizes public output profiles once per producer with one total search
+budget, on a blocking worker. Stable port/item ordinals select new outputs rather than old identities
+or global array positions. Fresh image data requires matching preserved owned bytes; native previews
+remain previews. Resolved internal edges become host-only prepared replacements and do not import
+old native copies. External inputs still follow the strict archive import path. No host-only input
+replacement can be decoded from an uploaded manifest.
+
+Stop invalidates the current generation and prevents further input work; any current ordinary run is
+cancelled through its usual owner. Queued staging/import ownership and native preservation must settle
+before resume/dismiss can proceed. Completed evidence is reloaded and verified on explicit resume;
+missing outputs, changed/missing public ports or an unavailable native resource block the consumer.
+Replay reviews are session-local; this is not crash recovery. Historical runs and archives remain
+saved. Rollback must keep the optional context parser when removing replay entry points, and must
+stop/drain owned work before reverting orchestration. API/drawer wiring follows in M5.20b.

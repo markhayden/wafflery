@@ -6,6 +6,7 @@ mod native_preservation;
 mod preparation;
 mod readiness;
 mod renders;
+mod replays;
 pub use super::prepared::retained::{Preparation, PreparedEstimate};
 mod recovery;
 mod restart;
@@ -80,6 +81,7 @@ pub struct Coordinator {
     preserve_native: bool,
     artifact_jobs: Arc<super::artifact_jobs::Jobs>,
     submission: Mutex<()>,
+    replays: replays::Registry,
     preparations: super::prepared::retained::Retained,
     active: Mutex<BTreeMap<String, Active>>,
     renders: Mutex<BTreeMap<String, renders::View>>,
@@ -149,6 +151,7 @@ impl Coordinator {
             attempts,
             tools,
             submission: Mutex::new(()),
+            replays: replays::Registry::default(),
             preparations: super::prepared::retained::Retained::new(),
             active: Mutex::new(BTreeMap::new()),
             renders: Mutex::new(BTreeMap::new()),
@@ -287,6 +290,7 @@ impl Coordinator {
         prepared.set_launch(&client.descriptor)?;
         let arguments = prepared.arguments().clone();
         let attempt = prepared.persist(&self.attempts, estimate.as_ref()).await?;
+        self.claim_chain_request(&request).await?;
         let binding = estimate
             .as_ref()
             .map(|quote| quote.observation()["binding"].clone());

@@ -111,3 +111,43 @@ async fn explicit_omissions_remain_unresolved_and_never_reuse_old_references() {
     ));
     assets.database.shutdown().await.unwrap();
 }
+#[tokio::test]
+async fn fresh_edge_overrides_keep_input_order_and_do_not_require_importing_stale_native_copies() {
+    use wafflery::{
+        library::attempts::{BindingSource, InputBinding},
+        tools::chain_replay::FreshInput,
+    };
+    let (_root, assets, bundle) = parsed().await;
+    let value = fixtures::artifact("sample", "location");
+    let fresh = FreshInput {
+        name: "markers".into(),
+        index: 0,
+        binding: InputBinding::Artifact {
+            reference: value["artifact"].clone(),
+        },
+        source: BindingSource::Attempt {
+            attempt: "new-line".into(),
+            port: "marker".into(),
+            occurrence: 1,
+        },
+        changed: true,
+    };
+    let plan =
+        bundle_step::prepare_rebound(&bundle, 0, &description(), std::slice::from_ref(&fresh))
+            .unwrap();
+    assert_eq!(plan.inputs.len(), 4);
+    assert!(matches!(&plan.inputs[2].input,Input::Fresh{binding,..} if binding==&fresh.binding));
+    assert!(matches!(&plan.inputs[3].input, Input::Artifact { .. }));
+    let mut changed = description();
+    changed["actions"][0]["ports"]["in"][1]["type"] = json!("sample:Token");
+    assert!(
+        bundle_step::prepare_rebound(&bundle, 0, &changed, std::slice::from_ref(&fresh)).is_err()
+    );
+    let mut unknown = fresh.clone();
+    unknown.index = 99;
+    assert!(bundle_step::prepare_rebound(&bundle, 0, &description(), &[unknown]).is_err());
+    assert!(
+        bundle_step::prepare_rebound(&bundle, 0, &description(), &[fresh.clone(), fresh]).is_err()
+    );
+    assets.database.shutdown().await.unwrap();
+}

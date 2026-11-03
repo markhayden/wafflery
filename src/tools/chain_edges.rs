@@ -59,7 +59,7 @@ fn dimension(value: &Value) -> Option<u64> {
             .map(|n| n as u64)
     })
 }
-fn same_image(left: &Value, right: &Value) -> bool {
+pub(crate) fn same_image(left: &Value, right: &Value) -> bool {
     left["file_sha256"].is_string()
         && ["file_sha256", "projection", "topology"]
             .iter()
@@ -382,4 +382,61 @@ pub fn check_selection(
         }
     }
     Ok(edges)
+}
+
+pub(crate) struct FreshOutput {
+    pub producer: Producer,
+    pub reference: Option<Value>,
+    pub image: Option<Value>,
+}
+pub(crate) struct FreshOutputs {
+    items: Vec<FreshOutput>,
+    aliases: BTreeMap<(String, String, usize), usize>,
+}
+impl FreshOutputs {
+    /// Port/item is stable across reordering; a formerly mirrored pair must still be one output.
+    pub fn locate(&self, producer: &Producer) -> Result<&FreshOutput> {
+        let matches = producer
+            .aliases
+            .iter()
+            .filter_map(|alias| {
+                self.aliases
+                    .get(&(alias.profile.clone(), alias.port.clone(), alias.item))
+                    .copied()
+            })
+            .collect::<BTreeSet<_>>();
+        if matches.len() > 1 {
+            return Err(invalid(
+                "The fresh producer's formerly mirrored outputs now differ. The consumer was not prepared.",
+            ));
+        }
+        let index=matches.first().ok_or_else(||invalid("The fresh producer is missing the required output port/item. The consumer was not prepared."))?;
+        Ok(&self.items[*index])
+    }
+}
+/// Normalize each producer once, sharing the total work budget across the whole staged step.
+pub(crate) fn fresh_tables(
+    results: &BTreeMap<usize, Value>,
+) -> Result<BTreeMap<usize, FreshOutputs>> {
+    let mut budget = SearchBudget(1_000_000);
+    let mut tables = BTreeMap::new();
+    for (step, result) in results {
+        let mut items = vec![];
+        let mut aliases = BTreeMap::new();
+        for output in outputs(*step, result, &mut budget)? {
+            for alias in &output.producer.aliases {
+                aliases.insert(
+                    (alias.profile.clone(), alias.port.clone(), alias.item),
+                    items.len(),
+                );
+            }
+            items.push(FreshOutput {
+                producer: output.producer,
+                reference: output.reference,
+                image: output.image,
+            });
+        }
+        tables.insert(*step, FreshOutputs { items, aliases });
+    }
+    Ok(tables)
 }

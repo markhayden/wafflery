@@ -259,6 +259,17 @@ impl Retained {
     pub fn discard(&self, id: &str) {
         self.lock().drafts.remove(id);
     }
+    pub fn invalidate_replay(&self, id: &str) {
+        self.lock().drafts.retain(|_, draft| {
+            draft
+                .call
+                .request
+                .source_bundle
+                .as_ref()
+                .and_then(|source| source.replay.as_ref())
+                .is_none_or(|context| context.id != id)
+        });
+    }
     pub fn invalidate_tool(&self, tool: &str) {
         self.lock().drafts.retain(|_, d| d.receipt.tool != tool);
     }

@@ -27,6 +27,14 @@ pub struct Submission {
 pub struct BundleSource {
     pub id: String,
     pub step: usize,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub replay: Option<ReplayContext>,
+}
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
+#[serde(deny_unknown_fields)]
+pub struct ReplayContext {
+    pub id: String,
+    pub generation: u64,
 }
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
 #[serde(tag = "kind", rename_all = "snake_case", deny_unknown_fields)]
