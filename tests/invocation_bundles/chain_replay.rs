@@ -18,7 +18,6 @@ async fn original_with_external(mixed: bool) -> Arc<ValidatedBundle> {
     request.lineage=serde_json::from_value(json!({"tokens":[{"attempt":a.id,"port":"token","occurrence":0},if mixed{Value::Null}else{json!({"attempt":a.id,"port":"token","occurrence":0})}]})).unwrap();
     h.c.submit(request).await.unwrap();
     let b = super::bundle_import_cases::owned(&h, "original-consumer").await;
-    h.settled(&b.id).await;
     let built = bundles::build_chain(&h.c.assets, &[a, b]).await.unwrap();
     let parsed = Arc::new(
         wafflery::tools::bundle_reader::read(std::fs::read(built.file.path()).unwrap()).unwrap(),

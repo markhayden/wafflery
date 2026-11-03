@@ -8,7 +8,10 @@ pub(super) async fn seed(h: &Host, id: &str) -> Attempt {
         .insert("source".into(), vec![h.image.id.clone()]);
     h.c.submit(request).await.unwrap();
     let saved = owned(h, id).await;
-    h.settled(id).await;
+    assert_eq!(
+        saved.preservation["contract"], "complete",
+        "bundle source must include completed evidence capture"
+    );
     saved
 }
 pub(super) async fn soften(h: &Host, id: &str, source: &Attempt) -> Attempt {
@@ -26,7 +29,10 @@ pub(super) async fn soften(h: &Host, id: &str, source: &Attempt) -> Attempt {
     .unwrap();
     h.c.submit(request).await.unwrap();
     let saved = owned(h, id).await;
-    h.settled(id).await;
+    assert_eq!(
+        saved.preservation["contract"], "complete",
+        "bundle source must include completed evidence capture"
+    );
     saved
 }
 fn controls(h: &Host) -> String {
@@ -38,9 +44,7 @@ async fn selected_chains_keep_order_input_copies_and_deterministic_bytes_without
     let h = Host::native(&[]).await;
     let first = seed(&h, "seed").await;
     let second = soften(&h, "soften-a", &first).await;
-    h.settled("soften-a").await;
     let third = soften(&h, "soften-b", &first).await;
-    h.settled("soften-b").await;
     let before = controls(&h);
     let selection = vec![first.clone(), second.clone(), third.clone()];
     let a = bundles::build_chain(&h.c.assets, &selection).await.unwrap();
@@ -136,11 +140,8 @@ async fn coincidental_selected_producers_reversed_order_and_duplicate_runs_are_r
  {
     let h = Host::native(&[]).await;
     let actual = seed(&h, "actual").await;
-    h.settled("actual").await;
     let unrelated = seed(&h, "unrelated").await;
-    h.settled("unrelated").await;
     let consumer = soften(&h, "consumer", &actual).await;
-    h.settled("consumer").await;
     assert_eq!(
         actual.result.as_ref().unwrap()["artifacts"]["out"][0]["artifact"]["identity"],
         unrelated.result.as_ref().unwrap()["artifacts"]["out"][0]["artifact"]["identity"]

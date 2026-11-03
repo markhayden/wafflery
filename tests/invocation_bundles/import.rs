@@ -4,10 +4,14 @@ use wafflery::tools::{
     bundles::{self, Options},
 };
 pub(super) async fn owned(h: &Host, id: &str) -> Attempt {
+    // Native export can finish before contract evidence capture. Never return that early clone.
+    h.settled(id).await;
     tokio::time::timeout(Duration::from_secs(8), async {
         loop {
             let saved = h.c.attempts.get(id).await.unwrap();
-            if saved.preservation["native"] == "preserved" {
+            if saved.preservation["contract"] != "pending"
+                && saved.preservation["native"] == "preserved"
+            {
                 return saved;
             }
             tokio::time::sleep(Duration::from_millis(10)).await;

@@ -3386,6 +3386,17 @@ records the cause. The original controlled slow-setup test failed and the correc
 twenty final zero-retry WebKit repetitions plus all 26 replay checks across both engines passed.
 Independent follow-up review approved the fixture correction; scratch specs/configs were removed.
 
+**M5.22 bundle-source correction:** hosted run `41639928503` exposed a second, independent
+fixture race. Native export can complete before contract evidence capture; `owned()` returned that
+early snapshot, and later `settled()` waits discarded their newer result. Regression assertions
+reproduced `contract: pending` locally before the fix. The shared source helper now waits for run
+settlement and returns a fresh snapshot with both contract capture settled and native bytes preserved.
+All live bundle import/replay/chain source callers use this helper; static archive fixtures already
+supply terminal evidence, and real-peer probes already wait on both preservation categories. Product
+bundle refusal, native worker lifetime and deadlines are unchanged. All 44 operation integration tests, the full locked Rust workspace suite, formatting, all-target
+clippy and UI typecheck passed. Twenty repetitions of the three chain bundle tests passed, and
+independent review approved the correction; M5.22 still awaits green hosted CI.
+
 ### Approval, checks and remaining coordination
 
 The owner approved `plan-m5-v04` on 2026-11-02, including the published v0.4 pin update.

@@ -102,3 +102,13 @@ old-fails/new-passes reproduction, twenty final WebKit repetitions and 26 unchan
 checks in both engines. The correction changes no product lifetime or retry policy. Hosted CI runs
 the entire matrix; local verification follows the coordinator's lean policy rather than rerunning
 the complete browser suite.
+
+## Bundle-source fixture correction
+
+[Hosted run 41639928503](https://github.com/markhayden/wafflery/actions/runs/41639928503)
+correctly refused a bundle assembled from an early saved snapshot. Native bytes were already
+preserved while contract evidence capture remained pending. Waiting later without replacing that
+snapshot did not make it usable. The shared test helper now waits for run settlement before returning
+a fresh snapshot with native preservation complete. New assertions reproduced the pending evidence
+locally before the fix. All live bundle import/replay source callers share that helper; static fixtures
+and real-peer probes were checked separately. Product refusal and worker lifetimes remain unchanged.
