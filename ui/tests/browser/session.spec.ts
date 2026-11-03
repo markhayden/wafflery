@@ -43,7 +43,7 @@ async function control(operation: string): Promise<{ bootstrap: string }> {
 async function startHost() {
   child = spawn(
     resolve("../target/debug/wafflery"),
-    ["--foreground", "--no-open", "--data-dir", root],
+    ["start", "--no-open", "--data-dir", root],
     { stdio: ["ignore", "pipe", "pipe"] },
   );
   lifetime = new HostLifetime(child);
@@ -52,7 +52,7 @@ async function startHost() {
   origin = await new Promise<string>((resolveOrigin, reject) => {
     child.once("error", reject);
     child.once("exit", () => reject(new Error("host exited before readiness")));
-    child.stdout?.once("data", (chunk) => resolveOrigin(String(chunk).trim()));
+    child.stdout?.once("data", (chunk) => resolveOrigin(new URL(String(chunk).trim()).origin));
   });
   await expect
     .poll(async () => {

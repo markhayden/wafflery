@@ -10,7 +10,7 @@ use std::{
 
 #[derive(Default)]
 pub struct Options {
-    pub foreground: bool,
+    pub start: bool,
     pub internal: bool,
     pub no_open: bool,
     pub root: PathBuf,
@@ -22,13 +22,14 @@ pub struct Options {
 impl Options {
     pub fn parse(arguments: Vec<OsString>) -> Result<Self, &'static str> {
         let mut options = Self::default();
-        let mut arguments = arguments.into_iter();
+        let mut arguments = arguments.into_iter().peekable();
+        if arguments.peek().is_some_and(|arg| arg == "start") {
+            options.start = true;
+            arguments.next();
+        }
         while let Some(argument) = arguments.next() {
             match argument.to_str() {
-                Some("--foreground") if !options.foreground && !options.internal => {
-                    options.foreground = true
-                }
-                Some("--internal-host") if !options.foreground && !options.internal => {
+                Some("--internal-host") if !options.start && !options.internal => {
                     options.internal = true
                 }
                 Some("--no-open") if !options.no_open => options.no_open = true,
@@ -71,11 +72,14 @@ impl Options {
                 _ => return Err("unknown, duplicate or incompatible arguments"),
             }
         }
+        if options.start && options.tool.is_some() {
+            return Err("start accepts only --data-dir and --no-open");
+        }
         if options.replace_registration && options.registration.is_none() {
             return Err("--replace-registration requires --register");
         }
         if options.registration.is_some()
-            && (options.foreground || options.internal || options.no_open || options.tool.is_some())
+            && (options.start || options.internal || options.no_open || options.tool.is_some())
         {
             return Err(
                 "--register accepts only --data-dir and --replace-registration; it does not launch a workspace",
@@ -139,7 +143,7 @@ pub fn attach(options: &Options) -> io::Result<String> {
                 if Instant::now() >= deadline {
                     return Err(io::Error::new(
                         io::ErrorKind::TimedOut,
-                        "host did not become ready; run with --foreground --no-open to inspect startup",
+                        "host did not become ready; run wafflery start --no-open to inspect startup",
                     ));
                 }
                 std::thread::sleep(Duration::from_millis(25));
@@ -183,4 +187,9 @@ pub fn open_browser(url: &str) -> io::Result<()> {
     } else {
         Err(io::Error::other("macOS could not open the browser"))
     }
+}
+
+/// Shell display only; never used to execute a command.
+pub(super) fn shell_quote(path: &std::path::Path) -> String {
+    format!("'{}'", path.to_string_lossy().replace('\'', "'\\''"))
 }

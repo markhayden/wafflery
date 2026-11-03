@@ -143,12 +143,12 @@ join these tracks rather than forcing a dependency that does not exist.
 
 ## M1 — One host and a persistent local image library
 
-### F05a — Serve one foreground host and verify H1 boundaries
+### F05a — Serve one attached host and verify H1 boundaries
 
 - **Accept:** Foreground host serves UI on loopback with lifetime lock/private readiness. H1 draft explicitly names binary, lookup, argv, exits and host-only attachment; test doubles exercise that boundary.
 - **Files:** `src/host/mod.rs`, `src/host/control.rs`, `src/main.rs`, `tests/host_lifecycle.rs`, H1 proposal.
 - **Verify:** `cargo test --locked --test host_lifecycle`; simultaneous ownership and stale readiness cases. Proposal approval remains distinct from tests.
-- **Depends:** F04b. **Commit:** `serve one foreground host and verify H1 boundaries` with the appropriate conventional prefix.
+- **Depends:** F04b. **Commit:** `serve one attached host and verify H1 boundaries` with the appropriate conventional prefix.
 
 ### F05b — Detach and attach the Wafflery launcher
 
@@ -3547,6 +3547,37 @@ unrelated user work. Tests use disposable library roots. Preserve real library d
 backups; a newer schema may require the matching newer binary rather than automatic downgrade.
 An incomplete task can remain on its branch with an honest status; never commit a false passing
 checkpoint to save time. No backward-compatibility shims are added for unreleased APIs.
+
+## V22 — Attached terminal start
+
+Owner-approved UI-review follow-up; one passing task commit on `v22-start`, then merge locally
+and stop. No push, full matrix or screenshot. Rollback: revert the task commit; no storage changes.
+
+- [x] Replace the attached-host CLI with `wafflery start [--data-dir <path>] [--no-open]` everywhere;
+  retain H1/default detached launching without a compatibility alias.
+- [x] Announce readiness and print/open a bootstrap link once, pass through prefixed tool stderr,
+  log tool launch/exit status, request error statuses (without query/body/auth), and shutdown.
+- [x] SIGINT cancels owned work, preserves evidence and closes/reaps tools using the existing
+  graceful shutdown and explicit-force policy. Install handlers before tool initialization.
+- [x] Add `scripts/dev-pipeline.ts ... --start [--no-open]` for an attached offline demo.
+- [x] Targeted CLI/lifecycle/configuration tests, script flag tests and session browser checks;
+  review, update docs in the same commit, merge locally.
+
+**As built:** bootstrap credentials remain single-use with the existing 60-second expiry. The
+terminal also prints a shell-quoted launcher command that obtains a fresh browser handoff for
+this library; no persistent/reusable terminal credential is introduced. Detached hosts continue
+discarding stderr. Ordinary terminal interrupt retains the existing graceful/confirmed-force
+semantics rather than silently killing a tool that refuses EOF. Tools get separate process groups
+in attached mode so a terminal-group SIGINT reaches the host first. Terminal hangup uses the
+same orderly shutdown. Review corrected closed-output panics and stderr backpressure during
+child waits; regression tests first reproduced both failures. Request logs use route templates,
+including redacted report-frame token parameters. Tool stderr is streamed with bounded buffers.
+
+**Verified:** 19 targeted Rust CLI/lifecycle/configuration tests, the demo flag test (8 assertions),
+script type checking, and 10 session/workspace browser checks across Chromium and WebKit passed.
+SIGINT covers both owned tools (probe and serving sessions), exit statuses, final stderr without
+a newline, and large stderr output during close. Closed stdout/stderr plus SIGINT/SIGHUP remain
+safe. Independent task review completed. No full matrix, push or screenshot was requested.
 
 ## Risks and decisions retained
 

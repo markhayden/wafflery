@@ -201,6 +201,7 @@ pub fn request(root: &Path, operation: &str) -> io::Result<Value> {
 }
 
 pub async fn listen(
+    listener: tokio::net::UnixListener,
     owner: &Ownership,
     origin: &str,
     shutdown: tokio::sync::watch::Sender<bool>,
@@ -208,8 +209,6 @@ pub async fn listen(
     tools: std::sync::Arc<crate::tools::coordinator::Coordinator>,
 ) -> io::Result<()> {
     use tokio::io::{AsyncReadExt, AsyncWriteExt};
-    let listener = tokio::net::UnixListener::bind(&owner.socket)?;
-    owner.publish()?;
     loop {
         let (mut stream, _) = listener.accept().await?;
         let root = owner.root.clone();

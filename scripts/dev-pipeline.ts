@@ -1,21 +1,18 @@
-import { execFileSync } from "node:child_process";
+import { execFileSync, spawn } from "node:child_process";
 import { mkdtemp, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { root } from "./ui-manifest";
+import { pipelineOptions } from "./dev-pipeline-options";
 import { prepareOfflinePipeline } from "../ui/tests/browser/offline-pipeline";
 
 const [rascal, squint, ...flags] = process.argv.slice(2);
-if (
-  !rascal ||
-  !squint ||
-  flags.length > 1 ||
-  flags.some((flag) => flag !== "--no-open")
-) {
+if (!rascal || !squint) {
   throw new Error(
-    "Usage: bun run scripts/dev-pipeline.ts /absolute/rascal /absolute/testkit/squint [--no-open]",
+    "Usage: bun run scripts/dev-pipeline.ts /absolute/rascal /absolute/testkit/squint [--start] [--no-open]",
   );
 }
+const options = pipelineOptions(flags);
 const temporary = await mkdtemp(join(tmpdir(), "wafflery-pipeline-"));
 const data = join(temporary, "data");
 const registrations = await prepareOfflinePipeline(temporary, rascal, squint);
@@ -47,7 +44,32 @@ const environment = {
   WAFFLERY_BIN: host,
   WAFFLERY_DATA_DIR: data,
 };
-if (flags.includes("--no-open")) {
+if (options.start) {
+  console.log(
+    "Ctrl-C stops this host and its tools. Closing a browser tab leaves it running.",
+  );
+  const child = spawn(
+    host,
+    ["start", "--data-dir", data, ...(options.noOpen ? ["--no-open"] : [])],
+    { env: environment, stdio: "inherit" },
+  );
+  // Also forward signals sent only to the script, rather than the whole terminal group.
+  const interrupt = () => { child.kill("SIGINT"); };
+  const terminate = () => { child.kill("SIGTERM"); };
+  process.on("SIGINT", interrupt);
+  process.on("SIGTERM", terminate);
+  try {
+    process.exitCode = await new Promise<number>((resolve, reject) => {
+      child.once("error", reject);
+      child.once("exit", (code, signal) =>
+        resolve(code ?? (signal === "SIGINT" ? 130 : signal === "SIGTERM" ? 143 : 1)),
+      );
+    });
+  } finally {
+    process.off("SIGINT", interrupt);
+    process.off("SIGTERM", terminate);
+  }
+} else if (options.noOpen) {
   execFileSync(host, ["--tool", "squint", "--no-open"], {
     env: environment,
     stdio: "inherit",
@@ -60,11 +82,13 @@ if (flags.includes("--no-open")) {
     { env: environment, stdio: "inherit" },
   );
 }
-const quote = (value: string) => `'${value.replaceAll("'", "'\\''")}'`;
-console.log("Reopen this same library:");
-console.log(
-  `WAFFLERY_BIN=${quote(host)} WAFFLERY_DATA_DIR=${quote(data)} ${quote(squint)} playground`,
-);
-console.log(
-  "Use the Quit power icon and confirm to stop this host. Closing a tab leaves it running. macOS may eventually remove this temporary library.",
-);
+if (!options.start) {
+  const quote = (value: string) => `'${value.replaceAll("'", "'\\''")}'`;
+  console.log("Reopen this same library:");
+  console.log(
+    `WAFFLERY_BIN=${quote(host)} WAFFLERY_DATA_DIR=${quote(data)} ${quote(squint)} playground`,
+  );
+  console.log(
+    "Use the Quit power icon and confirm to stop this host. Closing a tab leaves it running. macOS may eventually remove this temporary library.",
+  );
+}

@@ -57,7 +57,7 @@ impl Host {
         wafflery::tools::registration::register(&root, &registrations).unwrap();
         let mut command = Command::new(env!("CARGO_BIN_EXE_wafflery"));
         command
-            .args(["--foreground", "--no-open", "--data-dir"])
+            .args(["start", "--no-open", "--data-dir"])
             .arg(&root)
             .env("HOME", &home)
             .env_remove("XDG_CONFIG_HOME")

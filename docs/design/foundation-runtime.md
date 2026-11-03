@@ -265,7 +265,7 @@ development/UI regeneration.
 | `cargo fmt --all -- --check` | Rust format check |
 | `cargo clippy --locked --all-targets --all-features -- -D warnings` | Rust lint check |
 | `cargo test --locked --all-targets` | Unit/integration tests with isolated temporary libraries |
-| `cargo run --locked --bin wafflery -- --foreground --no-open` | Development host with embedded UI |
+| `cargo run --locked --bin wafflery -- start --no-open` | Development host with embedded UI |
 | `cargo build --locked --release --bin wafflery` | Installed-style binary; never invokes Node/Bun |
 | `bun run scripts/dev-fake.ts` | Build/start independent fake + isolated host + browser-ready development URL |
 

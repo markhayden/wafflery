@@ -68,7 +68,7 @@ fn invalid_setup_combinations_and_bad_environment_never_launch() {
         vec!["--register"],
         vec!["--register", "missing", "--no-open"],
         vec!["--register", "missing", "--tool", "rascal"],
-        vec!["--register", "missing", "--foreground"],
+        vec!["start", "--register", "missing"],
         vec!["--register", "missing", "--internal-host"],
         vec!["--register", "one", "--register", "two"],
     ] {

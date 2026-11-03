@@ -7,7 +7,7 @@ pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 pub const HELP: &str = "Wafflery — local visual pipeline workshop
 
 Usage: wafflery [--tool <id>] [--no-open] [--data-dir <path>]
-       wafflery --foreground --no-open [--data-dir <path>]
+       wafflery start [--data-dir <path>] [--no-open]
        wafflery --register <descriptors.json> [--replace-registration] [--data-dir <path>]
 
   -h, --help     Show this help
@@ -15,7 +15,7 @@ Usage: wafflery [--tool <id>] [--no-open] [--data-dir <path>]
       --tool     Select a tool in the shared workspace
       --no-open  Leave browser opening to the caller; print the local address
       --data-dir Use a separate local data directory for development
-      --foreground  Keep the host in this terminal (Ctrl-C to quit)
+      start      Keep the host in this terminal with logs (Ctrl-C to quit)
       --register Register local tools while the host is stopped; do not launch them
       --replace-registration Explicitly replace existing registered IDs while stopped
 

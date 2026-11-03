@@ -81,7 +81,8 @@ pub struct ToolClient {
     pub(super) last_session: std::sync::RwLock<Option<Value>>,
     pub(super) estimate_slot: Arc<tokio::sync::Semaphore>,
     pub(crate) gate: Gate,
-    child: Mutex<Child>,
+    child: Arc<Mutex<Child>>,
+    output: Option<crate::host::terminal::ToolOutput>,
     pipes: std::sync::Mutex<Option<(ChildStdout, ChildStdin)>>,
     service: Mutex<Option<RunningService<RoleClient, Handler>>>,
     peer: Option<Peer<RoleClient>>,
@@ -112,12 +113,20 @@ impl ToolClient {
         if let Some(config) = &descriptor.config {
             command.arg("--config").arg(config);
         }
+        // Terminal SIGINT belongs to the host. Tools stop through owned cancellation/EOF.
+        if crate::host::terminal::enabled() {
+            command.process_group(0);
+        }
         let mut child = crate::process::spawn(
             command
                 .current_dir(&descriptor.cwd)
                 .stdin(Stdio::piped())
                 .stdout(Stdio::piped())
-                .stderr(Stdio::null()),
+                .stderr(if crate::host::terminal::enabled() {
+                    Stdio::piped()
+                } else {
+                    Stdio::null()
+                }),
         )?;
         let stdout = child
             .stdout
@@ -127,13 +136,20 @@ impl ToolClient {
             .stdin
             .take()
             .ok_or_else(|| Error::Invalid("Missing stdin pipe".into()))?;
+        let stderr = child.stderr.take();
+        let pid = child.id().unwrap_or_default();
+        let child = Arc::new(Mutex::new(child));
+        let output = stderr.map(|stderr| {
+            crate::host::terminal::ToolOutput::watch(&descriptor.id, &child, stderr, pid)
+        });
         let (progress, _) = watch::channel(None);
         Ok(Self {
             descriptor,
             session,
             provided_requirements: requirements.map(super::environment::names),
             gate: Gate::default(),
-            child: Mutex::new(child),
+            child,
+            output,
             observed_session: Mutex::new(None),
             last_session: std::sync::RwLock::new(None),
             estimate_slot: Arc::new(tokio::sync::Semaphore::new(1)),
@@ -365,9 +381,16 @@ impl ToolClient {
         if let Some(service) = self.service.lock().await.as_mut() {
             let _ = service.close_with_timeout(Duration::from_secs(2)).await;
         }
-        match tokio::time::timeout(Duration::from_secs(2), self.child.lock().await.wait()).await {
+        let status = {
+            let mut child = self.child.lock().await;
+            tokio::time::timeout(Duration::from_secs(2), child.wait()).await
+        };
+        match status {
             Ok(status) => {
                 status?;
+                if let Some(output) = &self.output {
+                    output.finish().await;
+                }
                 Ok(true)
             }
             Err(_) => Ok(false),

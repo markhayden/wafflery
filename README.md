@@ -87,8 +87,16 @@ it is never automatically retried.
 
 The development script uses a temporary directory, which macOS may eventually remove. Ordinary
 launches use `~/Library/Application Support/Wafflery/Library` for durable personal storage.
-To run that host use `cargo run --`; to isolate it use `--data-dir <path>`. `--foreground --no-open`
-keeps it attached to the terminal, and Ctrl-C requests orderly shutdown. Registered tool descriptors
+Run `wafflery start` (or `cargo run -- start`) in a terminal to keep the host attached.
+Use `--data-dir <path>` to isolate its library and `--no-open` to skip browser opening.
+The terminal prints the address and a single-use bootstrap URL, host events, request error statuses,
+and each tool's stderr prefixed with its registration ID. Request bodies, query strings, authorization headers and report-frame tokens
+are not logged by the host; a tool controls its own stderr. Ctrl-C cancels owned work, waits for
+preservation, closes tool sessions and reaps their processes before exiting. If a tool refuses to
+stop, the host retains ownership and the existing confirmed force-quit control remains available.
+The bootstrap link expires after 60 seconds; to reopen later, run `wafflery --data-dir <path>` in
+another terminal for a fresh browser handoff. Default launches and tool `playground` commands
+remain detached and discard host/tool logs. Registered tool descriptors
 are currently explicit development configuration; see [the test kit](testkit/README.md), including
 the opt-in real Rascal offline smoke. Automatic discovery and installation remain M4 work.
 
@@ -151,6 +159,16 @@ declaration/result because it starts a live tool; older previews and raw evidenc
 association. This is a server-session ledger, not a provider account balance. Cancellation
 can recover a terminal result from its associated resource; missing or contradictory evidence
 remains unconfirmed. Paid dispatch remains disabled pending provider readiness and per-call caps.
+
+For an offline pipeline demo attached to the terminal, use:
+
+```sh
+bun run scripts/dev-pipeline.ts /absolute/path/to/rascal /absolute/path/to/testkit/squint --start
+```
+
+Add `--no-open` to print the bootstrap link without opening the browser. `--start` runs
+`wafflery start --data-dir <the temporary library>` after setup and forwards Ctrl-C to it.
+Without `--start`, the existing detached launcher flow is unchanged.
 
 ### Registration format
 

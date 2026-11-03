@@ -50,12 +50,18 @@ fn main() -> ExitCode {
         eprintln!("Cannot detach host: {error}");
         return ExitCode::from(70);
     }
-    let result = if options.foreground || options.internal {
+    let result = if options.start || options.internal {
         match tokio::runtime::Builder::new_multi_thread()
             .enable_all()
             .build()
         {
-            Ok(runtime) => runtime.block_on(wafflery::host::serve(&options.root)),
+            Ok(runtime) => runtime.block_on(async {
+                if options.start {
+                    wafflery::host::start(&options.root, options.no_open).await
+                } else {
+                    wafflery::host::serve(&options.root).await
+                }
+            }),
             Err(error) => Err(error),
         }
     } else {

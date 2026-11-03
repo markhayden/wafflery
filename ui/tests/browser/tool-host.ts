@@ -145,7 +145,7 @@ export const test = base.extend<{
       async start() {
         child = spawn(
           resolve("../target/debug/wafflery"),
-          ["--foreground", "--no-open", "--data-dir", root],
+          ["start", "--no-open", "--data-dir", root],
           { stdio: ["ignore", "pipe", "pipe"], env: peerEnvironment },
         );
         lifetime = new HostLifetime(child);
@@ -157,7 +157,7 @@ export const test = base.extend<{
             reject(new Error("Host exited before readiness")),
           );
           child.stdout?.once("data", (chunk) =>
-            resolveOrigin(String(chunk).trim()),
+            resolveOrigin(new URL(String(chunk).trim()).origin),
           );
         });
         await expect

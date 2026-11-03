@@ -80,6 +80,13 @@ fn one_header<'a>(headers: &'a HeaderMap, name: &str) -> Option<&'a str> {
 }
 
 async fn boundary(State(state): State<HostState>, request: Request, next: Next) -> Response {
+    let method = request.method().clone();
+    // Route templates omit report-frame credentials and arbitrary unmatched path contents.
+    let path = request
+        .extensions()
+        .get::<axum::extract::MatchedPath>()
+        .map(|path| path.as_str().to_owned())
+        .unwrap_or_else(|| "<unmatched>".into());
     let headers = request.headers();
     let mut response = if one_header(headers, "host") != state.origin.strip_prefix("http://")
         || (headers.contains_key("origin")
@@ -107,6 +114,9 @@ async fn boundary(State(state): State<HostState>, request: Request, next: Next) 
     } else {
         next.run(request).await
     };
+    if response.status().is_client_error() || response.status().is_server_error() {
+        super::terminal::event(format_args!("{method} {path}: {}", response.status()));
+    }
     let frame_policy = response
         .extensions_mut()
         .remove::<super::frame_api::FramePolicy>();

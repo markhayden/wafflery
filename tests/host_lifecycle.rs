@@ -16,7 +16,7 @@ impl Drop for Host {
 fn start(root: &std::path::Path) -> Host {
     Host(
         Command::new(env!("CARGO_BIN_EXE_wafflery"))
-            .args(["--foreground", "--no-open", "--data-dir"])
+            .args(["start", "--no-open", "--data-dir"])
             .arg(root)
             .stdout(Stdio::null())
             .stderr(Stdio::null())
@@ -37,7 +37,7 @@ fn ready(root: &std::path::Path) -> serde_json::Value {
 }
 
 #[test]
-fn foreground_serves_embedded_ui_and_preserves_a_single_owner() {
+fn start_serves_embedded_ui_and_preserves_a_single_owner() {
     let temp = tempfile::tempdir().unwrap();
     let root = temp.path().join("data");
     let _host = start(&root);
@@ -59,7 +59,7 @@ fn foreground_serves_embedded_ui_and_preserves_a_single_owner() {
     assert!(response.contains("200 OK"));
     assert!(response.contains("<title>Wafflery</title>"));
     let result = Command::new(env!("CARGO_BIN_EXE_wafflery"))
-        .args(["--foreground", "--no-open", "--data-dir"])
+        .args(["start", "--no-open", "--data-dir"])
         .arg(&root)
         .output()
         .unwrap();
@@ -87,7 +87,7 @@ fn a_symlinked_data_root_is_refused_without_modifying_the_target() {
     std::fs::create_dir(&other).unwrap();
     std::os::unix::fs::symlink(&other, &root).unwrap();
     let result = Command::new(env!("CARGO_BIN_EXE_wafflery"))
-        .args(["--foreground", "--no-open", "--data-dir"])
+        .args(["start", "--no-open", "--data-dir"])
         .arg(&root)
         .output()
         .unwrap();

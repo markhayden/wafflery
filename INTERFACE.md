@@ -107,7 +107,11 @@ Do not show an old result as if it came from the unexecuted draft.
 
 Keep Quit secondary: a power icon in the header, with the tooltip and accessible name “Quit”.
 It opens the existing confirmation drawer; clicking the icon alone never stops the host.
-The owner considered terminal-owned hosting and chose to keep H1's detached lifecycle unchanged.
+`wafflery start [--data-dir <path>] [--no-open]` offers terminal-owned hosting with startup,
+request-error, tool lifecycle and prefixed tool stderr logs. It opens the browser after readiness,
+prints its short-lived bootstrap link, and Ctrl-C requests orderly cancellation and child cleanup.
+H1's default/tool launchers retain their detached lifecycle and quiet output. Closing a tab never
+stops either mode; the same Quit confirmation remains available.
 Flag conflicts with agreed interfaces before proposing changes to them.
 
 For compatible images, offer a draggable comparison divider with a native keyboard-operable
