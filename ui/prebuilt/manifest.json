@@ -70,8 +70,8 @@
     "ui/src/features/workspace/RunOutcome.tsx": "61d7f9e6df0c658f68ca3e0f142af8841c2fbf4c28e38af29c965d2ce191bb67",
     "ui/src/features/workspace/SavedComparison.tsx": "8a02acee808c1f7df4de346272875c90a65719c132286f3b394bfeb017e007c0",
     "ui/src/features/workspace/ToolSetup.module.css": "8bbcd85b8be8a7ca0765b8cfac3bc386f2f8ded0c852cfb08dfa297cfe434ae9",
-    "ui/src/features/workspace/ToolSetup.stories.tsx": "1c6ee301a64475e04fbf5f46013867f34c40cd75351b915fb3ff6d0a510ef9d7",
-    "ui/src/features/workspace/ToolSetup.tsx": "ddd95f231509bea2c6a799f3136d586e3cc05e4b94d70302846e012f49ff9a38",
+    "ui/src/features/workspace/ToolSetup.stories.tsx": "aaa38f4af5758ad11908c637f6bcbdffda2fa5e2ea478d5565bfc846654adf05",
+    "ui/src/features/workspace/ToolSetup.tsx": "36f016aa0b2716041e2619972fcdc3a97cff1cf59d3f35bf09052cff66f67d6e",
     "ui/src/features/workspace/Workspace.module.css": "31a95af1a46b2d19a9aa6120da64ec023f3834e675e26351f8449a14062e6545",
     "ui/src/features/workspace/Workspace.tsx": "e96aa4fa0a332d0933fdaa4aaf6cb1b3b730bdf3ced3fc49bd0911772260f1e8",
     "ui/src/features/workspace/report-owner.ts": "ebabc35cd81b37c83126eb54327fd1c8a6ed8370fab21c981518eaa0f2d68857",
@@ -84,8 +84,8 @@
   },
   "outputs": {
     "assets/index-CMr7uhzP.css": "ed5dea8d80c96048c6d655212ff283f085f8f1d5608faa125556060fbeb34034",
-    "assets/index-rYM-LrxJ.js": "67bb88ef9b9b762d0b12b4fc3e4fb1c844fc70f778acdd43cff137fe24a62469",
+    "assets/index-CSccWn61.js": "5a0f0a1deae6d25dc0245c3c621727754c5a8e725dcbdeecb58efa7726a787e7",
     "assets/wafflery-mark-CML0EpfM.svg": "51bc8a040e26b897a948238598b8cabdf69bf4687c2b1a70613b542de1c99f1f",
-    "index.html": "3057872387eb5a9f8ce57b282b583da98dad027050dccdfe58101c27262625c0"
+    "index.html": "13781095034ac94549976c2ac3692eeed5b0aa7df1a8709dd4635f5d12a12cb3"
   }
 }
