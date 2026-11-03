@@ -2300,6 +2300,34 @@ together, never mix wire versions.
 **Verify:** completed/invalid/cancelled fixtures, history reopen and draft-edit isolation.
 **Commit:** `feat: preserve resolved run invocations`.
 
+**M5.04 build slices (recorded before building):**
+
+- **a, evidence and view states:** four authored files: `tests/attempt_invocations.rs`,
+  `ui/src/features/workspace/invocation.ts`, `ui/tests/unit/invocation.test.ts`, and this plan.
+  Verify the existing atomic result storage retains invocation on every terminal outcome through
+  reopen, independently from submitted params and recorded wire data. Add a read-only view model
+  for resolved, explicitly unresolved-invalid, and unavailable older/missing evidence. Never infer
+  defaults or requirement values. This introduces no database field or migration: the complete
+  result JSON already stores invocation, so duplicating it would create two sources of truth.
+- **b, inspector:** use the saved view model in a distinct Resolved invocation view beside Recorded
+  call. Update evidence stories, keyboard navigation and browser regression coverage; refresh only
+  affected visual baselines and generated assets in separate generated-file commits. List its exact
+  authored inventory before implementing. Preserve the shared drawer and responsive evidence nav.
+
+No real user library is opened by these checks. Schema-version/backup safeguards remain in force
+for any later actual migration; M5.04 does not require one.
+
+**M5.04a checkpoint (2026-11-02):** the initial UI test failed before the saved-invocation helper
+existed. Three view-state tests now pass; the storage regression verifies completed, cancelled,
+error, resolved-invalid and null-invalid results through reopen/recover, unchanged original
+request/wire data and refusal to replace the saved result. Existing older-history tests also pass.
+Independent review approved the existing storage boundary and new view model. The first CI-mode
+matrix stopped at the expected stale-input manifest guard; regenerating the manifest changed no
+bundled UI bytes. Final shared-lock matrix passed fmt/clippy, 405 Rust tests (4 ignored), typecheck,
+60 UI tests, 2 asset tests, Storybook, reproducible assets, release build and 230 browser tests
+(8 skipped). Lockfiles unchanged; temporary config removed. Generated manifest is a separate commit.
+History selection and Inspector integration remain M5.04b; no migration or real library upgrade.
+
 #### M5.05 — Present the declared activity hierarchy
 
 - [ ] Playground/Operations/Utilities and the focused grouped picker derive only from kind/group
