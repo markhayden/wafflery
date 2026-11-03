@@ -2141,6 +2141,29 @@ now complete: the b2/b3 boundaries and lifecycle tests plus b4's browser checks 
 access, invalid paths and escape refusal, refresh/restart and preserved old-session spend. Remaining
 M5.03 work concerns description/callable schemas, invocation/refusal wiring and real-peer preflight.
 
+**b5 invocation-boundary inventory (before building):** `src/tools/mod.rs`,
+`src/tools/evidence.rs`, `testkit/scenarios.rs`, `tests/attempt_execution.rs`, and this plan.
+Wire the staged invocation validator after schema/run association checks, on both direct and
+recovered results. A different invocation action or image-delivery flag in replay arguments cannot
+become a verified result. Independent peer scenarios emit structurally valid contradictions; the
+host must retain the raw response, mark evidence incomplete, keep the result unbound and never
+replay. Normal completion remains accepted. Teardown waits on the host's shutdown completion signal,
+not a terminal database record. Existing unit cases cover null invalid invocations, all terminal
+statuses and opaque nested arguments. No invocation rewriting or storage migration occurs here.
+The recovery regression checks the peer's published contradictory resource while the host retains
+its original RPC error; this slice does not add storage of rejected recovery documents. The direct
+regressions check the contradictory fields in the host's saved raw response.
+
+**b5 checkpoint (2026-11-02):** the independent direct-result regression initially accepted
+a mismatched invocation as completed. After wiring the shared validator, all three direct
+contradictions and the RPC-error/resource-recovery case remain interrupted with incomplete evidence,
+an unbound result and one original dispatch. Raw contradictory fields are explicitly asserted;
+recovered failures retain the original RPC error. The four-case test passed 20 stress iterations.
+Independent review approved both acceptance paths and teardown. Full shared-lock matrix passed
+fmt/clippy, 384 Rust tests (4 ignored), typecheck, 57 UI tests, 2 asset tests, Storybook, reproducible
+assets, release build and 230 browser tests (8 skipped). Lockfiles/prebuilt assets unchanged;
+temporary config removed. Description/callable-schema, refusal wiring and peer preflight remain.
+
 **Checkpoint A:** merge M5.01–03 as a coherent cutover of validation, launch arguments and fake
 defaults; v0.4 is the only supported live contract afterward. Green matrix, an independent fake
 task run and the published exact dependency pin are required.

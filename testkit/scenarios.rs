@@ -334,6 +334,16 @@ pub fn execute(
         };
         run["images"]["out"] = json!([]);
     }
+    match scenario.as_str() {
+        "invocation-action" | "invocation-recovered-action" => {
+            run["invocation"]["action"] = json!("other_action");
+        }
+        "invocation-return-images" => {
+            run["invocation"]["arguments"]["return_images"] = json!("path")
+        }
+        "invocation-image-blocks" => run["invocation"]["arguments"]["image_blocks"] = json!(false),
+        _ => (),
+    }
     if scenario == "digest-mismatch" {
         run["images"]["out"][0]["image"]["file_sha256"] = json!("0".repeat(64));
     }
@@ -359,10 +369,16 @@ pub fn execute(
     if !is_cancelled
         && matches!(
             scenario.as_str(),
-            "known-run-rpc-error" | "reused-run" | "reused-foreign-run"
+            "known-run-rpc-error"
+                | "invocation-recovered-action"
+                | "reused-run"
+                | "reused-foreign-run"
         )
     {
-        let error = if scenario == "known-run-rpc-error" {
+        let error = if matches!(
+            scenario.as_str(),
+            "known-run-rpc-error" | "invocation-recovered-action"
+        ) {
             json!({"code":-32603,"message":"Synthetic protocol violation after allocation"})
         } else {
             let mut reference = run["run"].clone();

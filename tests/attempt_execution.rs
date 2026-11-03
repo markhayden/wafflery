@@ -1114,3 +1114,83 @@ async fn preparation_controls_require_this_workspace_and_never_dispatch_on_prepa
     c.assets.database.shutdown().await.unwrap();
     other_assets.database.shutdown().await.unwrap();
 }
+
+#[tokio::test]
+async fn contradictory_invocations_keep_raw_evidence_without_binding_a_result() {
+    for (scenario, reason) in [
+        ("invocation-action", "different action"),
+        ("invocation-recovered-action", "different action"),
+        ("invocation-return-images", "image-delivery arguments"),
+        ("invocation-image-blocks", "image-delivery arguments"),
+    ] {
+        let (dir, c, request) = setup(scenario).await;
+        c.submit(request).await.unwrap();
+        let saved = tokio::time::timeout(std::time::Duration::from_secs(10), async {
+            loop {
+                let saved = c.attempts.get("attempt-1").await.unwrap();
+                if saved.preservation["contract"] != "pending" {
+                    break saved;
+                }
+                tokio::time::sleep(std::time::Duration::from_millis(10)).await;
+            }
+        })
+        .await
+        .expect("result validation did not finish");
+        let raw = if scenario == "invocation-recovered-action" {
+            assert_eq!(
+                saved.raw_response.as_ref().unwrap()["error"]["code"],
+                -32603
+            );
+            assert!(
+                saved
+                    .notices
+                    .iter()
+                    .any(|notice| notice.contains("Run-resource recovery was attempted"))
+            );
+            serde_json::from_slice(
+                &std::fs::read(dir.path().join("runs/run-0001/run.json")).unwrap(),
+            )
+            .unwrap()
+        } else {
+            saved.raw_response.as_ref().unwrap()["structuredContent"].clone()
+        };
+        wafflery::tools::validate_contract("urn:table-manners:core:result", &raw).unwrap();
+        assert_eq!(raw["status"], "completed");
+        assert_eq!(raw["action"], saved.request.action);
+        match scenario {
+            "invocation-action" | "invocation-recovered-action" => {
+                assert_eq!(raw["invocation"]["action"], "other_action")
+            }
+            "invocation-return-images" => {
+                assert_eq!(raw["invocation"]["arguments"]["return_images"], "path")
+            }
+            "invocation-image-blocks" => {
+                assert_eq!(raw["invocation"]["arguments"]["image_blocks"], false)
+            }
+            _ => unreachable!(),
+        }
+        assert_eq!(
+            saved.execution, "interrupted",
+            "{scenario}: {:?}",
+            saved.notices
+        );
+        assert_eq!(saved.preservation["contract"], "incomplete");
+        assert!(saved.result.is_none());
+        assert!(saved.outputs.is_empty());
+        assert!(
+            saved.notices.iter().any(|notice| notice.contains(reason)),
+            "{:?}",
+            saved.notices
+        );
+        assert_eq!(
+            std::fs::read_to_string(dir.path().join("runs/calls.ndjson"))
+                .unwrap()
+                .lines()
+                .count(),
+            1
+        );
+        finish_host(&c).await;
+        assert_eq!(c.shutdown_status().await.active_attempts, 0);
+        c.assets.database.shutdown().await.unwrap();
+    }
+}

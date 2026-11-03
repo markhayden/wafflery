@@ -34,10 +34,11 @@ pub fn check_association(attempt: &Attempt, result: &Value) -> Result<Vec<String
         ));
     }
     super::association::check_reference(attempt, &result["run"])?;
-    if attempt.declaration["document"]["profiles"]
+    let images_profile = attempt.declaration["document"]["profiles"]
         .as_array()
-        .is_some_and(|profiles| profiles.iter().any(|profile| profile == "images"))
-    {
+        .is_some_and(|profiles| profiles.iter().any(|profile| profile == "images"));
+    super::invocation_semantics::validate(result, images_profile)?;
+    if images_profile {
         for (container, fields) in [("images", ["in", "out"]), ("locations", ["used", "found"])] {
             if fields
                 .iter()
