@@ -9,6 +9,7 @@ export type InputBinding = (
   | {kind: "image"; asset: string; frame?: {projection:"flat"|"equirectangular";topology:"bounded"|"wrap"}}
   | {kind: "artifact"; reference: Schema}
   | {kind: "location"; value: Schema}) & {origin?:BindingOrigin};
+export type BundleSource={id:string;step:number};
 export type Submission = {
   id: string;
   tool: string;
@@ -18,6 +19,7 @@ export type Submission = {
   images: Record<string, string[]>;
   bindings?: Record<string, InputBinding[]>;
   lineage?:Record<string,(BindingOrigin|null)[]>;
+  source_bundle?:BundleSource;
   frames?: Record<
     string,
     { projection: "flat" | "equirectangular"; topology: "bounded" | "wrap" }[]

@@ -5,7 +5,7 @@ import {workspaceClient,type RegisteredTool} from "../../api/workspace";
 import {Button} from "../../components/Button";
 import styles from "./InvocationBundles.module.css";
 
-export function BundleImports({api}:{api:LocalApi}){
+export function BundleImports({api,onOpen}:{api:LocalApi;onOpen?:((upload:BundleUpload)=>Promise<void>)|undefined}){
  const client=useMemo(()=>bundleImports(api),[api]);const generation=useRef(0);
  const [reviews,setReviews]=useState<ReviewSummary[]>([]),[selected,setSelected]=useState<BundleUpload>(),[tools,setTools]=useState<RegisteredTool[]>([]),[step,setStep]=useState(0),[target,setTarget]=useState(""),[busy,setBusy]=useState(false),[loading,setLoading]=useState(true),[notice,setNotice]=useState("");
  useEffect(()=>{let active=true;++generation.current;setSelected(undefined);setNotice("");setReviews([]);setLoading(true);
@@ -28,6 +28,7 @@ export function BundleImports({api}:{api:LocalApi}){
  async function open(id:string){await operation(async generationId=>{const review=await client.read(id);if(generationId===generation.current){setSelected(review);setStep(review.import?.step??0);setTarget(review.import?.tool??"");}});}
  async function remove(id:string){await operation(async generationId=>{await client.remove(id);if(generationId!==generation.current)return;setReviews(previous=>previous.filter(i=>i.id!==id));setSelected(previous=>previous?.id===id?undefined:previous);});}
  async function start(){if(!selected||!receiver)return;const id=selected.id;await operation(async generationId=>{const progress=await client.start(id,step,receiver.id);if(generationId===generation.current)setSelected(previous=>previous?.id===id?{...previous,import:progress}:previous);});}
+ async function openDraft(){if(!selected||!onOpen)return;await operation(async()=>{await onOpen(selected);});}
  return <section className={styles.bundles} aria-label="Bundle uploads">
   <p>Upload an uncompressed invocation tar (up to 256 MiB) to review it. Uploading verifies declared files; it does not install tools, change setup or run an action. Two reviews can remain open.</p>
   <label>Upload invocation bundle<input type="file" accept=".tar,application/x-tar" disabled={locked} onChange={event=>{const file=event.target.files?.[0];event.target.value="";if(file)void upload(file);}}/></label>
@@ -48,7 +49,8 @@ export function BundleImports({api}:{api:LocalApi}){
    {action&&<><p>Current action readiness: {action.readiness.state}. Configure requirements and effective file grants separately in Tool setup; import never changes them.</p>{action.readiness.requirements.length>0&&<ul>{action.readiness.requirements.map((r,i)=><li key={i}>{r.name} · {r.state}{r.setup?` · ${r.setup}`:""}</li>)}</ul>}</>}
    <Button disabled={locked||!receiver||!action} onClick={()=>void start()}>Import selected step inputs</Button>
    {selected.import&&<section aria-label="Input import progress"><p role="status">{importing?"Importing inputs. Closing the drawer keeps this work owned.":selected.import.phase==="failed"?"Import stopped. Completed inputs are retained; retry only when you choose.":"Inputs imported. Unresolved inputs still need explicit replacement before any Run."}</p><p>Step {selected.import.step+1} · {selected.import.tool} / {selected.import.action}</p><ul>{selected.import.inputs.map((i,n)=><li key={n}>{i.name} item {i.index+1} · {i.status}{i.reason?` · ${i.reason}`:""}</li>)}</ul>{selected.import.error&&<p role="alert">{selected.import.error}</p>}</section>}
-   <p>Import retains the original archive and available input bytes. Omitted inputs stay unresolved. Opening a new draft is a separate step; import cannot replay upstream actions or authorize spending.</p>
+   {onOpen&&selected.import&&selected.import.phase!=="importing"&&selected.import.step===step&&selected.import.tool===receiver?.id&&<Button disabled={locked} onClick={()=>void openDraft()}>Open as new draft</Button>}
+   <p>Import retains the original archive and available input bytes. Omitted inputs stay unresolved. A new draft uses fresh readiness and estimates; opening it cannot replay upstream actions or authorize spending.</p>
   </section>}
   {notice&&<p role="alert">{notice}</p>}
  </section>;

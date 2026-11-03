@@ -1,0 +1,9 @@
+.source { display: grid; gap: .875rem; min-width: 0; }
+.source h3, .source h4 { margin: 0; font-size: .9375rem; font-weight: 500; }
+.source p, .source small { font-size: .875rem; overflow-wrap: anywhere; }
+.source small { display: block; color: var(--color-muted); }
+.source ul { display: grid; gap: 1rem; margin: 0; padding-left: 1.25rem; }
+.source li > p { margin: .375rem 0; }
+.source li > button { display: block; margin: .5rem 0; }
+.source summary { cursor: pointer; font-size: .875rem; }
+.source pre { white-space: pre-wrap; overflow-wrap: anywhere; }

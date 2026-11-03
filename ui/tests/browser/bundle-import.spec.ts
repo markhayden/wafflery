@@ -10,7 +10,7 @@ test("an uploaded bundle is reviewed before explicit input import and never star
  await drawer.getByRole("button",{name:"Close",exact:true}).click();await page.getByRole("button",{name:"Bundles",exact:true}).click();
  drawer=page.getByRole("dialog",{name:"Saved invocation bundles",exact:true});
  await drawer.getByText("Import an invocation bundle",{exact:true}).click();
- await drawer.getByLabel("Upload invocation bundle",{exact:true}).setInputFiles(archive);
+ await expect(drawer.getByLabel("Upload invocation bundle",{exact:true})).toBeEnabled();await drawer.getByLabel("Upload invocation bundle",{exact:true}).setInputFiles(archive);
  const review=drawer.getByRole("region",{name:"Uploaded bundle review",exact:true});
  await expect(review).toContainText("Declared files verified");await expect(review).toContainText("Portable input");
  await expect(review).toContainText("No tool action has been run");await expect(review.getByRole("button",{name:"Run",exact:true})).toHaveCount(0);
@@ -25,7 +25,7 @@ test("an uploaded bundle is reviewed before explicit input import and never star
 test("an invalid upload reports its refusal without creating a review",async({page,host})=>{
  await host.open(page);await page.getByRole("button",{name:"Bundles",exact:true}).click();const drawer=page.getByRole("dialog",{name:"Saved invocation bundles",exact:true});
  await drawer.getByText("Import an invocation bundle",{exact:true}).click();
- await drawer.getByLabel("Upload invocation bundle",{exact:true}).setInputFiles({name:"bad.tar",mimeType:"application/x-tar",buffer:Buffer.from("not an archive")});
+ await expect(drawer.getByLabel("Upload invocation bundle",{exact:true})).toBeEnabled();await drawer.getByLabel("Upload invocation bundle",{exact:true}).setInputFiles({name:"bad.tar",mimeType:"application/x-tar",buffer:Buffer.from("not an archive")});
  await expect(drawer.getByRole("region",{name:"Bundle uploads",exact:true})).toContainText("bounded, uncompressed ustar");
  await expect(drawer.getByRole("region",{name:"Uploaded bundle review",exact:true})).toHaveCount(0);
 });

@@ -13,7 +13,7 @@ export function Inspector({ attempt, reports, retryNative }: { attempt: Attempt;
   const invocation = savedInvocation(attempt.result);
   const data =
     view === "inputs"
-      ? { parameters: attempt.request.params, images: attempt.inputs }
+      ? { parameters: attempt.request.params, images: attempt.inputs,...(attempt.request.source_bundle?{source_bundle:attempt.request.source_bundle}:{}) }
       : view === "result"
         ? attempt.raw_response ?? attempt.result
         : view === "invocation"

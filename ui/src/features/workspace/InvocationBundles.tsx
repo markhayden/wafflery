@@ -1,3 +1,4 @@
+import type {BundleUpload} from "../../api/bundle-imports";
 import {BundleImports} from "./BundleImports";
 import {useEffect,useMemo,useRef,useState} from "react";
 import {bundleClient,cliBundleTool,type BundleRecord,type BundleSummary} from "../../api/bundles";
@@ -17,7 +18,7 @@ function choices(attempt?:Attempt):string[]{
  }).map(p=>p.name);
 }
 const fileSize=(bytes:number)=>bytes<1024*1024?`${(bytes/1024).toFixed(1)} KB`:`${(bytes/1024/1024).toFixed(2)} MiB`;
-export function InvocationBundles({api,attempt}:{api:LocalApi;attempt?:Attempt}){
+export function InvocationBundles({api,attempt,onOpenImported}:{api:LocalApi;attempt?:Attempt;onOpenImported?:((upload:BundleUpload)=>Promise<void>)|undefined}){
  const client=useMemo(()=>bundleClient(api),[api]);const generation=useRef(0);
  const [importOpen,setImportOpen]=useState(false);
  const [items,setItems]=useState<BundleSummary[]>([]),[cursor,setCursor]=useState<number|null>(null),[selected,setSelected]=useState<BundleRecord>(),[busy,setBusy]=useState(true),[notice,setNotice]=useState(""),[omit,setOmit]=useState<string[]>([]);
@@ -40,7 +41,7 @@ export function InvocationBundles({api,attempt}:{api:LocalApi;attempt?:Attempt})
  const omittable=choices(attempt);const ready=!!attempt?.result&&object(object(attempt.result)?.invocation)!==undefined&&attempt.preservation.contract!=="pending"&&attempt.preservation.native!=="preserving";
  return <section className={styles.bundles} aria-label="Invocation bundles">
   <p>Invocation bundles carry the recorded call and its exact preserved inputs. They are separate from evidence archives. Saving or downloading one never runs a tool.</p>
-  <details onToggle={event=>setImportOpen(event.currentTarget.open)}><summary>Import an invocation bundle</summary>{importOpen&&<BundleImports api={api}/>}</details>
+  <details onToggle={event=>setImportOpen(event.currentTarget.open)}><summary>Import an invocation bundle</summary>{importOpen&&<BundleImports api={api} onOpen={onOpenImported}/>}</details>
   {attempt&&<fieldset disabled={busy}><legend>New bundle from this saved run</legend>
    <p>Inputs are included by default. Omitting a whole slot or port makes the bundle workspace-dependent. Shared location values remain in the recorded invocation.</p>
    {omittable.map(name=><label key={name}><input type="checkbox" checked={!omit.includes(name)} onChange={e=>setOmit(previous=>e.target.checked?previous.filter(v=>v!==name):[...previous,name])}/> Include {name} inputs</label>)}
@@ -48,8 +49,8 @@ export function InvocationBundles({api,attempt}:{api:LocalApi;attempt?:Attempt})
    {!ready&&<p>Wait for a resolved invocation and input preservation to finish. Historical or unresolved runs retain their evidence archive.</p>}
   </fieldset>}
   {busy&&<p role="status">Reading and verifying saved bundle data…</p>}
-  {!!items.length&&<section aria-label="Saved bundle list"><h3>Saved bundles</h3><ul>{items.map(item=><li key={item.id}><Button disabled={busy} aria-pressed={selected?.id===item.id} onClick={()=>void open(item.id)}>Review {item.tool.name} / {item.action} · {item.id.slice(0,8)}</Button><span>{item.workspace_dependent?"Workspace-dependent":"Inputs included"} · {fileSize(item.size)}</span></li>)}</ul></section>}
-  {!busy&&items.length===0&&<p>No invocation bundles have been saved{attempt?" for this run":""}.</p>}
+  {!!items.length&&<section aria-label="Saved bundle list"><h3>{attempt?"Bundles linked to this run":"Saved bundles"}</h3><ul>{items.map(item=><li key={item.id}><Button disabled={busy} aria-pressed={selected?.id===item.id} onClick={()=>void open(item.id)}>Review {item.tool.name} / {item.action} · {item.id.slice(0,8)}</Button><span>{item.workspace_dependent?"Workspace-dependent":"Inputs included"} · {fileSize(item.size)}</span></li>)}</ul></section>}
+  {!busy&&items.length===0&&<p>No invocation bundles are linked{attempt?" to this run":" in this library"}.</p>}
   {cursor!==null&&<Button disabled={busy} onClick={()=>void more()}>Load older bundles</Button>}
   {selected&&<BundleReview bundle={selected} busy={busy} onDownload={()=>void download()}/>}
   {notice&&<p role="status">{notice}</p>}
@@ -61,7 +62,7 @@ export function BundleReview({bundle,busy=false,onDownload}:{bundle:BundleRecord
   <header><h3>{bundle.workspace_dependent?"Workspace-dependent bundle":"Inputs included"}</h3><p>Saved bundle · {bundle.id.slice(0,12)} · {fileSize(bundle.size)}</p></header>
   <p>{bundle.workspace_dependent?"Some inputs still need the original store or an explicitly supplied replacement. This bundle cannot be replayed as-is.":"Original input bytes and supported native exports are included. Install/configure the named tool and provide its requirements separately. Model judgments may change on replay."}</p>
   <section aria-label="Bundle files"><h4>Included files</h4><ul><li><code>invocation.json</code> · Original invocation and result</li>{bundle.members.map(member=><li key={member.name}><code title={member.name} aria-label={member.name}>{member.name.replace(/([a-f0-9]{12})[a-f0-9]{52}/g,"$1…")}</code><span>{fileSize(member.bytes)} · {member.sha256.slice(0,12)}</span></li>)}</ul></section>
-  <section><h4>Requirements</h4>{requirements.length?<ul>{requirements.map(name=><li key={name}>{name}</li>)}</ul>:<p>No additional requirements were recorded.</p>}<p>Credentials and tool configuration contents are not included. A replay starts a new tool session and needs fresh paid estimates and caps.</p></section>
+  <section><h4>Requirements</h4>{requirements.length?<ul>{requirements.map(name=><li key={name}>{name}</li>)}</ul>:<p>No additional requirements were recorded.</p>}<p>Credentials and tool configuration contents are not included. Replay uses the current tool session and requires fresh estimates and caps for paid actions.</p></section>
   {bundle.manifest.steps.map((step,index)=><section key={index} aria-label={`Bundle step ${index+1}`}><h4>{index+1}. {step.tool.name} / {step.invocation.action}</h4><p>Recorded tool version {step.tool.version}</p>
    {!!step.artifacts.length&&<><h4>Native input copies</h4><ul>{step.artifacts.map((entry,index)=><li key={index}>{entry.port} · {String(entry.artifact.type??"Artifact")} · <code>{String(entry.artifact.identity??"")}</code></li>)}</ul></>}
    {!!step.reference_only.length&&<><h4>Omitted inputs</h4><ul>{step.reference_only.map((entry,index)=><li key={index}>{entry.port??entry.slot}: {entry.why}</li>)}</ul></>}

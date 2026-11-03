@@ -317,5 +317,12 @@ parameters, native types and effective file grants are checked first; setup rema
 Imports stay owned when the drawer closes. Reopen the review to see completed inputs or a partial
 failure, then retry only when you choose. Omitted/unportable inputs remain unresolved. At most two
 upload reviews are held in memory; dismiss an inactive review to free a slot. Explicitly retained
-archives and imported image bytes survive restart. Opening an imported step as a new runnable draft
-is the next implementation step.
+archives and imported image bytes survive restart.
+
+Choose **Open as new draft** after import to experiment with that step. Opening starts no run. Current
+inputs and parameters can be changed; the original archive stays unchanged and the new run records
+its source bundle. Any unresolved port, including an optional one, blocks Run until you explicitly
+confirm replacement inputs or omit that optional port. Paid drafts start with a blank spending cap:
+choose a new cap and request a fresh estimate before Run. The current tool session and allowance
+remain in use; opening does not restart the tool or replenish its budget. Different output identities
+are shown as new results and do not by themselves mean failure.

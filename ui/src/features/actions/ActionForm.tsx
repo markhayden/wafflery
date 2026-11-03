@@ -248,12 +248,6 @@ export function ActionForm({
           disabled={disabled}
         />
       )}
-      {(action.locations ?? []).length > 0 && (
-        <p>
-          Location bindings require the operations interface. Actions requiring
-          those bindings are unavailable in this foundation.
-        </p>
-      )}
       <p className={styles.purpose}>
         Inputs are checked against the tool’s complete schema before execution.
       </p>

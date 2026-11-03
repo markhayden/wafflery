@@ -1,3 +1,8 @@
+import {BundleSource} from "./BundleSource";
+import {importedDraft,type UnresolvedInput} from "./bundle-replay";
+import {bundleClient} from "../../api/bundles";
+import {bundleImports,type BundleUpload} from "../../api/bundle-imports";
+import type {BundleSource as SourceBundle} from "../../api/workspace";
 import {InvocationBundles} from "./InvocationBundles";
 import {useArtifactRestore} from "./useArtifactRestore";
 import {NativePreservation} from "./NativePreservation";
@@ -66,6 +71,8 @@ export function Workspace({
   const reports = useMemo(() => new ReportOwner(reportClient(api)), [api]);
   const examples = useMemo(() => exampleClient(api), [api]);
   const [draftExample, setDraftExample] = useState<Example>();
+  const [bundleOrigin,setBundleOrigin]=useState<SourceBundle>();
+  const [unresolvedImport,setUnresolvedImport]=useState<UnresolvedInput[]>([]);
   const preferred = new URLSearchParams(window.location.search).get("tool");
   const [toolId, setToolId] = useState(
     preferred ?? snapshot.tools[0]?.id ?? "",
@@ -115,6 +122,7 @@ export function Workspace({
     firstActivity(declaration?.document.actions ?? [])?.name ?? "",
   );
   const action = declaration?.document.actions.find((a) => a.name === actionId);
+  const inputPorts=action?.kind==="operation"?action.ports?.in??[]:(action?.locations??[]).map(slot=>({name:slot.slot,type:"location",required:slot.required,many:false}));
   const [emptyKind, setEmptyKind] = useState<ActivityKind>("task");
   const activityKind = action?.kind ?? emptyKind;
   const [draftRevision, setDraftRevision] = useState(0);
@@ -195,10 +203,11 @@ export function Workspace({
       .then((attempt) => {
         const restored = restoreSelection(attempt.inputs);
         setDraftRevision((value) => value + 1);
-        setDraftExample(undefined);
+        setDraftExample(undefined);setUnresolvedImport([]);
         setToolId(attempt.request.tool);
         setActionId(attempt.request.action);
         setParams(structuredClone(attempt.request.params));
+        setBundleOrigin(attempt.request.source_bundle);
         setImages(attempt.declaration.document.actions.find(a=>a.name===attempt.request.action)?.kind === "operation" ? {} : restored);
         setPortBindings(Object.fromEntries(Object.entries(attempt.request.bindings??{}).map(([port,items])=>[port,items.map((item,index)=>({...structuredClone(item),...(attempt.request.lineage?.[port]?.[index]?{origin:attempt.request.lineage[port]![index]!}:{} )}))])));
         setBindingIssues([]);
@@ -232,12 +241,36 @@ export function Workspace({
       setParams(structuredClone(example.request.params));
       setImages(current.document.actions.find(action=>action.name===example.request.action)?.kind==="operation"?{}:restoreSelection(example.inputs));
       setPortBindings(bindings);setBindingIssues([]);setSelectedId(null);setSelected(undefined);
-      setDraftExample(example);setError(undefined);submitted.current=null;
+      setDraftExample(example);setBundleOrigin(example.request.source_bundle);setUnresolvedImport([]);setError(undefined);submitted.current=null;
     }finally{setBusy(false);}
+  }
+  async function openImportedBundle(upload:BundleUpload) {
+    if(busy||cost.submission||working)throw Error("Finish or resolve the current submission before opening an imported step.");
+    setBusy(true);
+    try {
+      const latest=await bundleImports(api).read(upload.id),status=latest.import;
+      if(!status||latest.record.id!==upload.record.id||status.step!==upload.import?.step||status.tool!==upload.import?.tool)throw Error("Import progress changed. Reopen the review before opening a draft.");
+      await bundleClient(api).read(latest.record.id);
+      const current=await client.refresh(status.tool);
+      const draft=await importedDraft(latest,status.tool,current,assets.metadata);
+      const saved=await assets.list();
+      await updateSnapshot();
+      setToolId(draft.tool);setActionId(draft.action);setParams(draft.params);
+      setImages(draft.images);setPortBindings(draft.bindings);setBindingIssues([]);setPortImporting(false);
+      setSavedImages([...new Map([...saved,...draft.assets].map(asset=>[asset.id,asset])).values()]);
+      setBundleOrigin(draft.source);setUnresolvedImport(draft.unresolved);setDraftExample(undefined);
+      setSelectedId(null);setSelected(undefined);setError(undefined);submitted.current=null;
+      setDraftRevision(value=>value+1);setDrawer(null);
+    }finally {setBusy(false);}
+  }
+  function canResolveImport(name:string) {
+    const imageSlot=action?.kind!=="operation"?action?.images?.find(slot=>slot.slot===name):undefined;
+    if(imageSlot)return !imageSlot.required||!!images[name]?.length;
+    const port=inputPorts.find(port=>port.name===name);return !!port&&!validatePorts([port],portBindings);
   }
   function chooseTool(id: string) {
     setDraftRevision((value) => value + 1);
-    setDraftExample(undefined);
+    setDraftExample(undefined);setBundleOrigin(undefined);setUnresolvedImport([]);
     setToolId(id);
     const action = firstActivity(snapshot.tools.find((t) => t.id === id)?.declaration
       ?.document.actions ?? []);
@@ -253,7 +286,7 @@ export function Workspace({
   }
   function chooseAction(id: string) {
     setDraftRevision((value) => value + 1);
-    setDraftExample(undefined);
+    setDraftExample(undefined);setBundleOrigin(undefined);setUnresolvedImport([]);
     setActionId(id);
     setParams(
       initialParameters(
@@ -272,7 +305,7 @@ export function Workspace({
     if (busy) return;
     if (!retry && (!action || !declaration)) return;
     if (!retry && (cost.submission || (action?.cost.may_spend && !cost.canRun))) return;
-    if(portImporting)return;
+    if(portImporting||unresolvedImport.length)return;
     setError(undefined);
     setBusy(true);
     try {
@@ -284,7 +317,7 @@ export function Workspace({
         return;
       }
       if (!action || !declaration) return;
-      const portError=validatePorts(action.ports?.in??[],portBindings);if(portError){const invalid=(action.ports?.in??[]).find(port=>validatePorts([port],portBindings));if(invalid)document.querySelector<HTMLElement>(`[data-port="${CSS.escape(invalid.name)}"]`)?.focus();throw new Error(portError);}
+      const portError=validatePorts(inputPorts,portBindings);if(portError){const invalid=inputPorts.find(port=>validatePorts([port],portBindings));if(invalid)document.querySelector<HTMLElement>(`[data-port="${CSS.escape(invalid.name)}"]`)?.focus();throw new Error(portError);}
       setBindingIssues([]);
       const {images: bindings, frames} = encodeSelection(
         declaration.document.contract, action.images ?? [], images,
@@ -294,6 +327,7 @@ export function Workspace({
         action: actionId,
         revision: declaration.revision,
         params,
+        ...(bundleOrigin?{source_bundle:bundleOrigin}:{}),
         images: bindings,
         ...encodePortBindings(portBindings),
         frames,
@@ -307,6 +341,7 @@ export function Workspace({
             action: actionId,
             revision: declaration.revision,
             params: structuredClone(params),
+            ...(bundleOrigin?{source_bundle:bundleOrigin}:{}),
             images: bindings,
             ...encodePortBindings(portBindings),
             frames,
@@ -330,16 +365,17 @@ export function Workspace({
     }
   }
   const estimateKey = JSON.stringify({toolId,actionId,revision:declaration?.revision,sessionId,restarting,
-    draftRevision,estimateEditRevision,params,portBindings,images:Object.fromEntries(Object.entries(images).map(([slot,items]) =>
+    draftRevision,estimateEditRevision,params,portBindings,bundleOrigin,unresolvedImport,images:Object.fromEntries(Object.entries(images).map(([slot,items]) =>
       [slot,items.map(image => ({id:image.id,coordinates:image.coordinates}))]))});
   const cost = useEstimateDraft(api, estimateKey, typeof sessionId === "string" && !restarting ? sessionId : undefined, () => {
     if (!declaration || !action?.cost.may_spend) throw new Error("Choose a paid action before estimating.");
+    if(unresolvedImport.length)throw new Error("Resolve imported inputs explicitly before estimating.");
     const cap = positiveCap(params.max_spend_usd);
     if (cap === undefined) throw new Error("Choose a positive spending cap before estimating.");
-    const portError=validatePorts(action.ports?.in??[],portBindings);if(portError){const invalid=(action.ports?.in??[]).find(port=>validatePorts([port],portBindings));if(invalid)document.querySelector<HTMLElement>(`[data-port="${CSS.escape(invalid.name)}"]`)?.focus();throw new Error(portError);}
+    const portError=validatePorts(inputPorts,portBindings);if(portError){const invalid=inputPorts.find(port=>validatePorts([port],portBindings));if(invalid)document.querySelector<HTMLElement>(`[data-port="${CSS.escape(invalid.name)}"]`)?.focus();throw new Error(portError);}
     const bindings = encodeSelection(declaration.document.contract, action.images ?? [], images);
     return {id:crypto.randomUUID(),tool:toolId,action:actionId,revision:declaration.revision,
-      params:{...structuredClone(params),max_spend_usd:cap},...bindings,...encodePortBindings(portBindings)};
+      params:{...structuredClone(params),max_spend_usd:cap},...(bundleOrigin?{source_bundle:bundleOrigin}:{}),...bindings,...encodePortBindings(portBindings)};
   }, updateSnapshot);
   let costSession;
   try { costSession = parseToolSession(declaration?.tool_session); } catch { /* No fabricated allowance. */ }
@@ -407,13 +443,14 @@ export function Workspace({
             tabIndex={0}
             key={draftRevision}
           >
+            {bundleOrigin&&<BundleSource api={api} source={bundleOrigin} attempt={selected} unresolved={unresolvedImport} canResolve={canResolveImport} resolve={name=>setUnresolvedImport(values=>values.filter(value=>value.name!==name))}/>}
             {draftExample && (
               <p className={styles.note}>
                 From example: {draftExample.name}{draftExample.workspace_dependent?" · Workspace-dependent":""}
                 {draftExample.notes ? ` · ${draftExample.notes}` : ""}
               </p>
             )}
-            {action?.kind==="operation" && action.ports && <PortEditor key={`ports/${toolId}/${actionId}/${draftRevision}/${declaration?.revision}`} ports={action.ports.in} resolveArtifact={binding=>artifactRestore.choose(binding,toolId)} value={portBindings} onBusy={setPortImporting} onChange={value=>{setPortBindings(value);setBindingIssues([]);}} assets={savedImages} artifacts={libraryArtifacts.sources.flatMap((source,index)=>{const binding=transferBinding(source,declaration!.document.tool.name);return binding?[{id:String(index),label:`${source.port} item ${(source.index??0)+1} · ${source.attempt?.slice(0,8)} · ${String(source.reference.type)}`,reference:source.reference,binding}]:[];})} issues={cost.state.kind==="error"?cost.state.bindings??bindingIssues:bindingIssues.length?bindingIssues:savedBindingIssues} upload={async file=>{const asset=await assets.upload(file);setSavedImages(await assets.list());return asset;}} disabled={busy||!!working||portImporting} />}
+            {inputPorts.length>0 && <PortEditor key={`ports/${toolId}/${actionId}/${draftRevision}/${declaration?.revision}`} ports={inputPorts} resolveArtifact={binding=>artifactRestore.choose(binding,toolId)} value={portBindings} onBusy={setPortImporting} onChange={value=>{setPortBindings(value);setBindingIssues([]);}} assets={savedImages} artifacts={(action?.kind==="operation"?libraryArtifacts.sources:[]).flatMap((source,index)=>{const binding=transferBinding(source,declaration!.document.tool.name);return binding?[{id:String(index),label:`${source.port} item ${(source.index??0)+1} · ${source.attempt?.slice(0,8)} · ${String(source.reference.type)}`,reference:source.reference,binding}]:[];})} issues={cost.state.kind==="error"?cost.state.bindings??bindingIssues:bindingIssues.length?bindingIssues:savedBindingIssues} upload={async file=>{const asset=await assets.upload(file);setSavedImages(await assets.list());return asset;}} disabled={busy||!!working||portImporting} />}
             {action?.kind==="operation" && <><p role="status">{libraryArtifacts.loading?"Loading saved artifacts…":libraryArtifacts.error??"Select a saved artifact to check its availability. Run still validates compatibility."}</p>{libraryArtifacts.more&&<Button type="button" onClick={libraryArtifacts.loadMore}>Load older artifacts</Button>}</>}
             {action ? (
               <ActionForm
@@ -465,7 +502,7 @@ export function Workspace({
               onCapChange={value => setParams(current => ({...current,max_spend_usd:value}))}
               onEstimate={() => { void cost.estimate(); }}
               onSetup={opener => setDrawer({opener,view:"setup"})}
-              disabled={busy || !!cost.submission || restarting || typeof sessionId !== "string"}
+              disabled={busy || unresolvedImport.length>0 || !!cost.submission || restarting || typeof sessionId !== "string"}
               {...(costSession ? {session:costSession} : {})} />}
             {cost.submission === "uncertain" && <div role="status">
               <p>The submission was not acknowledged. Retry sends the original reviewed inputs with
@@ -484,7 +521,7 @@ export function Workspace({
               type="submit"
               busy={busy}
               disabled={
-                portImporting || !action ||
+                portImporting || unresolvedImport.length>0 || !action ||
                 (action.cost.may_spend && !cost.canRun) ||
                 !!cost.submission ||
                 restarting ||
@@ -494,7 +531,7 @@ export function Workspace({
                 (action.images ?? []).some(
                   (slot) => slot.required && !images[slot.slot]?.length,
                 ) ||
-                (action.locations ?? []).some((slot) => slot.required)
+                (action.locations ?? []).some((slot) => slot.required&&!portBindings[slot.slot]?.length)
               }
             >
               Run
@@ -680,7 +717,7 @@ export function Workspace({
                   : ""
         }
       >
-        {drawer?.view === "bundles" ? <InvocationBundles api={api}/> : drawer?.view === "setup" ? (
+        {drawer?.view === "bundles" ? <InvocationBundles api={api} onOpenImported={openImportedBundle}/> : drawer?.view === "setup" ? (
           <>
             {setupRestarting ? <p role="status">Checking the replacement session…</p> : setupDeclaration && setupAction ? (
               <ToolSetup
@@ -704,7 +741,7 @@ export function Workspace({
             onOpen={openExample}
           />
         ) : drawer?.view === "pipeline" && selected ? (
-          <Pipeline attempt={selected} api={api} />
+          <Pipeline attempt={selected} api={api} onOpenImported={openImportedBundle} />
         ) : drawer?.view === "cleanup" ? (
           <Cleanup
             api={api}

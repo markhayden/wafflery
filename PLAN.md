@@ -3089,16 +3089,56 @@ checkboxes remain open until the upload/review/control orchestration is wired an
 
 #### M5.18 — Replay one imported step through the workspace
 
-- [ ] A reviewed imported step opens a normal draft with fresh resource refs and materialized inputs.
+- [x] A reviewed imported step opens a normal draft with fresh resource refs and materialized inputs.
   It reuses ordinary readiness/estimate/cap/Run/cancel; recorded estimates or session ids never authorize it.
-- [ ] A new attempt records linkage to the source bundle while preserving its original evidence.
+- [x] A new attempt records linkage to the source bundle while preserving its original evidence.
   Identity differences are displayed, not equated with failure or a guarantee of deterministic judgments.
-- [ ] Reference-only/unportable inputs block Run until resolved explicitly. Import, opening or restoring
+- [x] Reference-only/unportable inputs block Run until resolved explicitly. Import, opening or restoring
   a draft cannot start a paid action; restart requires new session readiness and estimates.
 
 **Depends:** M5.06,09,17. **Areas:** replay draft adapter, Workspace/Pipeline state, attempt linkage.
 **Verify:** original store absent, same invocation with new paths, changed provider output, paid confirmation.
 **Commit:** `feat: replay imported invocations as new experiments`.
+
+**M5.18 build approach:** two coherent changes: validate/persist optional source-bundle provenance
+through ordinary preparation/dispatch, then the imported-step draft adapter and workspace presentation.
+Source linkage records a bundle ID and step independently from per-input producer lineage. It never
+asserts that a user-edited draft is byte-for-byte the archived invocation or reuses archived paid
+approval. Existing submission JSON can carry the optional provenance without a database migration;
+the existing bundle/attempt association is committed with the new attempt. Missing or mismatched
+source steps are refused before preparation/publication. The archive and recorded result remain
+immutable. Unresolved imported ports require an explicit replacement selection/acknowledgement in the
+new draft; even optional missing occurrences cannot silently disappear and authorize Run.
+
+**M5.18 as built:** source provenance is optional submission metadata (`source_bundle: {id, step}`),
+validated against a retained immutable bundle and the current tool/action before preparation and again
+before dispatch. The new attempt and bundle association commit together. It does not enter the MCP
+arguments or claim equality with edited inputs. An ID-specific private image metadata read restores
+older owned images without depending on the newest-hundred image catalogue.
+
+The import drawer rechecks its current progress before opening a draft. Current declarations determine
+ports and task image/location controls; completed native/image/location inputs preserve occurrence
+order. Unresolved ports remain explicit, including optional ones, until the user confirms a replacement
+list or deliberately leaves an optional port empty. Readiness/estimate/Run/cancel use the ordinary
+workspace path. Paid drafts clear the archived spending cap and require a newly entered cap and fresh
+estimate; opening does not restart a tool or replenish its existing session ledger. Tool restart still
+invalidates ordinary preparations through session identity. Source identity comparisons are presented
+as new results, not automatic failures or guarantees of deterministic judgments. Inspector inputs
+include the source bundle, and run-filtered bundle lists say “linked” rather than claiming every source
+archive was exported from the replay run.
+
+Review caught the inherited-cap issue; a unit test failed before clearing it and passed afterward.
+The browser coverage also found programmatic file selection racing a disabled upload picker; upload
+tests now wait for that picker to become enabled, with no timeout/retry increase.
+
+Independent task review approved the corrected cap handling and found no further blocker. The full
+Rust workspace suite, clippy with warnings denied, formatting and UI typecheck passed on the final
+code; all 87 UI unit tests passed. Ninety-eight targeted Chromium/WebKit cases passed across replay,
+bundles, image lists, chains/examples, all paid specs and workspace fidelity. A later 42-case run of
+the changed bundle/replay screens passed without baseline updates. Eight source/unresolved/identity
+region snapshots were inspected at desktop/mobile widths in both engines. Rollback removes replay
+entry points first and retains source-metadata parsing and bundle ownership for already-saved runs;
+removing optional JSON fields from the reader would make those new records unreadable in older code.
 
 #### M5.19 — Export selected experiment chains
 

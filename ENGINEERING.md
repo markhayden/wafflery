@@ -881,3 +881,13 @@ Changing parameters/inputs is permitted because this link records origin, not eq
 archive/result remain immutable. This metadata never enters the tool's argument object.
 The private ID-specific image metadata endpoint returns owned metadata without a raster decode or
 depending on the newest-hundred image catalogue.
+
+The import review rereads current progress before its data-only adapter opens a normal workspace
+draft. Source images use `/api/assets/{id}/metadata`, with the same private boundary and owned-ID
+validation; this avoids the limited image catalogue and performs no raster decode. Native refs come
+from confirmed import progress. Task shared locations use the existing typed by-value port controls.
+An unresolved imported port blocks both estimating and Run until its current replacement list is
+explicitly confirmed, even if optional. Paid drafts clear the archived cap; users choose a new positive
+cap before a fresh estimate. Opening does not replace a tool session or reset its spending allowance.
+Source linkage appears in the inspector and input pane. Output identity differences are informative,
+while ordinary tool outcomes remain authoritative.

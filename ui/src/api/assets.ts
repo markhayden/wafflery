@@ -19,6 +19,10 @@ export function assetClient(api: LocalApi) {
       if (!Array.isArray(values) || !values.every(isAsset)) throw new Error("The saved image list could not be read.");
       return values;
     },
+    async metadata(id:string):Promise<Asset> {
+      const asset:unknown=await(await api.request(`/api/assets/${encodeURIComponent(id)}/metadata`)).json();
+      if(!isAsset(asset)||asset.id!==id)throw Error("The imported image metadata is unavailable.");return asset;
+    },
     async upload(file: File): Promise<Asset> {
       const asset: unknown = await (await api.request("/api/assets", { method: "POST", headers: { "X-Wafflery-Upload": "1", "Content-Type": "application/octet-stream" }, body: file })).json();
       if (!isAsset(asset)) throw new Error("The imported image could not be read.");
