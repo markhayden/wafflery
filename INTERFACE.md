@@ -12,7 +12,7 @@ grouped activity picker. Task-only tools omit unavailable workspace kinds. Both 
 same control. Desktop input/result panes scroll independently with fixed headers/footers; narrow and
 short windows use page scrolling.
 
-Choose tool rows show a decorative 40 px logo on the left, the name and right-aligned version
+Choose tool rows show a decorative 64 px logo on the left (48 px on narrow screens; 128 px WebP files under 16 KB), the name and right-aligned version
 on the first line, then the description. Known-tool presentation comes from a small local map;
 other tools use their declared purpose with the same reserved logo space. An error replaces the
 description. Descriptions wrap fully without truncation or clamping, and the logo stays

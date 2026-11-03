@@ -12,8 +12,8 @@ for(const width of [1440,320])test(`tool rows show logos, versions and searchabl
   const row=dialog.getByRole("button",{name:new RegExp(`^${name} `)});
   await expect(row.getByText(description!,{exact:true})).toBeVisible();
   const icon=row.locator("img");await expect(icon).toHaveAttribute("alt","");
-  await expect(icon).toHaveAttribute("width","40");await expect(icon).toHaveAttribute("height","40");
-  await expect.poll(()=>icon.evaluate((image:HTMLImageElement)=>image.naturalWidth)).toBe(900);
+  await expect(icon).toHaveAttribute("width","64");await expect(icon).toHaveAttribute("height","64");
+  await expect.poll(()=>icon.evaluate((image:HTMLImageElement)=>image.naturalWidth)).toBe(128);
   const titleBox=(await row.locator("strong").boundingBox())!;
   const versionBox=(await row.getByText(version!,{exact:true}).boundingBox())!;
   expect(titleBox.x+titleBox.width).toBeLessThanOrEqual(versionBox.x);
@@ -69,12 +69,13 @@ test("the packaged host serves unchanged WebP logos under its existing CSP",asyn
   const response=await page.request.get(`${host.origin}/${asset}`);expect(response.status()).toBe(200);expect(response.headers()["content-type"]).toBe("image/webp");
   expect(response.headers()["content-security-policy"]).toContain("img-src 'self' blob:");
   expect(await response.body()).toEqual(await readFile(new URL(`../../src/assets/tools/${name}-sticker.webp`,import.meta.url)));
+  expect((await response.body()).byteLength).toBeLessThan(16*1024); // logos stay small: 128px, 2x the 64px mark
   // Exercise image decoding under the real page's CSP without inventing MCP registrations.
   await unknown.locator("span[aria-hidden=true]").evaluate((mark,src)=>{
-   const image=document.createElement("img");image.src=src;image.alt="";image.width=40;image.height=40;
+   const image=document.createElement("img");image.src=src;image.alt="";image.width=64;image.height=64;
    mark.replaceChildren(image);
   },host.origin+"/"+asset);
-  await expect.poll(()=>unknown.locator("img").evaluate((image:HTMLImageElement)=>image.complete&&image.naturalWidth===900)).toBe(true);
+  await expect.poll(()=>unknown.locator("img").evaluate((image:HTMLImageElement)=>image.complete&&image.naturalWidth===128)).toBe(true);
  }
  expect(errors).toEqual([]);
 });

@@ -96,7 +96,7 @@ export function Picker({ label, value, choices, onChange, disabled, compact = fa
                   dialog.current?.close();
                 }}
               >
-                {choice.meta && <span className={styles.mark} aria-hidden="true">{choice.icon && <img src={choice.icon} width="40" height="40" alt="" />}</span>}
+                {choice.meta && <span className={styles.mark} aria-hidden="true">{choice.icon && <img src={choice.icon} width="64" height="64" alt="" />}</span>}
                 <span className={styles.optionText}>
                   <span className={styles.optionHeading}><strong>{choice.title}</strong>
                     {choice.meta && <small className={styles.meta} title={choice.meta}>{choice.meta}</small>}

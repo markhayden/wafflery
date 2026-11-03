@@ -3623,3 +3623,9 @@ contract are implemented under v0.4, with M5.21 real-peer acceptance verified. M
 V20 image-import follow-up are complete, including hosted CI. C3's v0.3 delivery is verified by
 V14–V18 against Rascal M12/Squint M9. R2 remains optional. Distribution/release requirements
 remain separate; no production release is implied. Product choices remain Q1–Q19.
+
+### V23: larger, small tool logos (owner UI review, 2026-11-03)
+
+- [x] Picker logos 64 px (48 px under 30rem), up from 40 px; the sticker files re-encoded from 900 px
+  (141 KB and 181 KB) to 128 px WebP (6.9 KB and 8.0 KB). The picker spec asserts 128 px natural
+  width and a 16 KB ceiling per logo.

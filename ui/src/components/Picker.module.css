@@ -25,9 +25,10 @@
 .compact .trigger strong { font-size: .9375rem; }
 .compact .trigger small { display: none; }
 
-.options .withMeta { grid-template-columns: 40px minmax(0, 1fr); gap: .75rem; align-items: start; }
-.mark { display: block; width: 40px; height: 40px; }
-.mark img { display: block; width: 40px; height: 40px; object-fit: contain; }
+.options .withMeta { grid-template-columns: 64px minmax(0, 1fr); gap: 1rem; align-items: start; }
+.mark { display: block; width: 64px; height: 64px; }
+.mark img { display: block; width: 64px; height: 64px; object-fit: contain; }
+@media (max-width: 30rem) { .options .withMeta { grid-template-columns: 48px minmax(0, 1fr); gap: .75rem; } .mark, .mark img { width: 48px; height: 48px; } }
 .optionText { display: grid; gap: .25rem; min-width: 0; overflow-wrap: anywhere; }
 .optionHeading { display: flex; align-items: baseline; justify-content: space-between; gap: .75rem; min-width: 0; }
 .optionHeading strong { min-width: 0; flex: 1; }
