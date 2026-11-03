@@ -14,34 +14,50 @@ pub(super) async fn inputs(call: &PreparedCall) -> Result<()> {
         .clone()
         .ok_or(Error::Conflict("Prepared inputs are no longer owned"))?;
     let mut files = Vec::new();
-    for (slot, ids) in &call.request.images {
-        // Optional scalar slots may be supplied empty and are omitted from wire arguments.
-        if ids.is_empty() {
-            continue;
-        }
-        let binding = &call.arguments[slot];
-        let bindings = binding
+    let mut counts = std::collections::BTreeMap::<&str, usize>::new();
+    for (slot, index, asset) in call.request.bound_images() {
+        *counts.entry(slot).or_default() += 1;
+        let argument = &call.arguments[slot];
+        let binding = if argument.is_array() {
+            &argument[index]
+        } else {
+            argument
+        };
+        let evidence = call.inputs[slot]
             .as_array()
-            .map(Vec::as_slice)
-            .unwrap_or_else(|| std::slice::from_ref(binding));
-        if bindings.len() != ids.len()
-            || call.inputs[slot]
-                .as_array()
-                .is_none_or(|inputs| inputs.len() != ids.len())
+            .and_then(|entries| {
+                entries
+                    .iter()
+                    .enumerate()
+                    .find(|(i, entry)| {
+                        entry["argument_index"]
+                            .as_u64()
+                            .map_or(*i, |value| value as usize)
+                            == index
+                    })
+                    .map(|(_, entry)| entry)
+            })
+            .ok_or(Error::Conflict("Prepared image evidence changed"))?;
+        if evidence["asset"]["id"] != asset {
+            return Err(Error::Conflict("Prepared image asset changed"));
+        }
+        let path = binding["path"]
+            .as_str()
+            .ok_or(Error::Conflict("Prepared image path is missing"))?;
+        let digest = binding["expect"]["file_sha256"]
+            .as_str()
+            .ok_or(Error::Conflict("Prepared image fingerprint is missing"))?;
+        let size = evidence["asset"]["size"]
+            .as_u64()
+            .ok_or(Error::Conflict("Prepared image size is missing"))?;
+        files.push((PathBuf::from(path), digest.to_owned(), size));
+    }
+    for (slot, count) in counts {
+        if call.inputs[slot]
+            .as_array()
+            .is_none_or(|entries| entries.len() != count)
         {
             return Err(Error::Conflict("Prepared image count changed"));
-        }
-        for (index, binding) in bindings.iter().enumerate() {
-            let path = binding["path"]
-                .as_str()
-                .ok_or(Error::Conflict("Prepared image path is missing"))?;
-            let digest = binding["expect"]["file_sha256"]
-                .as_str()
-                .ok_or(Error::Conflict("Prepared image fingerprint is missing"))?;
-            let size = call.inputs[slot][index]["asset"]["size"]
-                .as_u64()
-                .ok_or(Error::Conflict("Prepared image size is missing"))?;
-            files.push((PathBuf::from(path), digest.to_owned(), size));
         }
     }
     tokio::task::spawn_blocking(move || {

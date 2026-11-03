@@ -2418,6 +2418,30 @@ errors, ID reuse after refusal, paid-port edits.
 run path without weakening paid guards. Revert M5.04–06 newest dependent first if needed; retained
 new evidence remains data, not a reason to dispatch through an older contract.
 
+**M5.06 build approach (before implementation):** two coherent parts: ordered bindings and normal
+preparation, then lifecycle/refusal integration. Submission gains optional named binding lists whose
+items distinguish owned image assets, opaque artifact references and shared location values. Tasks
+keep image slots unchanged; task locations use location values. No caller path is accepted through
+this new field. Required/scalar/many shape checks precede copying; the final MCP schema still gates
+dispatch. The existing preparation owns all local copies, including mixed image/reference lists;
+asset ownership, verification, cleanup and evidence export must include those copied images.
+References remain unchanged and are never dereferenced or hashed by this binding layer. The tool
+owns type/version/frame resolution and refusal. Port editors and field-level display follow in M5.07.
+Targeted Rust tests use the independent peer and existing preparation/estimate suites; one task
+review and hosted full CI gate completion. No database schema migration is needed for additive
+submission JSON; old saved submissions deserialize with empty bindings.
+
+**M5.06 preparation checkpoint:** the initial host test rejected the new binding field; the next
+run exposed missing port-image cleanup, now fixed. Owned image copies, native-reference chains,
+shared location values, all four indexed binding refusals, required/scalar/many validation and
+parameter/path rejection pass through the independent peer. Mixed local-image/reference lists keep
+wire order and copy only owned images; preparation verification, attempt/example ownership and
+evidence archives include those assets. An image reference can execute without copying its bytes;
+the existing missing-byte preservation notice remains honest until M5.08–12. Targeted checks passed
+11 integration tests, 6 binding/evidence unit tests, 17 existing preparation tests and 2 cleanup tests,
+plus clippy/typecheck. Task completion still requires paid-port/refusal-control coverage and review;
+this checkpoint is not ready-to-push or a claim that M5.07 editors exist.
+
 #### M5.07 — Add port editors to the input pane
 
 - [ ] Render typed port rows before parameters, with image/location editors and a saved-artifact

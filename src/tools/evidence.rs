@@ -1,7 +1,7 @@
 use super::{Error, Result, client::ToolClient};
 use crate::library::{
     assets::{AssetStore, MAX_BYTES},
-    attempts::Attempt,
+    attempts::{Attempt, InputBinding},
 };
 use base64::{Engine, engine::general_purpose::STANDARD};
 use serde_json::{Value, json};
@@ -50,6 +50,57 @@ pub fn check_association(attempt: &Attempt, result: &Value) -> Result<Vec<String
             }
         }
     }
+    let action = attempt.declaration["document"]["actions"]
+        .as_array()
+        .and_then(|actions| {
+            actions
+                .iter()
+                .find(|action| action["name"] == attempt.request.action)
+        });
+    let operation = action.is_some_and(|action| action["kind"] == "operation");
+    let mut expected_inputs = attempt.inputs.clone();
+    if let Some(action) = action.filter(|_| operation) {
+        for port in action["ports"]["in"]
+            .as_array()
+            .into_iter()
+            .flatten()
+            .filter(|port| port["type"] == "image")
+        {
+            let name = port["name"].as_str().unwrap();
+            let mut expected = Vec::new();
+            for (index, binding) in attempt
+                .request
+                .bindings
+                .get(name)
+                .into_iter()
+                .flatten()
+                .enumerate()
+            {
+                match binding {
+                    InputBinding::Image { .. } => {
+                        let image = attempt.inputs[name]
+                            .as_array()
+                            .and_then(|entries| {
+                                entries.iter().find(|entry| {
+                                    entry["argument_index"].as_u64() == Some(index as u64)
+                                })
+                            })
+                            .ok_or_else(|| {
+                                Error::Invalid("Missing owned operation image evidence".into())
+                            })?;
+                        expected.push(image.clone());
+                    }
+                    InputBinding::Artifact { reference } => {
+                        expected.push(json!({"artifact":reference}))
+                    }
+                    _ => return Err(Error::Invalid("Invalid operation image binding".into())),
+                }
+            }
+            if !expected.is_empty() {
+                expected_inputs[name] = json!(expected);
+            }
+        }
+    }
     let mut positions = std::collections::BTreeMap::<&str, usize>::new();
     let mut counts = std::collections::BTreeMap::<&str, usize>::new();
     let completed = result["status"] == "completed";
@@ -57,12 +108,19 @@ pub fn check_association(attempt: &Attempt, result: &Value) -> Result<Vec<String
         let slot = input["slot"]
             .as_str()
             .ok_or_else(|| Error::Invalid("Missing input slot".into()))?;
-        let expected = attempt.inputs[slot]
+        let expected = expected_inputs[slot]
             .as_array()
             .ok_or_else(|| Error::Invalid("Result reports an unsubmitted image slot".into()))?;
         let position = positions.entry(slot).or_default();
         let matches = |entry: &Value| {
-            entry["role"] == input["role"] && same_frame(&entry["image"], &input["image"])
+            if let Some(identity) = entry["artifact"]["identity"].as_str() {
+                // Image identities are their file hash; `on` can name a different root frame.
+                entry["artifact"]["type"] == "image"
+                    && identity.strip_prefix("sha256:") == input["image"]["file_sha256"].as_str()
+            } else {
+                (operation || entry["role"] == input["role"])
+                    && same_frame(&entry["image"], &input["image"])
+            }
         };
         let offset = if completed {
             expected
@@ -82,8 +140,7 @@ pub fn check_association(attempt: &Attempt, result: &Value) -> Result<Vec<String
         *counts.entry(slot).or_default() += 1;
     }
     let mut notices = Vec::new();
-    for (slot, expected) in attempt
-        .inputs
+    for (slot, expected) in expected_inputs
         .as_object()
         .into_iter()
         .flat_map(|inputs| inputs.iter())

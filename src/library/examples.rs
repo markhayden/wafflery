@@ -65,7 +65,7 @@ impl ExampleStore {
                     params![example.id, serde_json::to_string(&example)?],
                 )?;
                 example.sequence = tx.last_insert_rowid();
-                for asset in example.request.images.values().flatten() {
+                for (_, _, asset) in example.request.bound_images() {
                     tx.execute(
                         "INSERT OR IGNORE INTO example_assets(example_id,asset_id) VALUES(?1,?2)",
                         params![example.id, asset],

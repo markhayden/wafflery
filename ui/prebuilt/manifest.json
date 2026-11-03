@@ -17,7 +17,7 @@
     "ui/src/api/reports.ts": "5241156e5e9c94f7a20b77310c2430a3e04c9294e98f6b3e1ae6ff0412c69083",
     "ui/src/api/session.ts": "216dfa6b5e809fcb0c1f97f1cf47850455646b1382826a2eb83c5fad475f96fb",
     "ui/src/api/tool-session.ts": "26adaf12701541325177e2bb4f4e6e3c23df1382e814190b7dbe217e4f72a545",
-    "ui/src/api/workspace.ts": "9e98d8745a39a57c0ff48b386fe36f4d5235b035d0efe7e3647f215df8131295",
+    "ui/src/api/workspace.ts": "023c33a3b614c1bea05c8149dab4d92b2f4868b090239da4d6b3b2effb6d380f",
     "ui/src/assets/wafflery-mark.svg": "51bc8a040e26b897a948238598b8cabdf69bf4687c2b1a70613b542de1c99f1f",
     "ui/src/components/Button.module.css": "ab2357148b3b415f5fbb33988a2aa3a97162ca357a119775a31d8dd390aef44e",
     "ui/src/components/Button.stories.tsx": "489b0b293bbeb9f5813829a79bc9e78c5ddffa0116d71b0582985750716136fa",

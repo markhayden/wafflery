@@ -36,7 +36,12 @@ pub async fn archive(
         ));
     }
     let mut entries = vec![("evidence/attempt.json".to_owned(), metadata)];
-    let mut ids: BTreeSet<String> = attempt.request.images.values().flatten().cloned().collect();
+    let mut ids: BTreeSet<String> = attempt
+        .request
+        .bound_images()
+        .into_iter()
+        .map(|(_, _, id)| id.to_owned())
+        .collect();
     for output in &attempt.outputs {
         if let Some(id) = output["asset"]["id"].as_str() {
             ids.insert(id.into());

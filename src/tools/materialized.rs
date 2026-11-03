@@ -18,20 +18,19 @@ pub(super) fn discard(root: &Path, attempt: &Attempt) -> io::Result<()> {
         return Err(io::Error::other("Input directory is no longer owned"));
     }
     let mut paths = Vec::new();
-    for slot in attempt.request.images.keys() {
+    for (slot, index, _) in attempt.request.bound_images() {
         let argument = &attempt.arguments[slot];
-        let values = argument
-            .as_array()
-            .map(Vec::as_slice)
-            .unwrap_or_else(|| std::slice::from_ref(argument));
-        for value in values {
-            if let Some(path) = value["path"].as_str() {
-                let path = Path::new(path);
-                if path.parent() != Some(directory.as_path()) {
-                    return Err(io::Error::other("Input path escaped its owned directory"));
-                }
-                paths.push(path);
+        let value = if argument.is_array() {
+            &argument[index]
+        } else {
+            argument
+        };
+        if let Some(path) = value["path"].as_str() {
+            let path = Path::new(path);
+            if path.parent() != Some(directory.as_path()) {
+                return Err(io::Error::other("Input path escaped its owned directory"));
             }
+            paths.push(path);
         }
     }
     // Validate the entire set first; an invalid later path must not delete an earlier copy.

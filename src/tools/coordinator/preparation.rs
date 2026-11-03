@@ -36,13 +36,13 @@ impl Coordinator {
             return Ok(existing);
         }
         // Reserve under submission before creating any copies; duplicated bindings each count.
-        if request.images.values().map(Vec::len).sum::<usize>() > 32 {
+        if request.bound_images().len() > 32 {
             return Err(Error::Invalid(
                 "A preparation supports at most 32 images".into(),
             ));
         }
         let mut bytes = 0;
-        for id in request.images.values().flatten() {
+        for (_, _, id) in request.bound_images() {
             bytes += u64::from(self.assets.metadata(id).await?.size);
         }
         self.preparations.capacity(bytes)?;

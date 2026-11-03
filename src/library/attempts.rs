@@ -15,6 +15,48 @@ pub struct Submission {
     pub images: BTreeMap<String, Vec<String>>,
     #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
     pub frames: BTreeMap<String, Vec<ImageFrame>>,
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    pub bindings: BTreeMap<String, Vec<InputBinding>>,
+}
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
+#[serde(tag = "kind", rename_all = "snake_case", deny_unknown_fields)]
+pub enum InputBinding {
+    Image {
+        asset: String,
+        #[serde(default)]
+        frame: ImageFrame,
+    },
+    Artifact {
+        reference: Value,
+    },
+    Location {
+        value: Value,
+    },
+}
+impl Submission {
+    /// Every owned image occurrence, including repeated assets and mixed operation lists.
+    pub fn bound_images(&self) -> Vec<(&str, usize, &str)> {
+        self.images
+            .iter()
+            .flat_map(|(slot, images)| {
+                images
+                    .iter()
+                    .enumerate()
+                    .map(move |(index, id)| (slot.as_str(), index, id.as_str()))
+            })
+            .chain(self.bindings.iter().flat_map(|(slot, items)| {
+                items
+                    .iter()
+                    .enumerate()
+                    .filter_map(move |(index, item)| match item {
+                        InputBinding::Image { asset, .. } => {
+                            Some((slot.as_str(), index, asset.as_str()))
+                        }
+                        _ => None,
+                    })
+            }))
+            .collect()
+    }
 }
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
 #[serde(deny_unknown_fields)]
@@ -157,7 +199,7 @@ impl AttemptStore {
                     ],
                 )?;
                 attempt.sequence = tx.last_insert_rowid();
-                for asset in attempt.request.images.values().flatten() {
+                for (_, _, asset) in attempt.request.bound_images() {
                     tx.execute(
                         "INSERT OR IGNORE INTO attempt_assets(attempt_id,asset_id) VALUES(?1,?2)",
                         params![attempt.id, asset],
