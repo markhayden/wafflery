@@ -1,5 +1,19 @@
+export type BindingIssue = {port:string; index?:number; problem:"wrong_type"|"wrong_version"|"wrong_frame"|"unresolved"; expected:string; got:string; remedy?:string};
+function bindingIssues(error: object): BindingIssue[] {
+  if (!("code" in error) || error.code!=="binding" || !("bindings" in error) || !Array.isArray(error.bindings)) return [];
+  const values: unknown[]=error.bindings;
+  return values.every((item):item is BindingIssue=>{
+    if (!item || typeof item!=="object") return false;
+    const value=item as Record<string,unknown>;
+    return typeof value.port==="string" && typeof value.expected==="string" && typeof value.got==="string" &&
+      typeof value.problem==="string" && ["wrong_type","wrong_version","wrong_frame","unresolved"].includes(value.problem) &&
+      (value.index===undefined || (typeof value.index==="number" && Number.isSafeInteger(value.index) && value.index>=0)) &&
+      (value.remedy===undefined || typeof value.remedy==="string") &&
+      (value.problem!=="unresolved" || typeof value.remedy==="string");
+  }) ? values : [];
+}
 export class ApiError extends Error {
-  constructor(message: string, readonly status: number) { super(message); }
+  constructor(message: string, readonly status: number, readonly bindings: BindingIssue[] = []) { super(message); }
 }
 
 /** Only the host origin receives credentials. Tool viewers use separate, uncredentialed URLs. */
@@ -18,7 +32,7 @@ export class LocalApi {
     if (!response.ok) {
       const payload: unknown = await response.json().catch(() => null);
       if (payload && typeof payload === "object" && "error" in payload && payload.error && typeof payload.error === "object" && "message" in payload.error && typeof payload.error.message === "string") {
-        throw new ApiError(payload.error.message, response.status);
+        throw new ApiError(payload.error.message, response.status, bindingIssues(payload.error));
       }
       throw new ApiError("The workspace could not complete that request.", response.status);
     }

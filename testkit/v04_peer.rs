@@ -21,6 +21,7 @@ struct Configuration {
     tool: String,
     allowed: Vec<PathBuf>,
     hold_operation: bool,
+    priced_operations: bool,
 }
 impl Configuration {
     fn parse(arguments: Vec<String>) -> Result<Self, String> {
@@ -28,9 +29,14 @@ impl Configuration {
             tool: "sample-lab".into(),
             allowed: vec![],
             hold_operation: false,
+            priced_operations: false,
         };
         let mut arguments = arguments.into_iter();
         while let Some(flag) = arguments.next() {
+            if flag == "--priced-operations" {
+                result.priced_operations = true;
+                continue;
+            }
             if flag == "--hold-operation" {
                 result.hold_operation = true;
                 continue;
@@ -97,11 +103,23 @@ pub fn serve(root: &Path, arguments: Vec<String>) -> Result<(), Box<dyn std::err
     let store =
         Arc::new(Store::new(root, tool, configuration.allowed.clone()).map_err(|e| e.to_string())?);
     let documents = v04_fixtures::documents(tool);
-    let description = &documents
+    let mut description = documents
         .iter()
         .find(|(id, _)| *id == "urn:table-manners:core:description")
         .unwrap()
-        .1;
+        .1
+        .clone();
+    if configuration.priced_operations {
+        for action in description["actions"]
+            .as_array_mut()
+            .unwrap()
+            .iter_mut()
+            .filter(|action| action["kind"] == "operation")
+        {
+            action["cost"] = json!({"may_spend":true,"basis":"estimated"});
+        }
+    }
+    let mut quotes = std::collections::HashMap::<String, std::time::Instant>::new();
     let mut session = documents
         .iter()
         .find(|(id, _)| *id == "urn:table-manners:core:session")
@@ -172,6 +190,9 @@ pub fn serve(root: &Path, arguments: Vec<String>) -> Result<(), Box<dyn std::err
                     json!({"name":"export","description":"Export held synthetic artifacts.","inputSchema":Calls::control_schema("export-request")}),
                     json!({"name":"import","description":"Import complete portable synthetic records.","inputSchema":Calls::control_schema("import-request")}),
                 ];
+                if configuration.priced_operations {
+                    tools.push(json!({"name":"estimate","description":"Price one synthetic operation.","inputSchema":{"type":"object","required":["action","arguments"],"properties":{"action":{"type":"string"},"arguments":{"type":"object"}},"additionalProperties":false}}));
+                }
                 tools.extend(calls.catalogue());
                 result(json!({"tools":tools}))
             }
@@ -183,6 +204,18 @@ pub fn serve(root: &Path, arguments: Vec<String>) -> Result<(), Box<dyn std::err
                     structured(description.clone())
                 } else {
                     error(-32602, "describe takes an empty object")
+                }
+            }
+            "tools/call" if params["name"] == "estimate" && configuration.priced_operations => {
+                match calls.estimate(&store, &params["arguments"], &session) {
+                    Ok(quote) => {
+                        quotes.insert(
+                            quote["binding"].as_str().unwrap().into(),
+                            std::time::Instant::now(),
+                        );
+                        structured(quote)
+                    }
+                    Err(error) => json!({"error":error}),
                 }
             }
             "tools/call" if params["name"] == "export" || params["name"] == "import" => {
@@ -200,10 +233,29 @@ pub fn serve(root: &Path, arguments: Vec<String>) -> Result<(), Box<dyn std::err
                 {"uri":format!("{tool}://session"),"name":"Session","mimeType":"application/json"},
                 {"uri":format!("{tool}://runs"),"name":"Runs","mimeType":"application/json"}
             ]})),
-            "tools/call" => match jobs.submit(id.clone(), params.clone()) {
-                Ok(()) => continue,
-                Err(value) => json!({"error":value}),
-            },
+            "tools/call" => {
+                let priced = configuration.priced_operations
+                    && description["actions"]
+                        .as_array()
+                        .unwrap()
+                        .iter()
+                        .any(|action| {
+                            action["name"] == params["name"] && action["cost"]["may_spend"] == true
+                        });
+                let authorization = if priced {
+                    calls.estimate(&store,&json!({"action":params["name"],"arguments":params["arguments"]}),&session).and_then(|quote| {
+                        let binding=quote["binding"].as_str().unwrap();
+                        if params["_meta"]["table-manners/estimate"]==binding && quotes.get(binding).is_some_and(|created|created.elapsed()<std::time::Duration::from_secs(60)) {Ok(())}
+                        else {Err(json!({"code":-32602,"message":"Estimate no longer matches","data":{"reason":"stale_estimate","run":null}}))}
+                    })
+                } else {
+                    Ok(())
+                };
+                match authorization.and_then(|()| jobs.submit(id.clone(), params.clone())) {
+                    Ok(()) => continue,
+                    Err(error) => json!({"error":error}),
+                }
+            }
             "resources/read" => {
                 let uri = params["uri"].as_str().unwrap_or("");
                 if let Some(content) = calls.resource(uri) {

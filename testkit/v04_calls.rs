@@ -45,6 +45,42 @@ impl Calls {
             json!({"name":action["name"],"description":action["purpose"],"inputSchema":v04_bindings::schemas::input_schema(action)})
         }).collect()
     }
+    /// Scripted zero-spend control: exercise paid host guards without any provider.
+    pub fn estimate(
+        &self,
+        store: &Store,
+        request: &Value,
+        session: &Value,
+    ) -> Result<Value, Value> {
+        use sha2::{Digest, Sha256};
+        let action = request["action"].as_str().unwrap_or("");
+        let prepared=v04_bindings::prepare(store,&self.tool,action,request["arguments"].clone()).map_err(|failure|match failure {
+            Failure::Rpc(error)=>error,
+            Failure::Invalid(reason)=>json!({"code":-32602,"message":reason,"data":{"reason":"invalid_arguments","run":null,"error":{"code":"input","retryable":false,"reason":reason}}}),
+        })?;
+        let cap=prepared.arguments["max_spend_usd"].as_f64().filter(|cap|*cap>0.0 && *cap<=1.0)
+            .ok_or_else(||json!({"code":-32602,"message":"Choose a positive cap no greater than $1","data":{"reason":"invalid_arguments","run":null,"error":{"code":"usage","retryable":false,"reason":"The scripted configured cap is $1."}}}))?;
+        let hash = |value: &Value| {
+            format!(
+                "sha256:{}",
+                Sha256::digest(value.to_string().as_bytes())
+                    .iter()
+                    .map(|byte| format!("{byte:02x}"))
+                    .collect::<String>()
+            )
+        };
+        let effective =
+            json!({"model":null,"config_identity":hash(&json!({"defaults":"synthetic-v04"}))});
+        let binding = hash(
+            &json!({"tool":self.tool,"version":"0.1.0","action":action,"arguments":prepared.arguments,"session":session["id"],"effective":effective}),
+        );
+        Ok(
+            json!({"contract":"0.4.0","tool":{"name":self.tool,"version":"0.1.0"},"action":action,
+            "binding":binding,"session_id":session["id"],"effective":effective,"worst_case_usd":0,"cap_usd":cap,
+            "allowed":true,"refused":null,"readiness":{"state":"ready","requirements":[]},"session":session,
+            "expires":(time::OffsetDateTime::now_utc()+time::Duration::seconds(60)).format(&time::format_description::well_known::Rfc3339).unwrap()}),
+        )
+    }
     pub fn control_schema(name: &str) -> Value {
         let id = format!("urn:table-manners:operations:{name}");
         let text = table_manners::SCHEMAS

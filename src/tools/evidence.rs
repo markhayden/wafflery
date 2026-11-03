@@ -58,6 +58,7 @@ pub fn check_association(attempt: &Attempt, result: &Value) -> Result<Vec<String
                 .find(|action| action["name"] == attempt.request.action)
         });
     let operation = action.is_some_and(|action| action["kind"] == "operation");
+    let mut notices = Vec::new();
     let mut expected_inputs = attempt.inputs.clone();
     if let Some(action) = action.filter(|_| operation) {
         for port in action["ports"]["in"]
@@ -91,7 +92,8 @@ pub fn check_association(attempt: &Attempt, result: &Value) -> Result<Vec<String
                         expected.push(image.clone());
                     }
                     InputBinding::Artifact { reference } => {
-                        expected.push(json!({"artifact":reference}))
+                        notices.push(format!("Input image {name}[{index}] was passed by reference; its image bytes were not preserved by this library."));
+                        expected.push(json!({"artifact":reference}));
                     }
                     _ => return Err(Error::Invalid("Invalid operation image binding".into())),
                 }
@@ -139,7 +141,6 @@ pub fn check_association(attempt: &Attempt, result: &Value) -> Result<Vec<String
         *position += offset + 1;
         *counts.entry(slot).or_default() += 1;
     }
-    let mut notices = Vec::new();
     for (slot, expected) in expected_inputs
         .as_object()
         .into_iter()

@@ -46,6 +46,15 @@ impl<E: Into<Error>> From<E> for ApiError {
 }
 impl IntoResponse for ApiError {
     fn into_response(self) -> Response {
+        if let Error::BindingRefusal(data) = &self.0 {
+            return (
+                StatusCode::UNPROCESSABLE_ENTITY,
+                Json(serde_json::json!({"error":{
+                    "code":"binding","message":self.0.to_string(),"bindings":data["bindings"]
+                }})),
+            )
+                .into_response();
+        }
         let (status, code) = match &self.0 {
             Error::Conflict(_) | Error::Library(crate::library::Error::Conflict(_)) => {
                 (StatusCode::CONFLICT, "conflict")
@@ -228,4 +237,24 @@ async fn estimate(
     Path(id): Path<String>,
 ) -> Result<Json<crate::tools::coordinator::PreparedEstimate>, ApiError> {
     Ok(Json(c.prepared_estimate(&id).await?))
+}
+
+#[cfg(test)]
+mod binding_error_tests {
+    use super::*;
+    #[tokio::test]
+    async fn estimate_refusal_keeps_indexed_remedies_in_the_http_response() {
+        let bindings = serde_json::json!([{"port":"masks","index":2,"problem":"unresolved","expected":"Mask","got":"missing","remedy":"Import the bundle."}]);
+        let response = ApiError(Error::BindingRefusal(
+            serde_json::json!({"bindings":bindings}),
+        ))
+        .into_response();
+        assert_eq!(response.status(), StatusCode::UNPROCESSABLE_ENTITY);
+        let bytes = axum::body::to_bytes(response.into_body(), 4096)
+            .await
+            .unwrap();
+        let body: serde_json::Value = serde_json::from_slice(&bytes).unwrap();
+        assert_eq!(body["error"]["code"], "binding");
+        assert_eq!(body["error"]["bindings"], bindings);
+    }
 }

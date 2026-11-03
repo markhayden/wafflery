@@ -2400,12 +2400,12 @@ regression and the ordering change. Hosted CI remains the full gate. No port exe
 
 #### M5.06 — Bind operation ports through normal preparation
 
-- [ ] Bind scalar/many/optional ports in order, with image input/ref and shared location value/ref
+- [x] Bind scalar/many/optional ports in order, with image input/ref and shared location value/ref
   alternatives; keep task image/location slots on their images-profile representation. Optional empty ports are omitted; populated many ports are nonempty arrays.
   Ports cannot be overwritten by params; validate final arguments against the advertised MCP schema.
-- [ ] Use normal preparations, estimates, bound paid calls, progress, cancel and dispatch. Changing a
+- [x] Use normal preparations, estimates, bound paid calls, progress, cancel and dispatch. Changing a
   port value/order invalidates estimates. Do not compute the tool's identity or binding digest.
-- [ ] Decode binding refusals by port and optional item index, retaining order and remedy. They create
+- [x] Decode binding refusals by port and optional item index, retaining order and remedy. They create
   no tool run/spend and release client_run_id; malformed inline input can instead produce an invalid
   run. Do not conflate those cases or automatically resubmit.
 
@@ -2439,8 +2439,17 @@ wire order and copy only owned images; preparation verification, attempt/example
 evidence archives include those assets. An image reference can execute without copying its bytes;
 the existing missing-byte preservation notice remains honest until M5.08–12. Targeted checks passed
 11 integration tests, 6 binding/evidence unit tests, 17 existing preparation tests and 2 cleanup tests,
-plus clippy/typecheck. Task completion still requires paid-port/refusal-control coverage and review;
-this checkpoint is not ready-to-push or a claim that M5.07 editors exist.
+plus clippy/typecheck. Paid-port/refusal-control coverage and task review follow in the completion record below.
+
+**M5.06 completion:** estimate binding refusals retain validated port/index/problem/remedy through
+HTTP 422 and the browser client, without allocating attempts or spend. The synthetic paid peer
+exercises the bound-call route with zero spend; changing valid image coordinates invalidates the
+prepared request. Normal progress and cancellation are covered with an owned held operation.
+Review found referenced image bytes could be missing without a location output; association now
+always records that preservation gap, including the Token-output regression. Native preservation
+and artifact cards remain M5.08–12; form editors remain M5.07. Final targeted checks: 7 operation
+integration, 10 contract fixture, 11 run lifecycle, 17 wire, 1 HTTP boundary and 3 client unit tests;
+clippy and UI typecheck passed. UI assets rebuilt. Hosted CI remains the full gate.
 
 #### M5.07 — Add port editors to the input pane
 

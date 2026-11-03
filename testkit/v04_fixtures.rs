@@ -53,6 +53,8 @@ pub fn description(tool: &str) -> Value {
         if name == "locate_marker" {
             value["outputs"]["locations"] = json!(["found"]);
         }
+        value["params_schema"]["properties"]["max_spend_usd"] =
+            json!({"type":"number","exclusiveMinimum":0});
         actions.push(value);
     }
     let mut task = action("make_token", "task");

@@ -37,6 +37,8 @@ pub enum Error {
     Io(#[from] std::io::Error),
     #[error("Tool connection failed: {0}")]
     Mcp(#[from] rmcp::ServiceError),
+    #[error("The tool could not bind the selected inputs")]
+    BindingRefusal(serde_json::Value),
     #[error("Tool response could not be decoded: {0}")]
     Json(#[from] serde_json::Error),
     #[error("Tool did not answer within the control-request deadline")]

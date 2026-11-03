@@ -22,6 +22,9 @@ struct Host {
 }
 impl Host {
     async fn new() -> Self {
+        Self::with_flags(&[]).await
+    }
+    async fn with_flags(flags: &[&str]) -> Self {
         static BIN: OnceLock<PathBuf> = OnceLock::new();
         let binary = BIN.get_or_init(|| {
             assert!(
@@ -44,10 +47,14 @@ impl Host {
                 vec![Descriptor {
                     id: "peer".into(),
                     executable: binary.clone(),
-                    args: vec![
-                        root.path().join("peer").display().to_string(),
-                        "v04-operations".into(),
-                    ],
+                    args: [
+                        vec![
+                            root.path().join("peer").display().to_string(),
+                            "v04-operations".into(),
+                        ],
+                        flags.iter().map(|flag| (*flag).to_owned()).collect(),
+                    ]
+                    .concat(),
                     cwd: root.path().into(),
                     allow_dirs: vec![root.path().into()],
                     evidence_dirs: vec![root.path().into()],
@@ -57,10 +64,16 @@ impl Host {
             .await
             .unwrap(),
         );
+        let snapshot = c.snapshot().await.unwrap();
+        assert!(
+            snapshot["tools"][0]["declaration"].is_object(),
+            "{}",
+            snapshot["tools"][0]["error"]
+        );
         Self { root, c, image }
     }
     async fn request(&self, id: &str, action: &str, bindings: Value) -> Submission {
-        serde_json::from_value(json!({"id":id,"tool":"peer","action":action,"revision":self.c.description("peer").await.unwrap().revision,"params":{},"images":{},"bindings":bindings})).unwrap()
+        serde_json::from_value(json!({"id":id,"tool":"peer","action":action,"revision":self.c.description("peer").await.unwrap_or_else(|error| panic!("description: {error}")).revision,"params":{},"images":{},"bindings":bindings})).unwrap()
     }
     async fn settled(&self, id: &str) -> Attempt {
         tokio::time::timeout(Duration::from_secs(8), async {
@@ -130,7 +143,7 @@ async fn saved_native_references_chain_without_rerunning_upstream_and_refusals_s
         .request(
             "locate-reference",
             "locate_marker",
-            json!({"image":[{"kind":"artifact","reference":image_reference}]}),
+            json!({"image":[{"kind":"artifact","reference":image_reference.clone()}]}),
         )
         .await;
     h.c.submit(image_request).await.unwrap();
@@ -142,18 +155,30 @@ async fn saved_native_references_chain_without_rerunning_upstream_and_refusals_s
         image_result
             .notices
             .iter()
-            .any(|note| note.contains("image bytes that were not preserved"))
+            .any(|note| note.contains("image bytes"))
     );
     let marker = located.result.unwrap()["artifacts"]["out"][0]["artifact"].clone();
     let request = h
         .request(
             "stamp",
             "stamp_marker",
-            json!({"image":[image],"marker":[{"kind":"artifact","reference":marker}]}),
+            json!({"image":[image],"marker":[{"kind":"artifact","reference":marker.clone()}]}),
         )
         .await;
     h.c.submit(request).await.unwrap();
     let stamped = h.settled("stamp").await;
+    let referenced = h.request("stamp-reference", "stamp_marker", json!({"image":[{"kind":"artifact","reference":image_reference.clone()}],"marker":[{"kind":"artifact","reference":marker.clone()}]})).await;
+    h.c.submit(referenced).await.unwrap();
+    let referenced = h.settled("stamp-reference").await;
+    assert_eq!(referenced.execution, "completed");
+    assert_eq!(referenced.preservation["contract"], "incomplete");
+    assert!(
+        referenced
+            .notices
+            .iter()
+            .any(|note| note.contains("passed by reference"))
+    );
+
     assert_eq!(stamped.execution, "completed");
     let token = stamped.result.unwrap()["artifacts"]["out"][0]["artifact"].clone();
     let binding = json!({"kind":"artifact","reference":token});
@@ -182,7 +207,7 @@ async fn saved_native_references_chain_without_rerunning_upstream_and_refusals_s
             "refused",
             "collect_tokens",
             json!({"tokens":[
-        {"kind":"artifact","reference":marker},{"kind":"artifact","reference":wrong_version},
+        {"kind":"artifact","reference":marker.clone()},{"kind":"artifact","reference":wrong_version},
         {"kind":"artifact","reference":wrong_frame},{"kind":"artifact","reference":missing}]}),
         )
         .await;
@@ -248,5 +273,95 @@ async fn shared_location_values_use_the_declared_port_without_native_decoding() 
     let saved = h.settled("location-value").await;
     assert_eq!(saved.execution, "completed");
     assert_eq!(saved.arguments["marker"], location);
+    h.close().await;
+}
+
+#[tokio::test]
+async fn priced_operation_estimates_bind_ports_without_creating_attempts() {
+    let h = Host::with_flags(&["--priced-operations"]).await;
+    let mut request = h
+        .request(
+            "priced",
+            "locate_marker",
+            json!({"image":[{"kind":"image","asset":h.image.id}]}),
+        )
+        .await;
+    request.params = json!({"max_spend_usd":0.5});
+    h.c.prepare(request.clone()).await.unwrap();
+    let quote = h.c.estimate_prepared("priced").await.unwrap();
+    assert!(h.c.attempts.get("priced").await.is_err());
+    let mut edited = request.clone();
+    edited.bindings.get_mut("image").unwrap()[0] = serde_json::from_value(json!({"kind":"image","asset":h.image.id,"frame":{"projection":"equirectangular","topology":"wrap"}})).unwrap();
+    assert!(h.c.submit_prepared(edited).await.is_err());
+    h.c.submit_prepared(request).await.unwrap();
+    let saved = h.settled("priced").await;
+    assert_eq!(saved.execution, "completed");
+    assert!(quote.estimate.get("binding").is_none()); // Binding stays in the host, not the browser receipt.
+    assert!(saved.observations["estimate"]["binding"].is_string());
+    assert_eq!(
+        saved.wire.as_ref().unwrap()["params"]["_meta"]["table-manners/estimate"],
+        saved.observations["estimate"]["binding"]
+    );
+    h.close().await;
+}
+
+#[tokio::test]
+async fn estimate_binding_refusals_preserve_indices_without_runs_or_spend() {
+    let h = Host::with_flags(&["--priced-operations"]).await;
+    let missing =
+        fixtures::artifact_variant("sample-lab", "sample-lab:Token", 0.75)["artifact"].clone();
+    let mut request = h
+        .request(
+            "refused-estimate",
+            "collect_tokens",
+            json!({"tokens":[{"kind":"artifact","reference":missing}]}),
+        )
+        .await;
+    request.params = json!({"max_spend_usd":0.5});
+    h.c.prepare(request.clone()).await.unwrap();
+    let error = h.c.estimate_prepared(&request.id).await.err().unwrap();
+    let wafflery::tools::Error::BindingRefusal(data) = error else {
+        panic!("Expected structured binding refusal: {error}")
+    };
+    assert_eq!(data["bindings"][0]["port"], "tokens");
+    assert_eq!(data["bindings"][0]["index"], 0);
+    assert_eq!(data["bindings"][0]["problem"], "unresolved");
+    assert!(data["bindings"][0]["remedy"].is_string());
+    assert!(h.c.attempts.get(&request.id).await.is_err());
+    assert!(h.c.prepared_estimate(&request.id).await.is_err());
+    assert_eq!(h.c.session("peer").await.unwrap()["spent_usd"], 0);
+    h.c.discard_preparation(&request.id).await.unwrap();
+    h.c.prepare(request).await.unwrap(); // No attempt claimed this client ID.
+    h.close().await;
+}
+
+#[tokio::test]
+async fn port_dispatch_reports_progress_and_cancels_through_the_normal_owner() {
+    let h = Host::with_flags(&["--hold-operation"]).await;
+    let request = h
+        .request(
+            "cancel-port",
+            "locate_marker",
+            json!({"image":[{"kind":"image","asset":h.image.id}]}),
+        )
+        .await;
+    h.c.submit(request).await.unwrap();
+    tokio::time::timeout(Duration::from_secs(8), async {
+        loop {
+            let snapshot = h.c.snapshot().await.unwrap();
+            if snapshot["tools"][0]["progress"]["message"]
+                .as_str()
+                .is_some_and(|message| message.contains("Waiting"))
+            {
+                break;
+            }
+            tokio::time::sleep(Duration::from_millis(10)).await;
+        }
+    })
+    .await
+    .unwrap();
+    h.c.cancel("cancel-port").await.unwrap();
+    let saved = h.settled("cancel-port").await;
+    assert_eq!(saved.result.as_ref().unwrap()["status"], "cancelled");
     h.close().await;
 }
