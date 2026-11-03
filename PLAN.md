@@ -2105,6 +2105,25 @@ typecheck, 57 UI tests, 2 asset tests, Storybook, byte-identical check-ui builds
 226 browser tests (8 skipped). Generated UI assets are refreshed in their own commit; dependency
 lockfiles are unchanged and the temporary browser config is removed. The drawer wiring follows.
 
+**b4c implementation:** setup now displays the validated session's effective folders. Refresh
+immediately removes stale effective access; loading and unavailable never imply deny-all. Requested
+inputs and result-read permissions remain separate. Configured browser fixtures grant a parent input
+folder but narrow the running peer to its approved child plus the execution area. Tests verify the
+live narrowed list, refresh without applying a config edit, explicit restart to deny-all, unchanged
+requested folders, and recovery from an unavailable response. Stories cover narrowed/empty/loading/
+unavailable at 320, 768, 1024 and 1440 widths. Both live browser regressions failed in Chromium and
+WebKit against the original `not_reported` fallback; acceptance checks follow.
+
+**b4c checkpoint (2026-11-02):** both live regression cases failed against the old fallback
+in Chromium and WebKit, then passed with the reported session list. Six target browser cases passed;
+the two live cases additionally passed 20 repetitions per browser (80 checks) with no retries.
+Review approved lifecycle/state separation. Folder comparisons are order-independent; the story
+case uses typed tuples. WebKit's deny-all screenshot was visually inspected: long literal paths
+wrap within the drawer and effective access remains distinct from requested/result folders.
+The full shared-lock matrix passed fmt/clippy, 383 Rust tests (4 ignored), typecheck, 57 UI tests,
+2 asset tests, Storybook, reproducible assets, release build and 230 browser tests (8 skipped).
+Generated assets are updated separately; lockfiles unchanged, temporary config removed.
+
 **Checkpoint A:** merge M5.01–03 as a coherent cutover of validation, launch arguments and fake
 defaults; v0.4 is the only supported live contract afterward. Green matrix, an independent fake
 task run and the published exact dependency pin are required.

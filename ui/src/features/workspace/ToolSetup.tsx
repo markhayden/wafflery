@@ -84,9 +84,9 @@ export function ToolSetup({ tool, action, loadSession, directoryGrants = null }:
         </dl></details>
       </>}
     </section>
-    <DirectoryAccess grants={directoryGrants} effective={{
-      // v0.3 sessions cannot report effective folders; M5.03 supplies validated allowed_dirs.
-      state: loading ? "loading" : error ? "unavailable" : "not_reported",
-    }} />
+    <DirectoryAccess grants={directoryGrants} effective={loading
+      ? {state:"loading"}
+      : session && !error ? {state:"reported", allowed_dirs:session.allowed_dirs}
+        : {state:"unavailable"}} />
   </div>;
 }

@@ -10,6 +10,7 @@ const session: ToolSession = {
 const meta = {
   title: "Workspace/ToolSetup", component: ToolSetup,
   args: { tool: session.tool,
+    directoryGrants: {requested_dirs:["/work/reference images"], evidence_dirs:["/work/tool/results"]},
     action: { name: "check", title: "Check an image", purpose: "A sample paid action", params_schema: {}, cost: { may_spend: true }, readiness: { state: "ready", requirements: [{ kind: "credential", name: "EXAMPLE_API_KEY", state: "present" }] } },
     loadSession: async () => session },
 } satisfies Meta<typeof ToolSetup>;
@@ -34,3 +35,6 @@ export const Requirements: Story = { args: { action: { ...meta.args.action, read
 export const UnavailableAction: Story = { args: { action: { ...meta.args.action, readiness: {
   state: "unavailable", requirements: [{ kind: "dependency", name: "optional backend", state: "missing", setup: "This build does not include the backend." }],
 } } } };
+
+export const NarrowedAccess: Story = {};
+export const NoFileAccess: Story = {args:{loadSession:async () => ({...session,allowed_dirs:[]})}};

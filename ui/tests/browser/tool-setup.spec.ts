@@ -1,6 +1,6 @@
 import { prepareSampleInput } from "./sample-input";
 import { test, expect } from "./tool-host";
-import { writeFile } from "node:fs/promises";
+import { realpath, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 
 test("setup shows reported allowances and never promotes a credential name to readiness", async ({ page }) => {
@@ -309,7 +309,7 @@ test("restart stories fit small screens and explain busy or disconnected states"
   await expect(page.getByRole("button", { name: "Restart tool session", exact: true })).toBeEnabled();
 });
 
-test("live folder setup reports launch permissions without inventing effective access", async ({page,host}, testInfo) => {
+test("live folder setup displays effective access and clears stale access on refresh", async ({page,host}, testInfo) => {
   await host.open(page);
   await page.getByRole("button", {name:"Tool setup",exact:true}).click();
   const drawer = page.getByRole("dialog",{name:"Tool setup",exact:true});
@@ -317,25 +317,89 @@ test("live folder setup reports launch permissions without inventing effective a
   const effective = access.getByRole("group",{name:"Effective input folders"});
   const requested = access.getByRole("group",{name:"Requested input folders"});
   const results = access.getByRole("group",{name:"Result folders"});
-  await expect(effective).toContainText("Not reported");
-  await expect(effective.locator("code")).toHaveCount(0);
+  await expect(effective.locator("code")).toHaveCount(1);
+  await expect(effective.locator("code")).toContainText("/data/Library/execution");
   await expect(requested.locator("code")).toHaveCount(1);
   await expect(requested.locator("code")).toContainText("/data/Library/execution");
   await expect(results.locator("code")).toHaveCount(1);
   await expect(results.locator("code")).toContainText("/tool");
   const before = await requested.locator("code").allTextContents();
-  await page.route("**/api/tools/sample/session", route => route.fulfill({status:503,contentType:"application/json",body:JSON.stringify({error:{message:"Session temporarily unavailable"}})}));
+  let release!: () => void;
+  const pending = new Promise<void>(resolve => { release = resolve; });
+  await page.route("**/api/tools/sample/session", async route => {
+    await pending;
+    await route.fulfill({status:503,contentType:"application/json",body:JSON.stringify({error:{message:"Session temporarily unavailable"}})});
+  });
   try {
     await drawer.getByRole("button",{name:"Refresh",exact:true}).click();
+    await expect(effective).toContainText("Checking access…");
+    await expect(effective.locator("code")).toHaveCount(0);
+    release();
     await expect(effective).toContainText("Unavailable");
     await expect(effective).not.toContainText("Not reported");
     await expect(effective).not.toContainText("No file paths allowed.");
     await expect(requested.locator("code")).toHaveText(before);
   } finally {
+    release();
     await page.unrouteAll({behavior:"wait"});
   }
   await drawer.getByRole("button",{name:"Refresh",exact:true}).click();
-  await expect(effective).toContainText("Not reported");
+  await expect(effective.locator("code")).toHaveText(before);
   await access.scrollIntoViewIfNeeded();
   await access.screenshot({path:testInfo.outputPath("live-folder-access.png")});
+});
+
+
+test.describe("configured folder access", () => {
+  test.use({hostScenario:"estimates", hostAccess:"narrowed"});
+  test("configured folder access stays frozen until explicit restart", async ({page,host}, testInfo) => {
+    await host.open(page);
+    await page.getByRole("button", {name:"Tool setup",exact:true}).click();
+    const drawer = page.getByRole("dialog",{name:"Tool setup",exact:true});
+    const access = drawer.getByRole("region",{name:"Folder access"});
+    const effective = access.getByRole("group",{name:"Effective input folders"});
+    const requested = access.getByRole("group",{name:"Requested input folders"});
+    const inputs = await realpath(join(host.root,"../inputs"));
+    const execution = join(await realpath(host.root),"Library/execution");
+    await expect.poll(async () => (await effective.locator("code").allTextContents()).sort())
+      .toEqual([execution,join(inputs,"approved")].sort());
+    await expect(requested.locator("code")).toHaveCount(2);
+    expect((await requested.locator("code").allTextContents()).sort()).toEqual([inputs,execution].sort());
+    const spending = drawer.getByRole("region",{name:"Session spending"});
+    await spending.getByText("Session identity",{exact:true}).click();
+    const original = await spending.locator("code").innerText();
+    await writeFile(join(host.root,"../access.json"),JSON.stringify({allowed_dirs:[]}));
+    const refreshed = page.waitForResponse(response => new URL(response.url()).pathname === "/api/tools/sample/session");
+    await drawer.getByRole("button",{name:"Refresh",exact:true}).click();
+    await refreshed;
+    await expect.poll(async () => (await effective.locator("code").allTextContents()).sort())
+      .toEqual([execution,join(inputs,"approved")].sort());
+    await expect(spending.locator("code")).toHaveText(original);
+    await drawer.getByRole("button",{name:"Restart tool session",exact:true}).click();
+    await drawer.getByRole("button",{name:"Confirm restart",exact:true}).click();
+    await expect(drawer.getByRole("region",{name:"Restart tool"})).toContainText("Tool restarted");
+    await expect(effective).toContainText("No file paths allowed.");
+    await expect(effective.locator("code")).toHaveCount(0);
+    await expect(requested.locator("code")).toHaveCount(2);
+    expect((await requested.locator("code").allTextContents()).sort()).toEqual([inputs,execution].sort());
+    await access.scrollIntoViewIfNeeded();
+    await access.screenshot({path:testInfo.outputPath("configured-deny-all.png")});
+  });
+});
+
+
+test("folder access stories keep narrowing, deny-all and loading distinct", async ({page}, testInfo) => {
+  for (const [story, expected] of [["narrowed-access","/work/reference images/approved"],
+    ["no-file-access","No file paths allowed."], ["loading","Checking access…"],
+    ["unavailable","Unavailable"]] as const) {
+    await page.goto(`http://127.0.0.1:6006/iframe.html?id=workspace-toolsetup--${story}&viewMode=story`);
+    const access = page.getByRole("region",{name:"Folder access"});
+    await expect(access.getByRole("group",{name:"Effective input folders"})).toContainText(expected);
+    await expect(access.getByRole("group",{name:"Requested input folders"})).toContainText("/work/reference images");
+    for (const width of [320,768,1024,1440]) {
+      await page.setViewportSize({width,height:900});
+      expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+    }
+    await access.screenshot({path:testInfo.outputPath(`folder-${story}.png`)});
+  }
 });

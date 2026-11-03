@@ -25,10 +25,12 @@ export const test = base.extend<{
   host: Host;
   hostScenario: string;
   hostKind: "sample" | "rascal" | "squint";
+  hostAccess: "unrestricted" | "narrowed";
 }>({
   hostScenario: ["normal", { option: true }],
   hostKind: ["sample", { option: true }],
-  host: async ({ hostScenario, hostKind }, use, testInfo) => {
+  hostAccess: ["unrestricted", { option: true }],
+  host: async ({ hostScenario, hostKind, hostAccess }, use, testInfo) => {
     const temporary = await mkdtemp(join(tmpdir(), "wafflery-workflow-"));
     const root = join(temporary, "data"),
       toolRoot = join(temporary, "tool");
@@ -50,6 +52,16 @@ export const test = base.extend<{
       throw new Error(
         "Real Rascal checks require an explicitly selected absolute WAFFLERY_RASCAL_BIN",
       );
+    }
+    const configuredAccess = hostAccess === "narrowed";
+    if (configuredAccess && (hostKind !== "sample" || hostScenario !== "estimates"))
+      throw new Error("Configured grants require the estimates peer.");
+    const inputs = join(temporary, "inputs"), config = join(temporary, "access.json");
+    if (configuredAccess) {
+      await mkdir(join(inputs, "approved"), {recursive:true});
+      await writeFile(config, JSON.stringify({allowed_dirs:[
+        await realpath(join(inputs, "approved")), join(await realpath(root), "Library", "execution"),
+      ]}));
     }
     const source = join(temporary, "registration.json");
     await writeFile(
@@ -74,7 +86,8 @@ export const test = base.extend<{
                     ? rascalServeArgs(toolRoot)
                     : [toolRoot, hostScenario],
                 cwd: toolRoot,
-                allow_dirs: [], evidence_dirs: [toolRoot],
+                allow_dirs: configuredAccess ? [inputs] : [], evidence_dirs: [toolRoot],
+                ...(configuredAccess ? {config} : {}),
               },
             ],
       ),
