@@ -11,8 +11,9 @@ import type { Plugin } from "vite";
 
 type Reply = { origin?: string; bootstrap?: string };
 
-/** One request on the host's control socket (the protocol `wafflery` itself uses). */
-export function control(library: string, operation: "status" | "bootstrap"): Promise<Reply> {
+/** One request on the host's control socket (the protocol `wafflery` itself uses). Async, so a
+ * missing record (a host still starting) is a rejection the bridge answers with 503. */
+export async function control(library: string, operation: "status" | "bootstrap"): Promise<Reply> {
   const root = realpathSync(library);
   const record = JSON.parse(readFileSync(`${root}/host.json`, "utf8")) as { socket?: unknown };
   if (typeof record.socket !== "string") throw new Error("host record names no control socket");
