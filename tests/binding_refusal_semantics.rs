@@ -5,7 +5,7 @@ mod fixtures;
 mod refusal;
 use refusal::Context;
 use serde_json::{Value, json};
-use wafflery::tools::{Error, Result};
+use wafflery::tools::{Error, Result, validator};
 
 fn operation() -> Value {
     let description = fixtures::description("test-prism");
@@ -180,4 +180,31 @@ fn other_valid_refusal_variants_are_rejected_without_a_panic() {
     let data = json!({"reason":"invalid_arguments", "run":null,
         "error":{"code":"usage","retryable":false,"reason":"Synthetic input refusal."}});
     assert!(refusal::validate(&data, Context::ArtifactRead).is_err());
+}
+
+#[test]
+fn inline_images_and_locations_cannot_be_reported_as_failed_artifact_references() {
+    let mut action = operation();
+    for many in [false, true] {
+        action["ports"]["in"] = json!([{"name":"image","type":"image","many":many}]);
+        let data = fixtures::refusal("wrong_frame", Some("image"), many.then_some(0));
+        for direct in [
+            json!({"path":"/input.png"}),
+            json!({"inline":{"media_type":"image/png","data":"AA=="}}),
+            json!({"kind":"line","parts":[]}),
+            json!({"identity":"not-a-reference"}),
+        ] {
+            let arguments = json!({"image":if many {json!([direct])} else {direct}});
+            assert!(
+                refusal::validate(
+                    &data,
+                    Context::Operation {
+                        action: &action,
+                        arguments: &arguments
+                    }
+                )
+                .is_err()
+            );
+        }
+    }
 }

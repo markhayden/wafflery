@@ -4,6 +4,9 @@
 mod fixtures;
 
 mod association;
+// Artifact-read/export contexts are staged until their M5 clients are enabled.
+#[allow(dead_code)]
+mod binding_refusal_semantics;
 mod bindings;
 pub mod client;
 pub mod coordinator;

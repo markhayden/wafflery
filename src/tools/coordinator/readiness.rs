@@ -52,7 +52,21 @@ impl Coordinator {
         id: &str,
         error: &Error,
     ) -> Result<bool> {
-        let Some((raw, data)) = no_run_refusal(error, client.run_reference()?.is_none()) else {
+        let saved = self.attempts.get(id).await?;
+        let action = saved.declaration["document"]["actions"]
+            .as_array()
+            .and_then(|actions| {
+                actions
+                    .iter()
+                    .find(|action| action["name"] == saved.request.action)
+            })
+            .unwrap_or(&Value::Null);
+        let Some((raw, data)) = no_run_refusal(
+            error,
+            client.run_reference()?.is_none(),
+            action,
+            &saved.arguments,
+        ) else {
             return Ok(false);
         };
         self.attempts.update(id, move |attempt| {
@@ -73,7 +87,12 @@ impl Coordinator {
         Ok(true)
     }
 }
-fn no_run_refusal(error: &Error, no_run: bool) -> Option<(Value, Value)> {
+fn no_run_refusal(
+    error: &Error,
+    no_run: bool,
+    action: &Value,
+    arguments: &Value,
+) -> Option<(Value, Value)> {
     let Error::Mcp(rmcp::ServiceError::McpError(rpc)) = error else {
         return None;
     };
@@ -88,7 +107,7 @@ fn no_run_refusal(error: &Error, no_run: bool) -> Option<(Value, Value)> {
             if rpc.code != rmcp::model::ErrorCode::INVALID_PARAMS
                 || !matches!(
                     data["reason"].as_str(),
-                    Some("not_ready" | "invalid_arguments")
+                    Some("not_ready" | "invalid_arguments" | "binding")
                 )
             {
                 return None;
@@ -105,6 +124,10 @@ fn no_run_refusal(error: &Error, no_run: bool) -> Option<(Value, Value)> {
             {
                 return None;
             }
+            if data["reason"] == "binding" {
+                use crate::tools::binding_refusal_semantics::{Context, validate};
+                validate(data, Context::Operation { action, arguments }).ok()?;
+            }
             data.clone()
         }
     };
@@ -113,6 +136,50 @@ fn no_run_refusal(error: &Error, no_run: bool) -> Option<(Value, Value)> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    fn no_run_refusal(error: &Error, no_run: bool) -> Option<(Value, Value)> {
+        super::no_run_refusal(error, no_run, &Value::Null, &Value::Null)
+    }
+    #[test]
+    fn binding_release_requires_the_saved_operation_reference_and_no_known_run() {
+        let action = json!({"kind":"operation","ports":{"in":[{"name":"masks","many":true}]}});
+        let artifact = json!({"type":"sample-lab:Mask","schema_version":1,"tool":"sample-lab",
+            "identity":format!("sha256:{}","1".repeat(64)), "frame":null,
+            "resource":"sample-lab://artifact/example"});
+        let arguments = json!({"masks":[artifact.clone(),artifact]});
+        let data = json!({"reason":"binding","run":null,"bindings":[{"port":"masks","index":1,
+            "problem":"unresolved","expected":"sample-lab:Mask v1","got":"missing",
+            "remedy":"Import its bundle."}]});
+        let error = |data| {
+            Error::Mcp(rmcp::ServiceError::McpError(
+                rmcp::ErrorData::invalid_params("Cannot bind", Some(data)),
+            ))
+        };
+        let saved = super::no_run_refusal(&error(data.clone()), true, &action, &arguments).unwrap();
+        assert_eq!(saved.1, data);
+        assert_eq!(saved.0["error"]["data"], data);
+        assert!(super::no_run_refusal(&error(data.clone()), false, &action, &arguments).is_none());
+        assert!(
+            super::no_run_refusal(
+                &error(data.clone()),
+                true,
+                &json!({"kind":"task"}),
+                &arguments
+            )
+            .is_none()
+        );
+        for invalid in [
+            json!({}),
+            json!({"masks":[arguments["masks"][0]]}),
+            json!({"masks":[arguments["masks"][0],{"path":"/image.png"}]}),
+        ] {
+            assert!(super::no_run_refusal(&error(data.clone()), true, &action, &invalid).is_none());
+        }
+        for index in [json!(null), json!(2), json!(-1), json!(0.5)] {
+            let mut invalid = data.clone();
+            invalid["bindings"][0]["index"] = index;
+            assert!(super::no_run_refusal(&error(invalid), true, &action, &arguments).is_none());
+        }
+    }
     #[test]
     fn only_a_valid_pre_run_not_ready_refusal_is_definitive() {
         let valid = json!({"reason":"not_ready","run":null,"requirements":[{"kind":"credential","name":"KEY","state":"missing"}]});

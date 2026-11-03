@@ -2232,6 +2232,28 @@ not M5.21 operation chains. The final shared-lock matrix passed fmt/clippy, 401 
 and 230 browser tests (8 skipped). Lockfiles/prebuilt assets unchanged; temporary config removed.
 Contextual binding-refusal adoption remains before closing M5.03.
 
+**b8 binding-refusal adoption (split before building):** b8a uses five files: the existing
+`src/tools/binding_refusal_semantics.rs`, its live declaration in `src/tools/mod.rs`,
+`src/tools/coordinator/readiness.rs`, `tests/binding_refusal_semantics.rs`, and this plan. Validate
+that a binding refusal identifies a submitted artifact reference, not a direct image/location,
+and use the saved action/arguments when classifying an original execution RPC response as no-run.
+Malformed, contradictory, known-run and recovery-resource failures stay uncertain. Existing
+artifact-read/export context variants remain staged until their clients arrive. b8b then uses the
+same operation context for estimate binding refusals (never attempts), with separate targeted
+control tests. Field-level binding presentation remains M5.06–07. Close M5.03 only after both
+live refusal paths and the final peer/preflight record are checked.
+
+**b8a checkpoint (2026-11-02):** a failing regression showed direct images/locations and partial
+objects could be mistaken for failed artifact references. The validator now checks the submitted
+item against the published artifact-ref schema. Seven contextual tests, the new original-RPC
+classifier test and all 26 execution tests pass. The classifier preserves the exact refusal while
+rejecting task actions, absent inputs, wrong indices and known runs; it reads the saved declaration
+and materialized arguments. Independent review approved the boundary and persistence/ownership
+checks. Full shared-lock matrix passed fmt/clippy, 403 Rust tests (4 ignored), typecheck, 57 UI tests,
+2 asset tests, Storybook, reproducible assets, release build and 230 browser tests (8 skipped).
+Lockfiles/assets unchanged; temporary config removed. M5.06's actual port dispatch will exercise
+this path end to end; this slice does not claim that the operation workspace is enabled.
+
 **Checkpoint A:** merge M5.01–03 as a coherent cutover of validation, launch arguments and fake
 defaults; v0.4 is the only supported live contract afterward. Green matrix, an independent fake
 task run and the published exact dependency pin are required.

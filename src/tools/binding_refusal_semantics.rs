@@ -38,6 +38,9 @@ pub fn validate(data: &Value, context: Context<'_>) -> Result<()> {
             if action["kind"] != "operation" {
                 return Err(invalid());
             }
+            let reference_schema = super::validator(&serde_json::json!({
+                "$ref":"urn:table-manners:operations:artifact-ref"
+            }))?;
             let ports = action["ports"]["in"].as_array().unwrap();
             let mut previous = None;
             for entry in entries {
@@ -65,6 +68,14 @@ pub fn validate(data: &Value, context: Context<'_>) -> Result<()> {
                     }
                     0
                 };
+                let reference = if ports[position]["many"] == true {
+                    &supplied[index]
+                } else {
+                    supplied
+                };
+                if !reference_schema.is_valid(reference) {
+                    return Err(invalid());
+                }
                 let current = (position, index);
                 if previous.is_some_and(|prior| prior >= current) {
                     return Err(invalid());
