@@ -14,7 +14,7 @@ import {artifactOccurrences} from "./artifacts";
 import {PortEditor} from "../actions/PortEditor";
 import {validatePorts,type PortBindings} from "../actions/ports";
 import {ApiError,bindingIssues as parseBindingIssues,type BindingIssue} from "../../api/client";
-import { toolChoice } from "./tool-presentation";
+import { toolChoice, toolIntroduction } from "./tool-presentation";
 import { ActivityPicker } from "./ActivityPicker";
 import { firstActivity } from "./activities";
 import type { ActivityKind } from "../actions/model";
@@ -414,7 +414,12 @@ export function Workspace({
       <div className={styles.toolContext}>
         <div className={styles.toolHeading}>
           <h1>{declaration?.document.tool.name ?? toolId ?? "Your workshop"}</h1>
-          <p className={styles.note}>{declaration?.document.tool.purpose ?? "Tool setup is unavailable."}</p>
+          {(() => {
+            const intro = toolIntroduction(declaration?.document.tool.name, declaration?.document.tool.purpose);
+            return <p className={styles.note}>{intro.description}
+              {intro.site && <> <a className={styles.site} href={intro.site} target="_blank" rel="noopener noreferrer">
+                Learn more about {declaration?.document.tool.name}<span aria-hidden="true"> ↗</span></a></>}</p>;
+          })()}
         </div>
         <nav className={styles.library} aria-label="Workspace library">
           <Button onClick={event => setDrawer({opener:event.currentTarget,view:"history"})}>History</Button>
@@ -424,7 +429,7 @@ export function Workspace({
           {tool && <Button onClick={event => setDrawer({opener:event.currentTarget,view:"setup"})}>Tool setup</Button>}
         </nav>
       </div>
-      <ActivityPicker actions={declaration?.document.actions ?? []}
+      <ActivityPicker actions={declaration?.document.actions ?? []} tool={declaration?.document.tool.name ?? "this tool"}
         groups={declaration?.document.vocabulary?.group ?? []} kind={activityKind} value={actionId}
         disabled={!declaration} onAction={chooseAction} onKind={kind=>{
           setEmptyKind(kind);

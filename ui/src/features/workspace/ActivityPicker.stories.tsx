@@ -9,7 +9,7 @@ const actions=[action("Make a study","task"),action("Measure a boundary","operat
   action("Build a shape","operation","create"),action("Refine a shape","operation","create"),
   action("Inspect metadata","utility")];
 const meta={title:"Workspace/ActivityPicker",component:ActivityPicker,
-  args:{actions,groups:["create","analyze"],kind:"operation",value:"Measure a boundary",onKind:()=>{},onAction:()=>{}},
+  args:{actions,tool:"sample-lab",groups:["create","analyze"],kind:"operation",value:"Measure a boundary",onKind:()=>{},onAction:()=>{}},
   render:args=>{
     const [kind,setKind]=useState(args.kind),[value,setValue]=useState(args.value);
     return <ActivityPicker {...args} kind={kind} value={value} onAction={setValue} onKind={kind=>{

@@ -1,6 +1,6 @@
 import {expect,test} from "bun:test";
 import type {RegisteredTool} from "../../src/api/workspace";
-import {toolChoice} from "../../src/features/workspace/tool-presentation";
+import {toolChoice,toolIntroduction} from "../../src/features/workspace/tool-presentation";
 function tool(name:string,purpose:string,version="0.1.0",error:string|null=null){
  return {id:"registered-tool",error,declaration:{document:{tool:{name,purpose,version}}}} as RegisteredTool;
 }
@@ -17,4 +17,14 @@ test("unknown tools use purpose, including names that are object property names;
  expect(toolChoice(tool("rascal","Ignored","0.1.1","Cannot start this tool.")).description).toBe("Cannot start this tool.");
  expect(toolChoice({id:"rascal",declaration:null,error:"Invalid declaration."}).icon).toBeUndefined();
  expect(toolChoice({id:"broken",declaration:null,error:"Invalid declaration."})).toMatchObject({title:"broken",description:"Invalid declaration.",meta:"Version unknown"});
+});
+test("known tools introduce themselves with the longer description and their site",()=>{
+ const rascal=toolIntroduction("rascal","Finds, masks and composites regions of an image.");
+ expect(rascal.description).toStartWith("Fully automated mask generation");
+ expect(rascal.site).toBe("https://wafflehammock.com/invention/rascal/");
+ expect(toolIntroduction("squint",undefined).site).toBe("https://wafflehammock.com/invention/squint/");
+});
+test("any other tool introduces itself with its declared purpose and no link",()=>{
+ for(const name of ["sample-lab","constructor"])expect(toolIntroduction(name,"A declared purpose.")).toEqual({description:"A declared purpose."});
+ expect(toolIntroduction(undefined,undefined)).toEqual({description:"Tool setup is unavailable."});
 });

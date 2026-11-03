@@ -11,7 +11,7 @@ test("typed ports keep list occurrences and show indexed refusal at narrow width
 });
 test.describe("operation images",()=>{test.use({hostScenario:"v04-operations"});test("an image port runs through the workspace",async({page,host})=>{
  await host.open(page);await page.getByRole("button",{name:"Workspace Playground",exact:true}).click();
- await page.getByRole("dialog",{name:"Choose workspace"}).getByRole("button",{name:"Operations",exact:true}).click();
+ await page.getByRole("dialog",{name:"Choose workspace"}).getByRole("button",{name:new RegExp("^Operations ")}).click();
  await page.getByLabel("Import image",{exact:true}).setInputFiles("tests/fixtures/sample.png");
  await expect(page.getByText(/Image ·/)).toBeVisible();await page.getByRole("button",{name:"Run",exact:true}).click();
  await expect(page.getByText("Saved attempt",{exact:false})).toBeVisible();

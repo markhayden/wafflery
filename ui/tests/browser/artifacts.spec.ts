@@ -1,7 +1,7 @@
 import {test,expect} from "./tool-host";
 test.describe("saved operation artifacts",()=>{test.use({hostScenario:"v04-operations"});test("output inspection follows a saved reference after reopening the host",async({page,host})=>{
  await host.open(page);await page.getByRole("button",{name:"Workspace Playground",exact:true}).click();
- await page.getByRole("dialog",{name:"Choose workspace"}).getByRole("button",{name:"Operations",exact:true}).click();
+ await page.getByRole("dialog",{name:"Choose workspace"}).getByRole("button",{name:new RegExp("^Operations ")}).click();
  await page.getByLabel("Import image",{exact:true}).setInputFiles("tests/fixtures/sample.png");
  await expect(page.getByText(/Image ·/)).toBeVisible();await page.getByRole("button",{name:"Run",exact:true}).click();
  const outputs=page.getByRole("region",{name:"Operation outputs"});

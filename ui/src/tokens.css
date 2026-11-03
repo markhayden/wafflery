@@ -23,6 +23,9 @@
 
 * { box-sizing: border-box; }
 body { margin: 0; min-width: 20rem; }
+/* No widows: running text never ends on a lone word; headings balance their lines. */
+:where(p, small, li, dd, dt, figcaption, label, legend, td, th, blockquote, span) { text-wrap: pretty; }
+:where(h1, h2, h3, h4, h5, h6) { text-wrap: balance; }
 button, input, select, textarea { font: inherit; color: inherit; }
 button { cursor: pointer; }
 button:disabled { cursor: not-allowed; opacity: 0.6; }

@@ -5,7 +5,7 @@ test.describe("owned operation examples",()=>{
  test.use({hostScenario:"v04-operations"});
  test("a native example restores after deleting its source runs and runs only its edited action",async({page,host})=>{
   await host.open(page);await page.getByRole("button",{name:"Workspace Playground",exact:true}).click();
-  await page.getByRole("dialog",{name:"Choose workspace"}).getByRole("button",{name:"Operations",exact:true}).click();
+  await page.getByRole("dialog",{name:"Choose workspace"}).getByRole("button",{name:new RegExp("^Operations ")}).click();
   await page.getByLabel("Import image",{exact:true}).setInputFiles("tests/fixtures/sample.png");
   await expect(page.getByText(/Image ·/)).toBeVisible();await page.getByRole("button",{name:"Run",exact:true}).click();
   await page.getByRole("button",{name:"Send marker item 1 to…",exact:true}).click();

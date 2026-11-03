@@ -1,9 +1,9 @@
 import type {Action,ActivityKind} from "../actions/model";
 import {Picker} from "../../components/Picker";
-import {activityChoices,activityKinds,activityTitles,activitySummary} from "./activities";
+import {activityChoices,activityKinds,activityTitles,activitySummary,workspaceChoices,workspaceSummary} from "./activities";
 import styles from "./ActivityPicker.module.css";
-export function ActivityPicker({actions,groups=[],kind,value,onKind,onAction,disabled=false}: {
-  actions:Action[]; groups?:string[]; kind:ActivityKind; value:string;
+export function ActivityPicker({actions,tool,groups=[],kind,value,onKind,onAction,disabled=false}: {
+  actions:Action[]; tool:string; groups?:string[]; kind:ActivityKind; value:string;
   onKind:(kind:ActivityKind)=>void; onAction:(name:string)=>void; disabled?:boolean;
 }) {
   const kinds=activityKinds(actions);
@@ -11,8 +11,8 @@ export function ActivityPicker({actions,groups=[],kind,value,onKind,onAction,dis
   const selected=actions.find(action=>action.name===value);
   const label=kind==="operation"?"Operation":kind==="utility"?"Utility":"Action";
   return <div className={`${styles.pickers} ${kinds.length>1?styles.multiple:""}`}>
-    {kinds.length>1 && <Picker label="Workspace" value={kind} onChange={value=>onKind(value as ActivityKind)}
-      disabled={disabled} choices={kinds.map(id=>({id,title:activityTitles[id]}))}/>}
+    {kinds.length>1 && <Picker label="Workspace" value={kind} onChange={value=>onKind(value as ActivityKind)} summary={workspaceSummary(actions,kind)}
+      disabled={disabled} choices={workspaceChoices(kinds,tool)}/>}
     <Picker label={label} value={value} onChange={onAction} disabled={disabled || choices.length===0} summary={selected?activitySummary(selected):undefined}
       choices={choices}/>
     {selected && selected.readiness.state!=="ready" && <div role="status" className={styles.readiness}>

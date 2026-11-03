@@ -3641,3 +3641,11 @@ remain separate; no production release is implied. Product choices remain Q1–Q
   reload takes a fresh bootstrap.
 - [x] `scripts/dev-pipeline.ts --library <dir> --register-only`: a persistent offline library,
   registered without starting a host. The hub's `scripts/dev.sh` runs the watchers over it.
+
+### V25: workspace descriptions, tool introduction, no widows (owner UI review, 2026-11-03)
+
+- [x] Workspace options describe what they offer, conversationally and naming the tool; the closed
+  control shows a count ("7 complete jobs", "24 operations") so it stays aligned with Action.
+- [x] The heading introduces rascal and squint with their longer description and a "Learn more" link
+  to their wafflehammock.com page; other tools keep their declared purpose.
+- [x] No widows anywhere: running text uses `text-wrap: pretty`, headings `balance` (tokens.css).

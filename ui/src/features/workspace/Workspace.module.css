@@ -214,3 +214,6 @@
   flex-wrap: wrap;
 }
 .toolContext button { flex-shrink: 0; }
+.toolHeading .note { max-width: 44rem; line-height: 1.5; }
+.site { color: var(--color-text); text-decoration: underline; text-underline-offset: 0.2em; white-space: nowrap; }
+.site:hover { color: var(--color-focus); }

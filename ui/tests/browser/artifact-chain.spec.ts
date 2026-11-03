@@ -1,7 +1,7 @@
 import {test,expect} from "./tool-host";
 test.describe("independent operation chains",()=>{test.use({hostScenario:"v04-operations"});test("send to fills drafts and native scalar/list bindings run without repeating upstream",async({page,host})=>{
  await host.open(page);await page.getByRole("button",{name:"Workspace Playground",exact:true}).click();
- await page.getByRole("dialog",{name:"Choose workspace"}).getByRole("button",{name:"Operations",exact:true}).click();
+ await page.getByRole("dialog",{name:"Choose workspace"}).getByRole("button",{name:new RegExp("^Operations ")}).click();
  await page.getByLabel("Import image",{exact:true}).setInputFiles("tests/fixtures/sample.png");
  await expect(page.getByText(/Image ·/)).toBeVisible();await page.getByRole("button",{name:"Run",exact:true}).click();
  await page.getByRole("button",{name:"Send marker item 1 to…",exact:true}).click();
@@ -39,7 +39,7 @@ test.describe("asynchronous destination selection",()=>{
  test.use({hostScenario:"v04-operations"});
  test("Run stays locked until the checked destination draft replaces the source",async({page,host})=>{
   await host.open(page);await page.getByRole("button",{name:"Workspace Playground",exact:true}).click();
-  await page.getByRole("dialog",{name:"Choose workspace"}).getByRole("button",{name:"Operations",exact:true}).click();
+  await page.getByRole("dialog",{name:"Choose workspace"}).getByRole("button",{name:new RegExp("^Operations ")}).click();
   await page.getByLabel("Import image",{exact:true}).setInputFiles("tests/fixtures/sample.png");
   await expect(page.getByText(/Image ·/)).toBeVisible();await page.getByRole("button",{name:"Run",exact:true}).click();
   await page.getByRole("button",{name:"Send marker item 1 to…",exact:true}).click();

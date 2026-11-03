@@ -1,5 +1,5 @@
 import {expect,test} from "bun:test";
-import {activityChoices,activityKinds,activitySummary,firstActivity} from "../../src/features/workspace/activities";
+import {activityChoices,activityKinds,activitySummary,firstActivity,workspaceChoices,workspaceDescription,workspaceSummary} from "../../src/features/workspace/activities";
 import type {Action} from "../../src/features/actions/model";
 const action=(name:string,kind:Action["kind"],group?:string):Action=>({name,title:name,purpose:"A declared activity",
   kind,...(group?{group}:{}),params_schema:{},cost:{may_spend:false},readiness:{state:"ready",requirements:[]}});
@@ -27,4 +27,16 @@ test("operation trigger summaries use declared port types rather than long purpo
 });
 test("task summaries stay compact in tools that also declare operations",()=>{
  expect(activitySummary({...action("Repair","task"),purpose:"Long task purpose.",images:[{slot:"source",role:"source",required:true}]})).toBe("Image → Result");
+});
+test("each workspace says, in plain words naming the tool, what it offers",()=>{
+ const choices=workspaceChoices(["task","operation","utility"],"rascal");
+ expect(choices.map(c=>c.title)).toEqual(["Playground","Operations","Utilities"]);
+ expect(choices[0]?.description).toBe("Test out complete jobs. Provide a series of inputs and see how rascal works end to end.");
+ for(const choice of choices){expect(choice.description).toBe(workspaceDescription(choice.id as Action["kind"],"rascal"));expect(choice.description).toContain("rascal");}
+});
+test("the closed workspace control counts what it holds",()=>{
+ const actions=[action("a","task"),action("b","task"),action("c","operation"),action("d","utility")];
+ expect(workspaceSummary(actions,"task")).toBe("2 complete jobs");
+ expect(workspaceSummary(actions,"operation")).toBe("1 operation");
+ expect(workspaceSummary(actions,"utility")).toBe("1 utility");
 });

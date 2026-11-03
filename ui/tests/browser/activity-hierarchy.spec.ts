@@ -6,7 +6,7 @@ test.describe("live operations hierarchy",()=>{
     await host.open(page);
     await expect(page.getByRole("button",{name:"Workspace Playground",exact:true})).toBeVisible();
     await page.getByRole("button",{name:"Workspace Playground",exact:true}).click();
-    await page.getByRole("dialog",{name:"Choose workspace"}).getByRole("button",{name:"Operations",exact:true}).click();
+    await page.getByRole("dialog",{name:"Choose workspace"}).getByRole("button",{name:new RegExp("^Operations ")}).click();
     await page.getByRole("button",{name:/^Operation locate marker/}).click();
     const picker=page.getByRole("dialog",{name:"Choose operation"});
     await expect(picker.getByText("locate",{exact:true})).toBeVisible();
@@ -15,11 +15,11 @@ test.describe("live operations hierarchy",()=>{
     const amount=page.getByLabel("amount",{exact:true});
     await amount.fill("0.8");
     await page.getByRole("button",{name:"Workspace Operations",exact:true}).click();
-    await page.getByRole("dialog",{name:"Choose workspace"}).getByRole("button",{name:"Utilities",exact:true}).click();
+    await page.getByRole("dialog",{name:"Choose workspace"}).getByRole("button",{name:new RegExp("^Utilities ")}).click();
     await expect(amount).toHaveCount(0);
     await expect(page.getByRole("button",{name:/^Utility summarize/})).toBeVisible();
     await page.getByRole("button",{name:"Workspace Utilities",exact:true}).click();
-    await page.getByRole("dialog",{name:"Choose workspace"}).getByRole("button",{name:"Operations",exact:true}).click();
+    await page.getByRole("dialog",{name:"Choose workspace"}).getByRole("button",{name:new RegExp("^Operations ")}).click();
     await page.getByRole("button",{name:/^Operation locate marker/}).click();
     await picker.getByRole("button",{name:/^soften token/}).click();
     await expect(amount).toHaveValue("0.25");

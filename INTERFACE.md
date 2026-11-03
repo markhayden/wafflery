@@ -8,7 +8,11 @@ shared drawer against the original studies. The mock interactions remain illustr
 
 The application header owns Tool; the selected tool name/purpose heads the workspace. One matching
 focused picker chooses Playground, Operations or Utilities where declared, followed by a searchable,
-grouped activity picker. Task-only tools omit unavailable workspace kinds. Both selectors use the
+grouped activity picker. Each workspace option says what it offers in plain words naming the tool
+(Playground: "Test out complete jobs. Provide a series of inputs and see how <tool> works end to end.");
+the closed control shows a compact count ("7 complete jobs"). The heading shows a known tool's longer
+description and a "Learn more" link to its wafflehammock.com page; other tools show their declared
+purpose. Running text never ends on a lone word (`text-wrap: pretty`; headings `balance`). Task-only tools omit unavailable workspace kinds. Both selectors use the
 same control. Desktop input/result panes scroll independently with fixed headers/footers; narrow and
 short windows use page scrolling.
 

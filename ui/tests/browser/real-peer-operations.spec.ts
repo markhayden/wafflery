@@ -3,7 +3,7 @@ test.use({hostKind:"rascal"});
 test.skip(!process.env.WAFFLERY_RASCAL_BIN,"Select the approved Rascal v0.4 testkit executable");
 test("real native operations expose locations and preserve masks while parameter edits run only Feather",async({page,host})=>{
  const errors:string[]=[];page.on("pageerror",error=>errors.push(error.message));page.on("console",message=>{if(message.type()==="error")errors.push(message.text());});
- await host.open(page);await page.getByRole("button",{name:"Workspace Playground",exact:true}).click();await page.getByRole("dialog",{name:"Choose workspace"}).getByRole("button",{name:"Operations",exact:true}).click();
+ await host.open(page);await page.getByRole("button",{name:"Workspace Playground",exact:true}).click();await page.getByRole("dialog",{name:"Choose workspace"}).getByRole("button",{name:new RegExp("^Operations ")}).click();
  await page.getByRole("button",{name:/^Operation /}).click();await page.getByRole("dialog",{name:"Choose operation"}).getByRole("button",{name:/^Line /}).click();
  await page.getByLabel("Import image",{exact:true}).setInputFiles("tests/fixtures/sample.png");await page.getByLabel("column",{exact:true}).fill("0.5");await page.getByLabel("width_px *",{exact:true}).fill("24");await page.getByRole("button",{name:"Run",exact:true}).click();
  await expect(page.getByRole("region",{name:"Native preservation"})).toContainText("Native artifacts · preserved");await page.getByRole("button",{name:"Send location item 1 to…",exact:true}).click();await page.getByRole("dialog",{name:"Send artifact to"}).getByRole("button",{name:/Rasterize.*location/}).click();

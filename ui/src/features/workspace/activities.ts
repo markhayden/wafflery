@@ -1,6 +1,24 @@
 import type {Action,ActivityKind} from "../actions/model";
 import type {Choice} from "../../components/Picker";
 export const activityTitles: Record<ActivityKind,string> = {task:"Playground",operation:"Operations",utility:"Utilities"};
+// What each workspace offers, in plain words, naming the tool. The contract defines the three
+// kinds the same way for every tool (table-manners 3).
+export function workspaceDescription(kind:ActivityKind,tool:string):string {
+  return {
+    task:`Test out complete jobs. Provide a series of inputs and see how ${tool} works end to end.`,
+    operation:`Work one step at a time. Run a single ${tool} operation, see what it makes, and feed the result into the next step.`,
+    utility:`Extra ${tool} tools that sit outside complete jobs and single steps.`,
+  }[kind];
+}
+// The closed control stays compact (like the action's summary): how much the workspace holds.
+export function workspaceSummary(actions:Action[],kind:ActivityKind):string {
+  const count=actions.filter(action=>action.kind===kind).length;
+  const noun={task:["complete job","complete jobs"],operation:["operation","operations"],utility:["utility","utilities"]}[kind];
+  return `${count} ${count===1?noun[0]:noun[1]}`;
+}
+export function workspaceChoices(kinds:ActivityKind[],tool:string):Choice[] {
+  return kinds.map(id=>({id,title:activityTitles[id],description:workspaceDescription(id,tool)}));
+}
 const kinds: ActivityKind[] = ["task","operation","utility"];
 export function activityKinds(actions:Action[]):ActivityKind[] {
   return kinds.filter(kind=>actions.some(action=>action.kind===kind));
