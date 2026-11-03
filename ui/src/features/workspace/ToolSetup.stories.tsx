@@ -11,7 +11,7 @@ const meta = {
   title: "Workspace/ToolSetup", component: ToolSetup,
   args: { tool: session.tool,
     directoryGrants: {requested_dirs:["/work/reference images"], evidence_dirs:["/work/tool/results"]},
-    action: { name: "check", title: "Check an image", purpose: "A sample paid action", params_schema: {}, cost: { may_spend: true }, readiness: { state: "ready", requirements: [{ kind: "credential", name: "EXAMPLE_API_KEY", state: "present" }] } },
+    action: { kind: "task", name: "check", title: "Check an image", purpose: "A sample paid action", params_schema: {}, cost: { may_spend: true }, readiness: { state: "ready", requirements: [{ kind: "credential", name: "EXAMPLE_API_KEY", state: "present" }] } },
     loadSession: async () => session },
 } satisfies Meta<typeof ToolSetup>;
 export default meta;

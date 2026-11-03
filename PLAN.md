@@ -2365,16 +2365,38 @@ The next push also includes the coordinator-requested CI trigger-only change: ig
 
 #### M5.05 — Present the declared activity hierarchy
 
-- [ ] Playground/Operations/Utilities and the focused grouped picker derive only from kind/group
+- [x] Playground/Operations/Utilities and the focused grouped picker derive only from kind/group
   metadata. Tools with only tasks stay uncluttered; unavailable operations explain readiness normally.
-- [ ] Switching tool/kind/action resets the existing draft and estimates, while leaving saved
+- [x] Switching tool/kind/action resets the existing draft and estimates, while leaving saved
   runs immutable. M5.07 extends this same behavior to newly introduced port bindings. Parameter labels/choices come from the current declaration.
-- [ ] Add keyboard, long-label, empty-kind and narrow-screen stories plus stable region snapshots
+- [x] Add keyboard, long-label, empty-kind and narrow-screen stories plus stable region snapshots
   using the V19 visual policy; record intentional differences from the two source mocks.
 
 **Depends:** M5.03. **Areas:** Workspace, Picker, styles/stories/browser tests.
 **Verify:** fake with renamed/reordered groups; keyboard selection and no horizontal category strip.
 **Commit:** `feat: organize activities by declared kind and group`.
+
+**As built approach (before implementation):** one coherent UI task, roughly fifteen authored files:
+a small activity model/selector and its styles/stories, Workspace integration, action types and existing
+typed fixtures, unit/browser tests, and this plan. Kind maps to Playground/Operations/Utilities; show
+the workspace picker only for multiple declared kinds. The focused action picker groups by declared
+`vocabulary.group` order, retaining action order within each group; no Rascal-specific names or
+horizontal category strip. History/examples choose their saved action's kind. An empty kind has an
+explicit state. Keep task-only labels/layout unchanged. This adapts activity-hierarchy's focused
+picker and journey's tool context: use the shared searchable dialog for both selectors rather than
+mock-only details menus/tabs. Targeted checks, one task review and hosted full CI follow the updated
+process. Port editors remain M5.07; M5.05 changes selection, not execution bindings.
+
+**M5.05 complete (2026-11-02):** metadata model and browser-boundary tests first failed for
+missing activity helpers and accepted malformed kinds; the setup story first failed for absent
+readiness guidance. The independent v0.4 peer now opens on its task despite declaring operations
+first, and switching kind resets edited parameters. Groups retain declared vocabulary/action order;
+ungrouped actions precede headings so they cannot appear inside another group. No group is inferred
+from a tool name. Task-only visual baselines remain unchanged. Seven targeted unit tests, clippy,
+typecheck and 38 Chromium/WebKit checks passed (activity hierarchy, workspace fidelity/history and
+estimates). New group/empty/long-label/setup snapshots use the existing V19 policy and were visually
+inspected. Independent task review approved; its ungrouped-heading note was addressed by a failing
+regression and the ordering change. Hosted CI remains the full gate. No port execution changes.
 
 #### M5.06 — Bind operation ports through normal preparation
 

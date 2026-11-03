@@ -1,3 +1,6 @@
+import { ActivityPicker } from "./ActivityPicker";
+import { firstActivity } from "./activities";
+import type { ActivityKind } from "../actions/model";
 import { WorkspaceFrame } from "../../components/WorkspaceFrame";
 import { Shutdown } from "../../components/Shutdown";
 import { reportClient } from "../../api/reports";
@@ -98,9 +101,11 @@ export function Workspace({
     }
   }, [client, setupToolId, updateSnapshot]);
   const [actionId, setActionId] = useState(
-    declaration?.document.actions[0]?.name ?? "",
+    firstActivity(declaration?.document.actions ?? [])?.name ?? "",
   );
   const action = declaration?.document.actions.find((a) => a.name === actionId);
+  const [emptyKind, setEmptyKind] = useState<ActivityKind>("task");
+  const activityKind = action?.kind ?? emptyKind;
   const [draftRevision, setDraftRevision] = useState(0);
   const [estimateEditRevision, setEstimateEditRevision] = useState(0);
   const [params, setParams] = useState<Schema>(() =>
@@ -211,8 +216,9 @@ export function Workspace({
     setDraftRevision((value) => value + 1);
     setDraftExample(undefined);
     setToolId(id);
-    const action = snapshot.tools.find((t) => t.id === id)?.declaration
-      ?.document.actions[0];
+    const action = firstActivity(snapshot.tools.find((t) => t.id === id)?.declaration
+      ?.document.actions ?? []);
+    setEmptyKind("task");
     setActionId(action?.name ?? "");
     setParams(initialParameters(action?.params_schema ?? {}));
     setImages({});
@@ -335,11 +341,12 @@ export function Workspace({
           {tool && <Button onClick={event => setDrawer({opener:event.currentTarget,view:"setup"})}>Tool setup</Button>}
         </nav>
       </div>
-      <div className={styles.actionPicker}>
-        <Picker label="Action" value={actionId} onChange={chooseAction} disabled={!declaration}
-          choices={(declaration?.document.actions ?? []).map(a => ({id:a.name,title:a.title,
-            description:(a.images ?? []).length ? "Image → Result" : "Parameters → Result"}))} />
-      </div>
+      <ActivityPicker actions={declaration?.document.actions ?? []}
+        groups={declaration?.document.vocabulary?.group ?? []} kind={activityKind} value={actionId}
+        disabled={!declaration} onAction={chooseAction} onKind={kind=>{
+          setEmptyKind(kind);
+          chooseAction(declaration?.document.actions.find(action=>action.kind===kind)?.name ?? "");
+        }}/>
       {!tool && toolId && (
         <p role="status">
           Tool “{toolId}” is not registered in this workspace. Register it while

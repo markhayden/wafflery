@@ -10,6 +10,7 @@ const meta = {
   component: ActionForm,
   args: {
     action: {
+      kind: "task",
       name: "fixture",
       title: "Fixture",
       purpose: "Declared fields",

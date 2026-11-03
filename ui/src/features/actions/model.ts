@@ -17,7 +17,10 @@ export type Readiness = {
   state: "ready" | "needs_setup" | "unavailable";
   requirements: Requirement[];
 };
+export type ActivityKind = "task" | "operation" | "utility";
 export type Action = {
+  kind: ActivityKind;
+  group?: string;
   name: string;
   title: string;
   purpose: string;
@@ -33,6 +36,7 @@ export type Declaration = {
     contract: string;
     tool: { name: string; version: string; purpose: string };
     actions: Action[];
+    vocabulary?: { group?: string[] };
   };
   tool_session?: Json;
   revision: string;

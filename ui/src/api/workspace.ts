@@ -85,12 +85,17 @@ function declaration(value: unknown): value is Declaration {
     value.document.contract !== "0.4.0" ||
     !record(value.document.tool) ||
     typeof value.document.tool.name !== "string" ||
-    !Array.isArray(value.document.actions)
+    !Array.isArray(value.document.actions) ||
+    (value.document.vocabulary !== undefined && (!record(value.document.vocabulary) ||
+      (value.document.vocabulary.group !== undefined && (!Array.isArray(value.document.vocabulary.group) ||
+        !value.document.vocabulary.group.every((group: unknown) => typeof group === "string")))))
   )
     return false;
   return value.document.actions.every(
     (action: unknown) =>
       record(action) &&
+      (action.kind === "task" || action.kind === "operation" || action.kind === "utility") &&
+      (action.group === undefined || typeof action.group === "string") &&
       typeof action.name === "string" &&
       typeof action.title === "string" &&
       typeof action.purpose === "string" &&

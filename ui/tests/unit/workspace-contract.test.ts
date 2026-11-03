@@ -4,7 +4,7 @@ import { workspaceClient } from "../../src/api/workspace";
 import type { Declaration } from "../../src/features/actions/model";
 const declaration: Declaration = {
   revision: "current", generation: 0, schemas: {}, document: { contract: "0.4.0", tool: { name: "arbitrary", version: "1", purpose: "Boundary fixture" },
-    actions: [{name:"check",title:"Check",purpose:"Test",params_schema:{},cost:{may_spend:false},readiness:{state:"ready",requirements:[]}}] }
+    actions: [{kind:"task",name:"check",title:"Check",purpose:"Test",params_schema:{},cost:{may_spend:false},readiness:{state:"ready",requirements:[]}}] }
 };
 class ResponseApi extends LocalApi {
   constructor(private value: unknown) { super("http://127.0.0.1:1234", "fixture"); }
@@ -46,4 +46,15 @@ test("saved v0.3 evidence remains readable without live compatibility or invente
     preservation: { contract: "complete", native: "unsupported", report: "unsupported" },
   };
   await expect(workspaceClient(new ResponseApi(saved)).attempt("prior-run")).resolves.toEqual(saved);
+});
+
+test("activity metadata must have a declared kind and string group vocabulary",async()=>{
+  for(const patch of [{kind:undefined},{kind:"rascal"},{kind:["task"]},{group:42}]) {
+    const value=structuredClone(declaration);
+    Object.assign(value.document.actions[0]!,patch);
+    await expect(workspaceClient(new ResponseApi(value)).description("arbitrary")).rejects.toThrow("unsupported");
+  }
+  const value=structuredClone(declaration) as any;
+  value.document.vocabulary={group:"find"};
+  await expect(workspaceClient(new ResponseApi(value)).description("arbitrary")).rejects.toThrow("unsupported");
 });

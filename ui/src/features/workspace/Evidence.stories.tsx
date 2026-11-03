@@ -18,7 +18,7 @@ const attempt: Attempt = {
   arguments:{label:"A saved experiment",strength:0.5},
   declaration:{revision:"example",generation:1,schemas:{},document:{contract:"0.4.0",
     tool:{name:"sample-lab",version:"0.1.0",purpose:"Illustrative offline tool."},
-    actions:[{name:"mark_band",title:"Add a test band",purpose:"Illustrative image band.",params_schema:{},
+    actions:[{kind:"task",name:"mark_band",title:"Add a test band",purpose:"Illustrative image band.",params_schema:{},
       cost:{may_spend:false},readiness:{state:"ready",requirements:[]}}]}},
   inputs:{},outputs:[],wire:{method:"tools/call",params:{name:"mark_band",arguments:{label:"A saved experiment",strength:0.5}}},
   raw_response:{structuredContent:result},result,execution:"completed",
