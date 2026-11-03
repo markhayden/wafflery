@@ -2838,12 +2838,12 @@ policy changed.
 
 #### M5.14 — Export the resolved single-call handoff
 
-- [ ] Pipeline drawer offers resolved invocation, recorded MCP evidence, requirements and a supported
+- [x] Pipeline drawer offers resolved invocation, recorded MCP evidence, requirements and a supported
   `<tool> call <action> --arguments <file.json>` handoff. Materialize owned image locators and explicit
   `--allow-dir`; shell-quote displayed argv, use argv arrays internally and never execute copied code.
-- [ ] Include resolved defaults/caps/effective values from the selected saved run, not current config.
+- [x] Include resolved defaults/caps/effective values from the selected saved run, not current config.
   Required config/env names are setup instructions; missing secrets are not inserted into downloads.
-- [ ] Label this handoff dependent on the configured local store. Use the contract-standard --config and --allow-dir arguments; never blindly copy serve-only
+- [x] Label this handoff dependent on the configured local store. Use the contract-standard --config and --allow-dir arguments; never blindly copy serve-only
   argv or interpret private effective fields. If the serving store requires other tool-specific launch
   arguments, show that unresolved local dependency and withhold a claimed ready-to-run command.
   A fresh store needs explicit native import or the bundle route. Distinguish this from portable; unresolved/null invocation and old
@@ -2875,7 +2875,18 @@ resolved invocation only. Image lists map exact saved argument indices and retai
 repeated occurrences. Arguments filenames are absolute under the saved working directory. A separate
 two-slot owned worker pool bounds byte verification even after the HTTP waiter is dropped. Private
 routes accept no caller paths and rebuild/verify on download. Tool configuration is never read.
-The UI and its updated screenshots follow in the second commit.
+**Complete:** the drawer defaults to Command and retains recorded MCP, resolved invocation,
+inputs/setup and evidence archive tabs. Command copy and arguments download use the selected saved
+attempt, with tool/version, requirements, file grants and paid-session caveats. Historical or
+unresolved launches keep inspection with an explained unavailable command. An open drawer refreshes
+when its run completes; late requests/downloads cannot replace another selection.
+
+Independent review approved after the completion-refresh correction. Full Rust workspace tests,
+clippy, formatting and UI typecheck passed, plus two handoff client unit tests. Targeted Chromium/
+WebKit coverage passed 60 cases including paid flows; the final reviewed drawer/download changes
+passed 30 cases, including a real arguments-file download in both engines. Command and pipeline
+region screenshots were updated and inspected at narrow and wide widths. No command was executed,
+no configuration contents were read, and no portable replay claim was introduced.
 
 #### M5.15 — Write canonical invocation bundles
 

@@ -1,3 +1,5 @@
+import {CommandHandoff} from "./CommandHandoff";
+import {savedInvocation} from "./invocation";
 import styles from "./Evidence.module.css";
 import { useState } from "react";
 import type { LocalApi } from "../../api/client";
@@ -10,7 +12,7 @@ export function Pipeline({
   attempt: Attempt;
   api: LocalApi;
 }) {
-  const [view, setView] = useState<"call" | "setup" | "archive">("call");
+  const [view, setView] = useState<"command"|"invocation"|"call" | "setup" | "archive">("command");
   const [images, setImages] = useState(true),
     [busy, setBusy] = useState(false),
     [notice, setNotice] = useState("");
@@ -69,6 +71,8 @@ export function Pipeline({
   return (
     <div className={styles.inspector}>
       <nav aria-label="Pipeline views">
+        <Button aria-pressed={view==="command"} onClick={()=>setView("command")}>Command</Button>
+        <Button aria-pressed={view==="invocation"} onClick={()=>setView("invocation")}>Resolved invocation</Button>
         <Button aria-pressed={view === "call"} onClick={() => setView("call")}>
           Recorded MCP call
         </Button>
@@ -85,7 +89,7 @@ export function Pipeline({
           Evidence archive
         </Button>
       </nav>
-      {view !== "archive" ? (
+      {view==="command"?<CommandHandoff id={attempt.id} api={api} tool={attempt.declaration.document?.tool} maySpend={attempt.declaration.document?.actions.find(action=>action.name===attempt.request.action)?.cost.may_spend} revision={JSON.stringify([attempt.execution,!!attempt.result,attempt.preservation.contract])}/>:view==="invocation"?<section><pre aria-label="Pipeline invocation">{JSON.stringify(savedInvocation(attempt.result),null,2)}</pre></section>:view !== "archive" ? (
         <>
           <p>
             {view === "call"
@@ -99,8 +103,8 @@ export function Pipeline({
             Copy {view === "call" ? "recorded call" : "setup"}
           </Button>
           <p>
-            CLI export requires tool-provided invocation metadata. Native replay
-            is not available yet.
+            Use Command for the saved invocation's local CLI handoff. Portable replay bundles
+            are separate from this recorded evidence.
           </p>
         </>
       ) : (

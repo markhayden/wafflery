@@ -1,0 +1,2 @@
+.handoff { display: grid; gap: 1rem; min-width: 0; overflow-wrap: anywhere; }
+.actions { display: flex; flex-wrap: wrap; gap: .75rem; }

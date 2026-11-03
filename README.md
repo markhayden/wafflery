@@ -33,8 +33,11 @@ Choose a PNG/JPEG, enter a label, and run. Inspect saved inputs/raw result/recor
 the shared drawer, drag the before/after divider, pin a baseline, or save an example. Opening an
 example fills a new draft without executing it. History and examples are separate. The pipeline
 drawer copies the saved request/setup and downloads a `.tar.gz` evidence package, optionally
-including image bytes. It does not claim a portable native replay bundle or generate unverified CLI
-flags. Editing the draft never changes a saved run.
+including image bytes. Command shows a local CLI handoff from the saved resolved invocation when
+its launch context and owned inputs are available. Download its arguments file and save it in the
+working directory shown before running the quoted command. Extra tool store flags require setup
+before a command is offered. This depends on the configured local store; portable replay bundles
+remain separate. Editing the draft never changes a saved run.
 
 **Inspect run → Reports** lists the views declared for that saved run. Choose a view and use
 **Open report** to start it; selecting one alone does not run anything. Server viewers and

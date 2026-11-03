@@ -21,6 +21,7 @@ test("pipeline drawer copies and downloads the selected saved evidence", async (
     name: "Use in your pipeline",
     exact: true,
   });
+  await drawer.getByRole("button",{name:"Recorded MCP call",exact:true}).click();
   await expect(
     drawer.getByLabel("Pipeline evidence", { exact: true }),
   ).toContainText("Export this run");
