@@ -1635,6 +1635,48 @@ owned fixture sizes/timings/memory, codec limitations and the intentional resize
 The full hosted matrix passed on `7f1d236`,
 [run 41651505463](https://github.com/markhayden/wafflery/actions/runs/41651505463). V20 is complete.
 
+#### V21 — Tool chooser logos and descriptions (owner-approved UI review)
+
+Scope: only Choose tool presentation. Use the supplied WebP files unchanged and a small map keyed
+by declared tool name. Rascal copy: "Fully automated mask generation for precise image edits. Describe what to change and
+rascal finds the region, builds a high-quality mask and protects everything else, across a wide range
+of use cases." Squint copy: "Image evaluation you can trust. Checks an image against the brief and
+references it was made from, and shows the evidence behind every verdict." Unknown tools use their required purpose;
+errors win over description. No sibling or contract changes.
+
+- [x] Known rows show a decorative 40 px square logo, name and unchanged Version text on the first
+  line (version right aligned), then description/error wrapping naturally without a clamp or truncation. Unknown rows retain aligned logo space.
+- [x] Search still matches names and descriptions; versions remain searchable. Long versions/names
+  fit normal and 320 px layouts without overlap. Keyboard selection/focus remains intact.
+- [x] Update stories and affected version selectors; verify logos, fallback purpose and errors in
+  both browsers. Commit generated UI assets; no screenshot delivery is required.
+- [x] Per coordinator amendment 3, run only UI unit/story checks and the touched picker browser
+  spec, then commit once, merge locally and stop. Skip the full matrix, push, CI wait and screenshot
+  delivery during the owner's quick local UI review. No other task runs.
+
+**Commit:** one passing task, `feat: show tool logos and descriptions in the chooser`.
+**Rollback:** revert that commit; no schema, tool registration, invocation or data changes.
+
+**V21 as built:** the declared-name presentation map supplies the amended owner descriptions and
+unchanged WebP art. Amendment 2 replaces the earlier short copy with full, naturally wrapping
+descriptions; no clamp or truncation is applied to them. Generic Picker choices carry optional icon/metadata, with a fixed 40 px mark
+column and a two-line text area. Version text remains complete in the DOM/title while visually
+truncating when needed; names wrap without overlap. Search includes the new description and the
+retained version. Errors take priority; unknown tools use purpose and aligned blank logo space.
+
+Vite emits both images without inlining so the existing CSP remains intact. The embedded host's
+static MIME selection now includes WebP; byte equality and real-page decoding are checked in both
+browsers. Stories include known/unknown/error tools and long versions. Updated integration selectors
+scope version assertions to the selected row. No activity/report behavior or tool metadata changes.
+Normal/320 px chooser regions are captured in the [V21 review](docs/reviews/2026-11-03-tool-picker.md).
+Before the final copy amendment, the full Rust suite, clippy/typecheck and 26 targeted browser checks
+passed. Amendment 3 explicitly replaces the final matrix with UI unit/story checks and the touched
+picker browser spec only; the in-progress full-matrix rerun was stopped. Independent review approved
+the required corrections. Generated assets remain part of the single task commit. Merge locally,
+then stop without pushing or waiting for CI; no screenshot delivery is required. The final
+UI-only gate passed: all 102 UI unit tests, Storybook build and 10 picker cases across Chromium
+and WebKit, including the full amendment-2 copy, unclamped wrapping and final-clause search.
+
 #### M5.02 — Separate input grants from evidence access
 
 - [x] Replace registration roots with explicit input/evidence directory fields, validate existing

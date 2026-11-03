@@ -93,7 +93,9 @@ test("Squint scripted evidence survives export, examples, tool switching and res
   ).toBeVisible();
   expect(await readdir(resolve(host.root, "../squint/runs"))).toEqual(runNames);
   await page.getByRole("button", { name: "Tool squint", exact: true }).click();
-  await page.getByRole("button", { name: /rascal Version/ }).click();
+  const toolRow=page.getByRole("dialog",{name:"Choose tool"}).getByRole("button",{name:/^rascal /});
+      await expect(toolRow.getByText(/^Version /)).toBeVisible();
+      await toolRow.click();
   await expect(page.getByLabel("Result data", { exact: true })).toHaveCount(0);
   await page.getByRole("button", { name: /^Action / }).click();
   await page.getByRole("button", { name: /Heal a seam/ }).click();

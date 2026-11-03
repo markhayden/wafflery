@@ -201,6 +201,8 @@ async fn static_asset(uri: Uri) -> Response {
                 "text/javascript"
             } else if uri.path().ends_with(".css") {
                 "text/css"
+            } else if uri.path().ends_with(".webp") {
+                "image/webp"
             } else if uri.path().ends_with(".svg") {
                 "image/svg+xml"
             } else {

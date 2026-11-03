@@ -14,6 +14,7 @@ import {artifactOccurrences} from "./artifacts";
 import {PortEditor} from "../actions/PortEditor";
 import {validatePorts,type PortBindings} from "../actions/ports";
 import {ApiError,bindingIssues as parseBindingIssues,type BindingIssue} from "../../api/client";
+import { toolChoice } from "./tool-presentation";
 import { ActivityPicker } from "./ActivityPicker";
 import { firstActivity } from "./activities";
 import type { ActivityKind } from "../actions/model";
@@ -408,8 +409,7 @@ export function Workspace({
   return (
     <WorkspaceFrame connected connection="Connected locally" controls={<Shutdown api={api} />}
       toolPicker={<Picker compact label="Tool" value={toolId} onChange={chooseTool}
-        choices={snapshot.tools.map(t => ({id:t.id,title:t.declaration?.document.tool.name ?? t.id,
-          description:t.error ?? `Version ${t.declaration?.document.tool.version ?? "unknown"}`}))} />}>
+        choices={snapshot.tools.map(toolChoice)} />}>
     <div className={styles.workspace}>
       <div className={styles.toolContext}>
         <div className={styles.toolHeading}>

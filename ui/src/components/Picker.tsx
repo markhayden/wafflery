@@ -5,6 +5,8 @@ export type Choice = {
   id: string;
   title: string;
   description?: string;
+  icon?: string;
+  meta?: string;
   group?: string;
   disabled?: boolean;
 };
@@ -26,7 +28,7 @@ export function Picker({ label, value, choices, onChange, disabled, compact = fa
   const [open, setOpen] = useState(false);
   const selected = choices.find((choice) => choice.id === value);
   const matches = choices.filter((choice) =>
-    `${choice.title} ${choice.description ?? ""} ${choice.group ?? ""}`
+    `${choice.title} ${choice.description ?? ""} ${choice.meta ?? ""} ${choice.group ?? ""}`
       .toLowerCase()
       .includes(query.toLowerCase()),
   );
@@ -85,6 +87,7 @@ export function Picker({ label, value, choices, onChange, disabled, compact = fa
               )}
               <button
                 type="button"
+                className={choice.meta ? styles.withMeta : undefined}
                 aria-pressed={choice.id === value}
                 disabled={choice.disabled}
                 onClick={() => {
@@ -92,8 +95,13 @@ export function Picker({ label, value, choices, onChange, disabled, compact = fa
                   dialog.current?.close();
                 }}
               >
-                <strong>{choice.title}</strong>
-                {choice.description && <small>{choice.description}</small>}
+                {choice.meta && <span className={styles.mark} aria-hidden="true">{choice.icon && <img src={choice.icon} width="40" height="40" alt="" />}</span>}
+                <span className={styles.optionText}>
+                  <span className={styles.optionHeading}><strong>{choice.title}</strong>
+                    {choice.meta && <small className={styles.meta} title={choice.meta}>{choice.meta}</small>}
+                  </span>
+                  {choice.description && <small>{choice.description}</small>}
+                </span>
               </button>
             </div>
           ))}

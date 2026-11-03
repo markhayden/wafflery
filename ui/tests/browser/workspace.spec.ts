@@ -20,7 +20,9 @@ test("an unavailable launcher selection never silently opens another tool", asyn
   await page
     .getByRole("button", { name: "Tool Choose tool", exact: true })
     .click();
-  await page.getByRole("button", { name: /sample-lab Version/ }).click();
+  const toolRow=page.getByRole("dialog",{name:"Choose tool"}).getByRole("button",{name:/^sample-lab /});
+      await expect(toolRow.getByText(/^Version /)).toBeVisible();
+      await toolRow.click();
   await expect(
     page.getByRole("button", { name: "Action Add a test band" }),
   ).toBeVisible();

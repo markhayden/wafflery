@@ -12,6 +12,14 @@ grouped activity picker. Task-only tools omit unavailable workspace kinds. Both 
 same control. Desktop input/result panes scroll independently with fixed headers/footers; narrow and
 short windows use page scrolling.
 
+Choose tool rows show a decorative 40 px logo on the left, the name and right-aligned version
+on the first line, then the description. Known-tool presentation comes from a small local map;
+other tools use their declared purpose with the same reserved logo space. An error replaces the
+description. Descriptions wrap fully without truncation or clamping, and the logo stays
+top-aligned with the name. Long versions truncate with the complete value available in their title and accessible
+button name. Search covers name, description and version. The selected workspace still shows the
+tool's declared purpose; this presentation map does not change tool capabilities or identity.
+
 Declared ports render image, shared-location and opaque native-reference inputs, including ordered
 lists. Send to fills a compatible draft without running it. Location outputs expose public geometry
 and overlays; native Masks show previews plus separately labelled resource/portability state.

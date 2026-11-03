@@ -28,7 +28,9 @@ for (const tool of ["rascal", "squint"] as const) {
     await open();
     if (tool === "rascal") {
       await page.getByRole("button", { name: "Tool squint", exact: true }).click();
-      await page.getByRole("button", { name: /rascal Version/ }).click();
+      const toolRow=page.getByRole("dialog",{name:"Choose tool"}).getByRole("button",{name:/^rascal /});
+      await expect(toolRow.getByText(/^Version /)).toBeVisible();
+      await toolRow.click();
     }
     await page.getByRole("button", { name: /^Action / }).click();
     await page.getByRole("button", { name: tool === "rascal" ? /Heal a seam/ : /Reference consistency Image/ }).click();
