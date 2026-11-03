@@ -1,3 +1,4 @@
+import {NativePreservation} from "./NativePreservation";
 import styles from "./Evidence.module.css";
 import { savedInvocation } from "./invocation";
 import { ReportInspection } from "./ReportInspection";
@@ -5,7 +6,7 @@ import type { ReportOwner } from "./report-owner";
 import { useState } from "react";
 import type { Attempt } from "../../api/workspace";
 import { Button } from "../../components/Button";
-export function Inspector({ attempt, reports }: { attempt: Attempt; reports: ReportOwner }) {
+export function Inspector({ attempt, reports, retryNative }: { attempt: Attempt; reports: ReportOwner; retryNative?:((id:string)=>Promise<unknown>)|undefined }) {
   const [view, setView] = useState<"inputs" | "result" | "call" | "invocation" | "journal" | "session" | "reports">(
     "inputs",
   );
@@ -69,9 +70,8 @@ export function Inspector({ attempt, reports }: { attempt: Attempt; reports: Rep
           {JSON.stringify(data, null, 2) ?? "No evidence available yet."}
         </pre>}
 
-      <p>
-        Native dependencies and tool reports are not included in the saved evidence.
-      </p>
+      <NativePreservation attempt={attempt} retry={retryNative}/>
+      <p>Tool reports remain dependent on the tool's saved report files.</p>
       </>}
       {attempt.notices.map((notice, index) => (
         <p key={index}>{notice}</p>

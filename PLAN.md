@@ -2699,9 +2699,9 @@ path boundary. UI assets rebuilt. Hosted CI is the full gate; automatic preserva
 
 - [x] Queue bounded deduplicated preservation for portable non-image artifact inputs/outputs after their references
   are known. Existing successful run state is never held hostage by export failure or a stopped peer.
-- [ ] Show preserved, preserving, workspace-dependent and failed states with explicit retry; portable:none
+- [x] Show preserved, preserving, workspace-dependent and failed states with explicit retry; portable:none
   has a reason. Restart can resume user-requested preservation without replaying the original action.
-- [ ] Reopen an unresolved saved artifact by offering import of its verified owned bytes; validate the
+- [x] Reopen an unresolved saved artifact by offering import of its verified owned bytes; validate the
   restored identity and re-read the artifact resource before binding. Do not silently import or run.
 
 **Depends:** M5.08,10–11. **Areas:** preservation queue/status, result cards/Inspector, artifact selection.
@@ -2718,12 +2718,25 @@ failure affect preservation only, never the immutable result, execution outcome,
 Cleanup/restart/shutdown account for queued and active preservation. A new host marks interrupted
 preservation failed; explicit retry can finish from owned bytes without replaying the action.
 
-The backend slice includes the explicit preservation retry endpoint and receiving-registration
-resource/import controls. Result cards, Inspector, selection confirmation and refreshed UI assets
-follow in the second commit of this task. Review approved. Targeted backend checks passed 26
-operation integrations, all 132 Rust lib tests and clippy. A lock-order regression fails with the
-submission lock held during worker joins and passes after releasing it; 40 browser shutdown
-repetitions in Chromium/WebKit confirm the fix. Hosted CI remains the full gate.
+Result and Inspector show per-occurrence preserved/preserving/workspace-dependent/failed states.
+`portable:none` keeps its explanation. An explicit retry queues preservation only. Native selection
+checks the receiving registered tool's artifact resource before adding a binding. If it is unresolved,
+the restore drawer offers owned-byte import only after confirmation, validates the returned identity,
+and re-reads the receiving store's resource before completing the selection. It never silently
+imports, reruns an upstream operation, searches a tool store or substitutes preview PNGs. A receiving
+registration of the same tool may use a different store; checks/import target that registration.
+Preview assets retain their layout and loaded URL across native-status updates so controls do not
+move when metadata refreshes. Examples and portable invocation bundles follow in later tasks.
+
+Review approved; follow-ups retain already-preserved entries on retry, coalesce across same-tool
+registrations, avoid unchecked worker metadata, guard a changed selected run, and resolve superseded
+restore choices. Two occupied export slots can temporarily refuse an interactive import; the host
+retains those transfers until terminal reply/confirmed child exit, with explicit force quit as before.
+Targeted checks passed 26 operation integrations, all 132 Rust lib tests, clippy and UI typecheck;
+54 browser cases passed (4 existing skips), including all paid specs, plus the final 4 restore/state
+cases after review. The shutdown regression fails with the submission lock held while joining a
+worker and passes when released; 40 shutdown repetitions passed in Chromium/WebKit. Restore drawer
+screenshots inspected and UI assets rebuilt. Hosted CI is the full gate. M5.12 complete.
 
 #### M5.13 — Save reusable operation examples
 

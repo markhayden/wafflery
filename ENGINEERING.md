@@ -232,6 +232,9 @@ A failed export or a full queue changes preservation status only. A new host mar
 preservation failed and waits for explicit retry, without replaying the action. Queue workers have
 no browser-wait deadline; their transfers retain staging until a reply or confirmed child exit.
 
+Artifact selection checks the receiving registration's resource. Missing resources offer explicit
+import of owned native bytes, followed by a validated resource read before the draft is filled.
+
 Never recursively delete unknown tool workspace files. Cleanup of native tool stores needs a
 declared ownership/deletion interface. Show opaque tool storage separately in disk usage;
 reclaimable bytes must not include space Wafflery cannot safely release.

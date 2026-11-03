@@ -17,7 +17,7 @@ test.describe("independent operation chains",()=>{test.use({hostScenario:"v04-op
  await page.getByRole("dialog",{name:"Send artifact to"}).getByRole("button",{name:/collect tokens.*tokens/}).click();
  const tokens=page.locator("fieldset").filter({has:page.locator("legend",{hasText:"tokens"})});
  await tokens.getByRole("combobox",{name:"Saved artifact",exact:true}).selectOption({index:1});
- await expect(tokens.getByRole("status")).toHaveText("2 selected");
+ await expect(tokens.getByRole("status",{name:"tokens selection count"})).toHaveText("2 selected");
  await page.getByRole("button",{name:"Run",exact:true}).click();
  await expect(page.getByRole("region",{name:"Operation outputs"}).getByRole("heading")).toHaveCount(2);
  await page.getByRole("button",{name:"History",exact:true}).click();

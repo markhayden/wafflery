@@ -9,7 +9,8 @@ Squint independently. Pixel, cross-tool workflows, and batch evaluations follow 
 This directory contains the Rust/React development application, its reviewed plans, and an earlier
 interactive mock. The application runs real offline MCP actions, preserves evidence, reopens
 history, compares baselines, saves examples and exports recorded calls/evidence. Production tool
-installation and native replay remain later integration work; saved runs can open declared tool reports.
+installation and portable replay bundles remain later integration work. Saved runs preserve declared
+portable native artifacts and can explicitly restore them into a compatible tool store or open declared tool reports.
 The authenticated prepared-call API can execute paid actions only from a current owned estimate;
 its automated verification uses synthetic spend, without provider charges.
 

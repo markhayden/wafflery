@@ -1,3 +1,5 @@
+import {useArtifactRestore} from "./useArtifactRestore";
+import {NativePreservation} from "./NativePreservation";
 import {useSavedArtifacts} from "./useSavedArtifacts";
 import {compatibleDestinations,transferBinding,encodePortBindings,savedSources,type ArtifactSource} from "./artifact-transfer";
 import {ArtifactOutputs} from "./ArtifactOutputs";
@@ -126,6 +128,8 @@ export function Workspace({
   const [images, setImages] = useState<ImageSelection>({});
   const [savedImages, setSavedImages] = useState<Asset[]>([]);
   const [selected, setSelected] = useState<Attempt | undefined>();
+  const artifactRestore=useArtifactRestore(client,`${toolId}/${actionId}/${draftRevision}`);
+  const retryNative=async(id:string)=>{await client.preserveNative(id);const saved=await client.attempt(id);setSelected(current=>current?.id===id?saved:current);};
   const libraryArtifacts=useSavedArtifacts(api,snapshot,JSON.stringify([selected?.id,selected?.preservation,selected?.outputs.length]));
   const savedRefusal=object(object(selected?.observations)?.refusal);
   const savedBindingIssues=selected?.request.action===actionId && JSON.stringify(selected.request.params)===JSON.stringify(params) && JSON.stringify(selected.request.bindings??{})===JSON.stringify(encodePortBindings(portBindings).bindings) && savedRefusal ? parseBindingIssues({code:"binding",bindings:savedRefusal.bindings}) : [];
@@ -408,8 +412,8 @@ export function Workspace({
                 {draftExample.notes ? ` · ${draftExample.notes}` : ""}
               </p>
             )}
-            {action?.kind==="operation" && action.ports && <PortEditor key={`ports/${toolId}/${actionId}/${draftRevision}/${declaration?.revision}`} ports={action.ports.in} value={portBindings} onBusy={setPortImporting} onChange={value=>{setPortBindings(value);setBindingIssues([]);}} assets={savedImages} artifacts={libraryArtifacts.sources.flatMap((source,index)=>{const binding=transferBinding(source,declaration!.document.tool.name);return binding?[{id:String(index),label:`${source.port} item ${(source.index??0)+1} · ${source.attempt?.slice(0,8)} · ${String(source.reference.type)}`,reference:source.reference,binding}]:[];})} issues={cost.state.kind==="error"?cost.state.bindings??bindingIssues:bindingIssues.length?bindingIssues:savedBindingIssues} upload={async file=>{const asset=await assets.upload(file);setSavedImages(await assets.list());return asset;}} disabled={busy||!!working||portImporting} />}
-            {action?.kind==="operation" && <><p role="status">{libraryArtifacts.loading?"Loading saved artifacts…":libraryArtifacts.error??"Saved references are checked by the tool on Run."}</p>{libraryArtifacts.more&&<Button type="button" onClick={libraryArtifacts.loadMore}>Load older artifacts</Button>}</>}
+            {action?.kind==="operation" && action.ports && <PortEditor key={`ports/${toolId}/${actionId}/${draftRevision}/${declaration?.revision}`} ports={action.ports.in} resolveArtifact={binding=>artifactRestore.choose(binding,toolId)} value={portBindings} onBusy={setPortImporting} onChange={value=>{setPortBindings(value);setBindingIssues([]);}} assets={savedImages} artifacts={libraryArtifacts.sources.flatMap((source,index)=>{const binding=transferBinding(source,declaration!.document.tool.name);return binding?[{id:String(index),label:`${source.port} item ${(source.index??0)+1} · ${source.attempt?.slice(0,8)} · ${String(source.reference.type)}`,reference:source.reference,binding}]:[];})} issues={cost.state.kind==="error"?cost.state.bindings??bindingIssues:bindingIssues.length?bindingIssues:savedBindingIssues} upload={async file=>{const asset=await assets.upload(file);setSavedImages(await assets.list());return asset;}} disabled={busy||!!working||portImporting} />}
+            {action?.kind==="operation" && <><p role="status">{libraryArtifacts.loading?"Loading saved artifacts…":libraryArtifacts.error??"Select a saved artifact to check its availability. Run still validates compatibility."}</p>{libraryArtifacts.more&&<Button type="button" onClick={libraryArtifacts.loadMore}>Load older artifacts</Button>}</>}
             {action ? (
               <ActionForm
                 key={`${toolId}/${actionId}/${draftRevision}/${declaration?.revision}`}
@@ -542,7 +546,8 @@ export function Workspace({
                   onSetup={event => setDrawer({opener:event.currentTarget,
                   view:"setup",tool:selected.request.tool,action:selected.request.action})} />
                 {!noRun && <>
-                <ArtifactOutputs attempt={selected} load={assets.preview} inspect={index=>client.artifact(selected.id,index)} disabled={busy||!!working} onSend={index=>setSendSource(savedSources(selected).find(source=>source.index===index))} />
+                <ArtifactOutputs attempt={selected} restore={async index=>{const source=savedSources(selected).find(source=>source.index===index);if(!source)return;const binding=transferBinding(source,selected.declaration.document.tool.name);if(!binding)return;if(await artifactRestore.choose(binding,selected.request.tool))return client.artifact(selected.id,index);}} load={assets.preview} inspect={index=>client.artifact(selected.id,index)} disabled={busy||!!working} onSend={index=>setSendSource(savedSources(selected).find(source=>source.index===index))} />
+                <NativePreservation key={`native/${selected.id}`} attempt={selected} retry={retryNative} />
                 {(!artifactOccurrences(selected.result).length || selected.outputs.some(output=>output.role!=="preview")) && <SavedComparison
                   attempt={selected}
                   client={client}
@@ -620,12 +625,15 @@ export function Workspace({
           ))}
         </section>
       )}
+      {artifactRestore.drawer}
       <Drawer open={!!sendSource} title="Send artifact to" description="Choose a destination port. This fills a new draft without running any tool." onClose={()=>setSendSource(undefined)}>
-        {sendSource && compatibleDestinations(sendSource,snapshot.tools).map(destination=><Button key={`${destination.tool}/${destination.action}/${destination.port}`} onClick={()=>{
+        {sendSource && compatibleDestinations(sendSource,snapshot.tools).map(destination=><Button key={`${destination.tool}/${destination.action}/${destination.port}`} onClick={async()=>{
           const target=snapshot.tools.find(tool=>tool.id===destination.tool)?.declaration;
           const action=target?.document.actions.find(action=>action.name===destination.action);
           if(!target||!action)return;
-          const binding=transferBinding(sendSource,target.document.tool.name);if(!binding)return;
+          const candidate=transferBinding(sendSource,target.document.tool.name);if(!candidate)return;
+          setSendSource(undefined);
+          const binding=await artifactRestore.choose(candidate,destination.tool);if(!binding)return;
           chooseTool(destination.tool);setActionId(destination.action);setParams(initialParameters(action.params_schema));
           setPortBindings({[destination.port]:[binding]});setSelectedId(null);setSelected(undefined);setSendSource(undefined);
         }}>{destination.title}</Button>)}
@@ -698,7 +706,7 @@ export function Workspace({
             }}
           />
         ) : (
-          drawer?.view === "inspect" && selected && <Inspector key={selected.id} attempt={selected} reports={reports} />
+          drawer?.view === "inspect" && selected && <Inspector key={selected.id} attempt={selected} reports={reports} retryNative={retryNative} />
         )}
       </Drawer>
     </div>

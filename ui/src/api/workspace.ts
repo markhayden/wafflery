@@ -173,7 +173,9 @@ export function workspaceClient(api: LocalApi) {
     return value;
   }
   return {
-    async artifact(id:string,index:number):Promise<Json>{return (await api.request(`/api/attempts/${encodeURIComponent(id)}/artifacts/out/${index}`)).json();},
+    async artifact(id:string,index:number,target?:string):Promise<Json>{return (await api.request(`/api/attempts/${encodeURIComponent(id)}/artifacts/out/${index}${target?`?${new URLSearchParams({target_tool:target})}`:""}`)).json();},
+    async importArtifact(id:string,index:number,target?:string):Promise<Json>{return (await api.request(`/api/attempts/${encodeURIComponent(id)}/artifacts/out/${index}/import`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({target_tool:target})})).json();},
+    preserveNative:(id:string)=>getAttempt(`/api/attempts/${encodeURIComponent(id)}/native-preservation`,{method:"POST",headers:{"Content-Type":"application/json"},body:"{}"}),
     async snapshot(): Promise<Snapshot> {
       const value: unknown = await (await api.request("/api/state")).json();
       if (
