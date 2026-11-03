@@ -30,7 +30,9 @@ export const test = base.extend<{
   hostScenario: ["normal", { option: true }],
   hostKind: ["sample", { option: true }],
   hostAccess: ["unrestricted", { option: true }],
-  host: async ({ hostScenario, hostKind, hostAccess }, use, testInfo) => {
+  // Host readiness/owned cleanup have their own bounded lifetime. Charging initial
+  // process setup to the browser body can tear down a healthy final run mid-preservation.
+  host: [async ({ hostScenario, hostKind, hostAccess }, use, testInfo) => {
     const temporary = await mkdtemp(join(tmpdir(), "wafflery-workflow-"));
     const root = join(temporary, "data"),
       toolRoot = join(temporary, "tool");
@@ -216,6 +218,6 @@ export const test = base.extend<{
         await rm(temporary, { recursive: true, force: true });
       }
     }
-  },
+  }, { timeout: 15_000 }],
 });
 export { expect };

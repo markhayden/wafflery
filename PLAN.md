@@ -2931,6 +2931,18 @@ unit checks passed, including a fixed archive SHA-256 golden and byte equality a
 builds. The full Rust workspace suite, clippy with warnings denied, formatting and UI typecheck
 passed after the review adjustments. No browser path changed in this backend-only task.
 
+**Hosted journey budget correction (2026-11-02):** run 41587857580 failed only in the WebKit
+restored-operation example. Its trace shows normal Run acceptance, then whole-test cancellation:
+initial host setup consumed about 2.5 seconds of the 15-second browser budget, leaving only about
+1.36 seconds after the final POST started (about 0.83 seconds after its 202 response). The saved attempt was completed with preservation pending;
+connection failures appeared during teardown. No evidence label or panel changed. The common host
+fixture now declares one shared 15-second setup/teardown slot, using Playwright's fixture lifetime
+boundary; browser tests stay at 15 seconds and assertions at five. Readiness still waits for the
+control handshake and cleanup still requires confirmed closure. No retry or longer body/assertion
+timeout was introduced. Targeted runs cover both Chromium and WebKit per the coordinator's updated
+lean rule. Independent review approved; all 20 targeted cases passed across five repetitions
+in each engine. Full Rust workspace tests, clippy, formatting and UI typecheck passed before merge.
+
 #### M5.16 — Expose saved bundles in the pipeline drawer
 
 - [ ] Export reviews included files, omissions, artifact dependencies and requirements before downloading.
