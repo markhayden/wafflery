@@ -3018,9 +3018,39 @@ spawn, transport or probe-close failures. No schema relaxation, retry or timeout
 
 **Planned build slices** (ordered, each with its own targeted checks and matching docs):
 
-- **M5.17a: bounded archive reader** — acceptance 1; malformed archives cause no effects.
+- **M5.17a: Complete — bounded archive reader** — reader portion of acceptance 1; malformed archives cause no effects. Public upload wiring follows in M5.17b.
 - **M5.17b: import review and orchestration** — acceptance 2–3; drawer and partial/idempotent import
   tests.
+
+**M5.17a as built:** a bounded, side-effect-free reader retains immutable archive bytes with checked
+member offsets. It reads raw ustar entries (so GNU/PAX extension entries cannot be hidden), requires
+regular files and fixed permission/owner/time fields, validates safe names including standard ustar
+prefix encoding, checks sorted unique members, zero padding/end blocks and rejects trailing payload.
+The M5.15 manifest/member/count/total limits apply before body processing. JSON duplicate keys,
+unsupported versions and contradictory result/invocation headers are refused. Every listed file is
+fingerprinted and named by its expected digest/identity; image format and dimensions come from its
+header, without decoding a full raster. Native export bytes remain opaque.
+
+Input occurrences are checked against the immutable invocation and public input evidence in the
+result, including order, duplicate counts, explicit omissions and unportable references. Removing an
+input row and its file cannot erase an input still recorded by the original run. Shared locations
+passed by value need no export. Private parameters resembling image inputs are not guessed at; current
+tool descriptions and ordinary typed preparation remain authoritative when opening an imported draft.
+The validation result exposes read-only accessors; callers cannot change a validated manifest/member
+map and retain its proof. Archive IDs fingerprint original bytes, including their safe ustar encoding;
+native import idempotence is by artifact identity, not an assumption that alternative encodings share
+an archive ID. Chains that rely on unstored earlier outputs need M5.19's edge resolver and are refused
+here unless every reference is supplied or explicitly marked as a dependency. Reader acceptance is
+not proof of current tool readiness or complete typed port coverage; import preflight uses current
+public descriptions before any publication/control call.
+This slice creates no files, ownership, tool imports or attempts. Upload review and explicit import
+orchestration follow in M5.17b.
+
+Independent security review approved M5.17a. All 23 assembler/store/reader integration cases and the
+full Rust workspace suite passed, including nine positive/adversarial reader cases. Clippy with
+warnings denied, formatting and UI typecheck passed after the reviewed immutable-accessor and lint
+adjustments. No browser code or public upload/import path changed in this slice. The parent M5.17
+checkboxes remain open until the upload/review/control orchestration is wired and checked.
 
 #### M5.18 — Replay one imported step through the workspace
 

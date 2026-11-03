@@ -836,3 +836,18 @@ removed the source after assembly, save reports a conflict before publication. A
 file publication and the metadata transaction can leave an unowned archive file; it is not a completed
 bundle, is not counted as a saved record, and can be adopted by an identical later save. Automatic
 orphan reclamation is outside the current recovery scope.
+
+M5.17a reads bounded uncompressed ustar into immutable bytes plus checked member offsets. Raw tar
+iteration exposes extension records for rejection; safe standard ustar prefix encoding is accepted.
+Headers, member order/names/count/size, padding/end blocks and all manifest schemas/references/hashes
+are verified before publication or tool contact. Duplicate JSON keys and unsupported versions are
+rejected. Image format/dimensions are checked from headers; full raster decoding is not part of
+archive validation. Native files are opaque. Occurrence checks use contract manifest/result fields,
+never private parameter interpretation. The reader itself has no filesystem or tool side effects.
+
+Validated archive data is immutable through the reader API. Archive IDs hash the exact input bytes;
+safe alternate ustar encodings are not normalized or equated. Native import idempotence follows the
+artifact identity. Current tool descriptions must establish typed port coverage/readiness before
+publication/import: arbitrary uploaded result fields are not authenticated proof that all required
+inputs are present. References to unstored earlier outputs require the later chain edge resolver;
+this reader currently requires files or explicit dependency records for such inputs.

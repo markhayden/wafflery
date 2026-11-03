@@ -63,7 +63,7 @@ fn layout(manifest: u64, sizes: impl Iterator<Item = u64>) -> Result<u64> {
     }
     Ok(total)
 }
-fn safe_name(name: &str) -> bool {
+pub(crate) fn safe_name(name: &str) -> bool {
     let Some((directory, base)) = name.split_once('/') else {
         return false;
     };

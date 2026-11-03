@@ -1,3 +1,4 @@
+pub mod bundle_reader;
 pub mod bundles;
 #[cfg(test)]
 #[allow(dead_code)]
