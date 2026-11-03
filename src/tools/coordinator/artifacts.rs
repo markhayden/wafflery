@@ -33,6 +33,12 @@ impl Coordinator {
             .declaration
             .clone()
             .ok_or_else(|| Error::Missing("The artifact's declaration is unavailable"))?;
+        if reference["tool"] != declaration.document["tool"]["name"] {
+            return Err(Error::Invalid(
+                "This input belongs to another tool. Inspect its originating saved run instead."
+                    .into(),
+            ));
+        }
         validate_reference(reference, &declaration.document)?;
         let uri = reference["resource"].as_str().unwrap();
         let response = match client.read_resource(uri).await {
@@ -95,6 +101,13 @@ impl Coordinator {
     }
 }
 pub(super) fn validate_reference(reference: &Value, description: &Value) -> Result<()> {
+    validate_reference_for_input(reference, description, false)
+}
+fn validate_reference_for_input(
+    reference: &Value,
+    description: &Value,
+    shared_input: bool,
+) -> Result<()> {
     let (_, schema) = table_manners::SCHEMAS
         .iter()
         .find(|(id, _)| *id == "urn:table-manners:operations:artifact-ref")
@@ -105,7 +118,8 @@ pub(super) fn validate_reference(reference: &Value, description: &Value) -> Resu
     let tool = reference["tool"].as_str().unwrap();
     let identity = reference["identity"].as_str().unwrap();
     if reference["resource"] != format!("{tool}://artifact/{identity}")
-        || reference["tool"] != description["tool"]["name"]
+        || (reference["tool"] != description["tool"]["name"]
+            && !(shared_input && matches!(reference["type"].as_str(), Some("image" | "location"))))
     {
         return Err(Error::Invalid(
             "Artifact resource address conflicts with its identity or registered tool".into(),
@@ -153,7 +167,7 @@ pub(crate) fn validate_occurrences(
             .flatten()
         {
             let reference = &occurrence["artifact"];
-            validate_reference(reference, description)?;
+            validate_reference_for_input(reference, description, direction == "in")?;
             let port = occurrence["port"]
                 .as_str()
                 .ok_or_else(|| Error::Invalid("Missing artifact port".into()))?;
@@ -166,6 +180,14 @@ pub(crate) fn validate_occurrences(
             {
                 return Err(Error::Invalid(
                     "Artifact input identity or order differs from the submitted binding".into(),
+                ));
+            }
+            if direction == "in"
+                && reference["tool"] != description["tool"]["name"]
+                && !matches!(bindings.get(port).and_then(|values|values.get(*index)),Some(crate::library::attempts::InputBinding::Artifact{reference:expected}) if expected==reference)
+            {
+                return Err(Error::Invalid(
+                    "Foreign shared artifact input has no exact submitted reference".into(),
                 ));
             }
             *index += 1;
@@ -266,6 +288,36 @@ mod tests {
         result["artifacts"]["out"] = json!([output]);
         result["locations"]["found"] = json!([value, value]);
         assert!(!unique_shared_location(&output, &result, &value));
+    }
+    #[test]
+    fn foreign_shared_occurrences_require_an_exact_submitted_reference() {
+        let identity = format!("sha256:{}", "a".repeat(64));
+        let reference = json!({"type":"image","schema_version":1,"tool":"source","identity":identity,"frame":null,"resource":format!("source://artifact/{identity}")});
+        let description = json!({"tool":{"name":"receiving"},"actions":[{"name":"mix","kind":"operation","ports":{"in":[{"name":"pictures","type":"image"}],"out":[]}}]});
+        let result =
+            json!({"artifacts":{"in":[{"port":"pictures","artifact":reference}],"out":[]}});
+        for value in [
+            json!({}),
+            json!({"pictures":[{"kind":"image","asset":"owned"}]}),
+        ] {
+            let bindings = serde_json::from_value(value).unwrap();
+            assert!(validate_occurrences(&description, "mix", &result, &bindings).is_err());
+        }
+        let bindings =
+            serde_json::from_value(json!({"pictures":[{"kind":"artifact","reference":reference}]}))
+                .unwrap();
+        validate_occurrences(&description, "mix", &result, &bindings).unwrap();
+    }
+    #[test]
+    fn shared_input_references_keep_their_owner_but_outputs_cannot_impersonate_it() {
+        let description = json!({"tool":{"name":"receiving"}});
+        let identity = format!("sha256:{}", "a".repeat(64));
+        let reference = json!({"type":"image","schema_version":1,"tool":"source","identity":identity,"frame":null,"resource":format!("source://artifact/{identity}")});
+        validate_reference_for_input(&reference, &description, true).unwrap();
+        assert!(validate_reference(&reference, &description).is_err());
+        let mut forged = reference.clone();
+        forged["resource"] = json!(format!("receiving://artifact/{identity}"));
+        assert!(validate_reference_for_input(&forged, &description, true).is_err());
     }
     #[test]
     fn artifact_addresses_types_and_versions_are_checked_without_reading_native_records() {

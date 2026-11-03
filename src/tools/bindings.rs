@@ -42,7 +42,9 @@ pub(super) async fn materialize(
             let (id, frame) = match item {
                 InputBinding::Image { asset, frame } => (asset, frame),
                 InputBinding::Artifact { reference } => {
-                    if reference["tool"] != declaration.document["tool"]["name"] {
+                    if !matches!(reference["type"].as_str(), Some("image" | "location"))
+                        && reference["tool"] != declaration.document["tool"]["name"]
+                    {
                         return Err(Error::Invalid("Artifact references cannot be sent to another tool; select owned image bytes or a shared location value instead".into()));
                     }
                     values.push(reference.clone());
@@ -128,19 +130,61 @@ mod operation_tests {
     use super::*;
     use std::collections::BTreeMap;
     #[tokio::test]
+    async fn native_binding_uses_the_declared_tool_name_not_the_registration_alias() {
+        let root = tempfile::tempdir().unwrap();
+        let assets = AssetStore::open(&root.path().join("Library")).unwrap();
+        let identity = format!("sha256:{}", "a".repeat(64));
+        let mut request:Submission=serde_json::from_value(json!({"id":"native","tool":"peer","action":"echo","revision":"r","params":{},"images":{},"bindings":{"token":[{"kind":"artifact","reference":{"type":"peer-tool:X","schema_version":1,"tool":"peer-tool","identity":identity,"frame":null,"resource":format!("peer-tool://artifact/{identity}")}}]}})).unwrap();
+        let action = json!({"name":"echo","kind":"operation","ports":{"in":[{"name":"token","type":"peer-tool:X","required":true}]}});
+        let declaration = Declaration {
+            document: json!({"tool":{"name":"peer-tool"}}),
+            revision: "r".into(),
+            generation: 0,
+            tool_session: Value::Null,
+            schemas: BTreeMap::from([("echo".into(), json!({"type":"object"}))]),
+        };
+        materialize(
+            &assets,
+            &request,
+            &action,
+            &declaration,
+            &root.path().join("unused"),
+        )
+        .await
+        .unwrap();
+        if let InputBinding::Artifact { reference } =
+            &mut request.bindings.get_mut("token").unwrap()[0]
+        {
+            reference["tool"] = json!("peer");
+            reference["resource"] = json!(format!("peer://artifact/{identity}"));
+        }
+        assert!(
+            materialize(
+                &assets,
+                &request,
+                &action,
+                &declaration,
+                &root.path().join("unused")
+            )
+            .await
+            .is_err()
+        );
+        assets.database.shutdown().await.unwrap();
+    }
+    #[tokio::test]
     async fn mixed_image_lists_copy_only_assets_and_preserve_all_occurrences_in_order() {
         let root = tempfile::tempdir().unwrap();
         let assets = AssetStore::open(&root.path().join("Library")).unwrap();
         let path = root.path().join("input.png");
         std::fs::write(&path, include_bytes!("../../ui/tests/fixtures/sample.png")).unwrap();
         let asset = assets.import_path(path).await.unwrap();
-        let reference = json!({"type":"image","schema_version":1,"tool":"other-tool","identity":format!("sha256:{}",asset.sha256),"frame":null,"resource":format!("other-tool://artifact/sha256:{}",asset.sha256)});
+        let reference = json!({"type":"image","schema_version":1,"tool":"peer-tool","identity":format!("sha256:{}",asset.sha256),"frame":null,"resource":format!("peer-tool://artifact/sha256:{}",asset.sha256)});
         let request:Submission=serde_json::from_value(json!({"id":"mixed","tool":"peer","action":"mix","revision":"r","params":{},"images":{},"bindings":{"pictures":[
             {"kind":"image","asset":asset.id},{"kind":"artifact","reference":reference},{"kind":"image","asset":asset.id}
         ]}})).unwrap();
         let action = json!({"name":"mix","kind":"operation","ports":{"in":[{"name":"pictures","type":"image","required":true,"many":true}]}});
         let declaration = Declaration {
-            document: json!({"profiles":["images","operations"]}),
+            document: json!({"tool":{"name":"peer-tool"},"profiles":["images","operations"]}),
             revision: "r".into(),
             generation: 0,
             tool_session: Value::Null,

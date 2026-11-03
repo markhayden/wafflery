@@ -2539,7 +2539,7 @@ identities; labels name the source port, item and attempt. Choosing a destinatio
 without any dispatch, import or reconstruction. The normal Run remains explicit. Native references
 stay with their owning tool. Cross-tool image transfers use matching owned asset bytes and saved
 coordinates; location transfers use the shared found value only when one location output and one
-found value make the association unambiguous. Foreign references are refused before materialization;
+found value make the association unambiguous. Foreign native references are refused before materialization;
 the UI converts supported shared types to values. No opaque record is read for a transfer.
 
 Origin metadata follows each editable list item, then is stripped into Submission.lineage (source
@@ -2577,6 +2577,19 @@ confirm the saved runs existed while the browser displayed a mismatched-acknowle
 All 34 paid browser cases passed across Chromium/WebKit; 5 acknowledgement unit tests, UI typecheck
 and clippy passed. Null maps are rejected, and changed list order/lineage still fails exact matching.
 Hosted CI remains the full gate.
+
+**Binding CI correction:** run 41570160858 found the mixed-list unit fixture had no receiving
+tool identity and named its image reference `other-tool`. The fixture now declares `peer-tool`
+and binds that tool's reference. A separate native fixture verifies the declared name, independently
+of the registration alias `peer`. Cross-tool refusal
+is scoped to native types; shared image/location input references retain their contract semantics,
+while resource addresses still have to match their reference owner and identity. Output references
+remain tied to the producing tool. Binding/dispatch changes now run cargo test --lib locally, as a
+coordinator process update, in addition to directly affected integrations. Review also identified
+that foreign shared input occurrences need exact submitted-reference provenance; unmatched, inline
+or missing bindings now fail association. A forged owner/address is rejected, and inspecting a
+foreign input directs the user to its originating run. All 130 Rust lib tests, 10 operation
+integration tests, clippy and UI typecheck passed; the storage work remains isolated from this fix.
 
 #### M5.10 — Store native bytes with reference-aware ownership
 
