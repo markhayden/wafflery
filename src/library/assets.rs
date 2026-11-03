@@ -58,6 +58,8 @@ impl AssetStore {
             "staging",
             "blobs",
             "blobs/sha256",
+            "bundles",
+            "bundles/sha256",
         ] {
             private_directory(&root.join(directory))?;
         }

@@ -2945,11 +2945,11 @@ in each engine. Full Rust workspace tests, clippy, formatting and UI typecheck p
 
 #### M5.16 — Expose saved bundles in the pipeline drawer
 
-- [ ] Export reviews included files, omissions, artifact dependencies and requirements before downloading.
+- [x] Export reviews included files, omissions, artifact dependencies and requirements before downloading.
   Portable versus workspace-dependent status is derived from preservation, never a user-editable claim.
-- [ ] Save manifest/digest/member ownership and selected-attempt links atomically; reopening a bundle
+- [x] Save manifest/digest/member ownership and selected-attempt links atomically; reopening a bundle
   returns identical bytes. Failed assembly leaves no completed bundle or leaked ownership reference.
-- [ ] Pipeline drawer keeps command/MCP/configuration/input concepts from journey; evidence archive and
+- [x] Pipeline drawer keeps command/MCP/configuration/input concepts from journey; evidence archive and
   invocation bundle have distinct descriptions. Offer `<tool> call --bundle` only for a single-tool
   bundle with empty reference_only and unportable lists; otherwise explain required host setup/replay.
   Add loading/error/partial stories and region snapshots.
@@ -2957,6 +2957,35 @@ in each engine. Full Rust workspace tests, clippy, formatting and UI typecheck p
 **Depends:** M5.14–15. **Areas:** bundle API/persistence, Pipeline drawer, cleanup ownership display.
 **Verify:** export selected saved evidence after draft change, interrupted download, source deletion.
 **Commit:** `feat: review and download saved invocation bundles`.
+
+**As built — M5.16:** schema 8 records completed invocation manifests, archive fingerprints/member
+metadata, input ownership and source-attempt links. Archives are privately stored under their own
+SHA-256, verified before publication/download, and reopened byte for byte. Publication revalidates
+input ownership under the cleanup write lease and commits metadata/links in one SQLite transaction;
+a failed transaction removes a newly published file. Source deletion removes only its association,
+not the archive or its retained input ownership. Cleanup previews count bundle storage and exclude
+bundle-owned shared inputs. Saved bundles do not expire; bundle deletion is a later library-management
+feature, not implied by source-run cleanup.
+
+Private create/read/list/download routes accept saved identifiers and explicit omission reasons,
+never caller paths. One owned assembly worker retains its permit through HTTP cancellation; two
+bounded download slots retain verified file handles until streams end. Assembly does not call export,
+import or any action. Lists are paged summaries rather than full manifests. The shared drawer has an
+Invocation bundle tab plus a workspace Bundles entry, so archived calls remain reachable after their
+source run is deleted. New bundles are explicitly saved for review before download; review shows
+files, omissions, native dependencies, requirement names and the immutable invocation. CLI examples
+appear only for single-tool manifests with no missing/omitted inputs and use clearly labelled path
+placeholders. Configuration/credentials, fresh-session paid approval and nondeterministic results
+remain separate. Loading, partial and failure states withhold a ready CLI example.
+
+Independent task review approved. Fourteen assembler/store/API tests passed, including a reproduced
+source-deletion conflict and injected transaction failure with no publication/ownership leak. Full
+Rust workspace tests, clippy, formatting and UI typecheck passed. Three client unit tests reject
+contradictory portability/version claims. Final targeted Chromium/WebKit checks passed all 76 cases:
+bundle review/download after source deletion, cleanup, paid flows, restored examples and existing
+workspace/evidence fidelity. Eight new narrow/wide bundle screenshots and two changed mobile context
+screenshots were inspected; long digest filenames are shortened visually with full accessible names.
+UI assets were rebuilt. The host fixture CI correction is included as its separate reviewed commit.
 
 **Checkpoint E:** single-run invocation and bundle are reviewable, stable, and labelled accurately.
 Rollback can remove new export routes without deleting already downloaded files or retained evidence.

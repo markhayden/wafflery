@@ -104,7 +104,7 @@ async fn schema_six_examples_are_backed_up_and_missing_native_occurrences_are_la
             path.file_name()
                 .unwrap()
                 .to_string_lossy()
-                .starts_with("before-v7-")
+                .starts_with("before-v8-")
         })
         .unwrap();
     let old = rusqlite::Connection::open(backup).unwrap();

@@ -477,3 +477,5 @@ async fn in_flight_preservation_and_nonexistent_or_literal_only_omissions_are_no
     assert!(bundles::build(&assets, &attempt, &omit).await.is_err());
     assets.database.shutdown().await.unwrap();
 }
+#[path = "invocation_bundles/store.rs"]
+mod store;

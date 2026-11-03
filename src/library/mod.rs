@@ -5,6 +5,7 @@ mod blob_cleanup;
 pub mod blob_links;
 pub mod blobs;
 pub mod bundle_archive;
+pub mod bundle_store;
 pub mod cleanup;
 pub mod db;
 pub mod examples;

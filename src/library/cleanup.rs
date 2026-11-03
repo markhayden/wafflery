@@ -20,6 +20,8 @@ pub struct Preview {
     pub assets: Vec<Asset>,
     pub native_blobs: Vec<super::blobs::Blob>,
     pub total_native_bytes: u64,
+    pub total_bundle_bytes: u64,
+    pub bundle_count: u64,
     pub reclaimable_bytes: u64,
     pub total_asset_bytes: u64,
     pub baselines_cleared: usize,
@@ -66,7 +68,7 @@ impl Cleanup {
         };
         for asset in assets {
             let id = asset.id.clone();
-            let referenced=self.0.database.call(move|db|Ok(db.query_row("SELECT EXISTS(SELECT 1 FROM attempt_assets WHERE asset_id=?1 UNION ALL SELECT 1 FROM example_assets WHERE asset_id=?1)",[id],|r|r.get::<_,bool>(0))?)).await?;
+            let referenced=self.0.database.call(move|db|Ok(db.query_row("SELECT EXISTS(SELECT 1 FROM attempt_assets WHERE asset_id=?1 UNION ALL SELECT 1 FROM example_assets WHERE asset_id=?1 UNION ALL SELECT 1 FROM bundle_assets WHERE asset_id=?1)",[id],|r|r.get::<_,bool>(0))?)).await?;
             if referenced {
                 continue;
             }
@@ -123,7 +125,7 @@ fn preview(db: &Connection, mut selection: Selection) -> Result<Preview> {
             ));
         }
     }
-    let mut query=db.prepare("SELECT id,sha256,size,width,height,media_type FROM assets a WHERE (?3 OR a.id IN (SELECT asset_id FROM attempt_assets WHERE attempt_id IN (SELECT value FROM json_each(?1)) UNION SELECT asset_id FROM example_assets WHERE example_id IN (SELECT value FROM json_each(?2)))) AND NOT EXISTS(SELECT 1 FROM attempt_assets WHERE asset_id=a.id AND attempt_id NOT IN (SELECT value FROM json_each(?1))) AND NOT EXISTS(SELECT 1 FROM example_assets WHERE asset_id=a.id AND example_id NOT IN (SELECT value FROM json_each(?2))) ORDER BY id LIMIT 1000")?;
+    let mut query=db.prepare("SELECT id,sha256,size,width,height,media_type FROM assets a WHERE (?3 OR a.id IN (SELECT asset_id FROM attempt_assets WHERE attempt_id IN (SELECT value FROM json_each(?1)) UNION SELECT asset_id FROM example_assets WHERE example_id IN (SELECT value FROM json_each(?2)))) AND NOT EXISTS(SELECT 1 FROM attempt_assets WHERE asset_id=a.id AND attempt_id NOT IN (SELECT value FROM json_each(?1))) AND NOT EXISTS(SELECT 1 FROM example_assets WHERE asset_id=a.id AND example_id NOT IN (SELECT value FROM json_each(?2))) AND NOT EXISTS(SELECT 1 FROM bundle_assets WHERE asset_id=a.id) ORDER BY id LIMIT 1000")?;
     let assets = query
         .query_map(params![attempts, examples, selection.unused_assets], |r| {
             Ok(Asset {
@@ -149,7 +151,14 @@ fn preview(db: &Connection, mut selection: Selection) -> Result<Preview> {
         [],
         |row| row.get(0),
     )?;
+    let (bundle_count, total_bundle_bytes): (i64, i64) = db.query_row(
+        "SELECT count(*),coalesce(sum(json_extract(record,'$.size')),0) FROM invocation_bundles",
+        [],
+        |row| Ok((row.get(0)?, row.get(1)?)),
+    )?;
     let mut preview = Preview {
+        bundle_count: bundle_count.max(0) as u64,
+        total_bundle_bytes: total_bundle_bytes.max(0) as u64,
         token: String::new(),
         reclaimable_bytes: assets.iter().map(|a| u64::from(a.size)).sum::<u64>()
             + native_blobs

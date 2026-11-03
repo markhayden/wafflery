@@ -7,7 +7,7 @@ use crate::library::{
     blobs::BlobStore,
     bundle_archive::{self, CanonicalArchive, MAX_MEMBER, MAX_MEMBERS, MAX_TOTAL},
 };
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use serde_json::{Value, json};
 use std::collections::{BTreeMap, BTreeSet};
 #[derive(Default, Deserialize)]
@@ -17,22 +17,7 @@ pub struct Options {
     #[serde(default)]
     pub omit: BTreeMap<String, String>,
 }
-#[derive(Serialize)]
-pub struct Member {
-    pub name: String,
-    pub sha256: String,
-    pub bytes: u64,
-}
-pub struct Bundle {
-    pub file: tempfile::NamedTempFile,
-    pub sha256: String,
-    pub size: u64,
-    pub manifest: Value,
-    pub members: Vec<Member>,
-    pub workspace_dependent: bool,
-    pub input_assets: Vec<String>,
-    pub native_links: Vec<BlobLink>,
-}
+pub use crate::library::bundle_archive::{Bundle, Member};
 struct Assembly {
     files: BTreeMap<String, Vec<u8>>,
     total: u64,

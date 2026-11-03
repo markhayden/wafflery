@@ -226,7 +226,7 @@ can leave reclaimable files; it must not break surviving runs/examples. Baseline
 an explicit run deletion; the UI explains that the pin will clear. Examples retain their assets.
 
 Schema 6 stores opaque native files under `Library/blobs/sha256`, with occurrence links owned
-independently by attempts, examples and bundles. Schema 7 adds frozen input-artifact
+independently by attempts, examples and bundles. Schema 8 adds saved invocation bundle ownership. Schema 7 adds frozen input-artifact
 occurrences and explicit workspace-dependence labels to example records, with the normal database
 backup before adoption. Historical examples lacking native input occurrences cannot claim portable
 restoration. Example-origin lineage validates saved port occurrences independently of deleted runs. Publication and reads verify the digest;
@@ -812,5 +812,27 @@ Bundles use the existing tar dependency with fixed uncompressed ustar headers, `
 first and other members sorted. MIME suffixes are fixed (png/jpg/json/tar, otherwise bin), never
 borrowed from an export path. Limits: 8 MiB manifest, 64 MiB/member, 64 members including the
 manifest, 256 MiB including container overhead; safe lowercase basenames are at most 96 bytes.
-The temporary file is hashed after completion. Persistence, UI review and downloads arrive in M5.16;
-assembly itself makes no tool calls, reads no configuration and creates no completed bundle record.
+The temporary file is hashed after completion. Assembly itself makes no tool calls, reads no configuration and creates no completed bundle record.
+
+
+M5.16 persists completed archives under `Library/bundles/sha256/` with schema 8 manifest/member
+metadata, image/native ownership and source-attempt associations in one transaction. Publication
+revalidates original inputs under the cleanup write lease. A failed commit rolls back ownership and
+removes a newly published file; an existing archive is never overwritten. Downloads hash the exact
+owned file before streaming it. HTTP cancellation does not release assembly capacity early; saved
+archives survive interrupted downloads, source-run deletion and restart. Bundle lists return bounded,
+paged summaries. Cleanup includes bundle usage and retains bundle-owned inputs. Bundles do not expire
+and source-run cleanup never implies bundle deletion; dedicated deletion is not implemented yet.
+
+The pipeline's Invocation bundle tab creates an immutable saved review, then downloads it separately.
+The workspace Bundles drawer can reopen it after source deletion. Requirements, included original
+files, native copies, explicit omissions and unportable inputs precede download. A standard CLI example
+is shown only for one tool and empty dependency lists; it uses labelled example paths. No export/import
+control or action runs during assembly/review/download, and no config or credential contents are read.
+
+Bundle save briefly holds the exclusive storage lease while revalidating input bytes and hashing/
+publishing the archive, so imports and preservation wait during that bounded operation. If cleanup
+removed the source after assembly, save reports a conflict before publication. A process crash between
+file publication and the metadata transaction can leave an unowned archive file; it is not a completed
+bundle, is not counted as a saved record, and can be adopted by an identical later save. Automatic
+orphan reclamation is outside the current recovery scope.

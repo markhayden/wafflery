@@ -1,5 +1,7 @@
 //! Canonical, bounded invocation containers. No caller paths or tool storage walks.
+use super::blob_links::BlobLink;
 use super::{Error, Result};
+use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use sha2::{Digest, Sha256};
 use std::{
@@ -14,6 +16,22 @@ pub const MAX_MANIFEST: u64 = 8 * 1024 * 1024;
 pub const MAX_MEMBER: u64 = 64 * 1024 * 1024;
 pub const MAX_MEMBERS: usize = 64;
 pub const MAX_TOTAL: u64 = 256 * 1024 * 1024;
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub struct Member {
+    pub name: String,
+    pub sha256: String,
+    pub bytes: u64,
+}
+pub struct Bundle {
+    pub file: tempfile::NamedTempFile,
+    pub sha256: String,
+    pub size: u64,
+    pub manifest: Value,
+    pub members: Vec<Member>,
+    pub workspace_dependent: bool,
+    pub input_assets: Vec<String>,
+    pub native_links: Vec<BlobLink>,
+}
 pub struct CanonicalArchive {
     pub file: tempfile::NamedTempFile,
     pub sha256: String,
