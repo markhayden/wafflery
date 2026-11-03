@@ -52,11 +52,11 @@
     "ui/src/features/workspace/DirectoryAccess.stories.tsx": "2cf138b50231a129f6fe92adbb3b953c7e677c66b690e1d321b51b01937925d0",
     "ui/src/features/workspace/DirectoryAccess.tsx": "bd533667523a0cca085dbf9b30b086f5fb2bc3ed484a7492cfcf027323c9cf30",
     "ui/src/features/workspace/Evidence.module.css": "5cd3657dc000a9d8a705f31f6d1b6a396243926b6ef1d76c58c09067c76c5bef",
-    "ui/src/features/workspace/Evidence.stories.tsx": "4166497db31166006c54f2f76a8dfc62ffdbc6f5c6ddaf06a46be142e87644a4",
+    "ui/src/features/workspace/Evidence.stories.tsx": "98039745cb2ca9e9687004959aacfdb3e6929ebb26687159ee16e4a594500736",
     "ui/src/features/workspace/Examples.stories.tsx": "5f2b2faeb7708ef7509ababc33ab5b144b26626c923c7eb7f1801ba37619f05c",
     "ui/src/features/workspace/Examples.tsx": "95212cec1ef943ce92bc14fbe9dc37b0fba4353a3c9999a2f079ccc0e9581546",
     "ui/src/features/workspace/History.tsx": "020455e1cf9685dc9bba7d3489169fd4f2c95d05e2a84a2e8eacefdd7e6e123d",
-    "ui/src/features/workspace/Inspector.tsx": "7d5a2befb05630095609e492c4bc3d767d9f4f81c56dbd9fdcbdf7e2c8143f71",
+    "ui/src/features/workspace/Inspector.tsx": "6abf2399ada56ff0edcc79f0c94e70403a8035ac5f2489288e029cdb0c7e0895",
     "ui/src/features/workspace/Library.module.css": "b1dad165604f76bde526502f270426f14f8f29c07a3a953fa0fe4b3990920ecc",
     "ui/src/features/workspace/Pipeline.tsx": "a1872b7e768704e5cf674cc5db8d262d150494dc40fec4ee5b367f16727dd090",
     "ui/src/features/workspace/ReportInspection.tsx": "7b5e1c614574603635c1b2f98e08681d349a5b052440ad9cf42dbf8d612c24a5",
@@ -85,8 +85,8 @@
   },
   "outputs": {
     "assets/index-CMr7uhzP.css": "ed5dea8d80c96048c6d655212ff283f085f8f1d5608faa125556060fbeb34034",
-    "assets/index-oj6RgxfT.js": "def1d70dda17e0a27789df6fae969a904505e8c7a28d42e16a9a8c36e4cf5a4c",
+    "assets/index-VGigp_Y7.js": "4b9cd78d98c331260d38f90c2d95f0a3924ca70b5df33d4259bf9ae51809bce5",
     "assets/wafflery-mark-CML0EpfM.svg": "51bc8a040e26b897a948238598b8cabdf69bf4687c2b1a70613b542de1c99f1f",
-    "index.html": "ffda116c45adb68443bb07241a5d6e6c3f2acbe450466944dd5a7518f156057a"
+    "index.html": "395f8fde8bb08f8807943b532dec12c4efdf253903011469789efd0f38b1d972"
   }
 }
