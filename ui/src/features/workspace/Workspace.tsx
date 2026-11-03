@@ -209,6 +209,7 @@ export function Workspace({
       .catch((failure) => setError(String(failure)));
   }
   async function openExample(example: Example) {
+    if(busy)throw Error("Wait for the current draft transition or submission before opening an example.");
     const candidates=snapshot.tools.filter(tool=>tool.declaration?.document.tool.name===example.declaration.document?.tool.name&&tool.declaration.document.actions.some(action=>action.name===example.request.action));
     const receiving=candidates.find(tool=>tool.id===example.request.tool)??candidates.find(tool=>tool.id===toolId)??(candidates.length===1?candidates[0]:undefined);
     if(!receiving?.declaration)throw Error("Choose an installed compatible tool before opening this example.");
@@ -626,14 +627,19 @@ export function Workspace({
       {artifactRestore.drawer}
       <Drawer open={!!sendSource} title="Send artifact to" description="Choose a destination port. This fills a new draft without running any tool." onClose={()=>setSendSource(undefined)}>
         {sendSource && compatibleDestinations(sendSource,snapshot.tools).map(destination=><Button key={`${destination.tool}/${destination.action}/${destination.port}`} onClick={async()=>{
+          if(busy)return;
           const target=snapshot.tools.find(tool=>tool.id===destination.tool)?.declaration;
           const action=target?.document.actions.find(action=>action.name===destination.action);
           if(!target||!action)return;
           const candidate=transferBinding(sendSource,target.document.tool.name);if(!candidate)return;
-          setSendSource(undefined);
-          const binding=await artifactRestore.choose(candidate,destination.tool);if(!binding)return;
-          chooseTool(destination.tool);setActionId(destination.action);setParams(initialParameters(action.params_schema));
-          setPortBindings({[destination.port]:[binding]});setSelectedId(null);setSelected(undefined);setSendSource(undefined);
+          // Availability checks are asynchronous. Keep the source form locked until all
+          // destination state is installed, so Run can never submit the outgoing draft.
+          setBusy(true);setSendSource(undefined);
+          try{
+            const binding=await artifactRestore.choose(candidate,destination.tool);if(!binding)return;
+            chooseTool(destination.tool);setActionId(destination.action);setParams(initialParameters(action.params_schema));
+            setPortBindings({[destination.port]:[binding]});setSelectedId(null);setSelected(undefined);
+          }catch(failure){setError(String(failure));}finally{setBusy(false);}
         }}>{destination.title}</Button>)}
         {sendSource&&!compatibleDestinations(sendSource,snapshot.tools).length&&<p>No installed operation declares a compatible receiving port. No tool was run.</p>}
       </Drawer>

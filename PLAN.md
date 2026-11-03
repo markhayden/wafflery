@@ -2819,6 +2819,23 @@ gate. Rollback retains the pre-schema-7 backup and never silently downgrades the
 change run outcomes or accounting. Back up the database before schema adoption; binary rollback
 requires compatible schema or the matching backup, never a silent downgrade or ledger reset.
 
+**Checkpoint D CI correction — destination transition:** hosted WebKit run 41581795881
+clicked Run while the previous Send-to resource check was still pending. The trace shows the
+resource request beginning at 143588 ms, its 67 ms response still pending when Run started at
+143602 ms, and only two saved runs; the UI eventually showed an unrun Soften draft. The outgoing
+form remained runnable during that asynchronous transition. Send-to now owns the existing busy
+lock from before the check until the complete destination draft is installed (or selection is
+cancelled/failed). The Run handler and button both honor it. A deterministically held-response
+regression fails before this fix and passes after it; the chain also waits for the selected
+operation title before running. No retries or timeout increases were added.
+
+Review approved. The held-response test failed before the lock and passed afterward; WebKit-only
+repetition passed all 40 cases (ten repeats of the spec). Final targeted checks passed 50 browser
+cases in Chromium/WebKit, including paid-run regressions, native restoration and operation examples.
+Full local Rust workspace tests, clippy, UI typecheck and format checks passed. Source/destination
+handlers also reject a second busy submission/selection. UI assets rebuilt; no timeout or retry
+policy changed.
+
 #### M5.14 — Export the resolved single-call handoff
 
 - [ ] Pipeline drawer offers resolved invocation, recorded MCP evidence, requirements and a supported
