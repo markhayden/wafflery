@@ -25,6 +25,12 @@ impl Host {
         Self::with_flags(&[]).await
     }
     async fn with_flags(flags: &[&str]) -> Self {
+        Self::configured(flags, false).await
+    }
+    async fn native(flags: &[&str]) -> Self {
+        Self::configured(flags, true).await
+    }
+    async fn configured(flags: &[&str], preserve_native: bool) -> Self {
         static BIN: OnceLock<PathBuf> = OnceLock::new();
         let binary = BIN.get_or_init(|| {
             assert!(
@@ -42,7 +48,7 @@ impl Host {
         std::fs::write(&source, include_bytes!("../ui/tests/fixtures/sample.png")).unwrap();
         let image = assets.import_path(source).await.unwrap();
         let c = Arc::new(
-            Coordinator::open(
+            Coordinator::open_with_options(
                 assets,
                 vec![Descriptor {
                     id: "peer".into(),
@@ -60,6 +66,7 @@ impl Host {
                     evidence_dirs: vec![root.path().into()],
                     config: None,
                 }],
+                wafflery::tools::coordinator::Options { preserve_native },
             )
             .await
             .unwrap(),
@@ -494,3 +501,6 @@ async fn native_references_cannot_cross_tool_boundaries_before_dispatch() {
 
 #[path = "artifact_controls/cases.rs"]
 mod artifact_control_cases;
+
+#[path = "native_preservation/cases.rs"]
+mod native_preservation_cases;

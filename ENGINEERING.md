@@ -226,6 +226,12 @@ until the RPC finishes or the child is confirmed stopped. Cleanup, restart and s
 for these workers. Native publication and attachment share a storage lease. An import may have
 completed remotely after acknowledgement is lost; an explicit retry reconciles by identity.
 
+Automatic native preservation uses two queue-owned workers and at most sixteen waiting attempts.
+Duplicate references share verified bytes; repeated occurrences retain separate ownership links.
+A failed export or a full queue changes preservation status only. A new host marks unfinished
+preservation failed and waits for explicit retry, without replaying the action. Queue workers have
+no browser-wait deadline; their transfers retain staging until a reply or confirmed child exit.
+
 Never recursively delete unknown tool workspace files. Cleanup of native tool stores needs a
 declared ownership/deletion interface. Show opaque tool storage separately in disk usage;
 reclaimable bytes must not include space Wafflery cannot safely release.

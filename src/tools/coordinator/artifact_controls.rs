@@ -39,6 +39,8 @@ impl Coordinator {
         direction: &str,
         index: usize,
         control: &str,
+        slot: Option<tokio::sync::OwnedSemaphorePermit>,
+        target: Option<&str>,
     ) -> Result<Context> {
         let _submission = self.submission.lock().await;
         if self.stopping.load(Ordering::Acquire) {
@@ -56,14 +58,15 @@ impl Coordinator {
             .get(index)
             .map(|entry| entry["artifact"].clone())
             .ok_or(Error::Missing("Saved artifact occurrence is unavailable"))?;
+        let tool = target.unwrap_or(&saved.request.tool);
         let entry = self
             .tools
-            .get(&saved.request.tool)
+            .get(tool)
             .ok_or(Error::Missing("Artifact tool is not registered"))?;
         let client = entry
             .client()
             .ok_or(Error::Missing("Artifact tool is unavailable"))?;
-        let declaration = self.description(&saved.request.tool).await?;
+        let declaration = self.description(tool).await?;
         super::artifacts::validate_reference(&reference, &declaration.document)?;
         if client.generation() != declaration.generation {
             return Err(Error::Conflict(
@@ -84,7 +87,10 @@ impl Coordinator {
         if !declaration.schemas.contains_key(control) {
             return Err(Error::Invalid("Artifact control is not advertised".into()));
         }
-        let job = self.artifact_jobs.start(&saved.request.tool)?;
+        let job = match slot {
+            Some(slot) => self.artifact_jobs.start_reserved(tool, slot),
+            None => self.artifact_jobs.start(tool)?,
+        };
         Ok(Context {
             owner: id.into(),
             direction: direction.into(),
@@ -98,6 +104,19 @@ impl Coordinator {
             _job: job,
         })
     }
+    pub(super) async fn preserve_artifact(
+        &self,
+        id: &str,
+        direction: &str,
+        index: usize,
+    ) -> Result<BlobLink> {
+        let slot = self.artifact_jobs.reserve().await?;
+        let context = self
+            .artifact_context(id, direction, index, "export", Some(slot), None)
+            .await?;
+        self.export_artifact_owned(context, Arc::new(AtomicBool::new(false)))
+            .await
+    }
     pub async fn export_artifact(
         self: &Arc<Self>,
         id: &str,
@@ -105,7 +124,7 @@ impl Coordinator {
         index: usize,
     ) -> Result<BlobLink> {
         let context = self
-            .artifact_context(id, direction, index, "export")
+            .artifact_context(id, direction, index, "export", None, None)
             .await?;
         let waiter = Waiter::new();
         let cancelled = waiter.0.clone();
@@ -164,8 +183,17 @@ impl Coordinator {
         direction: &str,
         index: usize,
     ) -> Result<Value> {
+        self.import_artifact_into(id, direction, index, None).await
+    }
+    pub async fn import_artifact_into(
+        self: &Arc<Self>,
+        id: &str,
+        direction: &str,
+        index: usize,
+        target: Option<&str>,
+    ) -> Result<Value> {
         let context = self
-            .artifact_context(id, direction, index, "import")
+            .artifact_context(id, direction, index, "import", None, target)
             .await?;
         let waiter = Waiter::new();
         let cancelled = waiter.0.clone();

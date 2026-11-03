@@ -17,6 +17,7 @@ mod environment;
 pub mod estimate;
 mod invocation_semantics;
 mod materialized;
+mod native_queue;
 mod parameter_names;
 mod prepared;
 mod probe;

@@ -32,6 +32,10 @@ pub fn router(coordinator: Arc<Coordinator>) -> Router {
         .route("/api/attempts/{id}", get(attempt))
         .route("/api/attempts/{id}/cancel", post(cancel))
         .route(
+            "/api/attempts/{id}/native-preservation",
+            post(preserve_native),
+        )
+        .route(
             "/api/attempts/{id}/artifacts/{direction}/{index}/export",
             post(export_artifact),
         )
@@ -254,11 +258,27 @@ async fn estimate(
     Ok(Json(c.prepared_estimate(&id).await?))
 }
 
+#[derive(serde::Deserialize)]
+#[serde(deny_unknown_fields)]
+struct ArtifactTarget {
+    target_tool: Option<String>,
+}
+async fn preserve_native(
+    State(c): State<Arc<Coordinator>>,
+    Path(id): Path<String>,
+    Json(_): Json<Empty>,
+) -> Result<Json<crate::library::attempts::Attempt>, ApiError> {
+    Ok(Json(c.queue_native_preservation(&id).await?))
+}
 async fn inspect_artifact(
     State(c): State<Arc<Coordinator>>,
     Path((id, direction, index)): Path<(String, String, usize)>,
+    Query(target): Query<ArtifactTarget>,
 ) -> Result<Json<serde_json::Value>, ApiError> {
-    Ok(Json(c.inspect_artifact(&id, &direction, index).await?))
+    Ok(Json(
+        c.inspect_artifact_at(&id, &direction, index, target.target_tool.as_deref())
+            .await?,
+    ))
 }
 
 async fn export_artifact(
@@ -271,9 +291,12 @@ async fn export_artifact(
 async fn import_artifact(
     State(c): State<Arc<Coordinator>>,
     Path((id, direction, index)): Path<(String, String, usize)>,
-    Json(_): Json<Empty>,
+    Json(target): Json<ArtifactTarget>,
 ) -> Result<Json<serde_json::Value>, ApiError> {
-    Ok(Json(c.import_artifact(&id, &direction, index).await?))
+    Ok(Json(
+        c.import_artifact_into(&id, &direction, index, target.target_tool.as_deref())
+            .await?,
+    ))
 }
 
 #[cfg(test)]

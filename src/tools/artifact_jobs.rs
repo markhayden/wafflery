@@ -27,10 +27,20 @@ impl Jobs {
             events,
         })
     }
+    pub async fn reserve(&self) -> Result<OwnedSemaphorePermit> {
+        self.slots
+            .clone()
+            .acquire_owned()
+            .await
+            .map_err(|_| Error::Invalid("Artifact transfer registry stopped".into()))
+    }
     pub fn start(self: &Arc<Self>, tool: &str) -> Result<Job> {
         let slot = self.slots.clone().try_acquire_owned().map_err(|_| {
             Error::Conflict("Two artifact transfers are active. Wait before starting another.")
         })?;
+        Ok(self.start_reserved(tool, slot))
+    }
+    pub fn start_reserved(self: &Arc<Self>, tool: &str, slot: OwnedSemaphorePermit) -> Job {
         *self
             .active
             .lock()
@@ -38,11 +48,11 @@ impl Jobs {
             .entry(tool.into())
             .or_default() += 1;
         self.events.changed();
-        Ok(Job {
+        Job {
             jobs: self.clone(),
             tool: tool.into(),
             slot: Some(slot),
-        })
+        }
     }
     pub fn count(&self) -> usize {
         self.active

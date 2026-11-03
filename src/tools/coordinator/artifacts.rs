@@ -9,6 +9,16 @@ impl Coordinator {
         direction: &str,
         index: usize,
     ) -> Result<Value> {
+        self.inspect_artifact_at(attempt, direction, index, None)
+            .await
+    }
+    pub async fn inspect_artifact_at(
+        &self,
+        attempt: &str,
+        direction: &str,
+        index: usize,
+        target: Option<&str>,
+    ) -> Result<Value> {
         if !matches!(direction, "in" | "out") {
             return Err(Error::Invalid("Unknown artifact direction".into()));
         }
@@ -21,7 +31,7 @@ impl Coordinator {
             .ok_or_else(|| Error::Missing("Saved artifact occurrence is unavailable"))?;
         let entry = self
             .tools
-            .get(&saved.request.tool)
+            .get(target.unwrap_or(&saved.request.tool))
             .ok_or_else(|| Error::Missing("The artifact's tool is not installed"))?;
         let client = entry
             .client()

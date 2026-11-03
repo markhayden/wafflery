@@ -78,6 +78,10 @@ impl BlobStore {
         let id = id.to_owned();
         self.0.database.call(move|db|{let mut query=db.prepare("SELECT direction,occurrence,sha256,media_type,artifact FROM native_links WHERE owner_kind=?1 AND owner_id=?2 ORDER BY direction,occurrence LIMIT 1000")?;Ok(query.query_map(params![kind,id],from_row)?.collect::<rusqlite::Result<Vec<_>>>()?)}).await
     }
+    pub async fn find_reference(&self, reference: &Value) -> Result<Option<BlobLink>> {
+        let reference = reference.clone();
+        self.0.database.call(move|db|{let mut query=db.prepare("SELECT direction,occurrence,sha256,media_type,artifact FROM native_links WHERE json_extract(artifact,'$.identity')=?1 AND json_extract(artifact,'$.tool')=?2 AND json_extract(artifact,'$.type')=?3 LIMIT 32")?;let rows=query.query_map(params![reference["identity"].as_str(),reference["tool"].as_str(),reference["type"].as_str()],from_row)?;for row in rows{let link=row?;if link.artifact==reference{return Ok(Some(link));}}Ok(None)}).await
+    }
     /// Future bundle records release only their own links. File reclamation remains previewed cleanup.
     pub async fn release_bundle(&self, id: String) -> Result<()> {
         let _storage = self.0.storage.read().await;

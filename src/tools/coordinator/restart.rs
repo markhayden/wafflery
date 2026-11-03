@@ -24,7 +24,7 @@ impl Coordinator {
             return Err(Error::Conflict("The host is shutting down"));
         }
         self.reap_exited().await;
-        if self.artifact_jobs.tools().contains(id) {
+        if self.native_queue.tools().contains(id) || self.artifact_jobs.tools().contains(id) {
             return Err(Error::Conflict(
                 "Wait for artifact transfers before restarting this tool",
             ));

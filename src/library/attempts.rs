@@ -316,11 +316,13 @@ impl AttemptStore {
     pub async fn recover(&self) -> Result<()> {
         self.database.call(|db| {
             let tx = db.transaction()?;
-            let records = { let mut query=tx.prepare("SELECT id,record FROM attempts WHERE json_extract(record,'$.execution') IN ('submitted','running','cancelling','unconfirmed') OR json_extract(record,'$.preservation.contract')='pending'")?; query.query_map([],|r|Ok((r.get::<_,String>(0)?,r.get::<_,String>(1)?)))?.collect::<rusqlite::Result<Vec<_>>>()? };
+            let records = { let mut query=tx.prepare("SELECT id,record FROM attempts WHERE json_extract(record,'$.execution') IN ('submitted','running','cancelling','unconfirmed') OR json_extract(record,'$.preservation.contract')='pending' OR json_extract(record,'$.preservation.native')='preserving'")?; query.query_map([],|r|Ok((r.get::<_,String>(0)?,r.get::<_,String>(1)?)))?.collect::<rusqlite::Result<Vec<_>>>()? };
             for (id,record) in records {
                 let mut attempt: Attempt = serde_json::from_str(&record)?;
                 if matches!(attempt.execution.as_str(),"submitted"|"running"|"cancelling"|"unconfirmed") { attempt.execution="interrupted".into(); attempt.notices.push("Host session ended. The tool's final outcome is unknown; this attempt was not retried.".into()); }
                 if attempt.preservation["contract"] == "pending" { attempt.preservation["contract"] = json!("incomplete"); }
+                if attempt.preservation["native"]=="preserving"{attempt.preservation["native"]=json!("failed");if let Some(values)=attempt.observations["native_artifacts"].as_array_mut(){for value in values{if value["state"]=="preserving"{value["state"]=json!("failed");value["reason"]=json!("Host session ended during native preservation. Retry preservation explicitly; the original action will not be replayed.");}}}}
+
                 tx.execute("UPDATE attempts SET record=?1 WHERE id=?2",params![serde_json::to_string(&attempt)?,id])?;
             }
             tx.commit()?;Ok(())

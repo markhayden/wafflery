@@ -239,6 +239,17 @@ pub fn serve(root: &Path, arguments: Vec<String>) -> Result<(), Box<dyn std::err
                 }
             }
             "tools/call" if params["name"] == "export" || params["name"] == "import" => {
+                {
+                    let mut log = std::fs::OpenOptions::new()
+                        .create(true)
+                        .append(true)
+                        .open(root.join("control-calls.jsonl"))?;
+                    writeln!(
+                        log,
+                        "{}",
+                        json!({"name":params["name"],"identity":params["arguments"]["artifact"]["identity"]})
+                    )?;
+                }
                 let response = if params["name"] == "export" {
                     store.export(params["arguments"].clone())
                 } else {
@@ -248,6 +259,7 @@ pub fn serve(root: &Path, arguments: Vec<String>) -> Result<(), Box<dyn std::err
                     Ok(mut value) => {
                         if params["name"] == "export" {
                             match configuration.export_fault.as_deref() {
+                                Some("exit") => std::process::exit(0),
                                 Some("hash") => value["file"]["sha256"] = json!("0".repeat(64)),
                                 Some("path") => value["file"]["path"] = json!("/etc/hosts"),
                                 Some("media") => value["file"]["media_type"] = json!("image/png"),

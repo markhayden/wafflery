@@ -1,6 +1,7 @@
 mod artifact_controls;
 pub(super) mod artifacts;
 mod estimates;
+mod native_preservation;
 mod preparation;
 mod readiness;
 mod renders;
@@ -59,11 +60,23 @@ impl Drop for SubmissionChange {
         self.0.changed();
     }
 }
+pub struct Options {
+    pub preserve_native: bool,
+}
+impl Default for Options {
+    fn default() -> Self {
+        Self {
+            preserve_native: true,
+        }
+    }
+}
 pub struct Coordinator {
     pub assets: AssetStore,
     pub events: crate::events::Events,
     pub attempts: AttemptStore,
     tools: BTreeMap<String, Entry>,
+    native_queue: Arc<super::native_queue::Queue>,
+    preserve_native: bool,
     artifact_jobs: Arc<super::artifact_jobs::Jobs>,
     submission: Mutex<()>,
     preparations: super::prepared::retained::Retained,
@@ -75,6 +88,13 @@ pub struct Coordinator {
 }
 impl Coordinator {
     pub async fn open(assets: AssetStore, descriptors: Vec<Descriptor>) -> Result<Self> {
+        Self::open_with_options(assets, descriptors, Options::default()).await
+    }
+    pub async fn open_with_options(
+        assets: AssetStore,
+        descriptors: Vec<Descriptor>,
+        options: Options,
+    ) -> Result<Self> {
         let attempts = AttemptStore::new(assets.database.clone());
         attempts.recover().await?;
         let execution = assets.root().join("execution");
@@ -123,6 +143,8 @@ impl Coordinator {
             assets,
             events,
             artifact_jobs,
+            native_queue: Arc::new(super::native_queue::Queue::default()),
+            preserve_native: options.preserve_native,
             attempts,
             tools,
             submission: Mutex::new(()),
@@ -179,7 +201,7 @@ impl Coordinator {
                 "progress":state.client.as_ref().and_then(|client|client.progress().borrow().clone())})
         }).collect();
         Ok(
-            json!({"artifact_transfers":self.artifact_jobs.count(),"tools":tools,"attempts":self.attempts.history(None,50,None,None).await?,"event_session":self.events.session()}),
+            json!({"native_preservations":self.native_queue.count(),"artifact_transfers":self.artifact_jobs.count(),"tools":tools,"attempts":self.attempts.history(None,50,None,None).await?,"event_session":self.events.session()}),
         )
     }
     pub async fn submit(self: &Arc<Self>, request: Submission) -> Result<Attempt> {
@@ -299,7 +321,7 @@ impl Coordinator {
         Ok(attempt)
     }
     async fn execute(
-        &self,
+        self: &Arc<Self>,
         client: Arc<ToolClient>,
         request: Submission,
         arguments: Value,
@@ -351,6 +373,21 @@ impl Coordinator {
                     let attempt = self.attempts.get(&request.id).await?;
                     let input_notices = super::evidence::check_association(&attempt, &result)?;
                     let attempt = self.attempts.bind_result(&request.id, result).await?;
+                    if self.preserve_native
+                        && let Err(error) = self.queue_native_preservation(&request.id).await
+                    {
+                        let reason = error.to_string();
+                        let _ = self
+                            .attempts
+                            .update(&request.id, move |attempt| {
+                                attempt.preservation["native"] = json!("failed");
+                                attempt.notices.push(format!(
+                                    "Native preservation could not be queued: {reason}"
+                                ));
+                                Ok(())
+                            })
+                            .await;
+                    }
                     self.events.changed();
                     let (outputs, journal, mut notices) =
                         super::evidence::capture(&self.assets, &client, &attempt).await;
@@ -574,7 +611,7 @@ impl Coordinator {
                 "Wait until all tool activity has stopped before cleaning the library",
             ));
         }
-        if !self.artifact_jobs.tools().is_empty() {
+        if self.native_queue.count() > 0 || !self.artifact_jobs.tools().is_empty() {
             return Err(Error::Conflict(
                 "Wait for artifact transfers before cleaning the library",
             ));
@@ -591,7 +628,8 @@ impl Coordinator {
         Ok(result)
     }
     pub async fn close(&self) -> bool {
-        let _submission = self.submission.lock().await;
+        let submission = self.submission.lock().await;
+        self.stopping.store(true, Ordering::Release);
         self.preparations.clear();
         let preserving = self.preserving_tools().await;
         let mut stopped = self.close_renderers(false).await && preserving.is_empty();
@@ -603,6 +641,9 @@ impl Coordinator {
                 stopped &= client.close().await.unwrap_or(false);
             }
         }
+        // Workers may still need this lock to reject a late preservation request. Once all
+        // children are closed, drain them without holding the lock they must acquire to exit.
+        drop(submission);
         if stopped {
             let tasks = self.workers.lock().await.drain(..).collect::<Vec<_>>();
             for task in tasks {
@@ -631,6 +672,7 @@ impl Coordinator {
     async fn preserving_tools(&self) -> std::collections::BTreeSet<String> {
         let ids = self.active.lock().await.keys().cloned().collect::<Vec<_>>();
         let mut preserving = self.artifact_jobs.tools();
+        preserving.extend(self.native_queue.tools());
         for (id, entry) in &self.tools {
             if entry
                 .client()
@@ -663,5 +705,40 @@ impl Coordinator {
                 })
                 .await;
         }
+    }
+}
+
+#[cfg(test)]
+mod close_tests {
+    use super::*;
+    #[tokio::test]
+    async fn closing_children_does_not_join_workers_while_holding_the_submission_lock() {
+        let root = tempfile::tempdir().unwrap();
+        let assets = AssetStore::open(&root.path().join("Library")).unwrap();
+        let coordinator = Arc::new(Coordinator::open(assets, vec![]).await.unwrap());
+        let release = Arc::new(tokio::sync::Notify::new());
+        let worker = {
+            let coordinator = coordinator.clone();
+            let release = release.clone();
+            tokio::spawn(async move {
+                release.notified().await;
+                let _submission = coordinator.submission.lock().await;
+                assert!(coordinator.stopping.load(Ordering::Acquire));
+            })
+        };
+        coordinator.workers.lock().await.push(worker);
+        let closing = {
+            let coordinator = coordinator.clone();
+            tokio::spawn(async move { coordinator.close().await })
+        };
+        tokio::time::timeout(std::time::Duration::from_secs(2), async {
+            while !coordinator.stopping.load(Ordering::Acquire) {
+                tokio::task::yield_now().await;
+            }
+            release.notify_one();
+            assert!(closing.await.unwrap());
+        })
+        .await
+        .expect("close must release submission before joining its workers");
     }
 }

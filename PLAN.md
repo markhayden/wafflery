@@ -2697,7 +2697,7 @@ path boundary. UI assets rebuilt. Hosted CI is the full gate; automatic preserva
 
 #### M5.12 — Preserve reusable artifacts after runs
 
-- [ ] Queue bounded deduplicated preservation for portable non-image artifact inputs/outputs after their references
+- [x] Queue bounded deduplicated preservation for portable non-image artifact inputs/outputs after their references
   are known. Existing successful run state is never held hostage by export failure or a stopped peer.
 - [ ] Show preserved, preserving, workspace-dependent and failed states with explicit retry; portable:none
   has a reason. Restart can resume user-requested preservation without replaying the original action.
@@ -2708,6 +2708,22 @@ path boundary. UI assets rebuilt. Hosted CI is the full gate; automatic preserva
 **Verify:** tool store removed after preserving both a JSON location and native Mask, interrupted export,
 duplicate outputs and bounded queue.
 **Commit:** `feat: preserve reusable operation artifacts`.
+
+**As built — M5.12:** two queue-owned workers process at most sixteen waiting attempts. The queue
+stores attempt IDs rather than unbounded file bodies, coalesces identical live references and reuses
+verified owned bytes across occurrences. Native images stay on the existing image-preservation path.
+JSON and bundle exports use the tool's declared control, with no interactive wait deadline; the
+separate two-slot transfer registry still owns RPC/staging lifetimes. Queue overflow and export
+failure affect preservation only, never the immutable result, execution outcome, invocation or spend.
+Cleanup/restart/shutdown account for queued and active preservation. A new host marks interrupted
+preservation failed; explicit retry can finish from owned bytes without replaying the action.
+
+The backend slice includes the explicit preservation retry endpoint and receiving-registration
+resource/import controls. Result cards, Inspector, selection confirmation and refreshed UI assets
+follow in the second commit of this task. Review approved. Targeted backend checks passed 26
+operation integrations, all 132 Rust lib tests and clippy. A lock-order regression fails with the
+submission lock held during worker joins and passes after releasing it; 40 browser shutdown
+repetitions in Chromium/WebKit confirm the fix. Hosted CI remains the full gate.
 
 #### M5.13 — Save reusable operation examples
 
