@@ -2164,6 +2164,27 @@ fmt/clippy, 384 Rust tests (4 ignored), typecheck, 57 UI tests, 2 asset tests, S
 assets, release build and 230 browser tests (8 skipped). Lockfiles/prebuilt assets unchanged;
 temporary config removed. Description/callable-schema, refusal wiring and peer preflight remain.
 
+**b6 parameter-name inspection (split before building):** b6a adds a staged namespace inspector
+and unit tests in `src/tools/parameter_names.rs`, its test-only module declaration in
+`src/tools/mod.rs`, and this plan. Use the pinned JSON Schema library's registry/resolver with the
+existing embedded-only retriever, including local pointers/anchors and composed schemas. Follow
+only schemas applying to the argument object: nested parameter values and unused definitions do not
+reserve root names. Collect direct/required/dependent names and matching patternProperties; preserve
+reference scope and terminate cycles with a bounded inspection budget. No new dependency or network
+retrieval. b6b then wires this into description semantics with structurally valid collision tests,
+keeping runtime behavior and staged helper verification in separate small slices. Callable-schema
+relationships are a following slice; namespace inspection is not a claim of schema equivalence.
+
+**b6a checkpoint (2026-11-02):** nine namespace tests pass, including local/embedded references,
+relative IDs and anchors, composition, patterns, legacy draft behavior, dynamic/recursive cycles
+and the inspection budget. The initial missing-helper test was red. Review identified that
+whole-scope deduplication could erase a 2019-09 recursive-anchor barrier; a failing regression
+now distinguishes those contexts, and the key preserves both the whole dynamic scope and the
+leading recursive-anchored segment. Follow-up review approved the fix. Full shared-lock matrix
+passed fmt/clippy, 393 Rust tests (4 ignored), typecheck, 57 UI tests, 2 asset tests, Storybook,
+reproducible assets, release build and 230 browser tests (8 skipped). Lockfiles/prebuilt assets
+unchanged; temporary config removed. This helper remains test-only until b6b.
+
 **Checkpoint A:** merge M5.01–03 as a coherent cutover of validation, launch arguments and fake
 defaults; v0.4 is the only supported live contract afterward. Green matrix, an independent fake
 task run and the published exact dependency pin are required.
