@@ -3142,10 +3142,10 @@ removing optional JSON fields from the reader would make those new records unrea
 
 #### M5.19 — Export selected experiment chains
 
-- [ ] Select an ordered set of saved attempts, exporting only those steps, never hidden provenance.
+- [x] Select an ordered set of saved attempts, exporting only those steps, never hidden provenance.
   Conservatively carry each non-image artifact input's export or mark it unportable, even when a selected preceding
   step also produced it. Do not claim this extra copy replaces fresh-output rebinding.
-- [ ] Use one manifest-edge resolver for export and import/replay: find earlier matching output
+- [x] Use one manifest-edge resolver for export and import/replay: find earlier matching output
   occurrences for every artifact-reference input (image, shared location and tool-native), including
   artifacts.out and images.out. Coalesce
   only demonstrably mirrored profile entries for the same output, never distinct ports/items with equal
@@ -3153,7 +3153,7 @@ removing optional JSON fields from the reader would make those new records unrea
   multiple matches are ambiguous. Export only if this resolution agrees with recorded host lineage;
   a selected producer with the same identity as an unselected actual source must not silently replace it.
   Refuse ambiguous/mismatched runnable chains with an explanation and single-step bundle alternative.
-- [ ] Preserve selected order and deterministic bytes. Imported bundles derive edges from the manifest
+- [x] Preserve selected order and deterministic bytes. Imported bundles derive edges from the manifest
   using the same resolver, without requiring private host lineage; ambiguous ones cannot replay as a
   chain. No invented from_step fields. Mixed-tool bundles use host replay, not a single-tool CLI claim.
 
@@ -3175,6 +3175,25 @@ image slots may use the existing lineage map as well as operation bindings; this
 not a new contract bundle field. Every non-image input still carries its available export or an
 explicit unportable record. UI selection remains an ordered set with a bounded step count. Task
 review and targeted tests precede one task-boundary merge.
+
+**As built:** chain selection is a collapsed section in the shared drawer, with explicit ordered
+runs (maximum 16), keyboard-accessible move/remove controls and connection review. Imported and
+saved reviews use the same derived graph; mixed tools never receive a single-tool CLI claim. A
+conservative one-million-candidate budget covers reference matching and mirrored-profile scans.
+Upload analysis runs with parsing on a blocking worker and is cached; saved-record analysis also
+runs on a blocking worker. Collapsing a save keeps its observer mounted, and parent/child controls
+share the busy gate. No replay dispatch is added in this task.
+
+**Verification:** full `cargo test --locked --workspace`, fmt, clippy for all targets, UI typecheck and
+88 unit tests passed. All 96 targeted Chromium/WebKit checks passed, covering ordered selection,
+review/omissions/imported drafts, paid paths and collapse during an owned save. Fourteen pure resolver
+cases cover public profiles, mirrored/distinct occurrences, location literals, coordinates, source
+collisions and both search limits. Native integration proves two consumers, deterministic bytes,
+source deletion/ownership and strict bounded API selection without action/control calls. Independent
+review blockers (search boundedness and collapsed observer lifetime) are resolved and re-reviewed.
+Existing bundle drawer snapshots were updated for the new collapsed section; new connection and
+selection regions cover desktop/mobile and mixed-tool/ambiguous states. The original single-step
+archive fingerprint is unchanged.
 
 #### M5.20 — Replay chains using fresh outputs
 

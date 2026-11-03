@@ -1,4 +1,5 @@
 import type {BundleUpload} from "../../api/bundle-imports";
+import {ChainDependencies,ChainSelection} from "./BundleChain";
 import {BundleImports} from "./BundleImports";
 import {useEffect,useMemo,useRef,useState} from "react";
 import {bundleClient,cliBundleTool,type BundleRecord,type BundleSummary} from "../../api/bundles";
@@ -20,7 +21,7 @@ function choices(attempt?:Attempt):string[]{
 const fileSize=(bytes:number)=>bytes<1024*1024?`${(bytes/1024).toFixed(1)} KB`:`${(bytes/1024/1024).toFixed(2)} MiB`;
 export function InvocationBundles({api,attempt,onOpenImported}:{api:LocalApi;attempt?:Attempt;onOpenImported?:((upload:BundleUpload)=>Promise<void>)|undefined}){
  const client=useMemo(()=>bundleClient(api),[api]);const generation=useRef(0);
- const [importOpen,setImportOpen]=useState(false);
+ const [importOpen,setImportOpen]=useState(false);const [chainOpen,setChainOpen]=useState(false);
  const [items,setItems]=useState<BundleSummary[]>([]),[cursor,setCursor]=useState<number|null>(null),[selected,setSelected]=useState<BundleRecord>(),[busy,setBusy]=useState(true),[notice,setNotice]=useState(""),[omit,setOmit]=useState<string[]>([]);
  useEffect(()=>{
   const current=++generation.current;setBusy(true);setSelected(undefined);setItems([]);setOmit([]);setNotice("");
@@ -42,6 +43,7 @@ export function InvocationBundles({api,attempt,onOpenImported}:{api:LocalApi;att
  return <section className={styles.bundles} aria-label="Invocation bundles">
   <p>Invocation bundles carry the recorded call and its exact preserved inputs. They are separate from evidence archives. Saving or downloading one never runs a tool.</p>
   <details onToggle={event=>setImportOpen(event.currentTarget.open)}><summary>Import an invocation bundle</summary>{importOpen&&<BundleImports api={api} onOpen={onOpenImported}/>}</details>
+  <details onToggle={event=>{if(event.currentTarget.open)setChainOpen(true);}}><summary>Build a bundle from saved runs</summary>{chainOpen&&<ChainSelection key={attempt?.id??"library"} api={api} disabled={busy} onBusy={setBusy} onSaved={async record=>{const current=generation.current;setSelected(record);const page=await client.list(attempt?.id);if(current===generation.current){setItems(page.items);setCursor(page.cursor);}}}/>}</details>
   {attempt&&<fieldset disabled={busy}><legend>New bundle from this saved run</legend>
    <p>Inputs are included by default. Omitting a whole slot or port makes the bundle workspace-dependent. Shared location values remain in the recorded invocation.</p>
    {omittable.map(name=><label key={name}><input type="checkbox" checked={!omit.includes(name)} onChange={e=>setOmit(previous=>e.target.checked?previous.filter(v=>v!==name):[...previous,name])}/> Include {name} inputs</label>)}
@@ -57,10 +59,11 @@ export function InvocationBundles({api,attempt,onOpenImported}:{api:LocalApi;att
  </section>;
 }
 export function BundleReview({bundle,busy=false,onDownload}:{bundle:BundleRecord;busy?:boolean;onDownload:()=>void}){
- const cli=cliBundleTool(bundle.manifest);const requirements=[...new Set(bundle.manifest.steps.flatMap(s=>s.invocation.requirements))];
+ const cli=cliBundleTool(bundle.manifest,bundle.chain);const requirements=[...new Set(bundle.manifest.steps.flatMap(s=>s.invocation.requirements))];
  return <section className={styles.review} aria-label="Saved bundle review">
   <header><h3>{bundle.workspace_dependent?"Workspace-dependent bundle":"Inputs included"}</h3><p>Saved bundle · {bundle.id.slice(0,12)} · {fileSize(bundle.size)}</p></header>
   <p>{bundle.workspace_dependent?"Some inputs still need the original store or an explicitly supplied replacement. This bundle cannot be replayed as-is.":"Original input bytes and supported native exports are included. Install/configure the named tool and provide its requirements separately. Model judgments may change on replay."}</p>
+  <ChainDependencies bundle={bundle}/>
   <section aria-label="Bundle files"><h4>Included files</h4><ul><li><code>invocation.json</code> · Original invocation and result</li>{bundle.members.map(member=><li key={member.name}><code title={member.name} aria-label={member.name}>{member.name.replace(/([a-f0-9]{12})[a-f0-9]{52}/g,"$1…")}</code><span>{fileSize(member.bytes)} · {member.sha256.slice(0,12)}</span></li>)}</ul></section>
   <section><h4>Requirements</h4>{requirements.length?<ul>{requirements.map(name=><li key={name}>{name}</li>)}</ul>:<p>No additional requirements were recorded.</p>}<p>Credentials and tool configuration contents are not included. Replay uses the current tool session and requires fresh estimates and caps for paid actions.</p></section>
   {bundle.manifest.steps.map((step,index)=><section key={index} aria-label={`Bundle step ${index+1}`}><h4>{index+1}. {step.tool.name} / {step.invocation.action}</h4><p>Recorded tool version {step.tool.version}</p>
@@ -70,7 +73,7 @@ export function BundleReview({bundle,busy=false,onDownload}:{bundle:BundleRecord
    <details><summary>Recorded invocation</summary><pre>{JSON.stringify(step.invocation,null,2)}</pre></details>
   </section>)}
   {cli&&<section><h4>Use with the tool CLI</h4><p>After downloading, replace both example paths with your saved file and its containing folder. Tool setup and any paid use remain separate.</p><pre aria-label="Bundle CLI example">{`'${cli}' call --bundle '/absolute/path/to/wafflery-invocation.tar' --allow-dir '/absolute/path/to'`}</pre></section>}
-  {!cli&&!bundle.workspace_dependent&&<p>This bundle needs host replay because it uses more than one tool.</p>}
+  {!cli&&!bundle.workspace_dependent&&new Set(bundle.manifest.steps.map(s=>s.tool.name)).size>1&&<p>This bundle needs host replay because it uses more than one tool.</p>}
   <Button busy={busy} onClick={onDownload}>Download saved invocation bundle</Button>
   <p>SHA-256: <code>{bundle.sha256}</code>. The saved archive is verified before each download.</p>
  </section>;

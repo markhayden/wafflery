@@ -16,3 +16,12 @@ test("a CLI bundle claim requires one tool and no omitted or unportable inputs",
  expect(cliBundleTool({bundle_version:1,steps:[{...step,reference_only:[{slot:"source",why:"Omitted"}]}]})).toBeNull();
  expect(cliBundleTool({bundle_version:1,steps:[step,{...step,tool:{name:"other",version:"1.0.0"}}]})).toBeNull();
 });
+test("selected chain creation submits only ordered run ids and validates derived edges",async()=>{
+ const chain={edges:[{consumer:1,name:"token",index:0,producer:{step:0,port:"token",item:0,aliases:[{profile:"artifacts",port:"token",index:0,item:0}]}}],problem:null};
+ const record={...saved,manifest:{bundle_version:1 as const,steps:[step,step]},chain};
+ const api=new Reply(record);await bundleClient(api).createChain(["first","second"]);
+ expect(api.paths).toEqual(["/api/bundles"]);expect(JSON.parse(String(api.body))).toEqual({attempts:["first","second"]});
+ expect(cliBundleTool(record.manifest)).toBeNull();expect(cliBundleTool(record.manifest,chain)).toBe("sample");
+ expect(cliBundleTool(record.manifest,{edges:[],problem:"Ambiguous output"})).toBeNull();
+ for(const bad of [{...chain,edges:[{...chain.edges[0],consumer:0}]},{...chain,edges:[{...chain.edges[0],index:-1}]}])await expect(bundleClient(new Reply({...record,chain:bad})).read(saved.id)).rejects.toThrow("unavailable");
+});

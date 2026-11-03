@@ -18,3 +18,13 @@
 .bundles label { flex-wrap: wrap; }
 .bundles input[type="file"] { width: 100%; max-width: 100%; min-width: 0; }
 .bundles select { max-width: 100%; min-width: 0; border: 1px solid var(--color-line); border-radius: var(--radius-control); background: var(--color-background); padding: .5rem; }
+
+.bundles > details { border: 1px solid var(--color-line); border-radius: var(--radius-control); padding: .75rem 1rem; }
+.bundles > details > summary { cursor: pointer; }
+.bundles > details[open] > summary { margin-bottom: 1rem; }
+.order { display: flex; gap: .5rem; flex-wrap: wrap; margin-top: .5rem; }
+.bundles ol { display: grid; gap: 1rem; padding-left: 1.5rem; }
+
+.bundles .selectionLabel { flex-wrap: nowrap; align-items: flex-start; }
+.selectionLabel > span { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.selectionLabel > input { flex-shrink: 0; margin-top: .25rem; }

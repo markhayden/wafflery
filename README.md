@@ -9,7 +9,7 @@ Squint independently. Pixel, cross-tool workflows, and batch evaluations follow 
 This directory contains the Rust/React development application, its reviewed plans, and an earlier
 interactive mock. The application runs real offline MCP actions, preserves evidence, reopens
 history, compares baselines, saves examples, and exports recorded calls/evidence and invocation bundles.
-Production tool installation and in-app bundle replay remain later integration work. Saved runs preserve declared
+Production tool installation and multi-step replay remain later integration work. Saved runs preserve declared
 portable native artifacts and can explicitly restore them into a compatible tool store or open declared tool reports.
 The authenticated prepared-call API can execute paid actions only from a current owned estimate;
 its automated verification uses synthetic spend, without provider charges.
@@ -326,3 +326,11 @@ confirm replacement inputs or omit that optional port. Paid drafts start with a 
 choose a new cap and request a fresh estimate before Run. The current tool session and allowance
 remain in use; opening does not restart the tool or replenish its budget. Different output identities
 are shown as new results and do not by themselves mean failure.
+
+In **Bundles → Build a bundle from saved runs**, select up to 16 runs and arrange them in execution
+order. The archive contains exactly those steps and their preserved inputs, with no upstream reruns.
+Review **Step connections** before download. Connections come from public output occurrences and must
+agree with each saved run's recorded source. Ambiguous outputs or mismatched sources refuse the chain;
+export a single step instead. Native input copies remain included even for connections between selected
+steps. Mixed-tool chains need host replay; no single-tool CLI command is offered for them. Uploading a
+chain uses the same connection resolver, and individual steps can still be imported separately.

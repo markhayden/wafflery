@@ -2,6 +2,7 @@ import {useEffect,useMemo,useRef,useState} from "react";
 import {bundleImports,type BundleUpload,type ReviewSummary} from "../../api/bundle-imports";
 import type {LocalApi} from "../../api/client";
 import {workspaceClient,type RegisteredTool} from "../../api/workspace";
+import {ChainDependencies} from "./BundleChain";
 import {Button} from "../../components/Button";
 import styles from "./InvocationBundles.module.css";
 
@@ -36,6 +37,7 @@ export function BundleImports({api,onOpen}:{api:LocalApi;onOpen?:((upload:Bundle
   {!!reviews.length&&<ul aria-label="Uploaded bundle list">{reviews.map(review=><li key={review.id}><Button disabled={locked} onClick={()=>void open(review.id)}>Review uploaded {review.bundle.slice(0,8)}</Button> <span>{selected?.id===review.id?selected.import?.phase??review.phase:review.phase}</span> <Button disabled={locked} onClick={()=>void remove(review.id)}>Dismiss {review.bundle.slice(0,8)}</Button></li>)}</ul>}
   {selected&&current&&<section className={styles.review} aria-label="Uploaded bundle review">
    <h3>Declared files verified</h3><p>Archive {selected.record.id.slice(0,12)} · {(selected.record.size/1024).toFixed(1)} KB. Current tool declarations still determine which inputs it can accept.</p>
+   <ChainDependencies bundle={selected.record}/>
    <label>Bundle step<select disabled={locked} value={step} onChange={event=>{setStep(Number(event.target.value));setTarget("");}}>{selected.record.manifest.steps.map((s,i)=><option key={i} value={i}>{i+1}. {s.tool.name} / {s.invocation.action}</option>)}</select></label>
    <p>Recorded tool version {current.tool.version}. No tool action has been run by this import flow.</p>
    <h4>Recorded requirements</h4>{current.invocation.requirements.length?<ul>{current.invocation.requirements.map((r,i)=><li key={i}>{r}</li>)}</ul>:<p>No additional requirements were recorded.</p>}

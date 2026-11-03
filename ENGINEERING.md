@@ -918,3 +918,7 @@ Connection resolution has a conservative one-million-candidate search budget cov
 matching and mirror scans. Oversized graphs remain individual-step reviews with an explanation.
 Uploaded analysis is computed once with parsing on a blocking worker and cached for the review's
 lifetime; saved-record analysis also runs off the async runtime.
+
+Ordered selection and connection review live in the shared drawer. Collapsing selection keeps its
+observer mounted until the owned save resolves, so completion releases the drawer controls. The
+builder respects the parent busy gate as well as its own work, preventing overlapping save actions.

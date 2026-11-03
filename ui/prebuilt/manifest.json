@@ -10,7 +10,7 @@
     "ui/src/App.tsx": "7ec34ba1e5b3273c3bbcb3731c2bb6f77362718d49b65fda460922294a3198da",
     "ui/src/api/assets.ts": "572219bd7d11310152c402683e636057e1ed2973eb54566867bea410ad3a2395",
     "ui/src/api/bundle-imports.ts": "80453049c9d50ea3bdbca7ef2bc72e2d5cf8759ec62e56f34d975b89157c2458",
-    "ui/src/api/bundles.ts": "e40f394264d526b9dca18f9a7bf291ffdae9eb5405b213ad5b26686ee8da26a4",
+    "ui/src/api/bundles.ts": "e125938c750855dae46e8e716f7a45121041a5f4de13bdb84cb858688a507008",
     "ui/src/api/client.ts": "377de81e08ff7571a6b416343841fcc0447d2826ed1ae8f8ada0a114e3579141",
     "ui/src/api/directory-grants.ts": "31443d86be6b40f9edc54884050455f3da28fc0549bdec059714d31f43fe5619",
     "ui/src/api/estimates.ts": "b3e4a64d781684bd75b03a81342b5784ae42c878d5ea16f1e82a0a40250bddb0",
@@ -55,8 +55,9 @@
     "ui/src/features/workspace/ActivityPicker.tsx": "f81f37deb110e425a84e2d29939d758cf79caf05ea654fdb76d7e9df70005797",
     "ui/src/features/workspace/ArtifactOutputs.stories.tsx": "7fe0c90ba304e8929e4eccd5ceded565c633ab310b54b26844bd4ebde674c41f",
     "ui/src/features/workspace/ArtifactOutputs.tsx": "6142d138ad309939e57cce6a7f50497f56ed92289a17794dd05faaa825a7206d",
+    "ui/src/features/workspace/BundleChain.tsx": "56053079ac20617c33b7f19c3b5586de0edb04f5c264f4f52bf5dd54ab1b9ba6",
     "ui/src/features/workspace/BundleImports.stories.tsx": "e80b0a1072b4dfa56f0acdee24b9f119171daf968556c5172d25f8fbe9ac6702",
-    "ui/src/features/workspace/BundleImports.tsx": "ff71f1d5d94bd2c5b50889ab169cb27655eef50c363b4a787825a1ed436e2d36",
+    "ui/src/features/workspace/BundleImports.tsx": "ab68016c4b951310a1c2c03bb529018e9e3e2d251ed6906cf85536560a928fc9",
     "ui/src/features/workspace/BundleSource.module.css": "d9e2387cf4d8886e22a466df62e9c7eff45765ddc1659c2dda40c71f30f2ee95",
     "ui/src/features/workspace/BundleSource.stories.tsx": "2594fb8544fa64d95dc2577995f5cfe071bfe1ce7d9f063de242dd1654b7e9dc",
     "ui/src/features/workspace/BundleSource.tsx": "ec4af4521e35bb66df8cac3da5dbbd1269cad7a323efb89ada9b504d3e5f3af1",
@@ -76,9 +77,9 @@
     "ui/src/features/workspace/Examples.tsx": "f9ce8e64edf106165af8001372512e186830995edeb60d6ed09aba49253e2878",
     "ui/src/features/workspace/History.tsx": "020455e1cf9685dc9bba7d3489169fd4f2c95d05e2a84a2e8eacefdd7e6e123d",
     "ui/src/features/workspace/Inspector.tsx": "5f9fea519471a613aac881957e61b8e4224cc812f643514220a59c006c4ec362",
-    "ui/src/features/workspace/InvocationBundles.module.css": "15088ab03b7bb85b4b8ac61f968345d4889d4d432db7247d92adece75c703714",
-    "ui/src/features/workspace/InvocationBundles.stories.tsx": "b8f98dce5c8acd69ddb9ac1f9ebe2f3c95fb1c18c2fb0209534ad35a392899aa",
-    "ui/src/features/workspace/InvocationBundles.tsx": "7e40b184386221e73c8e33997bf292e0ca6964139de5e60fa6cd3d277f4e6be9",
+    "ui/src/features/workspace/InvocationBundles.module.css": "fe313bfd791e09c0085aa73bbd8e0b0f0854e9cd7ffd1093bc9c1e52d8656c72",
+    "ui/src/features/workspace/InvocationBundles.stories.tsx": "a9b441254bad8c9573bd1ac02cd37bdfa2da1104a53703a1ed298a783a8a9cdd",
+    "ui/src/features/workspace/InvocationBundles.tsx": "ea344bee78858ac9d0a6093aab621aab1a37c4284a6ec0122ce312f0612a4d39",
     "ui/src/features/workspace/Library.module.css": "b1dad165604f76bde526502f270426f14f8f29c07a3a953fa0fe4b3990920ecc",
     "ui/src/features/workspace/NativePreservation.stories.tsx": "069d5d75e316f0871d80f0bfc67ae5cf381e8256605d81a5fcd086c2d0ce170c",
     "ui/src/features/workspace/NativePreservation.tsx": "b3bb8a2c9b614e6181b73b4916499525115fd28ac7a23f78c6d1ce1606554a15",
@@ -114,9 +115,9 @@
     "ui/vite.config.ts": "3aec7d6174ffca99d4d5288bea2f837d5e91335cbd7135a9682e6d18a40476b4"
   },
   "outputs": {
-    "assets/index-CpirWOgv.js": "ab566b91e62192878bc4c23cdd933fb24c6158b872419d306dd7fab52c737ecf",
-    "assets/index-DULEdOc4.css": "e5500c239d791d5eb02d6b57b0f6bd487c953972b3fa90001789dfd8f06cef75",
+    "assets/index-CknSmu12.css": "407e4783e013ddcedccf0e62d71559211acc06d4627e692443276b6057c7c480",
+    "assets/index-JJqCpIXh.js": "3d6b4110b43305ff892fe882e8790189c0dc49b209803aa13781d62c85a0d90d",
     "assets/wafflery-mark-CML0EpfM.svg": "51bc8a040e26b897a948238598b8cabdf69bf4687c2b1a70613b542de1c99f1f",
-    "index.html": "b0f4c17f502e7f61676a638d1780b5ba7e045aa16bc6de16ed88b3ba775486ed"
+    "index.html": "1e6a1b538ec2e780d78393ed87cea9ace26560018bf19c327d2c6baf0512676b"
   }
 }
