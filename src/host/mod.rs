@@ -64,10 +64,6 @@ pub async fn serve(root: &std::path::Path) -> std::io::Result<()> {
         eprintln!("Waiting for an owned tool to exit; no automatic force kill was performed.");
         tokio::time::sleep(std::time::Duration::from_secs(1)).await;
     }
-    store
-        .database
-        .shutdown()
-        .await
-        .map_err(std::io::Error::other)?;
+    store.shutdown().await.map_err(std::io::Error::other)?;
     result
 }

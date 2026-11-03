@@ -55,6 +55,26 @@ async fn upload_fetch_and_attachment_enforce_the_asset_boundary() {
     let metadata: serde_json::Value =
         serde_json::from_slice(&to_bytes(metadata.into_body(), 4096).await.unwrap()).unwrap();
     assert_eq!(metadata, asset);
+    let response = app
+        .clone()
+        .oneshot(
+            request(
+                &format!("/api/assets/{}/thumbnail", asset["id"].as_str().unwrap()),
+                "GET",
+            )
+            .body(Body::empty())
+            .unwrap(),
+        )
+        .await
+        .unwrap();
+    assert_eq!(response.status(), StatusCode::OK);
+    assert_eq!(response.headers()["content-type"], "image/png");
+    assert_eq!(response.headers()["x-content-type-options"], "nosniff");
+    let thumbnail = to_bytes(response.into_body(), 2 * 1024 * 1024)
+        .await
+        .unwrap();
+    let decoded = image::load_from_memory(&thumbnail).unwrap();
+    assert_eq!((decoded.width(), decoded.height()), (2, 3));
     for suffix in ["", "/download"] {
         let response = app
             .clone()

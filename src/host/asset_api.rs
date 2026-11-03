@@ -25,6 +25,7 @@ pub fn router(store: AssetStore) -> Router {
         .route("/api/assets", get(list).post(upload))
         .route("/api/assets/{id}", get(preview))
         .route("/api/assets/{id}/metadata", get(metadata))
+        .route("/api/assets/{id}/thumbnail", get(thumbnail))
         .route("/api/assets/{id}/download", get(download))
         .with_state(Assets {
             store,
@@ -145,6 +146,22 @@ async fn preview(
     Path(id): Path<String>,
 ) -> Result<Response, ApiError> {
     image_response(state, id, false).await
+}
+
+async fn thumbnail(
+    State(state): State<Assets>,
+    Path(id): Path<String>,
+) -> Result<Response, ApiError> {
+    let bytes = state.store.thumbnail(&id).await?;
+    let mut response = Response::new(Body::from(bytes));
+    response
+        .headers_mut()
+        .insert("content-type", HeaderValue::from_static("image/png"));
+    response.headers_mut().insert(
+        "content-disposition",
+        HeaderValue::from_static("inline; filename=\"thumbnail.png\""),
+    );
+    Ok(response)
 }
 
 async fn download(

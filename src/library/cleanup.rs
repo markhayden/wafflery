@@ -189,6 +189,15 @@ fn remove_owned(store: &AssetStore, asset: &Asset) -> Result<()> {
         return Err(Error::InvalidAsset("Asset directory is no longer owned"));
     }
     let path = parent.join(&asset.sha256);
+    let thumbnail = path.with_extension("thumbnail.png");
+    match std::fs::symlink_metadata(&thumbnail) {
+        Ok(metadata) if metadata.is_file() || metadata.is_symlink() => {
+            std::fs::remove_file(thumbnail)?
+        }
+        Ok(_) => return Err(Error::InvalidAsset("Thumbnail path is not a file")),
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => (),
+        Err(error) => return Err(error.into()),
+    }
     match std::fs::symlink_metadata(&path) {
         Ok(metadata) if metadata.is_file() || metadata.is_symlink() => std::fs::remove_file(path)?,
         Ok(_) => return Err(Error::InvalidAsset("Asset path is not a file")),

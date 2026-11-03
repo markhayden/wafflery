@@ -1,17 +1,15 @@
 //! Capture bytes first, validate and publish without clobbering, then commit the reference.
 use super::{Error, Result, db::Database};
-use image::ImageDecoder;
 use sha2::{Digest, Sha256};
 use std::{
     fs::{self, File},
-    io::{BufReader, Read, Write},
+    io::{Read, Write},
     os::unix::fs::{DirBuilderExt, MetadataExt, PermissionsExt},
     path::{Path, PathBuf},
     sync::Arc,
 };
 
 pub const MAX_BYTES: u64 = 128 * 1024 * 1024;
-const MAX_PIXELS: u64 = 128_000_000;
 
 #[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
 pub struct Asset {
@@ -77,7 +75,26 @@ impl AssetStore {
     }
 
     pub async fn import_path(&self, path: PathBuf) -> Result<Asset> {
-        let _storage = self.storage.read().await;
+        self.import_with_hook(path, || {}).await
+    }
+
+    async fn import_with_hook(
+        &self,
+        path: PathBuf,
+        after_copy: impl FnOnce() + Send + 'static,
+    ) -> Result<Asset> {
+        let store = self.clone();
+        tokio::spawn(async move { store.import_owned(path, after_copy).await })
+            .await
+            .map_err(|_| Error::Unavailable)?
+    }
+    async fn import_owned(
+        &self,
+        path: PathBuf,
+        after_copy: impl FnOnce() + Send + 'static,
+    ) -> Result<Asset> {
+        let storage = self.storage.clone().read_owned().await;
+        self.database.call(|_| Ok(())).await?;
         let permit = self
             .decoder
             .clone()
@@ -85,9 +102,9 @@ impl AssetStore {
             .await
             .map_err(|_| Error::Unavailable)?;
         let root = self.root.clone();
-        let asset = tokio::task::spawn_blocking(move || {
+        let (asset, _storage) = tokio::task::spawn_blocking(move || {
             let _permit = permit;
-            capture(&root, &path, || {})
+            capture(&root, &path, after_copy).map(|asset| (asset, storage))
         })
         .await
         .map_err(|_| Error::Unavailable)??;
@@ -96,6 +113,11 @@ impl AssetStore {
                 rusqlite::params![asset.id, asset.sha256, asset.size, asset.width, asset.height, asset.media_type])?;
             Ok(connection.query_row("SELECT id, sha256, size, width, height, media_type FROM assets WHERE sha256=?1", [asset.sha256], from_row)?)
         }).await
+    }
+
+    pub async fn shutdown(&self) -> Result<()> {
+        let _storage = self.storage.write().await;
+        self.database.shutdown().await
     }
 
     pub async fn list(&self) -> Result<Vec<Asset>> {
@@ -130,6 +152,49 @@ impl AssetStore {
                 return Err(Error::InvalidAsset("stored image size changed"));
             }
             Ok((asset, bytes))
+        })
+        .await
+        .map_err(|_| Error::Unavailable)?
+    }
+    /// A derived display aid; never used as run input or as original-image evidence.
+    pub async fn thumbnail(&self, id: &str) -> Result<Vec<u8>> {
+        let storage = self.storage.clone().read_owned().await;
+        let asset = self.metadata(id).await?;
+        let root = self.root.clone();
+        let cache_root = root.clone();
+        let digest = asset.sha256.clone();
+        let (cached, storage) = tokio::task::spawn_blocking(move || {
+            let cached =
+                thumbnail_path(&cache_root, &digest).and_then(|path| read_thumbnail(&path));
+            (cached, storage)
+        })
+        .await
+        .map_err(|_| Error::Unavailable)?;
+        if let Ok(bytes) = cached {
+            return Ok(bytes);
+        }
+        let permit = self
+            .decoder
+            .clone()
+            .acquire_owned()
+            .await
+            .map_err(|_| Error::Unavailable)?;
+        tokio::task::spawn_blocking(move || {
+            let (_storage, _permit) = (storage, permit);
+            let path = thumbnail_path(&root, &asset.sha256)?;
+            if let Ok(bytes) = read_thumbnail(&path) {
+                return Ok(bytes);
+            }
+            // Legacy assets and damaged derived files are rebuilt from verified originals only.
+            let original = verified_bytes(&owned_path(&root, &asset.sha256)?, &asset.sha256)?;
+            if original.len() != asset.size as usize {
+                return Err(Error::InvalidAsset("stored image size changed"));
+            }
+            let staged = tempfile::NamedTempFile::new_in(root.join("staging"))?;
+            fs::write(staged.path(), original)?;
+            let preview = super::image_preview::decode(staged.path())?;
+            write_thumbnail(&root, &asset.sha256, &preview.bytes)?;
+            Ok(preview.bytes)
         })
         .await
         .map_err(|_| Error::Unavailable)?
@@ -217,26 +282,8 @@ fn capture(root: &Path, source: &Path, after_copy: impl FnOnce()) -> Result<Asse
             "source image changed during import; try again",
         ));
     }
-    let reader = image::ImageReader::new(BufReader::new(File::open(staged.path())?))
-        .with_guessed_format()?;
-    let media_type = match reader.format() {
-        Some(image::ImageFormat::Png) => "image/png",
-        Some(image::ImageFormat::Jpeg) => "image/jpeg",
-        _ => {
-            return Err(Error::InvalidAsset(
-                "only PNG and JPEG images are supported",
-            ));
-        }
-    };
-    let mut decoder = reader.into_decoder()?;
-    let (width, height) = decoder.dimensions();
-    if u64::from(width) * u64::from(height) > MAX_PIXELS {
-        return Err(Error::InvalidAsset("image exceeds 128 megapixels"));
-    }
-    let mut limits = image::Limits::default(); // 512 MiB, including the output buffer.
-    limits.reserve(decoder.total_bytes())?;
-    decoder.set_limits(limits)?;
-    drop(image::DynamicImage::from_decoder(decoder)?); // Decode completely before trusting the file.
+    let preview = super::image_preview::decode(staged.path())?;
+    let (width, height, media_type) = (preview.width, preview.height, preview.media_type);
     staged.as_file().sync_all()?;
     staged
         .as_file()
@@ -244,6 +291,7 @@ fn capture(root: &Path, source: &Path, after_copy: impl FnOnce()) -> Result<Asse
     let destination = owned_path(root, &digest)?;
     let directory = destination.parent().expect("owned asset parent");
     private_directory(directory)?;
+    write_thumbnail(root, &digest, &preview.bytes)?;
     match staged.persist_noclobber(&destination) {
         Ok(_) => File::open(directory)?.sync_all()?,
         Err(error) if error.error.kind() == std::io::ErrorKind::AlreadyExists => {
@@ -288,6 +336,67 @@ fn copy_hash(input: &mut impl Read, output: &mut impl Write) -> Result<(String, 
     ))
 }
 
+fn thumbnail_path(root: &Path, digest: &str) -> Result<PathBuf> {
+    let original = owned_path(root, digest)?;
+    let parent = original.parent().expect("owned asset parent");
+    if parent.canonicalize()? != parent {
+        return Err(Error::InvalidAsset("Asset directory is no longer owned"));
+    }
+    Ok(original.with_extension("thumbnail.png"))
+}
+fn read_thumbnail(path: &Path) -> Result<Vec<u8>> {
+    use std::os::unix::fs::OpenOptionsExt;
+    let file = fs::OpenOptions::new()
+        .read(true)
+        .custom_flags(nix::libc::O_NOFOLLOW | nix::libc::O_NONBLOCK)
+        .open(path)?;
+    if !file.metadata()?.is_file() {
+        return Err(Error::InvalidAsset("Thumbnail is not a regular file"));
+    }
+    let mut bytes = vec![];
+    file.take(2 * 1024 * 1024 + 1).read_to_end(&mut bytes)?;
+    if bytes.len() > 2 * 1024 * 1024 {
+        return Err(Error::InvalidAsset("Thumbnail exceeds its size limit"));
+    }
+    let invalid = || Error::InvalidAsset("Derived thumbnail is damaged or exceeds its limits");
+    let mut decoder = png::Decoder::new_with_limits(
+        std::io::Cursor::new(&bytes),
+        png::Limits {
+            bytes: 4 * 1024 * 1024,
+        },
+    );
+    decoder.ignore_checksums(false);
+    let mut reader = decoder.read_info().map_err(|_| invalid())?;
+    if reader.info().width > super::image_preview::EDGE
+        || reader.info().height > super::image_preview::EDGE
+    {
+        return Err(invalid());
+    }
+    let size = reader
+        .output_buffer_size()
+        .filter(|size| *size <= 4 * 1024 * 1024)
+        .ok_or_else(invalid)?;
+    reader
+        .next_frame(&mut vec![0; size])
+        .map_err(|_| invalid())?;
+    reader.finish().map_err(|_| invalid())?;
+    Ok(bytes)
+}
+fn write_thumbnail(root: &Path, digest: &str, bytes: &[u8]) -> Result<()> {
+    let path = thumbnail_path(root, digest)?;
+    let mut staged = tempfile::NamedTempFile::new_in(root.join("staging"))?;
+    staged.write_all(bytes)?;
+    staged.as_file().sync_all()?;
+    staged
+        .as_file()
+        .set_permissions(fs::Permissions::from_mode(0o444))?;
+    staged
+        .persist(&path)
+        .map_err(|error| Error::Io(error.error))?;
+    File::open(path.parent().expect("owned thumbnail parent"))?.sync_all()?;
+    Ok(())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -320,5 +429,140 @@ mod tests {
             fs::read_dir(temp.path().join("staging")).unwrap().count(),
             0
         );
+    }
+    #[tokio::test]
+    async fn an_abandoned_import_keeps_publication_owned_until_its_database_record_exists() {
+        let root = tempfile::tempdir().unwrap();
+        let store = AssetStore::open(&root.path().join("Library")).unwrap();
+        let source = root.path().join("source.png");
+        image::RgbImage::from_pixel(8, 4, image::Rgb([20u8, 100, 200]))
+            .save(&source)
+            .unwrap();
+        let (ready, waiting) = tokio::sync::oneshot::channel();
+        let (release, gate) = std::sync::mpsc::channel();
+        let worker = store.clone();
+        let upload = tokio::spawn(async move {
+            worker
+                .import_with_hook(source, move || {
+                    ready.send(()).unwrap();
+                    gate.recv().unwrap();
+                })
+                .await
+        });
+        waiting.await.unwrap();
+        upload.abort();
+        let _ = upload.await;
+        let owned = store.storage.try_write().is_err();
+        release.send(()).unwrap();
+        assert!(
+            owned,
+            "dropping the upload waiter must not release publication ownership"
+        );
+        tokio::time::timeout(std::time::Duration::from_secs(5), async {
+            loop {
+                if store.list().await.unwrap().len() == 1 && store.storage.try_write().is_ok() {
+                    break;
+                }
+                tokio::task::yield_now().await;
+            }
+        })
+        .await
+        .unwrap();
+        let asset = store.list().await.unwrap().remove(0);
+        assert!(store.thumbnail(&asset.id).await.is_ok());
+        assert_eq!(
+            fs::read_dir(store.root().join("staging")).unwrap().count(),
+            0
+        );
+        let cleanup = super::super::cleanup::Cleanup(store.clone());
+        let selection = super::super::cleanup::Selection {
+            unused_assets: true,
+            ..Default::default()
+        };
+        let preview = cleanup.preview(selection.clone()).await.unwrap();
+        cleanup.confirm(selection, preview.token).await.unwrap();
+        assert!(!owned_path(store.root(), &asset.sha256).unwrap().exists());
+        assert!(
+            !thumbnail_path(store.root(), &asset.sha256)
+                .unwrap()
+                .exists()
+        );
+        store.database.shutdown().await.unwrap();
+    }
+    #[test]
+    fn a_thumbnail_publication_failure_does_not_publish_an_untracked_original() {
+        let root = tempfile::tempdir().unwrap();
+        let store = AssetStore::open(&root.path().join("Library")).unwrap();
+        let source = root.path().join("source.png");
+        image::RgbImage::from_pixel(8, 4, image::Rgb([20u8, 100, 200]))
+            .save(&source)
+            .unwrap();
+        let digest = hash(&fs::read(&source).unwrap());
+        let destination = owned_path(store.root(), &digest).unwrap();
+        private_directory(destination.parent().unwrap()).unwrap();
+        fs::create_dir(destination.with_extension("thumbnail.png")).unwrap();
+        assert!(capture(store.root(), &source, || {}).is_err());
+        assert!(!destination.exists());
+    }
+    #[tokio::test]
+    async fn verified_cached_thumbnails_do_not_wait_behind_source_decodes() {
+        let root = tempfile::tempdir().unwrap();
+        let store = AssetStore::open(&root.path().join("Library")).unwrap();
+        let source = root.path().join("source.png");
+        image::RgbImage::from_pixel(8, 4, image::Rgb([20u8, 100, 200]))
+            .save(&source)
+            .unwrap();
+        let asset = store.import_path(source).await.unwrap();
+        let held = store.decoder.acquire().await.unwrap();
+        let cached = tokio::time::timeout(
+            std::time::Duration::from_secs(5),
+            store.thumbnail(&asset.id),
+        )
+        .await;
+        drop(held);
+        assert!(cached.unwrap().is_ok());
+        store.database.shutdown().await.unwrap();
+    }
+    #[tokio::test]
+    async fn shutdown_waits_for_admitted_imports_and_rejects_late_ones_before_publication() {
+        let root = tempfile::tempdir().unwrap();
+        let library = root.path().join("Library");
+        let store = AssetStore::open(&library).unwrap();
+        let source = root.path().join("source.png");
+        image::RgbImage::from_pixel(8, 4, image::Rgb([20u8, 100, 200]))
+            .save(&source)
+            .unwrap();
+        let (ready, waiting) = tokio::sync::oneshot::channel();
+        let (release, gate) = std::sync::mpsc::channel();
+        let worker = store.clone();
+        let path = source.clone();
+        let upload = tokio::spawn(async move {
+            worker
+                .import_with_hook(path, move || {
+                    ready.send(()).unwrap();
+                    gate.recv().unwrap();
+                })
+                .await
+        });
+        waiting.await.unwrap();
+        let worker = store.clone();
+        let shutdown = tokio::spawn(async move { worker.shutdown().await });
+        tokio::time::timeout(std::time::Duration::from_secs(5), async {
+            while !shutdown.is_finished() && store.storage.try_read().is_ok() {
+                tokio::task::yield_now().await;
+            }
+        })
+        .await
+        .unwrap();
+        let retained = !shutdown.is_finished();
+        release.send(()).unwrap();
+        assert!(retained, "shutdown must wait until import metadata commits");
+        let asset = upload.await.unwrap().unwrap();
+        shutdown.await.unwrap().unwrap();
+        assert!(store.import_path(source).await.is_err());
+        let reopened = AssetStore::open(&library).unwrap();
+        assert_eq!(reopened.list().await.unwrap()[0].id, asset.id);
+        assert!(reopened.thumbnail(&asset.id).await.is_ok());
+        reopened.shutdown().await.unwrap();
     }
 }

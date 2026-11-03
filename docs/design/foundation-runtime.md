@@ -208,7 +208,12 @@ never dispatches again. Errors use `{error:{code,message,details?}}`: 400 malfor
 
 Foundation limits: upload 128 MiB/file, decoded image 128 megapixels and 512 MiB decoder memory,
 JSON request 4 MiB, event line 16 KiB, and captured journal 16 MiB. Stream uploads and hash copies;
-one image decoder at a time. Report limits clearly and mark excess journal preservation incomplete,
+one source image decoder at a time (cached previews have a separate small bounded validation).
+V20 checks PNG checksums and bounds progressive JPEG coefficient working memory
+from the encoded header before decoding, reserving 64 MiB within that budget for other buffers.
+Lossless/hierarchical/arithmetic JPEG remain unsupported.
+Oversized working sets are refused with an explicit smaller-copy remedy; input bytes are never
+resized automatically. Report limits clearly and mark excess journal preservation incomplete,
 never silently truncate a supposedly complete record. Tool limits may be narrower and take precedence.
 Supported initial image formats are PNG/JPEG; do not advertise arbitrary image codec support.
 

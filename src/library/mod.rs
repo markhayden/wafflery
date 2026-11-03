@@ -10,6 +10,7 @@ pub mod cleanup;
 pub mod db;
 pub mod examples;
 pub mod export;
+mod image_preview;
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
