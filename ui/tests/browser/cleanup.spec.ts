@@ -71,7 +71,7 @@ test("deleting a source run clears its baseline and preserves a saved example", 
   await cleanup.getByRole("button", { name: "Close", exact: true }).click();
   await page.getByRole("button", { name: "Examples", exact: true }).click();
   await examples.getByRole("button", { name: "Open Survives cleanup" }).click();
-  await expect(page.getByLabel("Label *", { exact: true })).toHaveValue(
+  await expect(page.getByLabel("Label", { exact: true })).toHaveValue(
     "Keep these inputs",
   );
   await expect(

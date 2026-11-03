@@ -11,7 +11,7 @@ test("long inputs scroll independently while run and result controls stay visibl
   const run = page.getByRole("button", { name: "Run", exact: true });
   await expect(run).toBeInViewport();
   const input = page.getByRole("region", {
-    name: "Input settings",
+    name: "Config settings",
     exact: true,
   });
   const result = page.getByRole("region", {

@@ -37,3 +37,30 @@
 .form ol { padding-left: 1.25rem; margin: 0; min-width: 0; }
 .form li { overflow-wrap: anywhere; margin-bottom: .75rem; }
 .form li small { display: block; color: var(--color-muted); }
+
+.legend { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; font-weight: 500; }
+.tag { padding: 0.0625rem 0.5rem; border: 1px solid var(--color-line); border-radius: 999px; color: var(--color-muted); font-size: 0.75rem; font-weight: 400; }
+.hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.advanced summary { cursor: pointer; color: var(--color-muted); font-size: 0.8125rem; }
+.advanced[open] summary { margin-bottom: 0.75rem; }
+.fieldLabel { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+.whatItDoes { margin: 0; font-size: 0.9375rem; line-height: 1.5; }
+.whatItDoes span { display: block; color: var(--color-muted); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 0.25rem; }
+.sectionTitle { margin: 0.5rem 0 -0.5rem; font-size: 0.875rem; font-weight: 500; color: var(--color-muted); }
+
+/* Numbered steps, in the order a person fills them in. */
+.steps { counter-reset: step; }
+.step { position: relative; display: grid; gap: 1rem; padding-left: 2.25rem; min-width: 0; }
+.step::before { counter-increment: step; content: counter(step); position: absolute; left: 0; top: 0; display: grid; place-items: center; width: 1.5rem; height: 1.5rem; border-radius: 999px; border: 1px solid var(--color-line); color: var(--color-muted); font-size: 0.75rem; }
+.stepTitle { margin: 0; font-size: 0.9375rem; font-weight: 500; }
+.optional summary { cursor: pointer; list-style: none; }
+.optional summary::-webkit-details-marker { display: none; }
+.optional summary::after { content: "▸"; margin-left: 0.5rem; color: var(--color-muted); display: inline-block; transition: transform 0.15s; }
+.optional[open] summary::after { transform: rotate(90deg); }
+.optional[open] summary { margin-bottom: 1rem; }
+.locked { opacity: 0.55; }
+.savedGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(6.5rem, 1fr)); gap: 0.5rem; }
+.thumb { display: grid; gap: 0.25rem; padding: 0.25rem; background: transparent; border: 1px solid var(--color-line); border-radius: var(--radius-control); text-align: left; }
+.thumb:hover:not(:disabled) { border-color: var(--color-muted); }
+.thumb img, .thumb span { display: block; width: 100%; aspect-ratio: 4 / 3; object-fit: cover; border-radius: calc(var(--radius-control) - 2px); background: var(--color-background); }
+.thumb small { color: var(--color-muted); font-size: 0.75rem; }

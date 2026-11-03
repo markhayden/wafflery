@@ -3656,3 +3656,20 @@ remain separate; no production release is implied. Product choices remain Q1–Q
   instead of a centred modal: search pinned, options scroll, outside click and Escape close, focus
   returns to the control; at least the control's width (the tool list 44rem), flipping above when
   the space below is short.
+
+### V27: Config steps, drawing tools and a simpler result (owner UI review, 2026-11-03)
+
+- [x] "Input" is "Config", laid out as numbered steps in fill-in order: images (saved images as
+  thumbnails in the step; the chooser steps aside once full), locations (a single locked line until
+  their image exists), required settings, optional settings folded ("Settings · N optional", JSON
+  settings last as "· advanced"), and the spending limit last. Empty fields say what empty means;
+  the Run footer names the missing step.
+- [x] Plain labels and an ⓘ per input (ui/src/features/actions/help.ts): images and locations
+  explained for newcomers, settings from the tool's schema plus what they accept.
+- [x] Drawing on the source image: a rectangle (bbox, with exact pixel fields) and a brush (stroke,
+  with brush size, several strokes, undo). JSON paste stays as a folded fallback.
+- [x] Result: one Wipe / Side by side comparison with a "Mask overlay" switch (on: the tool's preview;
+  off: the raw mask); outputs as rows with Details (a drawer) and "Use in another action…"; reuse
+  status in plain words. JSON everywhere in a CodeBlock (no wrapping, sideways scroll, Copy).
+- [x] Dev: the tools' XDG homes live in the dev library and rascal's export area is an evidence
+  directory, so native artifacts preserve in `scripts/dev.sh`.

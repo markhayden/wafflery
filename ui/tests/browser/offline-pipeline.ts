@@ -11,6 +11,8 @@ export async function prepareOfflinePipeline(
   rascal: string,
   squint: string,
   referenceCheck = false,
+  // Rascal's export area under the tools' isolated data home: native artifacts are read from it.
+  rascalExports?: string,
 ) {
   const installed = await Promise.all(([
     ["rascal", rascal], ["squint", squint],
@@ -55,7 +57,9 @@ export async function prepareOfflinePipeline(
         join(cwd, "runs"),
       ];
     }
-    entries.push({ id, executable, args, cwd, allow_dirs: [], evidence_dirs: [cwd], ...(config ? { config } : {}) });
+    if (id === "rascal" && rascalExports) await mkdir(rascalExports, { recursive: true, mode: 0o700 });
+    const evidence = id === "rascal" && rascalExports ? [cwd, rascalExports] : [cwd];
+    entries.push({ id, executable, args, cwd, allow_dirs: [], evidence_dirs: evidence, ...(config ? { config } : {}) });
   }
   return entries;
 }

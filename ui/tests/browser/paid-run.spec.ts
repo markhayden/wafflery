@@ -91,7 +91,7 @@ for (const mode of ["lost", "wrong", "missing declaration"] as const) test(`${mo
     expect(submitted[1]).toEqual(submitted[0]);
     expect((await calls(host.root))).toHaveLength(1);
     expect(submitted[0]!.params.label).toBe("reviewed paid draft");
-    if (mode !== "missing declaration") await expect(page.getByLabel("Label *",{exact:true})).toHaveValue("edited after sending");
+    if (mode !== "missing declaration") await expect(page.getByLabel("Label",{exact:true})).toHaveValue("edited after sending");
     await expect(run(page)).toBeDisabled();
   } finally { await page.unrouteAll({behavior:"wait"}); }
 });
@@ -117,7 +117,7 @@ test("edits while paid submission is in flight cannot delete or replace its prep
     await expect(page.getByRole("region",{name:"Result",exact:true})).toContainText("Contract evidence: complete");
     expect(posts).toBe(1); expect(deletes).toBe(0);
     expect((await calls(host.root))[0].arguments.label).toBe("reviewed paid draft");
-    await expect(page.getByLabel("Label *",{exact:true})).toHaveValue("next draft");
+    await expect(page.getByLabel("Label",{exact:true})).toHaveValue("next draft");
     await expect(run(page)).toBeDisabled();
   } finally { release(); await page.unrouteAll({behavior:"wait"}); }
 });

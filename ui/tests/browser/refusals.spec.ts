@@ -4,10 +4,10 @@ import { join } from "node:path";
 
 async function prepare(page: import("@playwright/test").Page, label: string) {
   await page.locator("input[type=file]").setInputFiles("tests/fixtures/sample.png");
-  const source = page.getByRole("region", { name: "source", exact: true });
+  const source = page.getByRole("region", { name:"Source image",exact: true });
   await expect(source).toHaveAttribute("aria-busy", "false");
   await expect(source.getByRole("img", { name: "Selected image 1" })).toBeVisible();
-  const input = page.getByLabel("Label *", { exact: true });
+  const input = page.getByLabel("Label", { exact: true });
   await input.click();
   await input.fill(label);
   await expect(input).toHaveValue(label);
@@ -44,7 +44,7 @@ test.describe("no-run refusals", () => {
       await expect.poll(() => ids.length).toBe(2);
       await expect(page.getByText(`Saved attempt · ${ids[1]!.slice(0, 8)}`, { exact: true })).toBeVisible();
       await expect(run).toBeEnabled();
-      await page.getByLabel("Label *", { exact: true }).fill("Corrected input");
+      await page.getByLabel("Label", { exact: true }).fill("Corrected input");
       await run.click();
       await expect(result).toContainText("Contract evidence: complete.");
       expect(new Set(ids).size).toBe(3);

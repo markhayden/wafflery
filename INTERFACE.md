@@ -6,7 +6,9 @@ shared drawer against the original studies. The mock interactions remain illustr
 
 ## Implemented workspace
 
-The application header owns Tool; the selected tool name/purpose heads the workspace. Pickers are dropdowns anchored to their control (a popover: search pinned, list scrolling, outside
+The application header owns Tool; the selected tool name/purpose heads the workspace. The form is "Config": numbered steps in fill-in order (images, locations drawn on the image, required
+settings, optional settings folded, spending limit last); every input has an ⓘ in plain words. The
+result is one comparison with a Mask overlay switch, outputs as rows (Details opens a drawer). Pickers are dropdowns anchored to their control (a popover: search pinned, list scrolling, outside
 click or Escape closes, flips above when below is short). One matching
 focused picker chooses Playground, Operations or Utilities where declared, followed by a searchable,
 grouped activity picker. Each workspace option says what it offers in plain words naming the tool

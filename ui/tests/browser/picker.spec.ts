@@ -35,15 +35,17 @@ test("declared form keeps arrays as JSON and invalid edits block submission", as
   await page.goto(
     "http://127.0.0.1:6006/iframe.html?id=inputs-actionform--declared&viewMode=story",
   );
-  await page.getByLabel("prompt *").fill("A seam");
-  await page.getByLabel("enabled").selectOption("true");
-  await page.getByLabel("tags").fill('["one","two"]');
+  await page.getByRole("textbox", { name: "Prompt", exact: true }).fill("A seam");
+  // Optional settings sit folded under "Settings · N optional"; free-form JSON ones are last.
+  await page.locator("summary").filter({ hasText: /^Settings · \d+ optional$/ }).click();
+  await page.getByRole("combobox", { name: "Enabled", exact: true }).selectOption("true");
+  await page.getByRole("textbox", { name: "Tags · advanced", exact: true }).fill('["one","two"]');
   await page.getByRole("button", { name: "Validate form" }).click();
   await expect(page.locator("output")).toHaveText(
     '{"prompt":"A seam","enabled":true,"tags":["one","two"]}',
   );
-  await page.getByLabel("tags").fill('["broken"');
-  await page.getByLabel("prompt *").fill("Changed");
+  await page.getByRole("textbox", { name: "Tags · advanced", exact: true }).fill('["broken"');
+  await page.getByRole("textbox", { name: "Prompt", exact: true }).fill("Changed");
   await page.getByRole("button", { name: "Validate form" }).click();
   await expect(page.locator("output")).not.toContainText("Changed");
   await expect(page.getByRole("alert")).toBeVisible();

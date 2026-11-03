@@ -1,4 +1,4 @@
-import { prepareSampleInput } from "./sample-input";
+import { openOptionalSettings, prepareSampleInput } from "./sample-input";
 import { test, expect } from "./tool-host";
 import { readFile } from "node:fs/promises";
 import { resolve } from "node:path";
@@ -8,13 +8,14 @@ test("an example owns saved inputs and opens a draft without execution", async (
 }) => {
   await host.open(page);
   await prepareSampleInput(page, "Saved example input");
-  await page.getByLabel("Tags", { exact: true }).fill('["saved tag"]');
+  await openOptionalSettings(page);
+  await page.getByLabel("Tags · advanced", { exact: true }).fill('["saved tag"]');
   await page.getByRole("button", { name: "Run", exact: true }).click();
   await expect(
     page.getByText("Contract evidence: complete.", { exact: false }).first(),
   ).toBeVisible();
-  await page.getByLabel("Label *", { exact: true }).fill("Unsubmitted edits");
-  await page.getByLabel("Tags", { exact: true }).fill("invalid draft JSON");
+  await page.getByLabel("Label", { exact: true }).fill("Unsubmitted edits");
+  await page.getByLabel("Tags · advanced", { exact: true }).fill("invalid draft JSON");
   await page.getByRole("button", { name: "Examples", exact: true }).click();
   const drawer = page.getByRole("dialog", { name: "Examples", exact: true });
   await drawer
@@ -27,10 +28,10 @@ test("an example owns saved inputs and opens a draft without execution", async (
     .getByRole("button", { name: "Save example", exact: true })
     .click();
   await drawer.getByRole("button", { name: "Open My first example" }).click();
-  await expect(page.getByLabel("Label *", { exact: true })).toHaveValue(
+  await expect(page.getByLabel("Label", { exact: true })).toHaveValue(
     "Saved example input",
   );
-  await expect(page.getByLabel("Tags", { exact: true })).toHaveValue(
+  await expect(page.getByLabel("Tags · advanced", { exact: true })).toHaveValue(
     /saved tag/,
   );
   await expect(

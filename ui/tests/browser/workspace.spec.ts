@@ -55,7 +55,7 @@ test("run a real offline action and inspect immutable evidence after editing the
   await expect(
     page.getByRole("slider", { name: "Before and after divider" }),
   ).toBeVisible();
-  await page.getByLabel("Label *", { exact: true }).fill("Unsubmitted draft");
+  await page.getByLabel("Label", { exact: true }).fill("Unsubmitted draft");
   await page.getByRole("button", { name: "Inspect run" }).click();
   const drawer = page.getByRole("dialog", { name: "Run details" });
   await expect(drawer.getByLabel("Saved evidence")).toContainText(

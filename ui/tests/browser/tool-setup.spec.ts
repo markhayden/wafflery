@@ -1,4 +1,4 @@
-import { prepareSampleInput } from "./sample-input";
+import { openOptionalSettings, prepareSampleInput } from "./sample-input";
 import { test, expect } from "./tool-host";
 import { realpath, writeFile } from "node:fs/promises";
 import { join } from "node:path";
@@ -25,7 +25,7 @@ test("setup shows reported allowances and never promotes a credential name to re
 
 test("live setup refresh preserves drafts and clears an unavailable allowance without running anything", async ({ page, host }) => {
   await host.open(page);
-  const label = page.getByLabel("Label *", { exact: true });
+  const label = page.getByLabel("Label", { exact: true });
   await label.click();
   await expect(label).toBeFocused();
   await label.fill("Keep this draft");
@@ -53,7 +53,7 @@ test("live setup refresh preserves drafts and clears an unavailable allowance wi
   await page.keyboard.press("Escape");
   await expect(drawer).not.toBeVisible();
   await expect(page.getByRole("button", { name: "Tool setup", exact: true })).toBeFocused();
-  await expect(page.getByLabel("Label *", { exact: true })).toHaveValue("Keep this draft");
+  await expect(page.getByLabel("Label", { exact: true })).toHaveValue("Keep this draft");
   expect(dispatched).toBe(0);
 });
 
@@ -71,7 +71,7 @@ test.describe("paid action setup", () => {
 test("an unavailable tool never replaces setup with a saved-run inspector", async ({ page, host }) => {
   await host.open(page);
   await page.locator("input[type=file]").setInputFiles("tests/fixtures/sample.png");
-  const label = page.getByLabel("Label *", { exact: true });
+  const label = page.getByLabel("Label", { exact: true });
   await label.click();
   await expect(label).toBeFocused();
   await label.fill("Saved before setup");
@@ -132,7 +132,7 @@ test.describe("live readiness", () => {
     await host.open(page);
     await page.getByRole("button", { name: "Action Add a test band" }).click();
     await page.getByRole("dialog", {name:"Choose action"}).getByRole("button", { name: /^Price a scripted call/ }).click();
-    await page.getByLabel("label *", { exact: true }).fill("Keep this paid draft");
+    await page.getByLabel("Label", { exact: true }).fill("Keep this paid draft");
     let attempts = 0;
     page.on("request", request => { if (request.method() === "POST" && new URL(request.url()).pathname === "/api/attempts") attempts++; });
     const opening = page.waitForResponse(response => new URL(response.url()).pathname === "/api/tools/sample/refresh");
@@ -147,7 +147,7 @@ test.describe("live readiness", () => {
       const current = (await (await response).json()).revision;
       expect(current).not.toBe(previous); previous = current;
       await expect(drawer.getByText(label, { exact: true })).toBeVisible();
-      await expect(page.getByLabel("label *", { exact: true })).toHaveValue("Keep this paid draft");
+      await expect(page.getByLabel("Label", { exact: true })).toHaveValue("Keep this paid draft");
     }
     await page.keyboard.press("Escape");
     await expect(page.getByRole("button", { name: "Action Price a scripted call" })).toBeVisible();
@@ -191,6 +191,7 @@ test.describe("live readiness", () => {
   test("optional setup refuses only the requested filler and a corrected free run completes", async ({ page, host }) => {
     await host.open(page);
     await prepareSampleInput(page, "Optional setup experiment");
+    await openOptionalSettings(page);
     await page.getByLabel("Use optional filler", { exact: true }).selectOption("true");
     await page.getByRole("button", { name: "Run", exact: true }).click();
     await expect(page.getByText("No run created.", { exact: true })).toBeVisible();
@@ -205,7 +206,7 @@ test.describe("live readiness", () => {
 
 test("restart confirmation preserves drafts and publishes a fresh session to both tabs", async ({ page, context, host }, testInfo) => {
   await host.open(page);
-  const label = page.getByLabel("Label *", { exact: true });
+  const label = page.getByLabel("Label", { exact: true });
   await label.click(); await label.fill("Keep across restart");
   await expect(label).toHaveValue("Keep across restart");
   const other = await context.newPage(); await host.open(other);
@@ -251,10 +252,10 @@ test.describe("restart during work", () => {
   test("setup explains why an active session cannot restart", async ({ page, host }) => {
     await host.open(page);
     await page.locator("input[type=file]").setInputFiles("tests/fixtures/sample.png");
-    const source = page.getByRole("region", { name: "source", exact: true });
+    const source = page.getByRole("region", { name:"Source image",exact: true });
     await expect(source).toHaveAttribute("aria-busy", "false");
     await expect(source.getByRole("img", { name: "Selected image 1" })).toBeVisible();
-    const label = page.getByLabel("Label *", { exact: true });
+    const label = page.getByLabel("Label", { exact: true });
     await label.click();
     await expect(label).toBeFocused();
     await label.fill("Held run");

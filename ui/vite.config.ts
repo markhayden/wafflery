@@ -15,6 +15,8 @@ export default defineConfig(({ command }) => ({
     port: 5173,
     strictPort: true,
     cors: false,
+    // Build and test output is not source: watching it reloads the page whenever tests run.
+    watch: { ignored: ["**/storybook-static/**", "**/prebuilt/**", "**/test-results/**", "**/playwright-report/**", "**/.prebuilt-*/**"] },
   },
   preview: { host: "127.0.0.1", port: 4173, strictPort: true },
   build: { target: "es2022" },

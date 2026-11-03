@@ -25,7 +25,7 @@ test("native keyboard edits after an uncertain paid reply preserve the original 
     await page.getByRole("button", { name: "Run", exact: true }).click();
     const retry = page.getByRole("button", { name: "Retry submission", exact: true });
     await expect(retry).toBeVisible();
-    const label = page.getByLabel("Label *", { exact: true });
+    const label = page.getByLabel("Label", { exact: true });
     await label.click();
     await label.press("ControlOrMeta+A");
     await label.pressSequentially("keyboard after sending");

@@ -7,6 +7,8 @@ import styles from "./ImageInput.module.css";
 
 type Props = {
   label: string;
+  /** Shown beside the label, such as an InfoTip explaining the image. */
+  info?: ReactNode;
   value: readonly Asset[];
   min: number;
   max: number;
@@ -34,7 +36,7 @@ function Preview({ asset, load, position }: { asset: Asset; load: Props["preview
     : <div className={styles.preview}>{error ? "Preview unavailable" : "Loading image…"}</div>;
 }
 
-export function ImageInput({ label, value, min, max, onChange, upload, preview, disabled = false, renderDetails }: Props) {
+export function ImageInput({ label, info, value, min, max, onChange, upload, preview, disabled = false, renderDetails }: Props) {
   const inputId = useId();
   const fileInput = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
@@ -82,9 +84,12 @@ export function ImageInput({ label, value, min, max, onChange, upload, preview, 
     }
   }
   return <section className={styles.input} aria-labelledby={`${inputId}-label`} aria-busy={busy}>
-    <div className={styles.heading}><label id={`${inputId}-label`} htmlFor={inputId}>{label}</label><span>{value.length} / {max}</span></div>
-    <p className={styles.hint} id={`${inputId}-help`}>PNG or JPEG · Up to 128 MiB each · {min > 0 ? `${min} required` : "Optional"}</p>
-    <div className={styles.file}><Button disabled={locked || value.length >= max} busy={busy} onClick={() => fileInput.current?.click()}>{max === 1 ? "Choose image" : "Add images"}</Button></div>
+    <div className={styles.heading}><span className={styles.title}><label id={`${inputId}-label`} htmlFor={inputId}>{label}</label>{info}</span><span>{value.length} / {max}</span></div>
+    {/* Once the slot is full the chooser steps aside; Remove brings it back. */}
+    {value.length < max && <>
+      <p className={styles.hint} id={`${inputId}-help`}>PNG or JPEG · Up to 128 MiB each · {min > 0 ? `${min} required` : "Optional"}</p>
+      <div className={styles.file}><Button disabled={locked} busy={busy} onClick={() => fileInput.current?.click()}>{max === 1 ? "Choose image" : "Add images"}</Button></div>
+    </>}
     <input ref={fileInput} id={inputId} hidden type="file" accept="image/png,image/jpeg" multiple={max > 1}
       disabled={locked || value.length >= max} aria-describedby={`${inputId}-help`}
       onChange={event => { const files = Array.from(event.currentTarget.files ?? []); event.currentTarget.value = ""; void add(files); }} />

@@ -1,6 +1,7 @@
 import { test, expect } from "./tool-host";
 import { readFile, readdir } from "node:fs/promises";
 import { join, resolve } from "node:path";
+import { openOptionalSettings } from "./sample-input";
 import { spawnSync } from "node:child_process";
 
 test.use({ hostKind: "squint", viewport: { width: 1440, height: 900 } });
@@ -17,7 +18,7 @@ test("Squint scripted evidence survives export, examples, tool switching and res
   const original = await readFile("tests/fixtures/sample.png");
   await host.open(page);
   await page.getByRole("button", { name: /^Action / }).click();
-  await page.getByRole("button", { name: /Source fidelity Image/ }).click();
+  await page.getByRole("button", { name: /^Source fidelity / }).click();
   await page
     .locator("input[type=file]")
     .nth(0)
@@ -103,14 +104,15 @@ test("Squint scripted evidence survives export, examples, tool switching and res
     .locator("input[type=file]")
     .setInputFiles("tests/fixtures/panorama.png");
   await page
-    .getByRole("combobox", { name: "image coordinates", exact: true })
+    .getByRole("combobox", { name: "Source image coordinates", exact: true })
     .selectOption("equirectangular");
+  await openOptionalSettings(page);
   await page
-    .getByLabel("projection", { exact: true })
+    .getByLabel("Projection", { exact: true })
     .selectOption({ label: "equirectangular" });
   await page.getByRole("button", { name: "Run", exact: true }).click();
   await expect(
-    page.getByRole("img", { name: "Mask", exact: true }),
+    page.getByRole("img", { name: "Mask overlay", exact: true }),
   ).toBeVisible();
   await expect(
     page.getByText("Contract evidence: complete.", { exact: false }).first(),
@@ -129,7 +131,7 @@ test("Squint scripted evidence survives export, examples, tool switching and res
     '"verdict": "pass"',
   );
   await expect(
-    page.getByRole("img", { name: "Mask", exact: true }),
+    page.getByRole("img", { name: /^Mask( overlay)?$/ }),
   ).toHaveCount(0);
   await expect(
     page.getByRole("dialog", { name: "History", exact: true }),

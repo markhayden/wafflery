@@ -4,6 +4,8 @@ import { Button } from "../../components/Button";
 import { ImageCompare } from "../../components/ImageCompare";
 import type { Asset } from "../../api/assets";
 import { object } from "../actions/model";
+import { humanize } from "../actions/help";
+import { CodeBlock } from "../../components/CodeBlock";
 import styles from "./Workspace.module.css";
 
 export function SavedComparison({
@@ -19,6 +21,9 @@ export function SavedComparison({
 }) {
   const [baseline, setBaseline] = useState<Attempt | null>(null);
   const [compare, setCompare] = useState(false);
+  // A tool's preview of an output (rascal: the mask drawn over the image) shows by default;
+  // turning it off shows the raw output (the black-and-white mask).
+  const [overlay, setOverlay] = useState(true);
   const [error, setError] = useState<string>();
   const { tool, action } = attempt.request;
   useEffect(() => {
@@ -46,8 +51,11 @@ export function SavedComparison({
   }
   const comparing = compare && baseline && baseline.id !== attempt.id;
   const source = Object.values(attempt.inputs).flat()[0];
-  const left = comparing ? baseline.outputs[0] : source;
-  const right = attempt.outputs[0];
+  const preview = attempt.outputs.find((output) => output.role === "preview");
+  const plain = attempt.outputs.find((output) => output.role !== "preview");
+  const right = (overlay && preview) || plain || attempt.outputs[0];
+  const rightLabel = right === preview ? `${humanize(plain?.role ?? "result")} overlay` : humanize(right?.role ?? "result");
+  const left = comparing ? baseline.outputs.find((output) => output.role === right?.role) ?? baseline.outputs[0] : source;
   const result = object(attempt.result);
   const declaredImages = object(result?.images)?.out;
   const dataOnly =
@@ -62,9 +70,7 @@ export function SavedComparison({
       {dataOnly ? (
         <div>
           <p>This run returned data without an output image.</p>
-          <pre className={styles.resultData} aria-label="Result data">
-            {JSON.stringify(result.body ?? {}, null, 2)}
-          </pre>
+          <CodeBlock label="Result data" value={result.body ?? {}} />
         </div>
       ) : (
         <ImageCompare
@@ -73,16 +79,14 @@ export function SavedComparison({
               ? { ...left, label: comparing ? "Baseline" : "Source" }
               : undefined
           }
-          right={
-            right
-              ? {
-                  ...right,
-                  label:
-                    right.role.charAt(0).toUpperCase() + right.role.slice(1),
-                }
-              : undefined
-          }
+          right={right ? { ...right, label: rightLabel } : undefined}
           load={load}
+          controls={preview && plain ? (
+            <button type="button" role="switch" aria-checked={overlay} className={styles.switch} onClick={() => setOverlay((value) => !value)}>
+              <span className={styles.track} aria-hidden="true"><span /></span>
+              {`${humanize(plain.role)} overlay`}
+            </button>
+          ) : undefined}
         />
       )}
       <div className="comparison-actions">
@@ -115,11 +119,11 @@ export function SavedComparison({
           <div className="settings-comparison">
             <section>
               <h3>Baseline settings</h3>
-              <pre>{JSON.stringify(settings(baseline), null, 2)}</pre>
+              <CodeBlock label="Baseline settings" value={settings(baseline)} />
             </section>
             <section>
               <h3>Selected run settings</h3>
-              <pre>{JSON.stringify(settings(attempt), null, 2)}</pre>
+              <CodeBlock label="Selected run settings" value={settings(attempt)} />
             </section>
           </div>
         </details>

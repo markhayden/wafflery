@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import type { Asset } from "../api/assets";
 import { Button } from "./Button";
 import { canWipe, type Coordinates } from "./comparison";
@@ -8,9 +8,13 @@ type Props = {
   left?: CompareImage | undefined;
   right?: CompareImage | undefined;
   load: (asset: Asset) => Promise<Blob>;
+  /** Extra controls in the toolbar, such as a toggle for what the right side shows. */
+  controls?: ReactNode;
 };
 function useImage(asset: Asset | undefined, load: Props["load"]) {
-  const [state, setState] = useState<{ url?: string; error?: string }>({});
+  // Tagged with the asset it was read for, so a new label never shows the previous image's bytes
+  // in the render before the new read starts.
+  const [state, setState] = useState<{ for?: Asset; url?: string; error?: string }>({});
   useEffect(() => {
     let active = true;
     let url: string | undefined;
@@ -20,12 +24,13 @@ function useImage(asset: Asset | undefined, load: Props["load"]) {
         .then((blob) => {
           if (active) {
             url = URL.createObjectURL(blob);
-            setState({ url });
+            setState({ for: asset, url });
           }
         })
         .catch(() => {
           if (active)
             setState({
+              for: asset,
               error: "Image unavailable. The saved bytes could not be read.",
             });
         });
@@ -34,9 +39,9 @@ function useImage(asset: Asset | undefined, load: Props["load"]) {
       if (url) URL.revokeObjectURL(url);
     };
   }, [asset, load]);
-  return state;
+  return state.for === asset ? state : {};
 }
-export function ImageCompare({ left, right, load }: Props) {
+export function ImageCompare({ left, right, load, controls }: Props) {
   const before = useImage(left?.asset, load),
     after = useImage(right?.asset, load);
   const [mode, setMode] = useState<"wipe" | "side">("wipe"),
@@ -67,6 +72,7 @@ export function ImageCompare({ left, right, load }: Props) {
       <div className={styles.toolbar}>
         <span>Compare</span>
         <div>
+          {controls}
           <Button
             aria-pressed={mode === "wipe" && compatible}
             disabled={!compatible}

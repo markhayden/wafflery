@@ -27,7 +27,7 @@ export type Action = {
   params_schema: Schema;
   images?: ImageSlot[];
   ports?: {in: import("./ports").Port[]; out: import("./ports").Port[]};
-  locations?: { slot: string; required: boolean }[];
+  locations?: { slot: string; required: boolean; kinds?: string[] }[];
   renders?: { name: string; kind: "server" | "document" }[];
   cost: { may_spend: boolean };
   readiness: Readiness;

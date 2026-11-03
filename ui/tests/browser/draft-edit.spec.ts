@@ -4,7 +4,7 @@ import { editSampleLabel, prepareSampleInput } from "./sample-input";
 test("fixture edits commit an input event even if focus changes before native insertion", async ({ page, host }) => {
   await host.open(page);
   await prepareSampleInput(page, "original");
-  const label = page.getByLabel("Label *", { exact: true });
+  const label = page.getByLabel("Label", { exact: true });
   // Reproduce the gap between Playwright's DOM selection and its separate insertText call.
   await label.evaluate((node: HTMLInputElement) => {
     node.addEventListener("select", () => node.blur());
@@ -20,7 +20,7 @@ test("fixture edits commit an input event even if focus changes before native in
 test("native keyboard editing reaches the saved run through the controlled form", async ({ page, host }) => {
   await host.open(page);
   await prepareSampleInput(page, "original");
-  const label = page.getByLabel("Label *", { exact: true });
+  const label = page.getByLabel("Label", { exact: true });
   await label.click();
   await label.press("ControlOrMeta+A");
   await label.pressSequentially("keyboard draft");

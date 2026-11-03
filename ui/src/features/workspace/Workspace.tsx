@@ -13,6 +13,7 @@ import {ArtifactOutputs} from "./ArtifactOutputs";
 import {artifactOccurrences} from "./artifacts";
 import {PortEditor} from "../actions/PortEditor";
 import {validatePorts,type PortBindings} from "../actions/ports";
+import {imageLabel,locationLabel} from "../actions/help";
 import {ApiError,bindingIssues as parseBindingIssues,type BindingIssue} from "../../api/client";
 import { toolChoice, toolIntroduction } from "./tool-presentation";
 import { ActivityPicker } from "./ActivityPicker";
@@ -49,7 +50,7 @@ import {
   object,
   type Schema,
 } from "../actions/model";
-import { restoreSelection, type ImageSelection } from "../actions/selection";
+import { restoreSelection, type ImageSelection, type SelectedImage } from "../actions/selection";
 import { ActionForm } from "../actions/ActionForm";
 import { Button } from "../../components/Button";
 import { Picker } from "../../components/Picker";
@@ -124,7 +125,7 @@ export function Workspace({
     firstActivity(declaration?.document.actions ?? [])?.name ?? "",
   );
   const action = declaration?.document.actions.find((a) => a.name === actionId);
-  const inputPorts=action?.kind==="operation"?action.ports?.in??[]:(action?.locations??[]).map(slot=>({name:slot.slot,type:"location",required:slot.required,many:false}));
+  const inputPorts=action?.kind==="operation"?action.ports?.in??[]:(action?.locations??[]).map(slot=>({name:slot.slot,type:"location",required:slot.required,many:false,...(slot.kinds?{kinds:slot.kinds}:{})}));
   const [emptyKind, setEmptyKind] = useState<ActivityKind>("task");
   const activityKind = action?.kind ?? emptyKind;
   const [draftRevision, setDraftRevision] = useState(0);
@@ -406,6 +407,17 @@ export function Workspace({
       selected.execution,
     ) ||
       selected.preservation.contract === "pending");
+  // The image a location is drawn on: a complete job's first chosen image, or an operation's
+  // first image input.
+  const drawOn:SelectedImage|undefined=action?.kind==="operation"
+    ?(()=>{const binding=Object.values(portBindings).flat().find(item=>item.kind==="image");const asset=binding?.kind==="image"?savedImages.find(entry=>entry.id===binding.asset):undefined;return asset&&binding?.kind==="image"?{...asset,coordinates:binding.frame??{projection:"flat",topology:"bounded"}}:undefined;})()
+    :Object.values(images).flat()[0];
+// What still stands between the form and Run, in the order the form asks for it.
+  const missingImage=(action?.images??[]).find(slot=>slot.required&&!images[slot.slot]?.length);
+  const missingPlace=(action?.locations??[]).find(slot=>slot.required&&!portBindings[slot.slot]?.length);
+  const missingStep=missingImage?`Choose the ${imageLabel(missingImage).toLowerCase()} to run`
+    :missingPlace?((missingPlace.kinds??[]).includes("bbox")?"Draw the area to run":(missingPlace.kinds??[]).includes("stroke")?"Paint over the damage to run":`Add the ${locationLabel(missingPlace.slot,missingPlace.kinds).toLowerCase()} to run`):undefined;
+    const portEditor=<PortEditor drawOn={drawOn} preview={assets.thumbnail} key={`ports/${toolId}/${actionId}/${draftRevision}/${declaration?.revision}`} ports={inputPorts} resolveArtifact={binding=>artifactRestore.choose(binding,toolId)} value={portBindings} onBusy={setPortImporting} onChange={value=>{setPortBindings(value);setBindingIssues([]);}} assets={savedImages} artifacts={(action?.kind==="operation"?libraryArtifacts.sources:[]).flatMap((source,index)=>{const binding=transferBinding(source,declaration!.document.tool.name);return binding?[{id:String(index),label:`${source.port} item ${(source.index??0)+1} · ${source.attempt?.slice(0,8)} · ${String(source.reference.type)}`,reference:source.reference,binding}]:[];})} issues={cost.state.kind==="error"?cost.state.bindings??bindingIssues:bindingIssues.length?bindingIssues:savedBindingIssues} upload={async file=>{const asset=await assets.upload(file);setSavedImages(await assets.list());return asset;}} disabled={busy||!!working||portImporting} />;
   return (
     <WorkspaceFrame connected connection="Connected locally" controls={<Shutdown api={api} />}
       toolPicker={<Picker compact wide label="Tool" value={toolId} onChange={chooseTool}
@@ -452,12 +464,12 @@ export function Workspace({
           }}
         >
           <header className={styles.panelHeading}>
-            <h2>Input</h2>
+            <h2>Config</h2>
           </header>
           <div
             className={styles.panelBody}
             role="region"
-            aria-label="Input settings"
+            aria-label="Config settings"
             onChangeCapture={() => setEstimateEditRevision(value => value + 1)}
             tabIndex={0}
             key={draftRevision}
@@ -469,7 +481,7 @@ export function Workspace({
                 {draftExample.notes ? ` · ${draftExample.notes}` : ""}
               </p>
             )}
-            {inputPorts.length>0 && <PortEditor key={`ports/${toolId}/${actionId}/${draftRevision}/${declaration?.revision}`} ports={inputPorts} resolveArtifact={binding=>artifactRestore.choose(binding,toolId)} value={portBindings} onBusy={setPortImporting} onChange={value=>{setPortBindings(value);setBindingIssues([]);}} assets={savedImages} artifacts={(action?.kind==="operation"?libraryArtifacts.sources:[]).flatMap((source,index)=>{const binding=transferBinding(source,declaration!.document.tool.name);return binding?[{id:String(index),label:`${source.port} item ${(source.index??0)+1} · ${source.attempt?.slice(0,8)} · ${String(source.reference.type)}`,reference:source.reference,binding}]:[];})} issues={cost.state.kind==="error"?cost.state.bindings??bindingIssues:bindingIssues.length?bindingIssues:savedBindingIssues} upload={async file=>{const asset=await assets.upload(file);setSavedImages(await assets.list());return asset;}} disabled={busy||!!working||portImporting} />}
+            {action?.kind==="operation"&&inputPorts.length>0 && portEditor}
             {action?.kind==="operation" && <><p role="status">{libraryArtifacts.loading?"Loading saved artifacts…":libraryArtifacts.error??"Select a saved artifact to check its availability. Run still validates compatibility."}</p>{libraryArtifacts.more&&<Button type="button" onClick={libraryArtifacts.loadMore}>Load older artifacts</Button>}</>}
             {action ? (
               <ActionForm
@@ -487,36 +499,12 @@ export function Workspace({
                   return asset;
                 }}
                 preview={assets.thumbnail}
+                locations={action.kind!=="operation"&&inputPorts.length>0?portEditor:undefined}
+                saved={savedImages}
               />
             ) : (
               <p>No supported action is available.</p>
             )}
-            {action?.images?.length && savedImages.length > 0 ? (
-              <details>
-                <summary>Saved images ({savedImages.length})</summary>
-                <div className={styles.saved}>
-                  {action.images.map((slot) => (
-                    <div key={slot.slot}>
-                      <p>Use for {slot.slot}</p>
-                      {savedImages.slice(0, 12).map((asset, index) => (
-                        <Button
-                          key={asset.id}
-                          disabled={slot.many && (images[slot.slot]?.length ?? 0) >= 32}
-                          onClick={() =>
-                            setImages((values) => ({
-                              ...values,
-                              [slot.slot]: slot.many ? [...(values[slot.slot] ?? []), asset] : [asset],
-                            }))
-                          }
-                        >
-                          Image {index + 1} · {asset.width} × {asset.height}
-                        </Button>
-                      ))}
-                    </div>
-                  ))}
-                </div>
-              </details>
-            ) : null}
             {action?.cost.may_spend && <CostReview cap={capText} state={cost.state}
               onCapChange={value => setParams(current => ({...current,max_spend_usd:value}))}
               onEstimate={() => { void cost.estimate(); }}
@@ -532,9 +520,9 @@ export function Workspace({
           </div>
           <div className={styles.run}>
             <p>
-              {action?.cost.may_spend
+              {missingStep ?? (action?.cost.may_spend
                 ? "Paid action · Review the estimate before Run"
-                : "Free action · Inputs are saved locally"}
+                : "Free action · Inputs are saved locally")}
             </p>
             <Button
               type="submit"
@@ -603,14 +591,14 @@ export function Workspace({
                   onSetup={event => setDrawer({opener:event.currentTarget,
                   view:"setup",tool:selected.request.tool,action:selected.request.action})} />
                 {!noRun && <>
-                <ArtifactOutputs attempt={selected} restore={async index=>{const source=savedSources(selected).find(source=>source.index===index);if(!source)return;const binding=transferBinding(source,selected.declaration.document.tool.name);if(!binding)return;if(await artifactRestore.choose(binding,selected.request.tool))return client.artifact(selected.id,index);}} load={assets.thumbnail} inspect={index=>client.artifact(selected.id,index)} disabled={busy||!!working} onSend={index=>setSendSource(savedSources(selected).find(source=>source.index===index))} />
-                <NativePreservation key={`native/${selected.id}`} attempt={selected} retry={retryNative} />
                 {(!artifactOccurrences(selected.result).length || selected.outputs.some(output=>output.role!=="preview")) && <SavedComparison
                   attempt={selected}
                   client={client}
                   load={assets.preview}
                   revision={snapshot}
                 />}
+                <ArtifactOutputs attempt={selected} restore={async index=>{const source=savedSources(selected).find(source=>source.index===index);if(!source)return;const binding=transferBinding(source,selected.declaration.document.tool.name);if(!binding)return;if(await artifactRestore.choose(binding,selected.request.tool))return client.artifact(selected.id,index);}} load={assets.thumbnail} inspect={index=>client.artifact(selected.id,index)} disabled={busy||!!working} onSend={index=>setSendSource(savedSources(selected).find(source=>source.index===index))} />
+                <NativePreservation key={`native/${selected.id}`} attempt={selected} retry={retryNative} />
                 <p className={styles.note}>
                   Contract evidence: {selected.preservation.contract}. Editing
                   the inputs starts a new draft.

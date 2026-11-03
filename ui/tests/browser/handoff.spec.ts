@@ -5,7 +5,7 @@ test("CLI handoff reads the selected saved invocation after editing the draft an
  await host.open(page);await prepareSampleInput(page,"Saved CLI input");
  await page.getByRole("button",{name:"Run",exact:true}).click();
  await expect(page.getByText("Contract evidence: complete.",{exact:false}).first()).toBeVisible();
- await page.getByLabel("Label *",{exact:true}).fill("Not in the handoff");
+ await page.getByLabel("Label",{exact:true}).fill("Not in the handoff");
  await page.getByRole("button",{name:"Use in your pipeline",exact:true}).click();
  const drawer=page.getByRole("dialog",{name:"Use in your pipeline",exact:true});
  await drawer.getByRole("button",{name:"Command",exact:true}).click();
