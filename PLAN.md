@@ -2092,6 +2092,19 @@ probe. Review and follow-up approved the strict missing-field policy and explici
 56 UI tests, 2 asset tests, Storybook, reproducible assets, release build and 226 browser tests
 (8 skipped). No runtime change; lockfiles/prebuilt assets are unchanged and temporary config removed.
 
+**b4b implementation:** `ToolSession` now requires `allowed_dirs`. Parsing rejects missing,
+null, non-array, duplicate, relative, noncanonical lexical and NUL-containing names; explicit `[]`
+is retained as deny-all. Absolute literal names are rendered as data. There is no guessed count
+limit and no browser filesystem resolution. Existing typed stories carry explicit valid lists.
+The first new regression failed because the old parser accepted missing access; final checks follow.
+
+**b4b checkpoint (2026-11-02):** the missing-access regression failed before the parser
+change; all three session unit tests and typecheck now pass. Independent review approved all live
+callers and typed fixtures. The full shared-lock matrix passed fmt/clippy, 383 Rust tests (4 ignored),
+typecheck, 57 UI tests, 2 asset tests, Storybook, byte-identical check-ui builds, release build and
+226 browser tests (8 skipped). Generated UI assets are refreshed in their own commit; dependency
+lockfiles are unchanged and the temporary browser config is removed. The drawer wiring follows.
+
 **Checkpoint A:** merge M5.01–03 as a coherent cutover of validation, launch arguments and fake
 defaults; v0.4 is the only supported live contract afterward. Green matrix, an independent fake
 task run and the published exact dependency pin are required.
