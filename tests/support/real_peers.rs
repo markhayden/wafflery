@@ -21,6 +21,7 @@ pub async fn settled(c: &Arc<Coordinator>, id: &str) -> Attempt {
             let attempt = c.attempts.get(id).await.unwrap();
             let snapshot = c.snapshot().await.unwrap();
             if attempt.preservation["contract"] != "pending"
+                && attempt.preservation["native"] != "preserving"
                 && snapshot["tools"]
                     .as_array()
                     .unwrap()
@@ -139,4 +140,14 @@ async fn phase(c: &Arc<Coordinator>, id: &str, expected: &str) -> Value {
     })
     .await
     .expect("report did not reach the expected state")
+}
+
+// Test-owned CLI processes must be killed if their bounded wait expires.
+#[allow(dead_code)]
+pub async fn output(command: &mut tokio::process::Command) -> std::process::Output {
+    command.kill_on_drop(true);
+    tokio::time::timeout(Duration::from_secs(30), command.output())
+        .await
+        .expect("real peer CLI did not finish")
+        .expect("real peer CLI did not launch")
 }

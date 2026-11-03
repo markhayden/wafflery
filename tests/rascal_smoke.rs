@@ -19,6 +19,9 @@ async fn real_rascal_offline_seam_uses_the_same_dispatch_and_evidence_guards() {
     let bytes = include_bytes!("../ui/tests/fixtures/panorama.png");
     std::fs::write(&input, bytes).unwrap();
     let asset = assets.import_path(input.clone()).await.unwrap();
+    let exports =
+        std::path::PathBuf::from(std::env::var_os("XDG_DATA_HOME").unwrap()).join("rascal/exports");
+    std::fs::create_dir_all(&exports).unwrap();
     let descriptor = Descriptor {
         config: None,
         id: "real-offline-smoke".into(),
@@ -32,7 +35,7 @@ async fn real_rascal_offline_seam_uses_the_same_dispatch_and_evidence_guards() {
         ],
         cwd: tool.clone(),
         allow_dirs: vec![],
-        evidence_dirs: vec![tool],
+        evidence_dirs: vec![tool, exports],
     };
     let c = Arc::new(Coordinator::open(assets, vec![descriptor]).await.unwrap());
     let outcome = peer::run(&c, async {

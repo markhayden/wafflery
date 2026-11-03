@@ -1,0 +1,11 @@
+# Consistent test-only catalog profile/model for MCP and CLI bundle interoperability.
+[provider]
+profile = "fake"
+model = "fake-model"
+
+[privacy]
+cloud_calls = true
+account = "fake:wafflery-test"
+
+[output]
+dir = "./runs"

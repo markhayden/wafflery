@@ -3293,15 +3293,15 @@ and preserve partial attempts/charges. Do not label a partially executed import/
 
 #### M5.21 — Verify real v0.4 peers
 
-- [ ] Build the approved Rascal/Squint revisions in isolated disposable checkouts under the shared lock.
+- [x] Build the approved Rascal/Squint revisions in isolated disposable checkouts under the shared lock.
   Verify version/description/allowed_dirs against v0.4 and document the exact executable and dependency
   revisions. Never edit sibling branches; ask the coordinator for any necessary replacement revision.
-- [ ] Rascal: Line → Rasterize by location reference → Feather (including the Location JSON export),
+- [x] Rascal: Line → Rasterize by location reference → Feather (including the Location JSON export),
   location-by-value contrast, saved Mask parameter edit without upstream calls, indexed
   binding refusal, resource after restart/store move, export/import to an empty store, and both host and
   `rascal call --bundle` replay with original workspace unavailable. Assert invocation and native identity
   for deterministic fixtures; do not claim visual previews prove native equivalence.
-- [ ] Squint: task-only hierarchy, ordered list images, invocation and single-tool CLI bundle replay
+- [x] Squint: task-only hierarchy, ordered list images, invocation and single-tool CLI bundle replay
   against its scripted test provider. Confirm path denial without grants and success with staging grants.
   Real-provider checks, if used, keep explicit cap/spend records and do not replace deterministic checks.
 
@@ -3315,6 +3315,27 @@ Safari manual coverage separately, never substitute WebKit as proof of Safari.
 
 - **M5.21a: Rascal integration** — acceptance 1–2 for Rascal; isolated operations/CLI/browser checks.
 - **M5.21b: Squint integration** — acceptance 1 and 3 for Squint; isolated task/list/CLI/browser checks.
+
+**As built — M5.21:** approved committed-source archives were rebuilt in isolated target directories,
+with `testkit`, locked dependencies and published table-manners `0.4.0`. The Rascal native journey
+checks exact identities/effective invocations through reference/value bindings, parameter edits,
+indexed missing-item refusal, restart/store move, an empty-store import, guided three-step host replay
+and CLI replay after source workspace deletion. Squint's ordered repeated image evidence and
+host-built CLI bundle survive original image/library/run deletion; CLI denial and granted success
+exercise the actual path boundary. The consistent `fake`/`fake-model` fixture is required for CLI
+catalog admission; an estimate-oriented mixed fake/real fixture cannot prove a path refusal.
+Rascal exports require explicit read-only registration of its isolated export area; no caller grant
+is added. A pre-existing opt-in report assertion now waits for native preservation to settle before
+comparing saved evidence. Six real operations/report journeys pass in Chromium/WebKit with strict
+console checks. Native Safari is not claimed. See [integration evidence](docs/integration-sources.md).
+Final locked full Rust workspace tests, fmt, all-target clippy, UI typecheck and all 94 unit tests
+passed. All five opt-in real-peer Rust checks and six Chromium/WebKit real journeys passed. Review
+blockers were corrected and re-reviewed: cleanup removes only test-owned temporary folders, never
+the environment-selected export area, and edited-Feather waits for the new attempt identity before
+checking preservation. Portable Location geometry/file identity is compared after omitting optional
+source/decoded-pixel hints. Fresh consumer lineage names this replay's producer, and the actual tool
+run directories contain only the explicit successful actions. CLI children have a bounded wait and
+kill-on-drop ownership. No peer or shared-contract change was needed.
 
 #### M5.22 — Close out the operations milestone
 

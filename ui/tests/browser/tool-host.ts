@@ -46,6 +46,10 @@ export const test = base.extend<{
         peerEnvironment[name] = path;
       }
     }
+    // Rascal's declared export control writes into its isolated data-home export area.
+    // This is a test registration read boundary, not a production path guess or input grant.
+    const nativeExports = hostKind === "rascal" ? join(peerEnvironment.XDG_DATA_HOME!, "rascal", "exports") : undefined;
+    if (nativeExports) await mkdir(nativeExports, {recursive:true,mode:0o700});
     const selectedBinary = process.env.WAFFLERY_RASCAL_BIN;
     if (
       hostKind === "rascal" &&
@@ -88,7 +92,7 @@ export const test = base.extend<{
                     ? rascalServeArgs(toolRoot)
                     : [toolRoot, hostScenario],
                 cwd: toolRoot,
-                allow_dirs: configuredAccess ? [inputs] : [], evidence_dirs: [toolRoot],
+                allow_dirs: configuredAccess ? [inputs] : [], evidence_dirs: [toolRoot,...(nativeExports?[nativeExports]:[])],
                 ...(configuredAccess ? {config} : {}),
               },
             ],

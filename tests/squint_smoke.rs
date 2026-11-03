@@ -17,7 +17,7 @@ async fn real_squint_scripted_check_preserves_zero_spend_evidence() {
     std::fs::create_dir(&tool).unwrap();
     let config = tool.join("config.toml");
     let script = tool.join("held.json");
-    std::fs::write(&config, include_str!("../testkit/squint/config.toml")).unwrap();
+    std::fs::write(&config, include_str!("../testkit/squint/call-config.toml")).unwrap();
     std::fs::write(
         &script,
         include_str!("../testkit/squint/references-held.json"),
@@ -57,9 +57,16 @@ async fn real_squint_scripted_check_preserves_zero_spend_evidence() {
         .await
         .unwrap(),
     );
-    let saved = peer::run(&c, async {
+    let (saved, bundle_bytes) = peer::run(&c, async {
         let description = c.description("squint").await.unwrap();
         assert_eq!(description.document["contract"], "0.4.0");
+        assert!(
+            description.document["actions"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .all(|a| a["kind"] == "task")
+        );
         for action in description.document["actions"].as_array().unwrap() {
             assert_eq!(action["cost"]["may_spend"], false, "{action}");
             assert_eq!(action["readiness"]["state"], "ready", "{action}");
@@ -72,6 +79,13 @@ async fn real_squint_scripted_check_preserves_zero_spend_evidence() {
                 .any(|action| action["name"] == "estimate")
         );
         assert!(description.schemas.contains_key("estimate"));
+        assert!(
+            c.session("squint").await.unwrap()["allowed_dirs"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .any(|p| p.as_str().unwrap().ends_with("/execution"))
+        );
         let id = "squint-probe";
         let request = serde_json::from_value(json!({
             "id":id, "tool":"squint", "action":"reference_consistency",
@@ -82,7 +96,11 @@ async fn real_squint_scripted_check_preserves_zero_spend_evidence() {
         c.submit(request).await.unwrap();
         let saved = peer::settled(&c, id).await;
         peer::reports(&c, &saved).await;
-        saved
+        let bundle = wafflery::tools::bundles::build(&c.assets, &saved, &Default::default())
+            .await
+            .unwrap();
+        let bytes = std::fs::read(bundle.file.path()).unwrap();
+        (saved, bytes)
     })
     .await;
     assert_eq!(
@@ -114,7 +132,100 @@ async fn real_squint_scripted_check_preserves_zero_spend_evidence() {
         assert_eq!(saved.inputs["references"][index]["asset"]["id"], *asset);
     }
     assert!(saved.outputs.is_empty());
-    assert_eq!(std::fs::read(input).unwrap(), bytes);
+    assert_eq!(std::fs::read(&input).unwrap(), bytes);
+    // Direct calls enforce the same explicit path rule; the host's call above used staging grants.
+    let mut arguments = result["invocation"]["arguments"].clone();
+    arguments["candidate"]["path"] = json!(input);
+    for (index, name) in ["reference.png", "original.png", "reference.png"]
+        .iter()
+        .enumerate()
+    {
+        arguments["references"][index]["path"] = json!(dir.path().join(name));
+    }
+    let cli = dir.path().join("cli");
+    std::fs::create_dir(&cli).unwrap();
+    std::fs::write(
+        cli.join("config.toml"),
+        include_str!("../testkit/squint/call-config.toml"),
+    )
+    .unwrap();
+    std::fs::write(
+        cli.join("script.json"),
+        include_str!("../testkit/squint/references-held.json"),
+    )
+    .unwrap();
+    let args = cli.join("arguments.json");
+    std::fs::write(&args, serde_json::to_vec(&arguments).unwrap()).unwrap();
+    let executable = peer::binary("WAFFLERY_SQUINT_BIN");
+    let command = || {
+        let mut command = tokio::process::Command::new(&executable);
+        command
+            .arg("call")
+            .arg("--config")
+            .arg(cli.join("config.toml"))
+            .arg("--provider-script")
+            .arg(cli.join("script.json"))
+            .arg("--out")
+            .arg(cli.join("runs"))
+            .current_dir(&cli);
+        command
+    };
+    let denied = peer::output(
+        command()
+            .arg("reference_consistency")
+            .arg("--arguments")
+            .arg(&args),
+    )
+    .await;
+    assert_eq!(denied.status.code(), Some(64));
+    let denied: serde_json::Value = serde_json::from_slice(&denied.stdout).unwrap();
+    assert_eq!(denied["status"], "invalid");
+    assert_eq!(denied["error"]["code"], "input");
+    assert!(
+        denied["error"]["reason"]
+            .as_str()
+            .unwrap()
+            .contains("outside the directories")
+    );
+    let allowed = peer::output(
+        command()
+            .arg("reference_consistency")
+            .arg("--arguments")
+            .arg(&args)
+            .arg("--allow-dir")
+            .arg(dir.path()),
+    )
+    .await;
+    assert!(
+        allowed.status.success(),
+        "{}",
+        String::from_utf8_lossy(&allowed.stderr)
+    );
+    std::fs::remove_dir_all(&tool).unwrap();
+    std::fs::remove_dir_all(dir.path().join("Library")).unwrap();
+    std::fs::remove_file(&input).unwrap();
+    std::fs::remove_file(dir.path().join("reference.png")).unwrap();
+    std::fs::remove_file(&args).unwrap();
+    let archive = cli.join("check.tar");
+    std::fs::write(&archive, bundle_bytes).unwrap();
+    let replay = peer::output(
+        command()
+            .arg("--bundle")
+            .arg(&archive)
+            .arg("--allow-dir")
+            .arg(&cli),
+    )
+    .await;
+    assert!(
+        replay.status.success(),
+        "{}",
+        String::from_utf8_lossy(&replay.stderr)
+    );
+    let replay: serde_json::Value = serde_json::from_slice(&replay.stdout).unwrap();
+    assert_eq!(replay["status"], "completed");
+    assert_eq!(replay["invocation"], result["invocation"]);
+    assert_eq!(replay["images"]["in"], result["images"]["in"]);
+    assert_eq!(replay["spend"]["usd"], 0.0);
 }
 
 #[tokio::test]

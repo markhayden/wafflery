@@ -20,10 +20,48 @@ v0.4 host with explicit `--allow-dir` grants and isolated XDG folders:
   missing-credential estimates pass without allocating a run or calling a provider.
 
 The same checks pass after composed parameter/callable namespace validation and contextual refusal
-adoption. These are current task/setup/report preflight checks, not certification of operation
-chains or invocation bundles; M5.21 owns those real-peer journeys. No credentials or paid-provider
+adoption. The M5.21 operations/bundle acceptance below extends those setup/report preflight checks. No credentials or paid-provider
 calls were used. The V18 results below describe the earlier v0.3 build; their evidence is retained
 in [checkpoint V18](plans/v03-real-peer-checkpoint.md).
+
+### M5.21 operations and portable replay — 2026-11-03
+
+The same isolated committed-source builds (Rascal `eed6397844c5346caec63670cb76ed920b83d9a2`,
+Squint `6dd1e3a99c60c146ecb6fde7f8839fc1a9727e51`) were rebuilt with locked dependencies and
+`testkit`. Each lockfile resolves published table-manners `0.4.0`. No sibling files were changed.
+`WAFFLERY_RASCAL_BIN`/`WAFFLERY_SQUINT_BIN` explicitly select the isolated executables; XDG lookup
+folders are disposable, and provider credential variables are unset.
+
+- Rascal's host journey performs Line → Rasterize by location reference → Feather, compares a
+  location-by-value Rasterize, and edits Feather's sigma without repeating upstream operations.
+  Native identities and full effective invocations match the deterministic source when replayed.
+  Its second missing image reference receives an indexed `plane[1]` binding refusal with no run.
+- The native Mask resource resolves after tool restart and after moving its entire workspace/run
+  store. A preserved Mask imports into an empty store without creating an action run. A three-step
+  bundle includes the conservative Location JSON copy; guided host replay and `rascal call --bundle`
+  work after deleting the original workspace and run directories.
+- The real Rascal browser journey runs the operations and a second Feather with a new parameter,
+  keeps exactly four action attempts, preserves native bytes and creates a portable native-input
+  bundle in the shared drawer.
+- Squint remains task-only. Its repeated reference list retains order and occurrence evidence.
+  Direct CLI calls refuse paths without a grant, succeed with an explicit grant, and replay a
+  host-built single-step bundle after deleting original input images, host library and run folder.
+  The replay's effective invocation and ordered input evidence match the source, with zero spend.
+- Chromium and WebKit pass all six real operations/report journeys. Both server and document
+  reports retain the strict, unfiltered console check and their actual rendered-style assertions.
+  WebKit is browser-engine coverage; no new native Safari manual check is claimed.
+
+Rascal exports into its isolated `$XDG_DATA_HOME/rascal/exports` directory. That directory must be
+registered explicitly in `evidence_dirs` for native preservation; it is never added to `allow_dirs`.
+The generic host does not guess tool export locations. The Rust report helper waits for native
+preservation to settle before asserting report viewing leaves saved evidence unchanged.
+
+The CLI fixture uses the consistent test-only `fake`/`fake-model` catalog pair in
+`testkit/squint/call-config.toml`. The earlier estimate-oriented fixture paired a fake profile with
+a real catalog model, which CLI catalog admission correctly rejects; that rejection is not evidence
+of path denial. The new path check reaches the actual path rule before succeeding with a grant.
+These checks establish interoperability and deterministic identity preservation, not paid-provider
+quality, billing or a production distribution release.
 
 ### V18 real-peer runs and reports — 2026-11-02
 
