@@ -24,6 +24,7 @@ pub fn router(store: AssetStore) -> Router {
     Router::new()
         .route("/api/assets", get(list).post(upload))
         .route("/api/assets/{id}", get(preview))
+        .route("/api/assets/{id}/metadata", get(metadata))
         .route("/api/assets/{id}/download", get(download))
         .with_state(Assets {
             store,
@@ -130,6 +131,13 @@ async fn upload(
     drop(file);
     let asset = state.store.import_path(staged.path().to_owned()).await?;
     Ok((StatusCode::CREATED, Json(asset)))
+}
+
+async fn metadata(
+    State(state): State<Assets>,
+    Path(id): Path<String>,
+) -> Result<Json<Asset>, ApiError> {
+    Ok(Json(state.store.metadata(&id).await?))
 }
 
 async fn preview(

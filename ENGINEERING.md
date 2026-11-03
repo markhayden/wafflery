@@ -872,3 +872,12 @@ untracked import. Shutdown stops between inputs, preserving any already-running 
 terminal response/confirmed exit and keeping remaining inputs pending. Unknown native export MIME
 never enters the shared native blob cache: the retained original archive owns those bytes, while the
 receiving tool owns the imported durable artifact. Image staging writes run off the async executor.
+
+
+M5.18 adds optional `source_bundle` provenance to serialized submissions. Retained bundle identity,
+step, tool name and action are checked before normal preparation and dispatch. The attempt and its
+bundle association use one SQLite transaction; no schema migration or copied authorization is needed.
+Changing parameters/inputs is permitted because this link records origin, not equality. The original
+archive/result remain immutable. This metadata never enters the tool's argument object.
+The private ID-specific image metadata endpoint returns owned metadata without a raster decode or
+depending on the newest-hundred image catalogue.

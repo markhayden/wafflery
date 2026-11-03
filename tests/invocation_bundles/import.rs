@@ -3,7 +3,7 @@ use wafflery::tools::{
     bundle_reader,
     bundles::{self, Options},
 };
-async fn owned(h: &Host, id: &str) -> Attempt {
+pub(super) async fn owned(h: &Host, id: &str) -> Attempt {
     tokio::time::timeout(Duration::from_secs(8), async {
         loop {
             let saved = h.c.attempts.get(id).await.unwrap();

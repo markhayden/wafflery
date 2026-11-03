@@ -39,6 +39,22 @@ async fn upload_fetch_and_attachment_enforce_the_asset_boundary() {
     assert_eq!(response.status(), StatusCode::CREATED);
     let asset: serde_json::Value =
         serde_json::from_slice(&to_bytes(response.into_body(), 4096).await.unwrap()).unwrap();
+    let metadata = app
+        .clone()
+        .oneshot(
+            request(
+                &format!("/api/assets/{}/metadata", asset["id"].as_str().unwrap()),
+                "GET",
+            )
+            .body(Body::empty())
+            .unwrap(),
+        )
+        .await
+        .unwrap();
+    assert_eq!(metadata.status(), StatusCode::OK);
+    let metadata: serde_json::Value =
+        serde_json::from_slice(&to_bytes(metadata.into_body(), 4096).await.unwrap()).unwrap();
+    assert_eq!(metadata, asset);
     for suffix in ["", "/download"] {
         let response = app
             .clone()

@@ -29,6 +29,8 @@ impl Coordinator {
             .client()
             .ok_or(Error::Missing("Tool is unavailable"))?;
         let current = self.refresh_under_guard(&request.tool).await?;
+        self.validate_bundle_source(&request, &current.document)
+            .await?;
         if let Some(existing) = self
             .preparations
             .existing(&request, &current, &client.session)?

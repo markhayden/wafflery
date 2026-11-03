@@ -509,3 +509,6 @@ mod native_preservation_cases;
 mod bundle_import_cases;
 #[path = "operation_examples/cases.rs"]
 mod operation_examples_cases;
+
+#[path = "invocation_bundles/replay.rs"]
+mod bundle_replay_cases;

@@ -21,6 +21,27 @@ use std::{
 };
 
 impl Coordinator {
+    pub(super) async fn validate_bundle_source(
+        &self,
+        request: &crate::library::attempts::Submission,
+        description: &Value,
+    ) -> Result<()> {
+        let Some(source) = &request.source_bundle else {
+            return Ok(());
+        };
+        let saved = BundleStore(self.assets.clone()).get(&source.id).await?;
+        let step = saved.manifest["steps"]
+            .get(source.step)
+            .ok_or(Error::Missing("Source bundle step is unavailable"))?;
+        if step["tool"]["name"] != description["tool"]["name"]
+            || step["invocation"]["action"] != request.action
+        {
+            return Err(Error::Invalid(
+                "Source bundle step does not match this tool and action".into(),
+            ));
+        }
+        Ok(())
+    }
     /// Explicit controls only. The owner survives an HTTP waiter or drawer being dropped.
     pub async fn start_bundle_import(
         self: &Arc<Self>,

@@ -19,6 +19,14 @@ pub struct Submission {
     pub bindings: BTreeMap<String, Vec<InputBinding>>,
     #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
     pub lineage: BTreeMap<String, Vec<Option<BindingSource>>>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub source_bundle: Option<BundleSource>,
+}
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
+#[serde(deny_unknown_fields)]
+pub struct BundleSource {
+    pub id: String,
+    pub step: usize,
 }
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
 #[serde(tag = "kind", rename_all = "snake_case", deny_unknown_fields)]
@@ -215,6 +223,12 @@ impl AttemptStore {
                     ],
                 )?;
                 attempt.sequence = tx.last_insert_rowid();
+                if let Some(source) = &attempt.request.source_bundle {
+                    tx.execute(
+                        "INSERT INTO bundle_attempts(bundle_id,attempt_id) VALUES(?1,?2)",
+                        params![source.id, attempt.id],
+                    )?;
+                }
                 for (_, _, asset) in attempt.request.bound_images() {
                     tx.execute(
                         "INSERT OR IGNORE INTO attempt_assets(attempt_id,asset_id) VALUES(?1,?2)",

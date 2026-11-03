@@ -239,6 +239,8 @@ impl Coordinator {
         // Serialize discovery through preflight and the actual wire write, not execution.
         let discovery = entry.discovery.clone().lock_owned().await;
         let current = self.refresh_under_guard(&request.tool).await?;
+        self.validate_bundle_source(&request, &current.document)
+            .await?;
         if current.revision != request.revision {
             return Err(Error::Conflict(
                 "Tool description changed. Reload its inputs before running.",
