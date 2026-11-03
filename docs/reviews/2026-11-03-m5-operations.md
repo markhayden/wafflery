@@ -1,8 +1,10 @@
 # M5 operations and invocation acceptance
 
-Status: implementation and real-peer acceptance through M5.21 are complete locally. M5.22 records
-closeout and the small picker correction below. Hosted CI is the final full gate; V20 image-import
-feedback remains the adjacent follow-up. This is not M7 distribution/release approval.
+Status: **M5 complete, 2026-11-03.** Implementation, real-peer acceptance, local checks and independent
+review are complete. The full hosted matrix passed on `e840e91`,
+[run 41646196843](https://github.com/markhayden/wafflery/actions/runs/41646196843), including the
+closeout corrections below. V20 image-import feedback remains the adjacent follow-up. This is not
+M7 distribution/release approval.
 
 ## Contract and peers
 

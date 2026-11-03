@@ -3342,7 +3342,7 @@ kill-on-drop ownership. No peer or shared-contract change was needed.
 - [x] Update SPEC/INTERFACE/ENGINEERING, tool requirements/handoffs and user setup/export docs to the
   implemented behavior; retire resolved C1/C2/R3 gates with evidence, retain actual distribution gaps.
   Capture before/after mock comparisons, stories and region screenshots for changed screens.
-- [ ] Confirm the published `=0.4.0` pin and packaged-schema verification from M5.03 remain intact,
+- [x] Confirm the published `=0.4.0` pin and packaged-schema verification from M5.03 remain intact,
   and run the complete PLAN matrix. Include asset-manifest unit checks,
   reproducible prebuilt assets/check-ui and release build, plus targeted repeated tests only where a
   lifetime/race change needs evidence. Hosted CI must be green before declaring completion.
@@ -3409,6 +3409,12 @@ they now select the stable title inside the open chooser. No description or read
 removed, and no deadline/retry was relaxed. All 106 targeted Chromium/WebKit checks passed, with two additional native Escape/reopen
 checks, full locked Rust workspace tests, formatting, all-target clippy and UI typecheck. Independent
 review approved the correction; hosted CI remains the M5.22 gate.
+
+**M5 COMPLETE (2026-11-03):** all M5.01–M5.22 acceptance items are complete. The full hosted matrix
+passed on `e840e91`, [run 41646196843](https://github.com/markhayden/wafflery/actions/runs/41646196843),
+including the bundle-source evidence and closed-chooser corrections. Published contract `=0.4.0`,
+real-peer evidence, local checks and independent review are recorded above. V20 remains the adjacent
+image-import follow-up; distribution/release, evaluations and agent orchestration remain later work.
 
 ### Approval, checks and remaining coordination
 
