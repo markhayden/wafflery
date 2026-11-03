@@ -1,3 +1,4 @@
+import {BundleImports} from "./BundleImports";
 import {useEffect,useMemo,useRef,useState} from "react";
 import {bundleClient,cliBundleTool,type BundleRecord,type BundleSummary} from "../../api/bundles";
 import type {LocalApi} from "../../api/client";
@@ -18,6 +19,7 @@ function choices(attempt?:Attempt):string[]{
 const fileSize=(bytes:number)=>bytes<1024*1024?`${(bytes/1024).toFixed(1)} KB`:`${(bytes/1024/1024).toFixed(2)} MiB`;
 export function InvocationBundles({api,attempt}:{api:LocalApi;attempt?:Attempt}){
  const client=useMemo(()=>bundleClient(api),[api]);const generation=useRef(0);
+ const [importOpen,setImportOpen]=useState(false);
  const [items,setItems]=useState<BundleSummary[]>([]),[cursor,setCursor]=useState<number|null>(null),[selected,setSelected]=useState<BundleRecord>(),[busy,setBusy]=useState(true),[notice,setNotice]=useState(""),[omit,setOmit]=useState<string[]>([]);
  useEffect(()=>{
   const current=++generation.current;setBusy(true);setSelected(undefined);setItems([]);setOmit([]);setNotice("");
@@ -38,6 +40,7 @@ export function InvocationBundles({api,attempt}:{api:LocalApi;attempt?:Attempt})
  const omittable=choices(attempt);const ready=!!attempt?.result&&object(object(attempt.result)?.invocation)!==undefined&&attempt.preservation.contract!=="pending"&&attempt.preservation.native!=="preserving";
  return <section className={styles.bundles} aria-label="Invocation bundles">
   <p>Invocation bundles carry the recorded call and its exact preserved inputs. They are separate from evidence archives. Saving or downloading one never runs a tool.</p>
+  <details onToggle={event=>setImportOpen(event.currentTarget.open)}><summary>Import an invocation bundle</summary>{importOpen&&<BundleImports api={api}/>}</details>
   {attempt&&<fieldset disabled={busy}><legend>New bundle from this saved run</legend>
    <p>Inputs are included by default. Omitting a whole slot or port makes the bundle workspace-dependent. Shared location values remain in the recorded invocation.</p>
    {omittable.map(name=><label key={name}><input type="checkbox" checked={!omit.includes(name)} onChange={e=>setOmit(previous=>e.target.checked?previous.filter(v=>v!==name):[...previous,name])}/> Include {name} inputs</label>)}

@@ -861,4 +861,14 @@ closure; group ownership blocks restart between controls. Per-input progress ret
 Native files remain opaque and use granted file staging because no export MIME type is in the
 manifest. The receiver verifies native contents; the host rereads each imported resource. Imports do
 not create attempts or authorize paid calls. Uploaded reviews are session-local; explicitly retained
-archives and bundle-owned image inputs survive restart. Drawer wiring is the next M5.17b change.
+archives and bundle-owned image inputs survive restart. The shared Bundles drawer exposes upload
+review and explicit selected-step import with small progress-only polling. Closing it stops browser
+observation, not the worker. Reopening finds session-local reviews and their current phases. Active
+reviews cannot be dismissed. Current tool setup/requirements, omitted inputs and original invocations
+are displayed separately from the file-verification label. Opening a runnable draft follows in M5.18.
+
+Worker registration takes its shutdown-owner lock before spawning: HTTP cancellation cannot leave an
+untracked import. Shutdown stops between inputs, preserving any already-running RPC through its
+terminal response/confirmed exit and keeping remaining inputs pending. Unknown native export MIME
+never enters the shared native blob cache: the retained original archive owns those bytes, while the
+receiving tool owns the imported durable artifact. Image staging writes run off the async executor.

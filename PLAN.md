@@ -3004,12 +3004,12 @@ spawn, transport or probe-close failures. No schema relaxation, retry or timeout
 
 #### M5.17 — Validate bundles before importing
 
-- [ ] Parse uploaded bundles with bounded uncompressed archive validation: safe member names, regular
+- [x] Parse uploaded bundles with bounded uncompressed archive validation: safe member names, regular
   files only, no links/traversal/duplicate members, complete manifest/schema/hash/reference checks before
   any tool import, file publication or action dispatch. Apply M5.15 limits and reject unsupported versions.
-- [ ] Show steps, tools, requirements, omitted inputs and workspace dependencies in an import review.
+- [x] Show steps, tools, requirements, omitted inputs and workspace dependencies in an import review.
   Supplied replacements become a new draft; never mutate the original archived invocation/result.
-- [ ] Only explicit import stages owned bytes and calls the needed tool controls; imports are idempotent,
+- [x] Only explicit import stages owned bytes and calls the needed tool controls; imports are idempotent,
   failures report which completed. Tool installation/configuration/grants remain separate explicit setup.
 
 **Depends:** M5.11,15–16. **Areas:** bundle reader, import staging/control orchestration, drawer/API.
@@ -3019,7 +3019,7 @@ spawn, transport or probe-close failures. No schema relaxation, retry or timeout
 **Planned build slices** (ordered, each with its own targeted checks and matching docs):
 
 - **M5.17a: Complete — bounded archive reader** — reader portion of acceptance 1; malformed archives cause no effects. Public upload wiring follows in M5.17b.
-- **M5.17b: import review and orchestration** — acceptance 2–3; two coherent commits: current-tool
+- **M5.17b: Complete — import review and orchestration** — acceptance 2–3; two coherent commits: current-tool
   preflight, archive retention, owned controls and private upload API; then the drawer, stories and
   browser checks. Task review and the Rust workspace suite gate the final merge.
 
@@ -3036,7 +3036,26 @@ identical native occurrences share one control call per import; explicit retries
 identity. Resource rereads confirm successful imports. The original archive is retained only after
 explicit import, without inventing a source attempt. Imported images gain bundle ownership; partial
 failures retain completed inputs and the original archive, with no automatic retry or action dispatch.
-The drawer wiring and task verification follow before M5.17 is marked complete.
+The shared Bundles drawer now exposes this flow, with loading/error/partial states and progress-only
+polling. It labels declared-file verification separately from current tool setup, displays original
+requirements/omissions, keeps original invocation JSON read-only and exposes no Run. Mobile overflow
+checks cover text and controls as well as the drawer itself. Active reviews survive drawer closure;
+inactive reviews may be dismissed to release the two-review capacity.
+
+Task review identified cancellation during worker registration and shutdown between inputs. Regression
+tests reproduced both before the fixes and passed afterward. Worker registration now has no await
+between spawn and ownership publication; shutdown allows an in-flight control to settle but starts no
+further input. An interrupted HTTP observer cannot dismiss active work or permit a tool restart.
+A 5 MiB upload proves the raw archive body is independent of the 4 MiB JSON limit; oversize declared
+lengths and malformed archives are refused without publication. Native-byte staging and image writes
+use bounded owned workers; no MIME is guessed for native files.
+
+Verification: the full Rust workspace suite and clippy with warnings denied passed. UI typecheck,
+82 unit tests and 72 targeted Chromium/WebKit cases passed, including bundle imports/downloads,
+operation chains/examples and all paid-run specs. Storybook includes review, partial, importing,
+loading and refusal states. Twelve new upload/progress region snapshots and the existing bundle
+snapshots were inspected and passed a subsequent run without baseline updates. Replay remains the
+separate M5.18 task; importing never creates an attempt or a paid approval.
 
 **M5.17a as built:** a bounded, side-effect-free reader retains immutable archive bytes with checked
 member offsets. It reads raw ustar entries (so GNU/PAX extension entries cannot be hidden), requires

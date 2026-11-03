@@ -13,3 +13,8 @@
 .review p { color: var(--color-muted); font-size: .875rem; }
 .review summary { cursor: pointer; }
 .review details[open] summary { margin-bottom: .75rem; }
+.bundles > *, .review > * { min-width: 0; }
+.bundles p, .review p { overflow-wrap: anywhere; }
+.bundles label { flex-wrap: wrap; }
+.bundles input[type="file"] { width: 100%; max-width: 100%; min-width: 0; }
+.bundles select { max-width: 100%; min-width: 0; border: 1px solid var(--color-line); border-radius: var(--radius-control); background: var(--color-background); padding: .5rem; }

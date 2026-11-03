@@ -18,7 +18,7 @@ function step(v:unknown):v is BundleStep {
   Array.isArray(v.reference_only)&&v.reference_only.every(v=>object(v)&&typeof v.why==="string"&&(typeof v.slot==="string"||typeof v.port==="string"))&&
   Array.isArray(v.unportable)&&v.unportable.every(v=>object(v)&&typeof v.port==="string"&&typeof v.reason==="string"&&object(v.artifact));
 }
-function record(v:unknown):v is BundleRecord {
+export function isBundleRecord(v:unknown):v is BundleRecord {
  if(!object(v)||!hash(v.id)||v.id!==v.sha256||!size(v.size)||v.size>256*1024*1024||!object(v.manifest)||v.manifest.bundle_version!==1||!Array.isArray(v.manifest.steps)||!v.manifest.steps.length||!v.manifest.steps.every(step)||typeof v.workspace_dependent!=="boolean"||!Array.isArray(v.members))return false;
  return v.workspace_dependent===v.manifest.steps.some(s=>s.reference_only.length>0||s.unportable.length>0)&&v.members.length<=63&&v.members.every(v=>object(v)&&typeof v.name==="string"&&hash(v.sha256)&&size(v.bytes));
 }
@@ -27,7 +27,7 @@ export function cliBundleTool(manifest:Manifest):string|null {
  return names.size===1&&manifest.steps.length>0&&manifest.steps.every(s=>s.reference_only.length===0&&s.unportable.length===0)?manifest.steps[0]!.tool.name:null;
 }
 export function bundleClient(api:LocalApi){
- async function read(response:Response):Promise<BundleRecord>{const value:unknown=await response.json();if(!record(value))throw Error("The saved invocation bundle is unavailable.");return value;}
+ async function read(response:Response):Promise<BundleRecord>{const value:unknown=await response.json();if(!isBundleRecord(value))throw Error("The saved invocation bundle is unavailable.");return value;}
  return {
   async list(attempt?:string,cursor?:number):Promise<Page>{const path=attempt===undefined?"/api/bundles":`/api/attempts/${encodeURIComponent(attempt)}/bundles`;const v:unknown=await(await api.request(`${path}${cursor===undefined?"":`?cursor=${cursor}`}`)).json();if(!object(v)||!Array.isArray(v.items)||(v.cursor!==null&&!size(v.cursor))||!v.items.every(v=>object(v)&&hash(v.id)&&size(v.sequence)&&size(v.size)&&typeof v.workspace_dependent==="boolean"&&tool(v.tool)&&typeof v.action==="string"))throw Error("Saved invocation bundles could not be read.");return v as Page;},
   read:async(id:string)=>read(await api.request(`/api/bundles/${encodeURIComponent(id)}`)),

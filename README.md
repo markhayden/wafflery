@@ -306,4 +306,16 @@ A bundle with omitted or unpreserved inputs is labelled **Workspace-dependent**.
 never substituted. Complete single-tool bundles show a standard `call --bundle` example with paths
 to replace after download. Install/configure the named tool and supply requirements separately;
 credentials/config contents are not included, paid replay needs new estimates/approval, and model
-judgments may differ. Bundle import/replay inside Wafflery is the next implementation step.
+judgments may differ.
+
+In **Bundles → Import an invocation bundle**, upload an uncompressed tar to review its original
+steps, declared files, requirements and omissions. Uploading verifies the archive without publishing
+files or contacting tools. **Import selected step inputs** explicitly retains the original archive
+and imports available inputs into a matching installed tool. It never runs the action. Current ports,
+parameters, native types and effective file grants are checked first; setup remains separate.
+
+Imports stay owned when the drawer closes. Reopen the review to see completed inputs or a partial
+failure, then retry only when you choose. Omitted/unportable inputs remain unresolved. At most two
+upload reviews are held in memory; dismiss an inactive review to free a slot. Explicitly retained
+archives and imported image bytes survive restart. Opening an imported step as a new runnable draft
+is the next implementation step.

@@ -9,7 +9,8 @@
     "ui/package.json": "3aae554e483ff6d81698b993fd0ea98818d134da3d10d2056ad19e7e40388fa7",
     "ui/src/App.tsx": "7ec34ba1e5b3273c3bbcb3731c2bb6f77362718d49b65fda460922294a3198da",
     "ui/src/api/assets.ts": "7a6ad972558a4b9761d0a6ef791ef9f00c340eb0bbc1f65ec29721532d127aff",
-    "ui/src/api/bundles.ts": "449ab06ecc026399108167288b07ba0c60c6cf38ee2a887a93378990aa4052be",
+    "ui/src/api/bundle-imports.ts": "80453049c9d50ea3bdbca7ef2bc72e2d5cf8759ec62e56f34d975b89157c2458",
+    "ui/src/api/bundles.ts": "e40f394264d526b9dca18f9a7bf291ffdae9eb5405b213ad5b26686ee8da26a4",
     "ui/src/api/client.ts": "377de81e08ff7571a6b416343841fcc0447d2826ed1ae8f8ada0a114e3579141",
     "ui/src/api/directory-grants.ts": "31443d86be6b40f9edc54884050455f3da28fc0549bdec059714d31f43fe5619",
     "ui/src/api/estimates.ts": "b3e4a64d781684bd75b03a81342b5784ae42c878d5ea16f1e82a0a40250bddb0",
@@ -54,6 +55,8 @@
     "ui/src/features/workspace/ActivityPicker.tsx": "f81f37deb110e425a84e2d29939d758cf79caf05ea654fdb76d7e9df70005797",
     "ui/src/features/workspace/ArtifactOutputs.stories.tsx": "7fe0c90ba304e8929e4eccd5ceded565c633ab310b54b26844bd4ebde674c41f",
     "ui/src/features/workspace/ArtifactOutputs.tsx": "6142d138ad309939e57cce6a7f50497f56ed92289a17794dd05faaa825a7206d",
+    "ui/src/features/workspace/BundleImports.stories.tsx": "e80b0a1072b4dfa56f0acdee24b9f119171daf968556c5172d25f8fbe9ac6702",
+    "ui/src/features/workspace/BundleImports.tsx": "a38ca21c823906c27b527337ca8bc04be16f4369f2c04164d87dbc6917d3d2d9",
     "ui/src/features/workspace/Cleanup.tsx": "e8f52f789f6d805829ba39ef948dc14d6c3417233ab93885b2f888e677212df5",
     "ui/src/features/workspace/CommandHandoff.module.css": "eaf03afa7a22f52a820e89a1ea619a9e538ea64325fa244870bcbaf35596da42",
     "ui/src/features/workspace/CommandHandoff.stories.tsx": "ac4cef8a07b206f9f1b13b4704c33d647d16d775865967f9f548f122f1a295db",
@@ -70,9 +73,9 @@
     "ui/src/features/workspace/Examples.tsx": "f9ce8e64edf106165af8001372512e186830995edeb60d6ed09aba49253e2878",
     "ui/src/features/workspace/History.tsx": "020455e1cf9685dc9bba7d3489169fd4f2c95d05e2a84a2e8eacefdd7e6e123d",
     "ui/src/features/workspace/Inspector.tsx": "f64d34ab6d343bc1e1dc2b207dcd2d3eeb755305760ddf981198110f0d663b91",
-    "ui/src/features/workspace/InvocationBundles.module.css": "fb12982dafe84520665c3191d32e07a15fdf7d96be06881d71eaf2d72b8cb7b6",
+    "ui/src/features/workspace/InvocationBundles.module.css": "15088ab03b7bb85b4b8ac61f968345d4889d4d432db7247d92adece75c703714",
     "ui/src/features/workspace/InvocationBundles.stories.tsx": "b8f98dce5c8acd69ddb9ac1f9ebe2f3c95fb1c18c2fb0209534ad35a392899aa",
-    "ui/src/features/workspace/InvocationBundles.tsx": "275f37fd411bde89755929e9f7fdb65243a99ab5a4e66062333b9982bfd1ba01",
+    "ui/src/features/workspace/InvocationBundles.tsx": "620bf59f82f49f8eddcd9e1f397bd8a43ae1c05919e6003628ed868becb18296",
     "ui/src/features/workspace/Library.module.css": "b1dad165604f76bde526502f270426f14f8f29c07a3a953fa0fe4b3990920ecc",
     "ui/src/features/workspace/NativePreservation.stories.tsx": "069d5d75e316f0871d80f0bfc67ae5cf381e8256605d81a5fcd086c2d0ce170c",
     "ui/src/features/workspace/NativePreservation.tsx": "b3bb8a2c9b614e6181b73b4916499525115fd28ac7a23f78c6d1ce1606554a15",
@@ -107,9 +110,9 @@
     "ui/vite.config.ts": "3aec7d6174ffca99d4d5288bea2f837d5e91335cbd7135a9682e6d18a40476b4"
   },
   "outputs": {
-    "assets/index-CkDJmWnk.js": "9f69a71949ec1a24a5dab276808013e12c33249ca3f5849d2577c6b504ecde2d",
-    "assets/index-xi4tBh1k.css": "c098401f7b456ce88607f470e3bd8a6fc6d17f5465c18b2664f180ae90a5cfd5",
+    "assets/index-CijJ3OtO.js": "c7809e2712663bbfacd6d8db6be860174a637de4c3829a831e099f3cf6116b4c",
+    "assets/index-e3W7OV6y.css": "12ef0eaf28115a2e663418e01d3126f713a91a37ae6eb7aa9c8b1495c662f2f3",
     "assets/wafflery-mark-CML0EpfM.svg": "51bc8a040e26b897a948238598b8cabdf69bf4687c2b1a70613b542de1c99f1f",
-    "index.html": "b24e67ab3e475d5dc6089515e588fcecaf2f2fa0fd68e18ac721a5ad14d78726"
+    "index.html": "59ae086da95ec0eda8dc6da4b6cc4ffb2d1a9c979fb65cf5771ddc6539526da1"
   }
 }
