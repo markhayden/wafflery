@@ -1,4 +1,6 @@
 import {useState,useEffect,useRef,useLayoutEffect,useId} from "react";
+import {imageHeader} from "../../api/image-header";
+import {ImageImportProgress,type ImageImport} from "../../components/ImageImportProgress";
 import type {Asset} from "../../api/assets";
 import type {BindingIssue} from "../../api/client";
 import type {InputBinding} from "../../api/workspace";
@@ -14,6 +16,7 @@ export function PortEditor({ports,value,onChange,assets,upload,artifacts=[],issu
 }
 function PortRow({port,value,onChange,assets,upload,artifacts,issues,disabled,onBusy,resolveArtifact}:Omit<Props,"ports"|"value"|"onChange">&{port:Port;value:InputBinding[];onChange:(items:InputBinding[])=>void}){
  const locationId=useId();
+ const [imageImport,setImageImport]=useState<ImageImport>();
  const [pending,setPending]=useState(false),[error,setError]=useState<string>(),[location,setLocation]=useState("");
  const alive=useRef(true);useEffect(()=>{alive.current=true;return()=>{alive.current=false;};},[]);
  const locked=disabled||pending,full=(!port.many&&value.length>0)||(port.type==="image"&&value.length>=32);
@@ -34,11 +37,11 @@ function PortRow({port,value,onChange,assets,upload,artifacts,issues,disabled,on
  </li>)}</ol>
  {!full&&<>
  {port.type==="image"&&<><label className={styles.field}>Saved image<select value="" onChange={event=>{if(event.target.value)add({kind:"image",asset:event.target.value,frame:{projection:"flat",topology:"bounded"}});}}><option value="">Choose image…</option>{assets.map(asset=><option key={asset.id} value={asset.id}>{asset.width} × {asset.height} · {asset.id.slice(0,8)}</option>)}</select></label>
- <label className={styles.field}>Import image<input type="file" accept="image/png,image/jpeg" onChange={async event=>{const file=event.target.files?.[0];if(!file)return;event.target.value="";setPending(true);onBusy?.(true);try{const asset=await upload(file);if(!alive.current)return;add({kind:"image",asset:asset.id,frame:{projection:"flat",topology:"bounded"}});}catch(failure){if(alive.current)setError(String(failure));}finally{if(alive.current){setPending(false);onBusy?.(false);}}}}/></label></>}
+ <label className={styles.field}>Import image<input type="file" accept="image/png,image/jpeg" onChange={async event=>{const file=event.target.files?.[0];if(!file)return;event.target.value="";setPending(true);setError(undefined);setImageImport({name:file.name});onBusy?.(true);try{if(file.size>128*1024*1024)throw Error("Images must be no larger than 128 MiB.");const dimensions=await imageHeader(file);if(!alive.current)return;setImageImport({name:file.name,dimensions});const asset=await upload(file);if(!alive.current)return;add({kind:"image",asset:asset.id,frame:{projection:"flat",topology:"bounded"}});}catch(failure){if(alive.current)setError(String(failure));}finally{if(alive.current){setPending(false);setImageImport(undefined);onBusy?.(false);}}}}/></label></>}
  {port.type==="location"&&<div className={styles.field}><label htmlFor={locationId}>Shared location JSON</label><textarea id={locationId} value={location} onChange={event=>setLocation(event.target.value)} rows={4}/><Button type="button" onClick={()=>{try{const parsed:unknown=JSON.parse(location);if(!parsed||typeof parsed!=="object"||Array.isArray(parsed))throw Error("Enter a location object.");add({kind:"location",value:parsed as Schema});setLocation("");}catch(failure){setError(String(failure));}}}>Add location</Button></div>}
- <label className={styles.field}>Saved artifact<select value="" onChange={async event=>{const choice=choices.find(item=>item.id===event.target.value);if(!choice)return;const binding=choice.binding?structuredClone(choice.binding):{kind:"artifact" as const,reference:structuredClone(choice.reference)};setPending(true);onBusy?.(true);try{const resolved=resolveArtifact?await resolveArtifact(binding):binding;if(alive.current&&resolved)add(resolved);}catch(failure){if(alive.current)setError(String(failure));}finally{if(alive.current){setPending(false);onBusy?.(false);}}}}><option value="">{choices.length?"Choose artifact…":"No saved artifacts of this type"}</option>{choices.map(item=><option key={item.id} value={item.id}>{item.label}</option>)}</select></label>
+ <label className={styles.field}>Saved artifact<select value="" onChange={async event=>{const choice=choices.find(item=>item.id===event.target.value);if(!choice)return;const binding=choice.binding?structuredClone(choice.binding):{kind:"artifact" as const,reference:structuredClone(choice.reference)};setPending(true);onBusy?.(true);try{const resolved=resolveArtifact?await resolveArtifact(binding):binding;if(alive.current&&resolved)add(resolved);}catch(failure){if(alive.current)setError(String(failure));}finally{if(alive.current){setPending(false);setImageImport(undefined);onBusy?.(false);}}}}><option value="">{choices.length?"Choose artifact…":"No saved artifacts of this type"}</option>{choices.map(item=><option key={item.id} value={item.id}>{item.label}</option>)}</select></label>
  </>}
- {pending&&<p role="status">Importing or resolving input…</p>}{error&&<p role="alert">{error}</p>}
+ {pending&&(imageImport?<ImageImportProgress image={imageImport}/>:<p role="status">Resolving input…</p>)}{error&&<p role="alert">{error}</p>}
  {(issues??[]).filter(issue=>issue.index===undefined).map((issue,i)=><p role="alert" key={i}>{issue.problem}: expected {issue.expected}; got {issue.got}. {issue.remedy}</p>)}
  </fieldset>;
 }

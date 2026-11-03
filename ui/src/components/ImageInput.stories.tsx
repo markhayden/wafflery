@@ -24,3 +24,9 @@ export const LongList: Story = { args: { label: "Reference images for a detailed
 export const Disabled: Story = { args: { disabled: true, value: [asset] } };
 export const Unavailable: Story = { args: { value: [asset], preview: async () => { throw new Error("Missing image"); } } };
 export const UploadError: Story = { args: { upload: async () => { throw new Error("Not enough disk space to save this image."); } } };
+export const PendingImport:Story = {render:function Pending(args){
+ const [value,setValue]=useState<Asset[]>([]);
+ const [finish,setFinish]=useState<(()=>void)>();
+ return <><ImageInput {...args} value={value} onChange={setValue} upload={()=>new Promise(resolve=>setFinish(()=>()=>resolve(asset)))}/>
+  {finish&&<button onClick={()=>{finish();setFinish(undefined);}}>Finish importing</button>}</>;
+}};

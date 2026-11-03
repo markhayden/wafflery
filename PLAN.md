@@ -1578,16 +1578,16 @@ This follow-up does not change M5's task order or block M5.01b. The demo showed 
 15000×7500 image passes the library bound but can exceed a tool's own bound. Original bytes,
 dimensions and fingerprints remain authoritative; thumbnails never replace run inputs.
 
-- [ ] Read PNG/JPEG header dimensions without a full decode and immediately show dimensions
+- [x] Read PNG/JPEG header dimensions without a full decode and immediately show dimensions
   and estimated decoded memory, with explicit import progress and failure feedback.
-- [ ] Generate bounded thumbnails from a downscaled decode; stop fetching/decoding the full
+- [x] Generate bounded thumbnails from a downscaled decode; stop fetching/decoding the full
   original merely to display a thumbnail. Preserve full validation before an asset is ready.
-- [ ] Display size refusals and any remedy supplied by the tool clearly. Do not guess a tool's
+- [x] Display size refusals and any remedy supplied by the tool clearly. Do not guess a tool's
   limit or parse its private fields. The coordinator owns an additive next-contract proposal
   for optional `max_pixels` (and potentially width/height) on image slots and ports.
-- [ ] Benchmark release-build import and preview stages with owned representative images,
+- [x] Benchmark release-build import and preview stages with owned representative images,
   recording dimensions, byte size, timing, memory where measurable, and test hardware/build.
-- [ ] Consider an explicit labelled "Make a resized copy" only if cheap and user-selected;
+- [x] Consider an explicit labelled "Make a resized copy" only if cheap and user-selected;
   never automatically resize fidelity inputs or overwrite the original.
 
 **Build slices:** V20a measure/header/progress; V20b bounded preview pipeline; optional V20c
@@ -1596,6 +1596,43 @@ stories/browser evidence, then one independent review for the task; hosted CI ru
 malformed/truncated images must still fail validation before becoming usable. Codec support
 and memory behavior must be measured before choosing a downscaled-decoding implementation.
 
+
+**V20 as built (2026-11-03, complete locally):** release measurements established the baseline
+before changing codecs. The browser now reads at most 1 MiB of PNG/JPEG header bytes without a
+raster, then shows provisional dimensions, estimated RGBA8 memory, filename and phase progress
+while full codec validation/owned publication continues. Tasks and operation ports use the same
+feedback. Input-refusal summaries retain the tool's exact reason/remedy; no tool pixel limit is
+inferred. Full-resolution comparison/downloads and every run still use hash-verified originals.
+
+PNG validates checksums while streaming scanlines into bounded samples, including Adam7, palette,
+transparency and 16-bit sources. JPEG uses pinned pure-Rust scaled DCT decoding, with a sampling-aware
+coefficient budget before codec allocation. Unsupported lossless/hierarchical/arithmetic JPEG stays
+refused. A strict marker preflight prevents a hidden large frame bypassing the budget. Derived PNG
+previews stay within 512-pixel edges, do not enlarge small sources, honor EXIF display orientation,
+and never substitute for original input identity. The private atomic cache repairs missing/corrupt/symlinked
+entries, survives relocation and is removed with its asset. Cached thumbnails bypass the source
+decoder queue; originals are not fetched merely for input cards.
+
+Review found and failing tests reproduced unchecked PNG compressed checksums, dropped-waiter
+publication ownership, original publication before failed thumbnail writes, a malformed JPEG marker
+budget bypass and graceful-shutdown/import ordering. Imports now retain storage ownership through
+SQLite commit; shutdown drains that ownership and late imports fail their database preflight before
+publication. Crash/failed-database unreferenced bytes retain the existing conservative policy; no
+new automatic deletion/recovery subsystem was added. Explicit resizing was considered and deferred:
+resampling dimensions, coordinates and separate ownership need their own workflow. Inputs are never
+silently resized. This is an internal implementation choice within the approved task, with no
+contract change or additional owner gate.
+
+Land the stable backend/preview endpoint and codec benchmarks first, then its UI consumers and
+matching acceptance docs, in one reviewed two-commit task batch. Header/refusal/ownership regressions
+failed before their fixes. Full locked Rust workspace tests, formatting, all-target clippy,
+TypeScript checks and all 100 UI unit tests passed, along with 58 zero-retry targeted Chromium/WebKit
+checks (including all paid specs). New region snapshots cover pending import and tool refusal;
+native indeterminate progress is masked as variable content. Two clean UI builds are byte-identical,
+check-ui passed and the final release benchmark built successfully. Independent review approved
+all required corrections. The [V20 review](docs/reviews/2026-11-03-image-import.md) records all eight
+owned fixture sizes/timings/memory, codec limitations and the intentional resized-copy deferral.
+Hosted CI remains the full task gate.
 
 #### M5.02 — Separate input grants from evidence access
 
@@ -3482,5 +3519,6 @@ checkpoint to save time. No backward-compatibility shims are added for unrelease
 
 M0–M3 and the V01–V19 client are complete. The R3 operations profile and C2 portable invocation
 contract are implemented under v0.4, with M5.21 real-peer acceptance verified. M5.22 records
-closeout; hosted CI and the adjacent V20 remain before the final completion statement. C3's v0.3 delivery is verified by V14–V18 against Rascal M12/Squint M9. R2 remains optional. Do not imply an Actions-only
+closeout passed hosted CI and M5 is complete. The adjacent V20 implementation is also complete
+locally, with its hosted push gate remaining. C3's v0.3 delivery is verified by V14–V18 against Rascal M12/Squint M9. R2 remains optional. Do not imply an Actions-only
 development build satisfies those release requirements. Product choices remain Q1–Q19.

@@ -481,7 +481,7 @@ export function Workspace({
                   setSavedImages(await assets.list());
                   return asset;
                 }}
-                preview={assets.preview}
+                preview={assets.thumbnail}
               />
             ) : (
               <p>No supported action is available.</p>
@@ -598,7 +598,7 @@ export function Workspace({
                   onSetup={event => setDrawer({opener:event.currentTarget,
                   view:"setup",tool:selected.request.tool,action:selected.request.action})} />
                 {!noRun && <>
-                <ArtifactOutputs attempt={selected} restore={async index=>{const source=savedSources(selected).find(source=>source.index===index);if(!source)return;const binding=transferBinding(source,selected.declaration.document.tool.name);if(!binding)return;if(await artifactRestore.choose(binding,selected.request.tool))return client.artifact(selected.id,index);}} load={assets.preview} inspect={index=>client.artifact(selected.id,index)} disabled={busy||!!working} onSend={index=>setSendSource(savedSources(selected).find(source=>source.index===index))} />
+                <ArtifactOutputs attempt={selected} restore={async index=>{const source=savedSources(selected).find(source=>source.index===index);if(!source)return;const binding=transferBinding(source,selected.declaration.document.tool.name);if(!binding)return;if(await artifactRestore.choose(binding,selected.request.tool))return client.artifact(selected.id,index);}} load={assets.thumbnail} inspect={index=>client.artifact(selected.id,index)} disabled={busy||!!working} onSend={index=>setSendSource(savedSources(selected).find(source=>source.index===index))} />
                 <NativePreservation key={`native/${selected.id}`} attempt={selected} retry={retryNative} />
                 {(!artifactOccurrences(selected.result).length || selected.outputs.some(output=>output.role!=="preview")) && <SavedComparison
                   attempt={selected}

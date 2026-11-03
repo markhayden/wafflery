@@ -53,3 +53,11 @@ test("free failure recovery does not ask for an estimate control that is unavail
   expect(view.guidance).not.toContain("estimate");
   expect(view.guidance).toContain("another run");
 });
+
+test("input refusal displays the tool's reason and remedy without guessing limits",()=>{
+ const refused=result("input",0,0,"invalid");
+ refused.error!.reason="This image exceeds the configured pixel budget. Choose a smaller source or raise image_limit in the tool configuration.";
+ const view=runOutcome(input(refused,"invalid"));
+ expect(view.title).toBe("Input refused by tool.");
+ expect(view.reason).toBe(refused.error!.reason);
+});

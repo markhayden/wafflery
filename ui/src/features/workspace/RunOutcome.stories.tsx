@@ -25,3 +25,4 @@ export const Completed:Story = {args:{attempt:record(null,0.08,0,"completed")}};
 export const Interrupted:Story = {args:{attempt:{execution:"unconfirmed",result:null,raw_response:null,observations:{}}}};
 export const NoRun:Story = {args:{attempt:{execution:"rejected",result:null,raw_response:null,
   observations:{spent_usd:0,refusal:{reason:"not_ready",run:null,requirements:[{kind:"credential",name:"EXAMPLE_KEY",state:"missing",setup:"Configure credentials outside the playground."}]}}}}};
+export const ImageRefused:Story = {args:{paid:false,attempt:{...record("input",0,0,"invalid"),result:{...record("input",0,0,"invalid").result,error:{code:"input",retryable:false,reason:"Image exceeds this tool’s configured pixel limit. Choose a smaller source or adjust the tool’s image-limit configuration."}}}}};

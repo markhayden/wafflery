@@ -68,10 +68,15 @@ The result summary explains stale estimates, credential rejection, caps and sess
 Failed and cancelled runs retain their reported spend; unresolved charges are shown as “at most,”
 not zero. **Review tool setup** opens setup for that saved run’s tool and action.
 
+Importing an image shows its header dimensions and estimated decoded memory while the original
+is saved and validated. Input cards use bounded previews; runs, downloads and full-resolution
+comparison keep the original bytes. Tool-specific size refusals show the tool’s own reason and
+remedy. Wafflery never resizes a fidelity input automatically.
+
 **Clean up library** previews selected runs/examples and reclaimable image bytes. Shared examples
 retain their images; deleting a baseline run clears its pin. Cleanup requires idle tools, rechecks
 references, and never deletes originals or opaque tool workspaces. SQLite metadata/backups and
-unconfirmed execution copies are additional storage, outside the image-byte preview. Known
+unconfirmed execution copies and derived thumbnail caches are additional storage, outside the image-byte preview. Known
 disposable inputs are removed after preservation or confirmed process exit. Crash leftovers whose
 owner cannot be proven stopped are retained. There is no automatic expiration.
 

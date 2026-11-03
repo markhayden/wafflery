@@ -6,6 +6,7 @@ type Record = Pick<Attempt,"execution" | "result" | "observations" | "raw_respon
 type Spend = {usd:number; unresolved:number; basis:"measured" | "estimated"};
 const amount = (value:Json | undefined): value is number => typeof value === "number" && Number.isFinite(value) && value >= 0;
 const guidance: {[code:string]:{title:string; guidance:string; setup:boolean}} = {
+  input:{title:"Input refused by tool.",guidance:"Review the tool’s reason and any suggested remedy before starting another run. Original inputs have not been resized.",setup:false},
   stale_estimate:{title:"Estimate no longer matches.",guidance:"Review the inputs and request a new estimate before running again.",setup:false},
   credential:{title:"Provider rejected authentication.",guidance:"Check the tool’s credential setup, then estimate again. No retry was started.",setup:true},
   cap:{title:"Spending cap reached.",guidance:"Review the cap and request a new estimate. The cap has not been increased.",setup:false},

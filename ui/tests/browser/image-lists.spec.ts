@@ -148,3 +148,17 @@ test("an import preserves saved-image insertions and cannot overwrite a restored
     } finally { release(); await page.unrouteAll({behavior:"wait"}); }
   }
 });
+
+test("input thumbnails never request the full original just to display a card",async({page,host})=>{
+ const originalReads:string[]=[];
+ page.on("request",request=>{if(request.method()==="GET"&&/\/api\/assets\/[a-f0-9]{32}$/.test(new URL(request.url()).pathname))originalReads.push(request.url());});
+ await host.open(page);
+ const thumbnail=page.waitForResponse(response=>/\/api\/assets\/[a-f0-9]{32}\/thumbnail$/.test(new URL(response.url()).pathname));
+ const source=page.getByRole("region",{name:"source",exact:true});
+ await source.locator("input[type=file]").setInputFiles("tests/fixtures/sample.png");
+ expect((await thumbnail).status()).toBe(200);
+ const image=source.getByRole("img");await expect(image).toBeVisible();
+ await expect.poll(()=>image.evaluate((node:HTMLImageElement)=>node.naturalWidth)).toBeGreaterThan(0);
+ expect(await image.evaluate((node:HTMLImageElement)=>Math.max(node.naturalWidth,node.naturalHeight))).toBeLessThanOrEqual(512);
+ expect(originalReads).toEqual([]);
+});

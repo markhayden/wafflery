@@ -533,6 +533,9 @@ neither may execute with host-session authority.
   manual evidence remains separate from Chromium/WebKit automation.
 - Evaluations and agent orchestration require later approved plans. V20 adds import feedback and
   bounded thumbnails; it does not silently resize source images or infer undeclared tool limits.
+  V20 implements bounded header feedback, streaming PNG/scaled JPEG preview generation, private
+  derived-cache repair/cleanup and separate original/thumbnail endpoints. The [import review](docs/reviews/2026-11-03-image-import.md)
+  records codec memory limits and release measurements.
 
 ### v0.3 readiness controls
 

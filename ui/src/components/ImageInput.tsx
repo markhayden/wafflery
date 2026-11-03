@@ -1,5 +1,7 @@
 import { useEffect, useLayoutEffect, useId, useRef, useState, type ReactNode } from "react";
 import { cardinalityError, moveImage, type Asset } from "../api/assets";
+import { imageHeader } from "../api/image-header";
+import { ImageImportProgress, type ImageImport } from "./ImageImportProgress";
 import { Button } from "./Button";
 import styles from "./ImageInput.module.css";
 
@@ -36,6 +38,7 @@ export function ImageInput({ label, value, min, max, onChange, upload, preview, 
   const inputId = useId();
   const fileInput = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
+  const [progress, setProgress] = useState<ImageImport>();
   const [error, setError] = useState<string>();
   const locked = busy || disabled;
   const alive = useRef(true);
@@ -52,8 +55,12 @@ export function ImageInput({ label, value, min, max, onChange, upload, preview, 
     setError(undefined);
     const imported: Asset[] = [];
     try {
-      for (const file of files) {
+      for (const [index, file] of files.entries()) {
+        setProgress({ name: file.name, index: index + 1, total: files.length });
         if (file.size > 128 * 1024 * 1024) throw new Error("Images must be no larger than 128 MiB.");
+        const dimensions = await imageHeader(file);
+        if (!alive.current) return;
+        setProgress({ name: file.name, dimensions, index: index + 1, total: files.length });
         const asset = await upload(file);
         if (!alive.current) return;
         imported.push(asset);
@@ -70,6 +77,7 @@ export function ImageInput({ label, value, min, max, onChange, upload, preview, 
           else latest.onChange([...latest.value, ...imported]);
         }
         setBusy(false);
+        setProgress(undefined);
       }
     }
   }
@@ -80,7 +88,7 @@ export function ImageInput({ label, value, min, max, onChange, upload, preview, 
     <input ref={fileInput} id={inputId} hidden type="file" accept="image/png,image/jpeg" multiple={max > 1}
       disabled={locked || value.length >= max} aria-describedby={`${inputId}-help`}
       onChange={event => { const files = Array.from(event.currentTarget.files ?? []); event.currentTarget.value = ""; void add(files); }} />
-    {busy && <p role="status">Importing image…</p>}
+    {busy && progress && <ImageImportProgress image={progress} />}
     {error && <p role="alert">{error}</p>}
     {value.length > 0 && <ol className={styles.images}>
       {value.map((asset, index) => <li className={styles.image} key={`${asset.id}-${index}`}>

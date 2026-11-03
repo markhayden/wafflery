@@ -28,6 +28,9 @@ export function assetClient(api: LocalApi) {
       if (!isAsset(asset)) throw new Error("The imported image could not be read.");
       return asset;
     },
+    async thumbnail(asset: Asset): Promise<Blob> {
+      return (await api.request(`/api/assets/${asset.id}/thumbnail`)).blob();
+    },
     async preview(asset: Asset): Promise<Blob> {
       return (await api.request(`/api/assets/${asset.id}`)).blob();
     },
