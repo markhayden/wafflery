@@ -101,6 +101,9 @@ pub fn start(
             None
         };
         let mut value = super::control_fixtures::estimate(super::fixtures::TOOL, &session, refused);
+        if refused != Some("readiness") {
+            value["effective"]["config_identity"] = json!(state.lock().unwrap().config_identity);
+        }
         value["effective"]["x-sample-lab"] = json!({"path":path,"binding":"internal-debug"});
         value["session"] = session.clone();
         if label != "readiness" {

@@ -53,7 +53,7 @@ pub fn execute(
         .map(|(images, _, _)| images)
         .unwrap_or_else(|_| json!([]));
     let mut effective =
-        json!({"model":"offline-script","config_identity":format!("sha256:{}","1".repeat(64))});
+        json!({"model":"offline-script","config_identity":state.lock().unwrap().config_identity});
     if label == "paid-stale" {
         effective["model"] = json!("changed-script");
     }

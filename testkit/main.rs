@@ -29,6 +29,7 @@ pub struct PeerState {
     pub estimates: std::collections::HashMap<String, Value>,
     pub claimed: std::collections::HashSet<String>,
     pub allow_dirs: Vec<PathBuf>,
+    pub config_identity: String,
     pub descriptions: usize,
     pub resource_reads: usize,
     pub runs: Vec<Value>,
@@ -57,6 +58,7 @@ impl Default for PeerState {
             estimates: Default::default(),
             claimed: Default::default(),
             allow_dirs: vec![],
+            config_identity: format!("sha256:{}", "1".repeat(64)),
             descriptions: 0,
             resource_reads: 0,
             runs: vec![],
@@ -128,6 +130,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             remaining.push(argument);
         }
     }
+    let (allow_dirs, config_identity) = if scenario == "estimates" {
+        configuration::startup_access(&remaining, &allow_dirs)?
+    } else {
+        (allow_dirs, format!("sha256:{}", "1".repeat(64)))
+    };
     let mut configuration = configuration::Configuration::load(&root, &scenario, remaining)?;
     if scenario.starts_with("control-") {
         return control_peer::serve(&scenario);
@@ -139,6 +146,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let output = Arc::new(Mutex::new(io::stdout()));
     let state = Arc::new(Mutex::new(PeerState {
         allow_dirs,
+        config_identity,
         ..PeerState::default()
     }));
     {

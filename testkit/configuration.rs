@@ -98,3 +98,157 @@ impl Drop for Configuration {
         }
     }
 }
+
+/// Optional scripted paid-peer config. Resolve once; later edits require a new child.
+/// Requested directories are the already-validated canonical launch grants.
+pub fn startup_access(
+    arguments: &[String],
+    requested: &[PathBuf],
+) -> Result<(Vec<PathBuf>, String), Box<dyn std::error::Error>> {
+    use sha2::{Digest, Sha256};
+    let path = match arguments {
+        [] => return Ok((requested.to_vec(), format!("sha256:{}", "1".repeat(64)))),
+        [flag, path] if flag == "--config" => Path::new(path),
+        _ => return Err("invalid scripted access configuration arguments".into()),
+    };
+    let settings = fs::read(path)
+        .ok()
+        .and_then(|bytes| serde_json::from_slice::<Value>(&bytes).ok());
+    let configured = settings
+        .as_ref()
+        .filter(|value| value.is_object())
+        .and_then(|value| match value.get("allowed_dirs") {
+            None => Some(requested.to_vec()),
+            Some(Value::Array(paths)) => paths
+                .iter()
+                .map(|value| {
+                    let path = Path::new(value.as_str()?);
+                    if !path.is_absolute() {
+                        return None;
+                    }
+                    let canonical = path.canonicalize().ok()?;
+                    canonical.is_dir().then_some(canonical)
+                })
+                .collect::<Option<Vec<_>>>(),
+            _ => None,
+        })
+        .unwrap_or_default();
+    let mut overlap = std::collections::BTreeSet::new();
+    for configured in configured {
+        for requested in requested {
+            if configured.starts_with(requested) {
+                overlap.insert(configured.clone());
+            } else if requested.starts_with(&configured) {
+                overlap.insert(requested.clone());
+            }
+        }
+    }
+    let directories: Vec<_> = overlap.into_iter().collect();
+    let resolved = json!({"model":"offline-script","cap_usd":1.0,"budget_usd":0.2,
+        "configured":true,"allowed_dirs":directories});
+    let digest: String = Sha256::digest(serde_json::to_vec(&resolved)?)
+        .iter()
+        .map(|byte| format!("{byte:02x}"))
+        .collect();
+    let identity = format!("sha256:{digest}");
+    Ok((directories, identity))
+}
+
+#[cfg(test)]
+mod access_tests {
+    use super::*;
+
+    #[test]
+    fn startup_access_intersects_configuration_and_grants_and_changes_identity() {
+        let temp = tempfile::tempdir().unwrap();
+        let root = temp.path().canonicalize().unwrap();
+        let input = root.join("inputs");
+        let narrow = input.join("selected");
+        fs::create_dir_all(&narrow).unwrap();
+        let config = root.join("access.json");
+        fs::write(&config, json!({"allowed_dirs":[narrow]}).to_string()).unwrap();
+        let args = vec!["--config".into(), config.display().to_string()];
+        let (actual, identity) = startup_access(&args, std::slice::from_ref(&input)).unwrap();
+        assert_eq!(actual, vec![narrow.clone()]);
+        fs::write(&config, json!({"allowed_dirs":[root]}).to_string()).unwrap();
+        let (replacement, changed_identity) =
+            startup_access(&args, std::slice::from_ref(&input)).unwrap();
+        assert_eq!(replacement, vec![input.clone()]);
+        assert_ne!(identity, changed_identity);
+        assert_eq!(startup_access(&args, &[input]).unwrap().1, changed_identity);
+    }
+
+    #[test]
+    fn denied_or_unloadable_configuration_has_no_input_access() {
+        let temp = tempfile::tempdir().unwrap();
+        let root = temp.path().canonicalize().unwrap();
+        let config = root.join("access.json");
+        let args = vec!["--config".into(), config.display().to_string()];
+        assert!(
+            startup_access(&args, std::slice::from_ref(&root))
+                .unwrap()
+                .0
+                .is_empty()
+        );
+        fs::write(&config, "{}").unwrap();
+        assert_eq!(
+            startup_access(&args, std::slice::from_ref(&root))
+                .unwrap()
+                .0,
+            vec![root.clone()]
+        );
+        for document in [
+            Value::Null,
+            json!([]),
+            json!("not an object"),
+            json!({"allowed_dirs":[]}),
+            json!({"allowed_dirs":null}),
+            json!({"allowed_dirs":[root,"relative"]}),
+            json!({"allowed_dirs":[config]}),
+            json!({"allowed_dirs":["relative"]}),
+            json!({"allowed_dirs":[root.join("missing")]}),
+            json!({"allowed_dirs":42}),
+        ] {
+            fs::write(&config, document.to_string()).unwrap();
+            assert!(
+                startup_access(&args, std::slice::from_ref(&root))
+                    .unwrap()
+                    .0
+                    .is_empty()
+            );
+        }
+        fs::write(&config, "not JSON").unwrap();
+        assert!(startup_access(&args, &[root]).unwrap().0.is_empty());
+    }
+
+    #[test]
+    fn startup_access_is_canonical_deduplicated_and_never_adds_an_ungranted_path() {
+        let temp = tempfile::tempdir().unwrap();
+        let root = temp.path().canonicalize().unwrap();
+        let input = root.join("inputs");
+        let outside = root.join("outside");
+        fs::create_dir(&input).unwrap();
+        fs::create_dir(&outside).unwrap();
+        let alias = root.join("alias");
+        std::os::unix::fs::symlink(&input, &alias).unwrap();
+        let config = root.join("access.json");
+        fs::write(
+            &config,
+            json!({"allowed_dirs":[alias,input,outside]}).to_string(),
+        )
+        .unwrap();
+        let args = vec!["--config".into(), config.display().to_string()];
+        assert_eq!(
+            startup_access(&args, std::slice::from_ref(&input))
+                .unwrap()
+                .0,
+            vec![input.clone()]
+        );
+        assert!(startup_access(&args, &[]).unwrap().0.is_empty());
+        assert_eq!(
+            startup_access(&[], std::slice::from_ref(&input)).unwrap().0,
+            vec![input]
+        );
+        assert!(startup_access(&["--unknown".into()], &[]).is_err());
+    }
+}

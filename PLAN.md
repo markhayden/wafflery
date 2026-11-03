@@ -2018,6 +2018,26 @@ byte-identical check-ui builds, release build and 226 Chromium/WebKit tests (8 o
 The temporary browser config is removed; lockfiles and prebuilt assets are unchanged. Configured
 narrowing/restart, hostile grant publication and the effective-access UI remain the next slices.
 
+**b3a configured-peer decisions:** the optional JSON config limits launch grants by canonical
+intersection and removes exact duplicate paths; it cannot add a directory outside the launch
+boundary. A valid object without `allowed_dirs` adds no restriction; an unreadable/invalid config,
+a null/malformed directory list or any invalid entry denies all input paths. The `estimates` peer
+reads this once at startup and freezes its effective directories/config identity. The identity
+covers its fixed model, cap and session-budget defaults plus effective grants. Existing scenarios
+remain unchanged. These unit tests verify startup resolution and identity changes on a new load;
+actual running-child freeze/restart and retained spending remain b3b wire acceptance, not a claim
+made from unchanged local variables. Live host handling is already behind the shared validator.
+
+**b3a startup checkpoint (2026-11-02):** the initial startup-access tests failed before the
+helper existed. Three unit tests now cover narrowing/identity changes on reload, canonical aliases
+and deduplication, disjoint directories, invalid/missing/non-object configs, malformed/mixed lists,
+files, explicit deny-all and an unrestricted valid object. Independent review approved. The full
+shared-lock matrix passed fmt/clippy, 380 Rust tests (4 opt-in ignored), typecheck, 56 UI unit tests,
+2 asset tests, Storybook, byte-identical check-ui builds, release build and 226 Chromium/WebKit tests
+(8 opt-in skipped). The temporary browser config is removed; lockfiles/prebuilt assets are unchanged.
+The following wire slice must still prove a real running child freezes these settings and that
+host publication and saved spending survive malformed observations and directory removal.
+
 **Checkpoint A:** merge M5.01–03 as a coherent cutover of validation, launch arguments and fake
 defaults; v0.4 is the only supported live contract afterward. Green matrix, an independent fake
 task run and the published exact dependency pin are required.
