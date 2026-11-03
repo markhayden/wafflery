@@ -1,5 +1,21 @@
 # Squint handoff: generic check workspace
 
+## Current disposition — 2026-11-03
+
+Approved M10 `6dd1e3a` provides the v0.4 task description, resolved invocation, list images,
+explicit grants and CLI bundle replay. M5.21 verifies ordered/repeated references, actual path
+refusal/granted success, and replay after original inputs/library/run directories are removed.
+The estimate control no longer creates a run; that old request is resolved. C1/C2 integration and
+C3 server/document framing/lifetime are verified. Report sources remain tool-owned; no full report
+reconstruction is claimed. Offline CLI checks use a consistent test-only fake profile/model.
+
+See [integration evidence](../integration-sources.md) and [M5 review](../reviews/2026-11-03-m5-operations.md).
+
+## Historical request packet
+
+The dated status and requests below are retained as historical context; current disposition above
+supersedes statements that these agreements are still awaiting a first proposal.
+
 Status: refreshed 2026-10-31. M7 has a local tag and the owner reports it pushed/released.
 These are remaining integration requests, not a replacement implementation plan. No sibling files changed.
 

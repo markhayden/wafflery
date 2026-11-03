@@ -1,8 +1,30 @@
 # Wafflery interface direction
 
-Working interface map, 2026-10-30. This develops [BRIEF.md](BRIEF.md) before a build spec.
-The initial experience lets someone explore Rascal or Squint independently: choose an
-activity, supply inputs, run it, inspect the result, and repeat with a change.
+Current implementation summary, 2026-11-03, followed by the historical interface exploration.
+The [M5 review](docs/reviews/2026-11-03-m5-operations.md) compares the implemented hierarchy and
+shared drawer against the original studies. The mock interactions remain illustrative.
+
+## Implemented workspace
+
+The application header owns Tool; the selected tool name/purpose heads the workspace. One matching
+focused picker chooses Playground, Operations or Utilities where declared, followed by a searchable,
+grouped activity picker. Task-only tools omit unavailable workspace kinds. Both selectors use the
+same control. Desktop input/result panes scroll independently with fixed headers/footers; narrow and
+short windows use page scrolling.
+
+Declared ports render image, shared-location and opaque native-reference inputs, including ordered
+lists. Send to fills a compatible draft without running it. Location outputs expose public geometry
+and overlays; native Masks show previews plus separately labelled resource/portability state.
+History/examples preserve inputs and origin links, and opening them creates an independent draft.
+
+The shared right drawer covers inspection, reports, pipeline handoff and invocation bundles. An
+ordered chain review opens each ordinary step draft with freshly produced inputs; Stop/resume and
+current paid approval remain explicit. Closing the drawer keeps owned work running. Before/after
+wipe remains limited to equal dimensions/coordinates; mismatches use side-by-side comparison.
+Tool report HTML is embedded on an isolated origin and is not restyled by Wafflery.
+
+The sections below preserve the original design inventory. Capabilities listed as proposals there
+are not a substitute for the current description or [integration evidence](docs/integration-sources.md).
 
 ## Established scope
 

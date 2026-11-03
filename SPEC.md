@@ -1,9 +1,9 @@
 # Wafflery specification
 
-Status: product acceptance consolidated, engineering specification still in progress. Started
-2026-10-30 through the kickoff workflow. The reviewed interface and decisions Q1–Q19 now have
-[testable acceptance criteria](ACCEPTANCE.md) and [owner handoffs](TOOL-REQUIREMENTS.md). This is
-not yet an approved implementation spec or build plan.
+Status: approved product decisions Q1–Q19 and implemented host behavior through M5.21,
+2026-11-03. M5.22 records acceptance and remaining limits; V20 adds image-import feedback.
+This is a macOS development build, not approval of installation/distribution or a public release.
+The [milestone review](docs/reviews/2026-11-03-m5-operations.md) and [PLAN.md](PLAN.md) record evidence.
 
 ## Objective
 
@@ -105,7 +105,7 @@ and the boundary between working mock interactions and future tool integration.
 - **Q5, confirmed:** Download example includes required images and supported artifacts by
   default. Show the included files and size; offer an explicit option to reference existing
   files instead. Omit credentials and tool/model installations. Unsupported artifact portability
-  must be labeled. The current mock downloads a manifest only; the bundle is not implemented.
+  must be labeled. The original mock downloads only a manifest; the implemented invocation-bundle drawer carries supported input bytes.
 - **Q6, confirmed:** Retain an owned copy of each run's inputs; store identical files once.
   Moving or editing originals must not change saved runs or their exports. Library scope is
   settled in Q14 and preservation scope in Q15; exact filesystem layout and the preservation
@@ -173,49 +173,36 @@ and the boundary between working mock interactions and future tool integration.
   Plan the local host/library/shared UI and v0.1 fake-tool path now; keep later integrations explicit.
   This agreement authorizes foundation planning, not an unreviewed full-release implementation.
 
-## Acceptance and remaining planning gates
+## Implementation and remaining gates
 
-[ACCEPTANCE.md](ACCEPTANCE.md) is the testable product checklist, AC01–AC22. Its gates G1–G6
-identify unresolved engineering work: output/report durability; budget/process lifecycle;
-discovery/install/host reuse; storage/roots/cleanup; current action coverage; and the engineering
-stack/commands/test/package details. The product choices in the decision log stay settled.
+The exact live contract is published table-manners `=0.4.0`; MCP remains `2025-11-25`. Earlier
+live contracts are refused, while saved historical evidence stays readable. The independent fake
+exercises generic task/operation/utility discovery, scalar/list ports, image/location/native
+bindings, indexed refusals, session grants, cancellation, invocation capture and portable bundles.
+Approved real Rascal/Squint snapshots pass [M5.21](docs/integration-sources.md).
 
-[TOOL-REQUIREMENTS.md](TOOL-REQUIREMENTS.md) indexes three owner packets with current source
-observations and verification requests. The [source inventory](docs/integration-sources.md)
-records Rascal M8 merged/tagged and Squint's locally merged server work, with its release still
-unconfirmed. These are source observations, not newly executed conformance tests.
+C1 readiness/estimates, C2 resolved invocation and declared native portability, and R3 typed-operation
+integration are implemented within their advertised capabilities. C3 report address/framing/lifetime
+and C4 explicit session/budget boundaries are verified. Nonportable artifact types remain labelled
+workspace-dependent; native previews are never replacements. Tool-owned report sources still need
+their original usable run directory. Broad report reconstruction and unadvertised tool capabilities
+are not promised.
 
-Routine implementation recommendations are explicitly labeled in the acceptance gates; resolve
-material choices one at a time and verify existing code before asking the owner. Under Q19, close
-the engineering choices applicable to a milestone before locking its implementation/commit plan.
-Open C1–C4/H1 agreements gate their integrations, not unrelated foundation tasks.
+The workspace keeps tool choice in the header and groups declared activities below it. Port editors
+bind saved artifacts and images without rerunning upstream operations. The shared drawer reviews
+ordered experiment chains; each step requires its own ordinary Run, and each paid step needs a fresh
+cap and bound estimate. This is guided replay, not unattended orchestration or a node editor.
 
-## Engineering sections to complete
+[Acceptance gates](ACCEPTANCE.md#feature-and-release-gates) retain actual distribution work: installer
+channel, automatic installed-tool discovery, supported macOS architectures/minimum version and release
+verification. No Linux/Windows support or new native Safari coverage is claimed. Evaluations, Pixel,
+agent loops and general cross-tool orchestration remain later scope. R2 prompt-led damage localization
+remains optional and requires tool support. V20 addresses image-import latency/feedback without
+changing pixels silently or guessing a tool's pixel limit.
 
-[ENGINEERING.md](ENGINEERING.md) now proposes storage ownership, capture/deletion ordering,
-host/tool/viewer lifetime, minimal interruption handling, and file-access boundaries.
-[ADR-0002](docs/decisions/0002-local-library-and-host.md) records the accepted embedded SQLite
-choice (Q18) and proposed asset-store/single-host mechanics. Detailed engineering proposals
-remain under review and are not implemented. C2/C3/H1 still need agreed tool interfaces.
-
-An owner-run external CLI review found association, preservation, relocation, and interface
-ambiguities. The [review disposition](docs/reviews/2026-10-30-spec-review-disposition.md) records
-the corrections and qualified recommendations. The subsequent [plan review disposition](docs/reviews/2026-10-31-plan-review-disposition.md) updates source facts, task ordering, and the early H1/C4 proposals. Neither review closes an unaccepted contract gate.
-
-[Foundation runtime](docs/design/foundation-runtime.md) now selects the initial runtime,
-dependency baseline, repository layout, browser boundary, developer commands and test approach.
-[PLAN.md](PLAN.md) proposes M0–M3 as the reviewable foundation implementation scope, with later
-feature gates separated. Dependency installation/compatibility checks are an explicit M0 task;
-listed commands are planned, not yet runnable. Full release G1–G6 remain tracked separately.
-
-Before spec review, add the chosen architecture and stack, repository structure, executable
-development/build/test commands, code conventions, persistence model, process and interface
-contracts, failure states, security boundaries for local execution, and measurable acceptance
-criteria. Do not invent command names or dependency versions before selecting the stack.
-
-Verification must cover offline fake-tool integration, real tool conformance, browser
-interactions and layout, cancellation/recovery, persisted runs and examples, and packaging.
-Any live paid verification must have explicit scope and cost authorization.
+The implementation uses Rust with embedded Vite/React assets, embedded SQLite, stdio MCP and the
+owned component set with development-only Storybook. [ENGINEERING.md](ENGINEERING.md),
+[README.md](README.md), and the runtime design document the actual boundaries and commands.
 
 ## Planning and documentation obligations
 
@@ -234,10 +221,10 @@ implemented behavior.
 - [First-release acceptance criteria](ACCEPTANCE.md)
 - [Original brief](BRIEF.md)
 - [Interface direction and capability map](INTERFACE.md)
-- [Draft tool and contract handoffs](TOOL-REQUIREMENTS.md)
+- [Tool and contract handoff status](TOOL-REQUIREMENTS.md)
 - [Installation and pipeline handoff journeys](USER-JOURNEYS.md)
 - [UI foundation decision](docs/decisions/0001-ui-foundation.md)
-- [Storage and process engineering draft](ENGINEERING.md)
+- [Storage and process engineering](ENGINEERING.md)
 - [Local library and host decision proposal](docs/decisions/0002-local-library-and-host.md)
 - [Foundation runtime and development workflow](docs/design/foundation-runtime.md)
 - [Foundation implementation plan](PLAN.md)

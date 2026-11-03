@@ -1,8 +1,10 @@
 # Installation, exploration, and pipeline handoff
 
-Status: proposed user journeys for review, 2026-10-30. These describe intended behavior,
-not shipped installation commands or currently available tool capabilities. First release
-covers Rascal and Squint independently; Pixel, cross-tool chains, and batch evaluations follow.
+Status: current host behavior through M5.21 is documented in [README](README.md) and the
+[M5 review](docs/reviews/2026-11-03-m5-operations.md). The original installation/mock walkthroughs
+below preserve the design intent; a real installer/distribution remains later work. Rascal and
+Squint work independently. Guided per-step chain review now exists; unattended orchestration,
+Pixel and batch evaluations remain later scope.
 
 ## Outcome
 

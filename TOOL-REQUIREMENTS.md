@@ -1,8 +1,21 @@
 # Tool and contract handoffs
 
-Consolidated 2026-10-30 from the reviewed interface and [acceptance criteria](ACCEPTANCE.md).
-These are ready-to-share review requests, not approved wire schemas or claims of completed
-integration. No sibling repositories were edited and no messages were sent to their agents.
+Current status, 2026-11-03. The original requests below retain their IDs and historical audit.
+The published contract is `=0.4.0`; the host is verified against approved Rascal `eed6397` and Squint
+`6dd1e3a`. See [M5 acceptance](docs/reviews/2026-11-03-m5-operations.md).
+
+| Request | Current disposition |
+| --- | --- |
+| C1 / S1 | Readiness/setup, list images, bound estimates and task discovery verified. |
+| R3 | Declared operations/ports/artifact resources, independent testing and explicit chaining verified. |
+| C2 | Effective invocation, declared native export/import and host/CLI bundles verified. Nonportable types remain workspace-dependent. |
+| C3 | Server/document framing and lifetimes verified; tool-owned report reconstruction remains unsupported. |
+| C4 | Association, explicit session restart, quotes/caps/budgets and preserved spend verified with controlled peers. |
+| H1 | Canonical launcher and host attachment implemented; distribution/install channel remains open. |
+| R1 / R2 | Advertised tasks remain tool-owned. Real provider/finder quality and optional prompt-led damage localization are not certified by offline host tests. |
+
+The earlier packets are historical requests, not an instruction to rebuild settled wire shapes or
+to edit sibling repositories. New cross-tool decisions go through the shared-contract coordinator.
 
 ## Owner packets
 
@@ -78,7 +91,7 @@ tool startup/workspace declarations (H1), native preservation (C2/R3), and durab
 support (C3) explicit. Review these concrete boundaries with the owners; the draft does not
 pretend those additions already exist in v0.1.
 
-## Coordination order
+## Historical coordination order
 
 Urgent deliverables are ready: [H1 launcher proposal](docs/handoffs/H1-launcher-proposal.md),
 [C4 v0.2 proposal](docs/handoffs/C4-v0.2-proposal.md), and the

@@ -3339,14 +3339,14 @@ kill-on-drop ownership. No peer or shared-contract change was needed.
 
 #### M5.22 — Close out the operations milestone
 
-- [ ] Update SPEC/INTERFACE/ENGINEERING, tool requirements/handoffs and user setup/export docs to the
+- [x] Update SPEC/INTERFACE/ENGINEERING, tool requirements/handoffs and user setup/export docs to the
   implemented behavior; retire resolved C1/C2/R3 gates with evidence, retain actual distribution gaps.
   Capture before/after mock comparisons, stories and region screenshots for changed screens.
 - [ ] Confirm the published `=0.4.0` pin and packaged-schema verification from M5.03 remain intact,
   and run the complete PLAN matrix. Include asset-manifest unit checks,
   reproducible prebuilt assets/check-ui and release build, plus targeted repeated tests only where a
   lifetime/race change needs evidence. Hosted CI must be green before declaring completion.
-- [ ] Record peer revisions, fixtures, archive bounds, ambiguous-chain limitations, preservation failures,
+- [x] Record peer revisions, fixtures, archive bounds, ambiguous-chain limitations, preservation failures,
   path migration instructions and downgrade limits in an M5 review. No implicit approval of M7 shipping.
 
 **Depends:** M5.21. **Areas:** milestone review, SPEC/INTERFACE/ENGINEERING and handoff/user docs.
@@ -3369,8 +3369,22 @@ alignment. This is within the approved mock fidelity/closeout scope, with no dis
 change. The failing unit/browser tests now pass; 48 targeted Chromium/WebKit cases include paid and
 workspace regressions, with new desktop/mobile long-purpose regions. Current screenshots use the
 approved real Rascal and synthetic image. The [M5 review](docs/reviews/2026-11-03-m5-operations.md)
-records native proof, bounds, rollback and remaining release gates. Final local checks/review and
-hosted CI remain the closeout gate; V20 is the adjacent next task.
+records native proof, bounds, rollback and remaining release gates. Full locked Rust workspace tests, formatting, all-target clippy, UI typecheck, all 96 unit tests,
+asset-manifest tests, packaged-schema checks, two clean byte-identical UI builds and release build
+passed. Independent review approved the UI/doc corrections. Hosted CI remains the final closeout
+gate; V20 is the adjacent next task.
+
+**M5.22 hosted-CI correction:** run `41635204792` exhausted the guided replay test's total body
+deadline; first-attempt diagnostics showed all six attempts completed with native bytes preserved.
+The last consumer settled just before the next 500 ms observer poll was cancelled by teardown.
+The retry had only five attempts and ran out of body time before staging its final consumer. Source
+creation (four prior UI runs plus selected-bundle save/ready installation) now has its own bounded
+15-second fixture lifetime; replay retains the normal 15-second body and assertion deadlines. The
+fixture waits for the enabled Start chain review control before yielding. No product polling,
+preservation, retry or timeout policy changed. [Trace analysis](docs/reviews/2026-11-03-chain-replay-deadline.md)
+records the cause. The original controlled slow-setup test failed and the corrected fixture passed;
+twenty final zero-retry WebKit repetitions plus all 26 replay checks across both engines passed.
+Independent follow-up review approved the fixture correction; scratch specs/configs were removed.
 
 ### Approval, checks and remaining coordination
 

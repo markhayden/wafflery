@@ -1,5 +1,21 @@
 # Shared interface handoff: Wafflery integration
 
+## Current disposition — 2026-11-03
+
+Published `=0.4.0` at `d1c49a7` is the live contract. C1 readiness/estimates, C2 invocation/native
+portability/bundles, C3 renders, C4 association/session boundaries and the operations profile are
+adopted by the host. M5.21 verifies the approved real peers and independent fake. Explicit
+`serve --allow-dir` replaces MCP roots; input grants and evidence reads stay separate. Image pixel
+limits remain a coordinator-owned additive follow-up; the host must not invent them. H1
+installation/distribution remains distinct from contract adoption.
+
+See [integration evidence](../integration-sources.md) and [M5 review](../reviews/2026-11-03-m5-operations.md).
+
+## Historical request packet
+
+The dated status and requests below are retained as historical context; current disposition above
+supersedes statements that these agreements are still awaiting a first proposal.
+
 Status: ready for owner review; proposed additions, not an approved wire design. No sibling
 repository has been edited. Implement in the appropriate versioned contract/host interface;
 do not add undeclared fields to v0.1 objects.

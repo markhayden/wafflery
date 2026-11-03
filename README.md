@@ -9,7 +9,7 @@ Squint independently. Pixel, cross-tool workflows, and batch evaluations follow 
 This directory contains the Rust/React development application, its reviewed plans, and an earlier
 interactive mock. The application runs real offline MCP actions, preserves evidence, reopens
 history, compares baselines, saves examples, and exports recorded calls/evidence and invocation bundles.
-Production tool installation and multi-step replay remain later integration work. Saved runs preserve declared
+Production tool installation and unattended workflow orchestration remain later integration work. Saved runs preserve declared
 portable native artifacts and can explicitly restore them into a compatible tool store or open declared tool reports.
 The authenticated prepared-call API can execute paid actions only from a current owned estimate;
 its automated verification uses synthetic spend, without provider charges.
@@ -94,14 +94,14 @@ pushes to main and manual dispatch. Action revisions and runtime versions are pi
 and Bun dependencies are cached, and matching Chromium/WebKit browsers are installed explicitly.
 CI uses the independent offline peer without provider keys. Local and hosted builds resolve
 exactly table-manners 0.4.0 from crates.io using Cargo.lock; no sibling contract checkout is
-required. The three Rust and four browser real-tool probes remain explicit opt-ins. Checked-in UI assets are verified
+required. Five Rust checks and six browser real-tool journeys remain explicit opt-ins. Checked-in UI assets are verified
 before any build can regenerate them. Failure diagnostics include Playwright traces, screenshots and an allowlisted attempt summary.
 See the [CI checkpoint](docs/reviews/2026-11-01-ci.md) for local versus hosted verification.
 
 ### Try real Rascal
 
 The live client now accepts only v0.4, with the independent peer as its required check target.
-Approved M10 snapshots are Rascal `eed6397` and Squint `6dd1e3a`; M5.21 verifies their integration.
+Approved M10 snapshots are Rascal `eed6397` and Squint `6dd1e3a`; M5.21 verifies their operations/task, report and portable bundle integration.
 Earlier live contracts are rejected; V18's v0.3 results remain historical evidence.
 With a stable contract 0.4.0 Rascal binary already built or installed, select its absolute path:
 
@@ -305,8 +305,9 @@ bundle deletion is not available yet. Downloads return the same verified archive
 A bundle with omitted or unpreserved inputs is labelled **Workspace-dependent**. Native previews are
 never substituted. Complete single-tool bundles show a standard `call --bundle` example with paths
 to replace after download. Install/configure the named tool and supply requirements separately;
-credentials/config contents are not included, paid replay needs new estimates/approval, and model
-judgments may differ.
+credentials/config contents are not included, and model judgments may differ. Host paid replay needs
+a fresh bound estimate/cap review. A direct CLI command follows that tool's configured spending policy;
+review its configuration and supported cap before invoking it.
 
 In **Bundles → Import an invocation bundle**, upload an uncompressed tar to review its original
 steps, declared files, requirements and omissions. Uploading verifies the archive without publishing
@@ -334,3 +335,25 @@ agree with each saved run's recorded source. Ambiguous outputs or mismatched sou
 export a single step instead. Native input copies remain included even for connections between selected
 steps. Mixed-tool chains need host replay; no single-tool CLI command is offered for them. Uploading a
 chain uses the same connection resolver, and individual steps can still be imported separately.
+
+
+To replay a selected chain, choose **Start chain review** on its saved/uploaded review, select the
+receiving installations, and prepare the first step. **Open step for review** fills an ordinary
+draft and runs nothing. Review its parameters and external inputs, choose a fresh cap/estimate for a
+paid step, then use **Run**. **Continue chain** observes that saved outcome and offers the next step.
+Connected inputs use the new producer's public output port/item; an identity change is shown.
+Missing/ambiguous outputs stop before a consumer, with no silent upstream rerun.
+
+**Stop chain** cancels the current ordinary run and prevents later preparation. Wait for owned
+imports/preservation to settle, then explicitly resume or dismiss. Completed evidence and spend
+remain saved. **Leave chain** stops its review and lets the draft become an independent experiment.
+Reviews are session-local; saved attempts and retained archives survive host restart. If a restarted
+tool no longer resolves a required native output, start a new review to rerun its producer explicitly.
+Each review has at most 16 steps; at most two reviews can be open. These controls do not form an
+automatic workflow engine. See [M5 acceptance and limits](docs/reviews/2026-11-03-m5-operations.md).
+
+For native Rascal preservation, add its actual export directory (normally
+`$XDG_DATA_HOME/rascal/exports`) to the registration's `evidence_dirs`, in addition to its run/store
+read boundaries. This is read-only authorization; it does not belong in `allow_dirs`. Create/select
+the real directory before registration. Wafflery does not infer these paths or scrape arbitrary
+workspace folders. The [registration procedure](#registration-format) preserves the explicit boundary.

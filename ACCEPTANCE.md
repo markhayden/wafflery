@@ -1,8 +1,8 @@
 # Wafflery first-release acceptance criteria
 
-Status: consolidated product acceptance draft, 2026-10-30. Derived from decisions Q1–Q19 in
-[SPEC.md](SPEC.md) and the reviewed [mock](work/mockups.html). This is the checklist for the
-implementation plan, not a claim that the product is implemented or a build authorization.
+Status: product acceptance targets with implementation evidence through M5.21, updated 2026-11-03.
+The criteria remain release targets; passing host integration does not approve M7 distribution.
+See [M5 review](docs/reviews/2026-11-03-m5-operations.md) for actual coverage and exclusions.
 
 ## Scope and evidence
 
@@ -17,7 +17,7 @@ adapter tests, browser tests for interactions, and installed-binary checks for d
 Mock DOM checks prove prototype wiring only. They do not prove native dialog behavior, layout,
 accessibility, MCP conformance, persistence, payment enforcement, or executable exports.
 
-All criteria below are product targets awaiting implementation verification. Handoff references
+The criteria below are product targets; coverage and remaining release gates are recorded separately. Handoff references
 are defined in [TOOL-REQUIREMENTS.md](TOOL-REQUIREMENTS.md).
 
 ## Entry and setup
@@ -170,7 +170,7 @@ Pre-run protocol rejection is distinct from a tool run failure and transport unc
 
 Verify byte snapshots, deduplication, changed/deleted originals, restart, and unavailable assets.
 Remove disposable tool files and verify that supported saved artifacts remain inspectable.
-Effective configuration and artifact preservation depend on C2/R3. Output ownership is gate G1.
+M5.21 verifies effective invocation and declared native portability under C2/R3. Nonportable types and tool-owned report sources retain their explicit G1 dependencies.
 
 ### AC12 — Retention is deliberate
 
@@ -245,7 +245,7 @@ Verify each drawer use with keyboard, long content, focus restoration, and real 
 - Environment-variable names may be shown; credential values never appear in exports.
 
 Verify hostile/space-containing paths, immutable snapshots, and an independent offline replay.
-Plain MCP capture already follows v0.1; CLI/effective configuration need C2.
+M5.21 verifies resolved CLI/effective invocation under C2 within declared portability.
 
 ### AC18 — Download includes required inputs
 
@@ -258,7 +258,7 @@ Plain MCP capture already follows v0.1; CLI/effective configuration need C2.
 - Verify fingerprints and omit credentials, unrelated files, tool binaries, and model installs.
   Explain absent assets. Nondeterministic providers are not promised identical output pixels.
 
-Verify a copied bundle in a new directory with the old workspace unavailable. See C2/R3.
+M5.21 verifies copied native/image bundles with the old workspace unavailable under C2/R3. Nonportable inputs remain explicitly workspace-dependent.
 
 ### AC19 — Reports remain tool-owned
 
@@ -314,24 +314,19 @@ Verify dynamic ports, slow startup, unsupported framing, failure, shutdown, and 
 
 ## Feature and release gates
 
-Q19 scopes these gates to dependent work. [PLAN.md](PLAN.md) defines the independently buildable
-M0–M3 foundation; the [runtime design](docs/design/foundation-runtime.md) resolves its host-side
-choices. Remaining gates below block the corresponding integration/full-release claims, not
-all implementation planning. Each milestone still needs its scoped plan reviewed before coding.
+Q19 scopes these gates to the work they govern. M0–M3 and V01–V19 are complete; M5.21 verifies the
+v0.4 operations/invocation client against approved peers. The following are current dispositions,
+not a blanket production release approval.
 
-| Gate | Remaining design work | Recommended direction / owner |
-|---|---|---|
-| G1 | Output and report durability, workspace ownership | Q15 settles preservation scope. Specify ownership and capture; decide complete report snapshot versus reconstruction. Wafflery + tools/C2/C3. |
-| G2 | Session budgets, process lifecycle, concurrency | Q17 limits crash handling to persisted history and interrupted status. Tool-owned caps; serial per tool initially; no hidden restart to refresh budget. Wafflery + C4. |
-| G3 | Discovery/install/host reuse | Known executable registry + explicit overrides; terminal install, attach to compatible host. Agree launcher ABI and supported platforms. H1. |
-| G4 | Storage/roots/cleanup | Managed immutable asset store plus explicit imported roots; no implicit whole-home access. Specify layout, atomicity, ownership, and deletion UX. Wafflery. |
-| G5 | Complete action coverage | Use live advertised capabilities; publish per-action readiness and supported task/operation mapping. C1/R1/R3/S1. R2 remains optional. |
-| G6 | Engineering specification | Foundation choices and commands are specified in the runtime design; M0 verifies locks/tooling. Release platforms, installer and dependent integration plans close at their own milestones. |
+| Gate | Verified | Remaining boundary |
+| --- | --- | --- |
+| G1 | Owned images, evidence, declared native bytes, examples and invocation bundles; host/CLI replay after source loss. | Tool-owned reports still need usable run directories. Nonportable types remain workspace-dependent. |
+| G2 | Owned child/report lifetimes, explicit cancellation/restart and session cap/budget/quote controls. | Minimal interruption reporting; no durable job recovery or cross-restart spending service. |
+| G3 | Canonical H1 launch and compatible-host attachment. | Real installation channel, automatic installed-tool discovery and packaged entry journeys. |
+| G4 | Explicit `serve --allow-dir` input grants replace roots; evidence reads remain separate; ownership-aware cleanup. | User-selected external stores remain separately owned. No automatic old-root registration migration. |
+| G5 | Generic task/operation/utility discovery, port bindings and supported artifacts verified through independent and real peers. | Unadvertised capabilities/provider quality are not inferred. R2 remains optional. |
+| G6 | Locked Rust/UI dependencies, embedded UI, reproducibility checks and hosted macOS CI. | M7 release mechanics, macOS minimum/architectures and final distribution acceptance. |
 
-These gates identify unfinished design work. They do not revoke accepted product decisions or
-block the authorized acceptance/handoff documentation. No application implementation is begun here.
-
-[ENGINEERING.md](ENGINEERING.md) proposes the host side of G1–G4, including ordered asset capture,
-explicit references/cleanup, single-host ownership, serial tool sessions, and minimal interruption
-handling. C2/C3/C4/H1 wire agreements and the remaining G6 choices are still open. The proposal
-does not mark these gates passed.
+Chromium/WebKit coverage is not a substitute for native Safari manual evidence. Real paid-provider
+quality/billing and evaluations are outside the offline M5 acceptance. V20 import feedback remains
+an adjacent task; the host must not guess Squint's undeclared pixel limit or silently resize inputs.

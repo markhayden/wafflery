@@ -1,5 +1,21 @@
 # Rascal handoff: tasks, operations, and reproducible runs
 
+## Current disposition — 2026-11-03
+
+Approved M10 `eed6397` provides the v0.4 operations profile, typed ports/resources and declared
+native portability. M5.21 verifies Line → Rasterize → Feather, value/reference contrast, parameter
+edits without upstream reruns, indexed refusal, restart/store move and native host/CLI bundles.
+R3/C2 integration is closed within those declarations. Register the tool's export directory as
+read-only evidence for native preservation; never grant it as input implicitly. Portable Plan,
+Series and BandProfile are not promised by this checkpoint. R2 remains optional/tool-owned.
+
+See [integration evidence](../integration-sources.md) and [M5 review](../reviews/2026-11-03-m5-operations.md).
+
+## Historical request packet
+
+The dated status and requests below are retained as historical context; current disposition above
+supersedes statements that these agreements are still awaiting a first proposal.
+
 Status: ready for owner review. Keep implementation in Rascal; shared additions go through
 table-manners. Wafflery remains a generic client. No sibling files changed.
 
