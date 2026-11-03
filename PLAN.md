@@ -1212,6 +1212,17 @@ races. Merge/report at task boundaries or coherent multi-commit batches, without
 inventories/checkpoints below are historical records, not requirements for future work. This applies
 to V20 too. Failing tests first, contract boundaries, accurate docs and no attribution remain required.
 
+**Coordinator CI policy update (2026-11-03):** Playwright retries once when `CI` is set and zero
+times locally. Passed-on-retry cases are explicitly listed in the job summary and warning annotations,
+with failed/flaky attempt diagnostics retained. A twice-failing test still fails the job; a flaky
+report remains a bug to investigate. The M5.19 hosted failure was an older restart test: its session
+response expanded content above Restart during the pointer click. The test now waits for the visible
+session region's `aria-busy=false` before interacting, rather than repeating the click or extending a
+timeout. Verification: the known restart case passed ten times per browser with retries disabled;
+full Rust workspace tests, fmt/clippy, typecheck and all 90 UI unit tests passed. Reporter integration
+proves real retry success is flagged while two failures still exit unsuccessfully. Independent review
+found no blockers. This change does not authorize a local full browser matrix or default stress runs.
+
 **Coordinator check adjustment after M5.12 CI (2026-11-02):** run the full local Rust suite
 (`cargo test --workspace`) before each ready-to-push task boundary, in addition to check/clippy and
 UI typecheck. Browser checks stay targeted; hosted CI remains the full matrix gate. This supersedes

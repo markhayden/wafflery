@@ -5,7 +5,8 @@ export default defineConfig({
   testDir: "./tests/browser",
   globalSetup: "./tests/browser/binaries.ts",
   forbidOnly: true,
-  retries: 0,
+  retries: process.env.CI ? 1 : 0,
+  reporter: process.env.CI ? [["dot"], ["./tests/browser/flaky-reporter.ts"]] : "list",
   workers: 2,
   timeout: 15_000,
   use: {

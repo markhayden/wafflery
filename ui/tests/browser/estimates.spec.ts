@@ -130,6 +130,8 @@ test("tool restart invalidates a quote and preserves the chosen cap", async ({pa
   await estimate(page).click(); await expect(cost(page)).toContainText("Estimate within cap.");
   await page.getByRole("button",{name:"Tool setup",exact:true}).click();
   const drawer = page.getByRole("dialog");
+  // Session details expand above Restart; wait for that observable layout transition.
+  await expect(drawer.getByRole("region",{name:"Session spending",exact:true})).toHaveAttribute("aria-busy","false");
   await drawer.getByRole("button",{name:"Restart tool session",exact:true}).click();
   await drawer.getByRole("button",{name:"Confirm restart",exact:true}).click();
   await expect(drawer.getByRole("region",{name:"Restart tool"})).toContainText("Tool restarted");

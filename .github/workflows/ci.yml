@@ -104,11 +104,11 @@ jobs:
         id: browser
         run: bun run --cwd ui test:browser
 
-      - name: Preserve failed browser diagnostics
-        if: ${{ failure() && steps.browser.outcome == 'failure' }}
+      - name: Preserve failed or flaky browser diagnostics
+        if: ${{ always() && (steps.browser.outcome == 'failure' || (steps.browser.outputs.flaky_count != '' && steps.browser.outputs.flaky_count != '0')) }}
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
         with:
-          name: browser-failures-${{ github.run_attempt }}
+          name: browser-diagnostics-${{ github.run_attempt }}
           path: |
             ui/test-results/**/trace.zip
             ui/test-results/**/test-failed-*.png
