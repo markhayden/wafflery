@@ -232,10 +232,28 @@ impl Coordinator {
     ) -> Result<()> {
         use crate::library::attempts::InputBinding;
         for (port, sources) in &request.lineage {
+            let image_bindings = request.images.get(port).map(|images| {
+                images
+                    .iter()
+                    .enumerate()
+                    .map(|(index, asset)| InputBinding::Image {
+                        asset: asset.clone(),
+                        frame: request
+                            .frames
+                            .get(port)
+                            .and_then(|frames| frames.get(index))
+                            .cloned()
+                            .unwrap_or_default(),
+                    })
+                    .collect::<Vec<_>>()
+            });
             let bindings = request
                 .bindings
                 .get(port)
-                .ok_or_else(|| Error::Invalid("Lineage has no receiving port".into()))?;
+                .or(image_bindings.as_ref())
+                .ok_or_else(|| {
+                    Error::Invalid("Lineage has no receiving port or image slot".into())
+                })?;
             if sources.len() != bindings.len() {
                 return Err(Error::Invalid(
                     "Lineage occurrence count differs from bindings".into(),
@@ -265,6 +283,14 @@ impl Coordinator {
                             Some(InputBinding::Image { asset: left, .. }),
                             InputBinding::Image { asset: right, .. },
                         ) => left == right,
+                        (None, InputBinding::Image { asset, .. }) => {
+                            saved
+                                .request
+                                .images
+                                .get(source_port)
+                                .and_then(|images| images.get(*occurrence))
+                                == Some(asset)
+                        }
                         _ => expected == Some(binding),
                     };
                     if !same {
@@ -289,19 +315,28 @@ impl Coordinator {
                     .ok_or_else(|| Error::Invalid("Lineage source has no result".into()))?;
                 let output = result["artifacts"]["out"]
                     .get(*occurrence)
-                    .ok_or_else(|| Error::Invalid("Lineage source occurrence is missing".into()))?;
-                if output["port"] != *source_port {
-                    return Err(Error::Invalid("Lineage source port differs".into()));
-                }
+                    .filter(|output| output["port"] == *source_port);
+                let picture = result["images"]["out"]
+                    .get(*occurrence)
+                    .filter(|output| output["role"] == *source_port);
                 let valid = match binding {
-                    InputBinding::Artifact { reference } => *reference == output["artifact"],
+                    InputBinding::Artifact { reference } => {
+                        output.is_some_and(|output| *reference == output["artifact"])
+                    }
                     InputBinding::Image { asset, .. } => {
-                        output["artifact"]["type"] == "image"
-                            && output["artifact"]["identity"]
-                                == format!("sha256:{}", self.assets.metadata(asset).await?.sha256)
+                        let asset = self.assets.metadata(asset).await?;
+                        output.is_some_and(|output| {
+                            output["artifact"]["type"] == "image"
+                                && output["artifact"]["identity"]
+                                    == format!("sha256:{}", asset.sha256)
+                        }) || picture.is_some_and(|output| {
+                            output["image"]["file_sha256"] == asset.sha256
+                                && output["image"]["width"] == asset.width
+                                && output["image"]["height"] == asset.height
+                        })
                     }
                     InputBinding::Location { value } => {
-                        unique_shared_location(output, result, value)
+                        output.is_some_and(|output| unique_shared_location(output, result, value))
                     }
                 };
                 if !valid {

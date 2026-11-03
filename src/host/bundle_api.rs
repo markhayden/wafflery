@@ -4,6 +4,7 @@ use crate::{
     tools::{
         Error,
         bundles::{self, Options},
+        chain_edges,
         coordinator::Coordinator,
     },
 };
@@ -26,7 +27,7 @@ struct BundleState {
 pub fn router(coordinator: Arc<Coordinator>) -> Router {
     Router::new()
         .route("/api/attempts/{id}/bundles", get(for_attempt).post(create))
-        .route("/api/bundles", get(list))
+        .route("/api/bundles", get(list).post(create_chain))
         .route("/api/bundles/{id}", get(read))
         .route("/api/bundles/{id}/download", get(download))
         .with_state(BundleState {
@@ -64,18 +65,17 @@ async fn for_attempt(
 async fn read(
     State(state): State<BundleState>,
     Path(id): Path<String>,
-) -> Result<Json<Record>, ApiError> {
-    Ok(Json(
-        BundleStore(state.coordinator.assets.clone())
-            .get(&id)
-            .await?,
-    ))
+) -> Result<Json<ReviewedRecord>, ApiError> {
+    let record = BundleStore(state.coordinator.assets.clone())
+        .get(&id)
+        .await?;
+    Ok(Json(reviewed(record).await?))
 }
 async fn create(
     State(state): State<BundleState>,
     Path(id): Path<String>,
     Json(options): Json<Options>,
-) -> Result<(StatusCode, Json<Record>), ApiError> {
+) -> Result<(StatusCode, Json<ReviewedRecord>), ApiError> {
     let permit = state
         .create
         .clone()
@@ -93,7 +93,89 @@ async fn create(
     })
     .await
     .map_err(|_| Error::Invalid("Invocation bundle worker stopped".into()))??;
-    Ok((StatusCode::CREATED, Json(record)))
+    Ok((StatusCode::CREATED, Json(reviewed(record).await?)))
+}
+pub(super) async fn reviewed(record: Record) -> Result<ReviewedRecord, Error> {
+    tokio::task::spawn_blocking(move || record.into())
+        .await
+        .map_err(|_| Error::Invalid("Invocation connection review worker stopped".into()))
+}
+/// Derived host review, never persisted in or added to the contract manifest.
+#[derive(Clone, serde::Serialize)]
+pub(super) struct ReviewedRecord {
+    #[serde(flatten)]
+    record: Record,
+    chain: ChainReview,
+}
+#[derive(Clone, serde::Serialize)]
+struct ChainReview {
+    edges: Vec<chain_edges::Edge>,
+    problem: Option<String>,
+}
+impl From<Record> for ReviewedRecord {
+    fn from(record: Record) -> Self {
+        let resolution = if record.manifest["steps"]
+            .as_array()
+            .is_some_and(|s| s.len() > chain_edges::MAX_STEPS)
+        {
+            Err(Error::Invalid(
+                "This host supports at most 16 steps. Import individual steps instead.".into(),
+            ))
+        } else {
+            chain_edges::resolve(&record.manifest)
+        };
+        let chain = match resolution {
+            Ok(edges) => ChainReview {
+                edges,
+                problem: None,
+            },
+            Err(error) => ChainReview {
+                edges: vec![],
+                problem: Some(error.to_string()),
+            },
+        };
+        Self { record, chain }
+    }
+}
+#[derive(serde::Deserialize)]
+#[serde(deny_unknown_fields)]
+struct Selection {
+    attempts: Vec<String>,
+}
+async fn create_chain(
+    State(state): State<BundleState>,
+    Json(selection): Json<Selection>,
+) -> Result<(StatusCode, Json<ReviewedRecord>), ApiError> {
+    let ids = selection.attempts;
+    if ids.is_empty()
+        || ids.len() > chain_edges::MAX_STEPS
+        || ids.iter().collect::<std::collections::BTreeSet<_>>().len() != ids.len()
+    {
+        return Err(Error::Invalid(
+            "Select between 1 and 16 distinct saved runs in execution order".into(),
+        )
+        .into());
+    }
+    let permit = state
+        .create
+        .clone()
+        .try_acquire_owned()
+        .map_err(|_| Error::Conflict("Another invocation bundle is being assembled"))?;
+    let record = tokio::spawn(async move {
+        let _permit = permit;
+        let mut attempts = Vec::with_capacity(ids.len());
+        for id in &ids {
+            attempts.push(state.coordinator.attempts.get(id).await?);
+        }
+        let bundle = bundles::build_chain(&state.coordinator.assets, &attempts).await?;
+        BundleStore(state.coordinator.assets.clone())
+            .save_chain(&ids, bundle)
+            .await
+            .map_err(Error::from)
+    })
+    .await
+    .map_err(|_| Error::Invalid("Invocation bundle worker stopped".into()))??;
+    Ok((StatusCode::CREATED, Json(reviewed(record).await?)))
 }
 async fn download(
     State(state): State<BundleState>,

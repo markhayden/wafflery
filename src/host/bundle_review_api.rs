@@ -28,6 +28,7 @@ struct Reviews {
 }
 struct Review {
     bundle: Arc<ValidatedBundle>,
+    record: super::bundle_api::ReviewedRecord,
     state: Mutex<Lifecycle>,
     _slot: OwnedSemaphorePermit,
 }
@@ -39,34 +40,37 @@ struct Lifecycle {
 #[derive(Serialize)]
 struct Response {
     id: String,
-    record: Record,
+    record: super::bundle_api::ReviewedRecord,
     import: Option<Progress>,
 }
 fn response(id: String, review: &Review, import: Option<Progress>) -> Response {
-    let b = &review.bundle;
     Response {
         id,
         import,
-        record: Record {
-            id: b.sha256().into(),
-            sha256: b.sha256().into(),
-            size: b.archive().len() as u64,
-            manifest: b.manifest().clone(),
-            members: b
-                .members()
-                .iter()
-                .map(|(name, m)| crate::library::bundle_archive::Member {
-                    name: name.clone(),
-                    sha256: m.sha256().into(),
-                    bytes: m.bytes(),
-                })
-                .collect(),
-            workspace_dependent: b.manifest()["steps"].as_array().unwrap().iter().any(|s| {
-                !s["reference_only"].as_array().unwrap().is_empty()
-                    || !s["unportable"].as_array().unwrap().is_empty()
-            }),
-        },
+        record: review.record.clone(),
     }
+}
+fn record(b: &ValidatedBundle) -> super::bundle_api::ReviewedRecord {
+    Record {
+        id: b.sha256().into(),
+        sha256: b.sha256().into(),
+        size: b.archive().len() as u64,
+        manifest: b.manifest().clone(),
+        members: b
+            .members()
+            .iter()
+            .map(|(name, m)| crate::library::bundle_archive::Member {
+                name: name.clone(),
+                sha256: m.sha256().into(),
+                bytes: m.bytes(),
+            })
+            .collect(),
+        workspace_dependent: b.manifest()["steps"].as_array().unwrap().iter().any(|s| {
+            !s["reference_only"].as_array().unwrap().is_empty()
+                || !s["unportable"].as_array().unwrap().is_empty()
+        }),
+    }
+    .into()
 }
 pub fn router(coordinator: Arc<Coordinator>) -> Router {
     Router::new()
@@ -193,9 +197,13 @@ async fn upload(
     })??;
     // Once parsing starts, retain the permit through completion even if the browser disconnects.
     let worker = tokio::spawn(async move {
-        let bundle = tokio::task::spawn_blocking(move || bundle_reader::read(bytes))
-            .await
-            .map_err(|_| Error::Invalid("Bundle validation worker stopped".into()))??;
+        let (bundle, record) = tokio::task::spawn_blocking(move || {
+            let bundle = bundle_reader::read(bytes)?;
+            let record = record(&bundle);
+            Ok::<_, Error>((bundle, record))
+        })
+        .await
+        .map_err(|_| Error::Invalid("Bundle validation worker stopped".into()))??;
         let mut random = [0; 16];
         getrandom::fill(&mut random).map_err(std::io::Error::other)?;
         let id = random
@@ -204,6 +212,7 @@ async fn upload(
             .collect::<String>();
         let review = Arc::new(Review {
             bundle: Arc::new(bundle),
+            record,
             state: Mutex::new(Lifecycle::default()),
             _slot: slot,
         });

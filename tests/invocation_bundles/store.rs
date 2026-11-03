@@ -340,3 +340,36 @@ async fn an_explicitly_imported_archive_is_retained_without_inventing_an_attempt
     source.database.shutdown().await.unwrap();
     target.database.shutdown().await.unwrap();
 }
+
+#[tokio::test]
+async fn chain_publication_rechecks_every_source_before_creating_owners_or_an_archive() {
+    let (_root, assets, attempt, _) = fixture().await;
+    let built = bundles::build(&assets, &attempt, &Options::default())
+        .await
+        .unwrap();
+    let id = built.sha256.clone();
+    let store = BundleStore(assets.clone());
+    assert!(matches!(
+        store
+            .save_chain(&[attempt.id.clone(), "deleted-second-source".into()], built)
+            .await,
+        Err(wafflery::library::Error::Conflict(_))
+    ));
+    assert!(store.list(None, None).await.unwrap().items.is_empty());
+    assert!(
+        !assets
+            .root()
+            .join("bundles/sha256")
+            .join(&id[..2])
+            .join(&id)
+            .exists()
+    );
+    assert!(
+        BlobStore(assets.clone())
+            .links(Owner::Bundle(id))
+            .await
+            .unwrap()
+            .is_empty()
+    );
+    assets.database.shutdown().await.unwrap();
+}

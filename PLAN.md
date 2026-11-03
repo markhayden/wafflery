@@ -3163,6 +3163,19 @@ Line → Rasterize by reference versus by value, selected producer/unselected so
 omitted upstream step and mixed tools.
 **Commit:** `feat: bundle selected experiment chains`.
 
+**M5.19 build approach:** three independent parts: a shared pure manifest-edge resolver and
+public-output lineage checks; bounded selected-order assembly/ownership and private API; then chain
+selection/review in the shared drawer. The resolver is also the import/replay authority. It treats
+literal shared locations as literals, recognizes image references from either public output profile,
+and coalesces an image profile entry only through a unique explicit preview link whose bytes match the
+image artifact identity. Equal hashes without that link never erase distinct ports/items. Host lineage
+must identify a selected producer occurrence (including a public images-profile role) exactly; missing
+or different lineage refuses a runnable chain rather than guessing from equal hashes. Core task
+image slots may use the existing lineage map as well as operation bindings; this is host metadata,
+not a new contract bundle field. Every non-image input still carries its available export or an
+explicit unportable record. UI selection remains an ordered set with a bounded step count. Task
+review and targeted tests precede one task-boundary merge.
+
 #### M5.20 — Replay chains using fresh outputs
 
 - [ ] Use M5.19's manifest resolver to map each earlier-output input to this replay's output port and

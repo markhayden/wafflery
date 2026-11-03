@@ -323,3 +323,48 @@ async fn partial_input_evidence_preserves_noncompleted_outcomes_with_notices() {
         }
     }
 }
+
+#[tokio::test]
+async fn task_image_lineage_can_identify_an_owned_images_profile_output() {
+    let h = Host::new("normal").await;
+    h.c.submit(h.request(None).await).await.unwrap();
+    let seed = h.settled().await;
+    assert_eq!(seed.outputs.len(), 1);
+    let image = &seed.outputs[0];
+    assert_ne!(image["asset"]["sha256"], h.a.sha256);
+    tokio::time::timeout(Duration::from_secs(5), async {
+        while h.c.snapshot().await.unwrap()["tools"][0]["busy"] == true {
+            tokio::task::yield_now().await;
+        }
+    })
+    .await
+    .unwrap();
+    let mut next = h.request(None).await;
+    next.id = "from-image".into();
+    next.images.insert(
+        "source".into(),
+        vec![image["asset"]["id"].as_str().unwrap().to_owned()],
+    );
+    next.lineage = serde_json::from_value(
+        json!({"source":[{"attempt":"binding-test","port":image["role"],"occurrence":0}]}),
+    )
+    .unwrap();
+    h.c.submit(next).await.unwrap();
+    let saved = tokio::time::timeout(Duration::from_secs(5), async {
+        loop {
+            let saved = h.c.attempts.get("from-image").await.unwrap();
+            if saved.preservation["contract"] != "pending" {
+                return saved;
+            }
+            tokio::time::sleep(Duration::from_millis(10)).await;
+        }
+    })
+    .await
+    .unwrap();
+    assert_eq!(saved.execution, "completed", "{:?}", saved.result);
+    assert_eq!(
+        saved.arguments["source"]["expect"]["file_sha256"],
+        image["asset"]["sha256"]
+    );
+    h.close().await;
+}

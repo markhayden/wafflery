@@ -512,3 +512,5 @@ mod operation_examples_cases;
 
 #[path = "invocation_bundles/replay.rs"]
 mod bundle_replay_cases;
+#[path = "invocation_bundles/chains.rs"]
+mod chain_bundle_cases;

@@ -891,3 +891,30 @@ explicitly confirmed, even if optional. Paid drafts clear the archived cap; user
 cap before a fresh estimate. Opening does not replace a tool session or reset its spending allowance.
 Source linkage appears in the inspector and input pane. Output identity differences are informative,
 while ordinary tool outcomes remain authoritative.
+
+
+M5.19 exports explicitly selected, distinct, ordered attempts (at most 16) through `POST /api/bundles`
+with an `attempts` ID list. Assembly shares one storage read lease, unions ownership, deduplicates exact
+members, enforces cumulative archive/manifest bounds and preserves canonical single-step bytes. The
+write-lease commit rechecks every source before publishing the archive and all source associations.
+HTTP cancellation retains the assembly worker and its single shared create permit. No tool controls,
+configuration reads, action calls or extra attempts are involved.
+
+`tools::chain_edges` is the common pure resolver for export and incoming review/replay. It matches only
+earlier public artifact/image occurrences, preserves port-local item order and global profile indices,
+and coalesces an image profile row only via a unique linked preview with identical image bytes and
+coordinates. Optional pixel-digest hints do not affect image identity. Native refs retain their opaque
+frame and tool ownership; previews never become native data. Shared location values stay literal.
+Zero matches denote external input, one a fresh-output edge, and multiple matches refuse the chain.
+Export additionally checks all inferred edges against saved host lineage; equal identities cannot
+substitute a different selected source. Task image slots may carry existing host lineage metadata.
+
+The private API derives `chain.edges` and `chain.problem` alongside reviews; these fields are neither
+stored nor added to the contract manifest. Incoming ambiguous archives stay reviewable as individual
+steps. Native exports are included
+conservatively for internal edges too; their presence never permits stale-output chain replay.
+
+Connection resolution has a conservative one-million-candidate search budget covering both input
+matching and mirror scans. Oversized graphs remain individual-step reviews with an explanation.
+Uploaded analysis is computed once with parsing on a blocking worker and cached for the review's
+lifetime; saved-record analysis also runs off the async runtime.

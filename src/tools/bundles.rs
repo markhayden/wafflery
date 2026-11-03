@@ -1,11 +1,11 @@
-//! Single-step invocation bundles from immutable evidence and exact owned inputs.
+//! Invocation bundles from immutable evidence and exact owned inputs.
 use super::{Error, Result, validator};
 use crate::library::{
     assets::AssetStore,
     attempts::Attempt,
     blob_links::{BlobLink, Owner},
     blobs::BlobStore,
-    bundle_archive::{self, CanonicalArchive, MAX_MEMBER, MAX_MEMBERS, MAX_TOTAL},
+    bundle_archive::{self, CanonicalArchive, MAX_MANIFEST, MAX_MEMBER, MAX_MEMBERS, MAX_TOTAL},
 };
 use serde::Deserialize;
 use serde_json::{Value, json};
@@ -18,6 +18,7 @@ pub struct Options {
     pub omit: BTreeMap<String, String>,
 }
 pub use crate::library::bundle_archive::{Bundle, Member};
+#[derive(Default)]
 struct Assembly {
     files: BTreeMap<String, Vec<u8>>,
     total: u64,
@@ -77,6 +78,54 @@ fn occurrence<'a>(result: &'a Value, name: &str, index: usize) -> Option<(usize,
 }
 pub async fn build(assets: &AssetStore, attempt: &Attempt, options: &Options) -> Result<Bundle> {
     let _storage = assets.storage.read().await;
+    let mut assembly = Assembly::default();
+    let step = assemble_step(assets, attempt, options, &mut assembly).await?;
+    finish(assets, vec![step], assembly).await
+}
+/// Explicitly selected order only; no provenance calls or implicit upstream steps.
+pub async fn build_chain(assets: &AssetStore, attempts: &[Attempt]) -> Result<Bundle> {
+    if attempts.is_empty()
+        || attempts.len() > super::chain_edges::MAX_STEPS
+        || attempts
+            .iter()
+            .map(|a| &a.id)
+            .collect::<BTreeSet<_>>()
+            .len()
+            != attempts.len()
+    {
+        return Err(Error::Invalid(
+            "Select between 1 and 16 distinct saved attempts".into(),
+        ));
+    }
+    let _storage = assets.storage.read().await;
+    let mut assembly = Assembly::default();
+    let mut steps = vec![];
+    let mut bytes = serde_json::to_vec(&json!({"bundle_version":1,"steps":[]}))?.len() as u64;
+    for (index, attempt) in attempts.iter().enumerate() {
+        let step = assemble_step(assets, attempt, &Options::default(), &mut assembly)
+            .await
+            .map_err(|error| {
+                Error::Invalid(format!(
+                    "Cannot bundle selected step {} ({}): {error}",
+                    index + 1,
+                    attempt.request.action
+                ))
+            })?;
+        bytes += serde_json::to_vec(&step)?.len() as u64 + u64::from(!steps.is_empty());
+        if bytes > MAX_MANIFEST {
+            return Err(Error::Conflict("Invocation manifest exceeds 8 MiB"));
+        }
+        steps.push(step);
+    }
+    super::chain_edges::check_selection(&json!({"steps":steps}), attempts)?;
+    finish(assets, steps, assembly).await
+}
+async fn assemble_step(
+    assets: &AssetStore,
+    attempt: &Attempt,
+    options: &Options,
+    assembly: &mut Assembly,
+) -> Result<Value> {
     if attempt.preservation["contract"] == "pending"
         || attempt.preservation["native"] == "preserving"
     {
@@ -130,12 +179,6 @@ pub async fn build(assets: &AssetStore, attempt: &Attempt, options: &Options) ->
             "Omissions need a declared slot/port and a reason of 1–1,024 bytes".into(),
         ));
     }
-    let mut assembly = Assembly {
-        files: BTreeMap::new(),
-        total: 0,
-        assets: BTreeSet::new(),
-        links: vec![],
-    };
     let blobs = BlobStore(assets.clone());
     let links = blobs.links(Owner::Attempt(attempt.id.clone())).await?;
     let mut inputs = vec![];
@@ -256,7 +299,7 @@ pub async fn build(assets: &AssetStore, attempt: &Attempt, options: &Options) ->
                 }
             } else if !operation || port["type"] == "image" {
                 let (member, image) =
-                    image_input(assets, attempt, name, index, value, &mut assembly).await?;
+                    image_input(assets, attempt, name, index, value, assembly).await?;
                 inputs.push(if operation {
                     json!({"port":name,"image":image,"member":member})
                 } else {
@@ -272,8 +315,16 @@ pub async fn build(assets: &AssetStore, attempt: &Attempt, options: &Options) ->
             }
         }
     }
-    let workspace_dependent = !reference_only.is_empty() || !unportable.is_empty();
-    let manifest = json!({"bundle_version":1,"steps":[{"contract":result["contract"],"tool":result["tool"],"invocation":result["invocation"],"result":result,"inputs":inputs,"artifacts":artifacts,"reference_only":reference_only,"unportable":unportable}]});
+    Ok(
+        json!({"contract":result["contract"],"tool":result["tool"],"invocation":result["invocation"],"result":result,"inputs":inputs,"artifacts":artifacts,"reference_only":reference_only,"unportable":unportable}),
+    )
+}
+async fn finish(assets: &AssetStore, steps: Vec<Value>, assembly: Assembly) -> Result<Bundle> {
+    let workspace_dependent = steps.iter().any(|step| {
+        !step["reference_only"].as_array().unwrap().is_empty()
+            || !step["unportable"].as_array().unwrap().is_empty()
+    });
+    let manifest = json!({"bundle_version":1,"steps":steps});
     check_schema("urn:table-manners:core:invocation-bundle", &manifest)?;
     let members = assembly
         .files
