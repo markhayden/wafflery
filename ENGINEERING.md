@@ -226,7 +226,7 @@ can leave reclaimable files; it must not break surviving runs/examples. Baseline
 an explicit run deletion; the UI explains that the pin will clear. Examples retain their assets.
 
 Schema 6 stores opaque native files under `Library/blobs/sha256`, with occurrence links owned
-independently by attempts, examples and future bundles. Schema 7 adds frozen input-artifact
+independently by attempts, examples and bundles. Schema 7 adds frozen input-artifact
 occurrences and explicit workspace-dependence labels to example records, with the normal database
 backup before adoption. Historical examples lacking native input occurrences cannot claim portable
 restoration. Example-origin lineage validates saved port occurrences independently of deleted runs. Publication and reads verify the digest;
@@ -799,3 +799,18 @@ activity renews every 30 seconds; hidden pages send neither. Exited views stop a
 polling. Remount resumes observation without opening a renderer; explicit Close keeps observing
 the retained view until closure or a force-required state. Startup failures preserve the saved run and its evidence tabs. Storybook covers ready,
 starting, failed, expired, uncertain, force-required and unavailable views at shared drawer sizes.
+
+
+M5.15 assembles invocation bundles from the saved result/invocation, verified original input images
+and exact owned native exports. By-value shared locations need no export. Missing native inputs and
+image references lacking preserved originals are explicitly workspace-dependent; image previews never
+stand in for native bytes. Omissions cover a whole declared slot/port and require a reason. The
+manifest retains occurrence order and duplicates while members are deduplicated by their canonical
+identity-derived name. Conflicting bytes for one name refuse assembly.
+
+Bundles use the existing tar dependency with fixed uncompressed ustar headers, `invocation.json`
+first and other members sorted. MIME suffixes are fixed (png/jpg/json/tar, otherwise bin), never
+borrowed from an export path. Limits: 8 MiB manifest, 64 MiB/member, 64 members including the
+manifest, 256 MiB including container overhead; safe lowercase basenames are at most 96 bytes.
+The temporary file is hashed after completion. Persistence, UI review and downloads arrive in M5.16;
+assembly itself makes no tool calls, reads no configuration and creates no completed bundle record.

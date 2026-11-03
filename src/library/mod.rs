@@ -4,6 +4,7 @@ pub mod baselines;
 mod blob_cleanup;
 pub mod blob_links;
 pub mod blobs;
+pub mod bundle_archive;
 pub mod cleanup;
 pub mod db;
 pub mod examples;

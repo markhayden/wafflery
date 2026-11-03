@@ -2890,15 +2890,15 @@ no configuration contents were read, and no portable replay claim was introduced
 
 #### M5.15 — Write canonical invocation bundles
 
-- [ ] Build schema-valid single-step manifests with original result/invocation, ordered image inputs and
+- [x] Build schema-valid single-step manifests with original result/invocation, ordered image inputs and
   non-image artifact inputs (including shared location references). Store original image bytes and exact
   tool exports under digest-based names; map repeated
   slot/port entries by occurrence and preserve duplicates without duplicating archive members.
-- [ ] Produce byte-identical uncompressed ustar: manifest first, remaining members sorted, prescribed
+- [x] Produce byte-identical uncompressed ustar: manifest first, remaining members sorted, prescribed
   headers/modes/owners/timestamps. Check image digest and native export hash; never substitute previews.
   Use a fixed media-type/extension mapping, lowercase safe basenames and the peer-compatible 96-byte
   member-name bound; never take an archive member name from an export path.
-- [ ] Enforce documented limits before writing (initial common CLI-compatible ceiling: 8 MiB manifest,
+- [x] Enforce documented limits before writing (initial common CLI-compatible ceiling: 8 MiB manifest,
   64 MiB per member, 64 members, 256 MiB total; over-limit exports explain the limit). Include inputs by
   default; explicit omissions populate reference_only, failed/unportable exports populate unportable.
 
@@ -2906,6 +2906,30 @@ no configuration contents were read, and no portable replay claim was introduced
 **Verify:** schema and byte-stability golden tests, Line → Rasterize with a location reference and
 its JSON export, location-by-value contrast, list duplicates, deterministic ordering, size boundaries.
 **Commit:** `feat: assemble portable invocation bundles`.
+
+**As built — M5.15:** the assembler reads a selected saved v0.4 result and its immutable invocation,
+then verifies exact owned input occurrences under a storage lease. Whole slot/port omissions require
+an explicit reason (the contract's omission record has no occurrence index). Absent/empty inputs and
+shared location values cannot be omitted; values remain part of the immutable invocation. Active
+native preservation must settle before assembly, avoiding a prematurely frozen partial bundle. Repeated inputs remain
+repeated in the manifest and share one archive member. A location passed by value already lives in
+invocation arguments; a location reference requires its exact owned JSON export. Nonportable,
+unpreserved or corrupt native inputs produce individual `unportable` records. Image references whose
+original bytes were not preserved remain workspace-dependent; previews are never substituted.
+Missing/corrupt original owned images, conflicting frames or identity/member collisions refuse assembly.
+
+The existing pinned tar dependency writes uncompressed ustar: manifest first, sorted remaining names,
+mode 0644, zero uid/gid/mtime and empty owner names. Fixed MIME suffixes are png, jpg, json and tar;
+other opaque media use bin. Names come only from verified fingerprints/artifact identities, with a
+96-byte basename bound. Limits are 8 MiB manifest, 64 MiB/member, 64 members including the manifest,
+and 256 MiB including headers/padding/end blocks. Limits are checked before writing. The writer hashes
+its completed temporary file; it publishes no library ownership and dispatches no controls/actions.
+The returned image/native ownership candidates feed M5.16's atomic persistence. API/UI follow there.
+
+Independent review approved. Nine assembler integration tests and the allocation-free limit/header
+unit checks passed, including a fixed archive SHA-256 golden and byte equality across separate
+builds. The full Rust workspace suite, clippy with warnings denied, formatting and UI typecheck
+passed after the review adjustments. No browser path changed in this backend-only task.
 
 #### M5.16 — Expose saved bundles in the pipeline drawer
 

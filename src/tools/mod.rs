@@ -1,3 +1,4 @@
+pub mod bundles;
 #[cfg(test)]
 #[allow(dead_code)]
 #[path = "../../testkit/control_fixtures.rs"]
