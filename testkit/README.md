@@ -503,3 +503,19 @@ grants; host probes prove that only input grants and the dedicated execution are
 The production host's structural validator now accepts only v0.4; both independent peers use
 the same explicit path rule. `tests/directory_grants.rs` checks registration
 rejection/canonicalization, literal argv, no roots capability and independent evidence reads.
+
+### Frozen access and hostile observations (M5.03)
+
+The `estimates` scenario accepts `--config <path>` with an optional JSON `allowed_dirs` list.
+Startup intersects canonical configured directories with the explicit launch grants. A valid
+object without that field adds no restriction; an unreadable or malformed configuration, or any
+invalid directory entry, denies every caller path. An empty list also denies all paths. Effective
+grants and their configuration identity stay fixed until a new process starts. Inline image bytes
+still work without filesystem grants (`tests/control_wire.rs` covers that boundary). No real
+provider or credentials are used.
+
+For boundary tests only, `<workspace>/resource-grants.json` and `estimate-grants.json` replace the
+`allowed_dirs` value in the corresponding session response. Malformed JSON supplies `null` so the
+host must reject it. These files do not change actual access checks or the ledger. Removing them
+restores the real observation. `tests/session_access.rs` exercises both rejection channels,
+configuration freeze/restart, denied copied inputs and preserved spending when a directory vanishes.

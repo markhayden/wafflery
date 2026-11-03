@@ -2061,6 +2061,37 @@ The final full matrix passed fmt/clippy, 383 Rust tests (4 opt-in ignored), type
 (8 opt-in skipped). Temporary browser config is removed; lockfiles/prebuilt assets are unchanged.
 Configured access display and the remaining description/invocation/refusal checks are still open.
 
+**b4 effective-access UI slices (before building):**
+
+- **b4a fixture preparation:** `ui/tests/unit/estimates.test.ts`, `testkit/README.md`, and this
+  plan. Give the existing estimate fixture an explicit empty effective grant list and document the
+  configured peer/hostile-observation controls. No runtime behavior changes.
+- **b4b session display model:** `ui/src/api/tool-session.ts`, its unit test, `ToolSetup.stories.tsx`,
+  `CostReview.stories.tsx`, and this plan. Require a unique list of canonical absolute path names;
+  reject the session response when access is missing or malformed; only an explicit empty list
+  means no access. The host owns filesystem and
+  requested-boundary validation; the browser does not resolve paths or infer permissions.
+- **b4c setup display:** `ToolSetup.tsx`, its stories, `ui/tests/browser/tool-setup.spec.ts`,
+  `ui/tests/browser/tool-host.ts`, and this plan. Display validated effective grants separately
+  from requests/results; clear stale access while loading or unavailable. Verify actual configured
+  narrowing, refresh remaining frozen, explicit restart to deny-all, and error recovery in both
+  browsers. Use the existing directory-access component and responsive styles. Never select its
+  obsolete `not_reported` state; a missing session is unavailable.
+- **b4d remove the obsolete display state:** `DirectoryAccess.tsx`, its stories,
+  `ui/tests/browser/directory-access.spec.ts`, and this plan. Remove `not_reported` after b4c
+  removes its final live caller. Retain loading, unavailable and reported (including deny-all).
+  No v0.3 fallback remains.
+
+Each slice receives review and the full matrix; source changes regenerate prebuilt assets in a
+separate generated-only commit. Reverse the display before its model when rolling back.
+
+**b4a checkpoint (2026-11-02):** the fixture now includes the required empty effective-grant
+list; peer documentation names both malicious-observation controls and the inline/no-path-grant
+probe. Review and follow-up approved the strict missing-field policy and explicit retirement of
+`not_reported`. The full shared-lock matrix passed fmt/clippy, 383 Rust tests (4 ignored), typecheck,
+56 UI tests, 2 asset tests, Storybook, reproducible assets, release build and 226 browser tests
+(8 skipped). No runtime change; lockfiles/prebuilt assets are unchanged and temporary config removed.
+
 **Checkpoint A:** merge M5.01–03 as a coherent cutover of validation, launch arguments and fake
 defaults; v0.4 is the only supported live contract afterward. Green matrix, an independent fake
 task run and the published exact dependency pin are required.

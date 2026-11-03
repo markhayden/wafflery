@@ -8,6 +8,7 @@ const session = {
   contract: "0.4.0" as const, tool: { name: "peer", version: "1" },
   id: "22222222-2222-4222-8222-222222222222", started: "2026-11-01T00:00:00Z",
   budget_usd: 2, spent_usd: 0, reserved_usd: 0, unresolved_usd: 0, remaining_usd: 2,
+  allowed_dirs: [],
 };
 function quote(): PreparedEstimate {
   return { preparation: {...preparation}, estimate: {
