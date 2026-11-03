@@ -36,7 +36,7 @@
     "ui/src/components/Drawer.tsx": "10a527140352d9492190af4b067690d9f9a9c418e52948e41179970d97704f29",
     "ui/src/components/ImageCompare.module.css": "37cf3ada3c140b5e148007d7397b5197577f7df993f681415367f5f13f6da511",
     "ui/src/components/ImageCompare.stories.tsx": "fb4fd31c9528c0272758a701e752eba9d40aaf4015ab26283f4d65e5013e6101",
-    "ui/src/components/ImageCompare.tsx": "9f08a07da6797db7204b90256a8ce84ee388b308c81317887f9c94daa446448e",
+    "ui/src/components/ImageCompare.tsx": "7975982a7d896a357b00f50e456e76d2a91893af237f9781e33ca4b3f3a3fc30",
     "ui/src/components/ImageImportProgress.tsx": "b393b2ecd66dcbdeb2521032501a30d7cce497ed094e96281b4817459f832846",
     "ui/src/components/ImageInput.module.css": "f648a4a55d2e4697db8f0b0104885cff2c3069219c94898af952dad28ddbee6a",
     "ui/src/components/ImageInput.stories.tsx": "b9cb7886793b3f2d11901edb6130b1ae90185c3320e0762e665b2e6d10288d98",
@@ -131,11 +131,11 @@
     "ui/vite.config.ts": "b9b67db799e574e4ef067182da4ef1acfa156f9722f5414936c423d989026bcc"
   },
   "outputs": {
-    "assets/index-6HdxKjhp.js": "eaa56c1ff3edaaa7c98f426c81804c95a65ca969720520dbaffaf779630eeb72",
+    "assets/index-RLHgwavK.js": "7c9d1fd312b1a3d06eb14f875f9ff0ae27bbdbba04787b408e7f159ce6f600a8",
     "assets/index-s8hKOW7N.css": "74d2675118cd03ff6d9e494f8017090a939fefeaad0bc105459cceaf39b06c6b",
     "assets/rascal-sticker-CmExR_HL.webp": "f1cc408f231167aee5543f0f8c0683f3594a0e447c51dcccc4fb413913e0a803",
     "assets/squint-sticker-CLmixeCt.webp": "3986ab96e919e338a7f8e8d64b552912baa3f79774c863d1e5d14f6a9f02f173",
     "assets/wafflery-mark-CML0EpfM.svg": "51bc8a040e26b897a948238598b8cabdf69bf4687c2b1a70613b542de1c99f1f",
-    "index.html": "4405671ea38b3d85d225f99293b084faf204c9632dda320565e05d909455a65c"
+    "index.html": "10d72c3148b72939e9402012cc71c012db7e5703c399db569c1f4633f1cb7ce9"
   }
 }

@@ -12,7 +12,9 @@ type Props = {
   controls?: ReactNode;
 };
 function useImage(asset: Asset | undefined, load: Props["load"]) {
-  const [state, setState] = useState<{ url?: string; error?: string }>({});
+  // Tagged with the asset it was read for, so a new label never shows the previous image's bytes
+  // in the render before the new read starts.
+  const [state, setState] = useState<{ for?: Asset; url?: string; error?: string }>({});
   useEffect(() => {
     let active = true;
     let url: string | undefined;
@@ -22,12 +24,13 @@ function useImage(asset: Asset | undefined, load: Props["load"]) {
         .then((blob) => {
           if (active) {
             url = URL.createObjectURL(blob);
-            setState({ url });
+            setState({ for: asset, url });
           }
         })
         .catch(() => {
           if (active)
             setState({
+              for: asset,
               error: "Image unavailable. The saved bytes could not be read.",
             });
         });
@@ -36,7 +39,7 @@ function useImage(asset: Asset | undefined, load: Props["load"]) {
       if (url) URL.revokeObjectURL(url);
     };
   }, [asset, load]);
-  return state;
+  return state.for === asset ? state : {};
 }
 export function ImageCompare({ left, right, load, controls }: Props) {
   const before = useImage(left?.asset, load),

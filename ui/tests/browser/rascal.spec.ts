@@ -1,6 +1,7 @@
 import { test, expect } from "./tool-host";
 import { readFile, readdir } from "node:fs/promises";
 import { join, resolve } from "node:path";
+import { openOptionalSettings } from "./sample-input";
 import { spawnSync } from "node:child_process";
 
 test.use({ hostKind: "rascal", viewport: { width: 1440, height: 900 } });
@@ -24,6 +25,7 @@ test("real Rascal runs offline and preserves browser evidence across restart", a
   await page
     .getByRole("combobox", { name: "Source image coordinates", exact: true })
     .selectOption("equirectangular");
+  await openOptionalSettings(page);
   await page
     .getByLabel("Projection", { exact: true })
     .selectOption({ label: "equirectangular" });
@@ -34,6 +36,14 @@ test("real Rascal runs offline and preserves browser evidence across restart", a
   await expect(
     page.getByRole("img", { name: "Source", exact: true }),
   ).toBeVisible();
+  // The tool's preview (the mask drawn over the image) shows first; the switch shows the raw mask.
+  const overlay = page.getByRole("switch", { name: "Mask overlay", exact: true });
+  await expect(overlay).toHaveAttribute("aria-checked", "true");
+  await expect(
+    page.getByRole("img", { name: "Mask overlay", exact: true }),
+  ).toBeVisible();
+  await overlay.click();
+  await expect(overlay).toHaveAttribute("aria-checked", "false");
   await expect(
     page.getByRole("img", { name: "Mask", exact: true }),
   ).toBeVisible();
@@ -124,7 +134,7 @@ test("real Rascal runs offline and preserves browser evidence across restart", a
     .getByRole("button", { name: /rascal \/ seam · completed/ })
     .click();
   await expect(
-    page.getByRole("img", { name: "Mask", exact: true }),
+    page.getByRole("img", { name: "Mask overlay", exact: true }),
   ).toBeVisible();
   await page.screenshot({
     path: testInfo.outputPath("real-rascal.png"),
