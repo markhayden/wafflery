@@ -491,3 +491,6 @@ async fn native_references_cannot_cross_tool_boundaries_before_dispatch() {
     );
     h.close().await;
 }
+
+#[path = "artifact_controls/cases.rs"]
+mod artifact_control_cases;

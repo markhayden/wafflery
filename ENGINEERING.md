@@ -220,6 +220,12 @@ Schema 6 stores opaque native files under `Library/blobs/sha256`, with occurrenc
 independently by attempts, examples and future bundles. Publication and reads verify the digest;
 cleanup includes only blobs with no surviving owner. Native files are not decoded by the host.
 
+Artifact export/import have a separate two-slot registry and never take a paid-run permit or
+create a run. An HTTP waiter has a 10-second deadline; its owned worker retains any staged file
+until the RPC finishes or the child is confirmed stopped. Cleanup, restart and shutdown account
+for these workers. Native publication and attachment share a storage lease. An import may have
+completed remotely after acknowledgement is lost; an explicit retry reconciles by identity.
+
 Never recursively delete unknown tool workspace files. Cleanup of native tool stores needs a
 declared ownership/deletion interface. Show opaque tool storage separately in disk usage;
 reclaimable bytes must not include space Wafflery cannot safely release.

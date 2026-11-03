@@ -32,6 +32,14 @@ pub fn router(coordinator: Arc<Coordinator>) -> Router {
         .route("/api/attempts/{id}", get(attempt))
         .route("/api/attempts/{id}/cancel", post(cancel))
         .route(
+            "/api/attempts/{id}/artifacts/{direction}/{index}/export",
+            post(export_artifact),
+        )
+        .route(
+            "/api/attempts/{id}/artifacts/{direction}/{index}/import",
+            post(import_artifact),
+        )
+        .route(
             "/api/attempts/{id}/artifacts/{direction}/{index}",
             get(inspect_artifact),
         )
@@ -50,6 +58,9 @@ impl<E: Into<Error>> From<E> for ApiError {
 }
 impl IntoResponse for ApiError {
     fn into_response(self) -> Response {
+        if let Error::ArtifactControlRefusal(data) = &self.0 {
+            return (StatusCode::UNPROCESSABLE_ENTITY,Json(serde_json::json!({"error":{"code":"artifact_refusal","message":data["error"]["reason"],"refusal":data}}))).into_response();
+        }
         if let Error::BindingRefusal(data) = &self.0 {
             return (
                 StatusCode::UNPROCESSABLE_ENTITY,
@@ -248,6 +259,21 @@ async fn inspect_artifact(
     Path((id, direction, index)): Path<(String, String, usize)>,
 ) -> Result<Json<serde_json::Value>, ApiError> {
     Ok(Json(c.inspect_artifact(&id, &direction, index).await?))
+}
+
+async fn export_artifact(
+    State(c): State<Arc<Coordinator>>,
+    Path((id, direction, index)): Path<(String, String, usize)>,
+    Json(_): Json<Empty>,
+) -> Result<Json<crate::library::blob_links::BlobLink>, ApiError> {
+    Ok(Json(c.export_artifact(&id, &direction, index).await?))
+}
+async fn import_artifact(
+    State(c): State<Arc<Coordinator>>,
+    Path((id, direction, index)): Path<(String, String, usize)>,
+    Json(_): Json<Empty>,
+) -> Result<Json<serde_json::Value>, ApiError> {
+    Ok(Json(c.import_artifact(&id, &direction, index).await?))
 }
 
 #[cfg(test)]

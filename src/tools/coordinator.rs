@@ -1,3 +1,4 @@
+mod artifact_controls;
 pub(super) mod artifacts;
 mod estimates;
 mod preparation;
@@ -63,6 +64,7 @@ pub struct Coordinator {
     pub events: crate::events::Events,
     pub attempts: AttemptStore,
     tools: BTreeMap<String, Entry>,
+    artifact_jobs: Arc<super::artifact_jobs::Jobs>,
     submission: Mutex<()>,
     preparations: super::prepared::retained::Retained,
     active: Mutex<BTreeMap<String, Active>>,
@@ -115,9 +117,12 @@ impl Coordinator {
                 },
             );
         }
+        let events = crate::events::Events::new()?;
+        let artifact_jobs = super::artifact_jobs::Jobs::new(events.clone());
         Ok(Self {
             assets,
-            events: crate::events::Events::new()?,
+            events,
+            artifact_jobs,
             attempts,
             tools,
             submission: Mutex::new(()),
@@ -174,7 +179,7 @@ impl Coordinator {
                 "progress":state.client.as_ref().and_then(|client|client.progress().borrow().clone())})
         }).collect();
         Ok(
-            json!({"tools":tools,"attempts":self.attempts.history(None,50,None,None).await?,"event_session":self.events.session()}),
+            json!({"artifact_transfers":self.artifact_jobs.count(),"tools":tools,"attempts":self.attempts.history(None,50,None,None).await?,"event_session":self.events.session()}),
         )
     }
     pub async fn submit(self: &Arc<Self>, request: Submission) -> Result<Attempt> {
@@ -569,6 +574,11 @@ impl Coordinator {
                 "Wait until all tool activity has stopped before cleaning the library",
             ));
         }
+        if !self.artifact_jobs.tools().is_empty() {
+            return Err(Error::Conflict(
+                "Wait for artifact transfers before cleaning the library",
+            ));
+        }
         if !self.preparations.is_empty() {
             return Err(Error::Conflict(
                 "Discard prepared drafts before cleaning the library",
@@ -620,7 +630,7 @@ impl Coordinator {
     }
     async fn preserving_tools(&self) -> std::collections::BTreeSet<String> {
         let ids = self.active.lock().await.keys().cloned().collect::<Vec<_>>();
-        let mut preserving = std::collections::BTreeSet::new();
+        let mut preserving = self.artifact_jobs.tools();
         for (id, entry) in &self.tools {
             if entry
                 .client()

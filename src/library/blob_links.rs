@@ -28,6 +28,10 @@ pub struct BlobLink {
 impl BlobStore {
     pub async fn attach(&self, owner: Owner, link: BlobLink) -> Result<()> {
         let _storage = self.0.storage.read().await;
+        self.attach_leased(owner, link).await
+    }
+    /// Caller holds the same read lease used for publishing the bytes.
+    pub(crate) async fn attach_leased(&self, owner: Owner, link: BlobLink) -> Result<()> {
         let (kind, id) = owner.parts();
         if id.is_empty()
             || id.len() > 128

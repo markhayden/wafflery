@@ -3,6 +3,8 @@
 #[path = "../../testkit/control_fixtures.rs"]
 mod fixtures;
 
+mod artifact_io;
+mod artifact_jobs;
 mod association;
 // Artifact-read/export contexts are staged until their M5 clients are enabled.
 #[allow(dead_code)]
@@ -39,6 +41,8 @@ pub enum Error {
     Mcp(#[from] rmcp::ServiceError),
     #[error("The tool could not bind the selected inputs")]
     BindingRefusal(serde_json::Value),
+    #[error("Artifact control refused the request")]
+    ArtifactControlRefusal(serde_json::Value),
     #[error("Tool response could not be decoded: {0}")]
     Json(#[from] serde_json::Error),
     #[error("Tool did not answer within the control-request deadline")]

@@ -64,11 +64,15 @@ pub(super) fn read_verified(root: &Path, digest: &str) -> Result<Vec<u8>> {
 }
 impl BlobStore {
     pub async fn publish(&self, bytes: Vec<u8>, expected: String) -> Result<Blob> {
+        let _storage = self.0.storage.read().await;
+        self.publish_leased(bytes, expected).await
+    }
+    /// Caller holds the store read lease through publication and ownership attachment.
+    pub(crate) async fn publish_leased(&self, bytes: Vec<u8>, expected: String) -> Result<Blob> {
         valid_digest(&expected)?;
         if bytes.len() as u64 > MAX_BLOB_BYTES {
             return Err(Error::InvalidAsset("Native blob exceeds 128 MiB"));
         }
-        let _storage = self.0.storage.read().await;
         let root = self.0.root().to_owned();
         let blob = tokio::task::spawn_blocking(move || -> Result<Blob> {
             if hash(&bytes) != expected {

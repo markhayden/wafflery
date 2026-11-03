@@ -22,6 +22,9 @@ struct Configuration {
     allowed: Vec<PathBuf>,
     hold_operation: bool,
     priced_operations: bool,
+    export_fault: Option<String>,
+    hold_control: bool,
+    tiny_inline: bool,
 }
 impl Configuration {
     fn parse(arguments: Vec<String>) -> Result<Self, String> {
@@ -30,9 +33,20 @@ impl Configuration {
             allowed: vec![],
             hold_operation: false,
             priced_operations: false,
+            export_fault: None,
+            hold_control: false,
+            tiny_inline: false,
         };
         let mut arguments = arguments.into_iter();
         while let Some(flag) = arguments.next() {
+            if flag == "--hold-control" {
+                result.hold_control = true;
+                continue;
+            }
+            if flag == "--tiny-inline" {
+                result.tiny_inline = true;
+                continue;
+            }
             if flag == "--priced-operations" {
                 result.priced_operations = true;
                 continue;
@@ -45,6 +59,7 @@ impl Configuration {
                 .next()
                 .ok_or_else(|| format!("Missing value for {flag}"))?;
             match flag.as_str() {
+                "--export-fault" => result.export_fault = Some(value),
                 "--allow-dir" => {
                     let path = PathBuf::from(value);
                     if !path.is_absolute() {
@@ -119,6 +134,9 @@ pub fn serve(root: &Path, arguments: Vec<String>) -> Result<(), Box<dyn std::err
             action["cost"] = json!({"may_spend":true,"basis":"estimated"});
         }
     }
+    if configuration.tiny_inline {
+        description["limits"]["inline_bytes"] = json!(1);
+    }
     let mut quotes = std::collections::HashMap::<String, std::time::Instant>::new();
     let mut session = documents
         .iter()
@@ -155,6 +173,8 @@ pub fn serve(root: &Path, arguments: Vec<String>) -> Result<(), Box<dyn std::err
     );
     let mut input = io::stdin().lock();
     let mut initialized = false;
+    let control_done = Arc::new(std::sync::atomic::AtomicBool::new(false));
+    let mut control_workers = Vec::new();
     loop {
         let mut line = Vec::new();
         if (&mut input).take(2097153).read_until(b'\n', &mut line)? == 0 {
@@ -225,7 +245,17 @@ pub fn serve(root: &Path, arguments: Vec<String>) -> Result<(), Box<dyn std::err
                     store.import(params["arguments"].clone())
                 };
                 match response {
-                    Ok(value) => structured(value),
+                    Ok(mut value) => {
+                        if params["name"] == "export" {
+                            match configuration.export_fault.as_deref() {
+                                Some("hash") => value["file"]["sha256"] = json!("0".repeat(64)),
+                                Some("path") => value["file"]["path"] = json!("/etc/hosts"),
+                                Some("media") => value["file"]["media_type"] = json!("image/png"),
+                                _ => (),
+                            }
+                        }
+                        structured(value)
+                    }
                     Err(value) => json!({"error":value}),
                 }
             }
@@ -291,7 +321,32 @@ pub fn serve(root: &Path, arguments: Vec<String>) -> Result<(), Box<dyn std::err
         };
         response["jsonrpc"] = json!("2.0");
         response["id"] = id.clone();
+        if configuration.hold_control
+            && message["method"] == "tools/call"
+            && matches!(params["name"].as_str(), Some("export" | "import"))
+            && !root.join("release-control").exists()
+        {
+            let release = root.join("release-control");
+            let marker = root.join(format!("holding-control-{}", control_workers.len()));
+            std::fs::write(&marker, b"ready")?;
+            let output = output.clone();
+            let done = control_done.clone();
+            control_workers.push(std::thread::spawn(move || {
+                while !release.exists() && !done.load(std::sync::atomic::Ordering::Acquire) {
+                    std::thread::sleep(std::time::Duration::from_millis(10));
+                }
+                if !done.load(std::sync::atomic::Ordering::Acquire) {
+                    let _ = write_message(&output, &response);
+                }
+                let _ = std::fs::remove_file(marker);
+            }));
+            continue;
+        }
         write_message(&output, &response)?;
+    }
+    control_done.store(true, std::sync::atomic::Ordering::Release);
+    for worker in control_workers {
+        let _ = worker.join();
     }
     jobs.shutdown();
     Ok(())

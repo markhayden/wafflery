@@ -53,7 +53,7 @@ impl<T: Transport<RoleClient, Error = io::Error>> Transport<RoleClient> for Reco
                 if value["method"] == "tools/call"
                     && !matches!(
                         value["params"]["name"].as_str(),
-                        Some("describe" | "estimate")
+                        Some("describe" | "estimate" | "export" | "import")
                     ) =>
             {
                 Some(self.gate.lock().unwrap_or_else(|e| e.into_inner()).take())
@@ -425,7 +425,12 @@ mod tests {
             association: association.clone(),
             generation: Arc::new(AtomicU64::new(0)),
         };
-        for (id, name) in [(1, "estimate"), (2, "describe")] {
+        for (id, name) in [
+            (1, "estimate"),
+            (2, "describe"),
+            (3, "export"),
+            (4, "import"),
+        ] {
             transport.send(serde_json::from_value(json!({"jsonrpc":"2.0","id":id,"method":"tools/call","params":{"name":name,"arguments":{},"_meta":{"progressToken":99}}})).unwrap()).await.unwrap();
             assert!(gate.lock().unwrap().is_some());
             assert!(!*observed.borrow());
@@ -440,11 +445,17 @@ mod tests {
         assert_eq!(store.get("run").await.unwrap().wire, Some(action));
         assert!(*observed.borrow());
         assert_eq!(association.lock().unwrap().token, Some(json!(42)));
-        assert_eq!(sent.lock().unwrap().len(), 3);
-        for name in ["estimate_more", "Describe", "other_action"] {
+        assert_eq!(sent.lock().unwrap().len(), 5);
+        for name in [
+            "estimate_more",
+            "Describe",
+            "export_more",
+            "Import",
+            "other_action",
+        ] {
             assert!(transport.send(serde_json::from_value(json!({"jsonrpc":"2.0","id":4,"method":"tools/call","params":{"name":name,"arguments":{}}})).unwrap()).await.is_err());
         }
-        assert_eq!(sent.lock().unwrap().len(), 3);
+        assert_eq!(sent.lock().unwrap().len(), 5);
         assert_eq!(store.history(None, 50, None, None).await.unwrap().len(), 1);
         assets.database.shutdown().await.unwrap();
     }

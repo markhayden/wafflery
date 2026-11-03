@@ -2658,6 +2658,20 @@ UI assets rebuilt; hosted CI is the full gate.
 **Verify:** control concurrency, duplicate import, corrupt hash, unsupported type and unsafe returned paths.
 **Commit:** `feat: transfer native artifacts through contract controls`.
 
+**M5.11 build approach:** reserved export/import controls use a separate two-slot owned transfer
+registry. They never take a run permit, create history or touch budget observations. A dropped HTTP
+waiter or 10-second wait deadline ends waiting, while the worker drains the RPC and keeps staging
+until the response or confirmed child exit. Cleanup/restart/shutdown account for those workers.
+Controls validate their advertised schemas and published envelopes, including exact saved reference,
+tool/version, portability and file media type. Export reads only the exact bounded file inside the
+registered evidence roots; import uses verified owned bytes, bounded inline content or private staging
+inside effective allowed_dirs. Publication and ownership attachment share one storage lease.
+Structured pre-run refusals remain distinct from run outcomes. The independent peer gains explicit
+fault/hold modes to verify headers, cancellation, staging and concurrent controls. UI controls and
+automatic artifact preservation remain subsequent tasks; these private APIs accept saved occurrence
+IDs and no arbitrary file path. The first control regression exposed the old run gate allowlist;
+only the two reserved names are added, with nearby names still requiring persisted dispatch.
+
 #### M5.12 — Preserve reusable artifacts after runs
 
 - [ ] Queue bounded deduplicated preservation for portable non-image artifact inputs/outputs after their references
