@@ -1,3 +1,5 @@
+#[path = "callable_semantics.rs"]
+mod callable_semantics;
 use super::dispatch_transport::{Gate, RecordedTransport};
 use super::{Error, Result, registration::Descriptor, validate_contract, validator};
 use rmcp::{
@@ -282,26 +284,7 @@ impl ToolClient {
         }
         let document = structured_result(&response)?;
         validate_contract("urn:table-manners:core:description", &document)?;
-        for action in document["actions"]
-            .as_array()
-            .ok_or_else(|| Error::Invalid("Missing actions".into()))?
-        {
-            if action["cost"]["may_spend"] == true && !schemas.contains_key("estimate") {
-                return Err(Error::Invalid(
-                    "Paid actions must expose the estimate MCP control".into(),
-                ));
-            }
-            validator(&action["params_schema"]).map_err(|error| {
-                let name = action["name"].as_str().unwrap_or("unknown");
-                Error::Invalid(format!("Action '{name}' parameter schema: {error}"))
-            })?;
-            if !action["name"]
-                .as_str()
-                .is_some_and(|name| schemas.contains_key(name))
-            {
-                return Err(Error::Invalid("Declared action has no MCP tool".into()));
-            }
-        }
+        callable_semantics::validate(&document, &schemas)?;
         if generation != self.generation() {
             return Err(Error::Invalid(
                 "Tool declarations changed while reading".into(),

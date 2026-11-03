@@ -2201,6 +2201,37 @@ unchanged; temporary config removed. Saved evidence remains readable; launching 
 revalidates its v0.4 declaration, so an earlier saved inconsistent declaration cannot launch a view.
 Callable-name/profile relationships, contextual refusals and peer preflight remain open.
 
+**b7 callable-name boundary (inventory before building):** five authored files:
+`src/tools/callable_semantics.rs` with independent-fixture unit tests, `testkit/main.rs`,
+`src/tools/parameter_names.rs` (read-only explicit-name iterator), `src/tools/client.rs` (owns the private callable validator module), and this
+plan. Check that each declared action exists, paid actions have estimate, portable artifact types
+have export/import, and each callable's named arguments match its parameters plus profile inputs
+and delivery options. Follow the same composed/reference namespaces; do not assume direct properties
+or compare JSON text. Reject undeclared named root arguments before publishing a declaration. These are
+name/control consistency checks, not schema equivalence: the full MCP schema continues validating
+materialized arguments before dispatch, including cardinality and accepted representations.
+
+**b7 inventory adjustment before fixture correction:** the first full matrix exposed the existing
+`becomes-paid` fixture advertising paid params on refreshed describe but still returning its free
+MCP schema. Keep the five-file budget by owning the private validator module under `client.rs`
+instead of changing `mod.rs`; the fifth file is `testkit/main.rs`, whose tools/list now uses the
+same upcoming description state. No production acceptance is loosened. Namespace checks are
+conservative for conditional/negative schemas and do not compare requiredness or prove that every
+possible value is accepted. Full prepared-argument validation remains authoritative. Extra MCP
+controls are not exposed as actions merely because tools/list contains them.
+
+**b7 checkpoint (2026-11-02):** three targeted tests first failed for missing actions/controls,
+missing named inputs and an injected root context; all five now pass. The first full matrix found
+and reproduced the refreshed fake's free/paid schema mismatch; its existing refresh regression
+passes after correcting the fixture. Independent review and follow-up approved both changes.
+All seven MCP-client tests and all four opt-in approved-peer checks passed with this boundary:
+Rascal `eed6397` and Squint `6dd1e3a`, isolated testkit builds, explicit grants and isolated XDG
+folders, no credentials/provider calls. This covers current task/setup/report interoperability,
+not M5.21 operation chains. The final shared-lock matrix passed fmt/clippy, 401 Rust tests
+(4 ignored), typecheck, 57 UI tests, 2 asset tests, Storybook, reproducible assets, release build
+and 230 browser tests (8 skipped). Lockfiles/prebuilt assets unchanged; temporary config removed.
+Contextual binding-refusal adoption remains before closing M5.03.
+
 **Checkpoint A:** merge M5.01–03 as a coherent cutover of validation, launch arguments and fake
 defaults; v0.4 is the only supported live contract afterward. Green matrix, an independent fake
 task run and the published exact dependency pin are required.

@@ -155,6 +155,9 @@ impl ParameterNames {
         }
         Ok(result)
     }
+    pub fn explicit_names(&self) -> impl Iterator<Item = &str> {
+        self.names.iter().map(String::as_str)
+    }
     pub fn contains(&self, name: &str) -> bool {
         self.names.contains(name)
             || self

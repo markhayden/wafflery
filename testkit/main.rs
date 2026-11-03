@@ -227,7 +227,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             }
             "ping" if initialized => reply(&output, id, json!({})),
             "tools/list" if initialized => {
-                let mut description = readiness::description(&root, &scenario);
+                // This listing belongs to the upcoming describe call, including its refreshed cost inputs.
+                let effective =
+                    if scenario == "becomes-paid" && state.lock().unwrap().descriptions > 0 {
+                        "paid"
+                    } else {
+                        &scenario
+                    };
+                let mut description = readiness::description(&root, effective);
                 if let Some(configuration) = &configuration {
                     description = configuration.describe(description);
                 }
