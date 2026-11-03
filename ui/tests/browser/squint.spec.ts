@@ -103,7 +103,7 @@ test("Squint scripted evidence survives export, examples, tool switching and res
     .locator("input[type=file]")
     .setInputFiles("tests/fixtures/panorama.png");
   await page
-    .getByRole("combobox", { name: "image coordinates", exact: true })
+    .getByRole("combobox", { name: "Source image coordinates", exact: true })
     .selectOption("equirectangular");
   await page
     .getByLabel("Projection", { exact: true })

@@ -1,5 +1,5 @@
 import { test, expect } from "./tool-host";
-import { editSampleLabel, prepareSampleInput } from "./sample-input";
+import { editSampleLabel, openOptionalSettings, prepareSampleInput } from "./sample-input";
 import { readFile, writeFile, readdir } from "node:fs/promises";
 import { resolve } from "node:path";
 import type { Page } from "@playwright/test";
@@ -145,7 +145,7 @@ test("tool restart invalidates a quote and preserves the chosen cap", async ({pa
 
 test("ordered image bindings and coordinates invalidate estimates", async ({page, host}) => {
   await host.open(page); await paidDraft(page,"references");
-  const refs = page.getByRole("region",{name:"references · reference",exact:true});
+  const refs = page.getByRole("region",{name:"References (reference image)",exact:true});
   await refs.locator("input[type=file]").setInputFiles(["tests/fixtures/sample.png","tests/fixtures/panorama.png"]);
   await expect(refs).toHaveAttribute("aria-busy","false");
   await expect(refs.getByRole("img")).toHaveCount(2);
@@ -195,7 +195,8 @@ test("a later ledger observation keeps the quote and warns about exhausted allow
 
 test("invalid JSON edits discard the quote and need an explicit estimate after correction", async ({page, host}) => {
   await host.open(page); await paidDraft(page,"JSON draft");
-  const tags = page.getByRole("textbox",{name:"Tags",exact:true});
+  await openOptionalSettings(page);
+  const tags = page.getByRole("textbox",{name:"Tags · advanced",exact:true});
   await tags.fill('["original"]');
   await estimate(page).click(); await expect(cost(page)).toContainText("Estimate within cap.");
   await tags.fill('["unfinished"');
@@ -217,7 +218,7 @@ test("a refreshed declaration invalidates its quote without losing draft inputs"
   await estimate(page).click(); await expect(cost(page)).toContainText("Estimate within cap.");
   await writeFile(resolve(host.root,"../tool/estimate-declaration-changed"),"changed");
   await page.getByRole("button",{name:"Tool setup",exact:true}).click();
-  await expect(page.getByText("Updated estimate declaration.",{exact:true})).toBeVisible();
+  await expect(page.getByText("Updated estimate declaration.")).toBeVisible();
   await page.keyboard.press("Escape");
   await expect(cost(page)).toContainText("Estimate again");
   await expect(cost(page)).not.toContainText("Worst case");

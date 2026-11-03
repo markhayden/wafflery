@@ -4,7 +4,7 @@ import { join } from "node:path";
 
 async function prepare(page: import("@playwright/test").Page, label: string) {
   await page.locator("input[type=file]").setInputFiles("tests/fixtures/sample.png");
-  const source = page.getByRole("region", { name: "source", exact: true });
+  const source = page.getByRole("region", { name:"Source image",exact: true });
   await expect(source).toHaveAttribute("aria-busy", "false");
   await expect(source.getByRole("img", { name: "Selected image 1" })).toBeVisible();
   const input = page.getByLabel("Label", { exact: true });

@@ -22,7 +22,7 @@ test("real Rascal runs offline and preserves browser evidence across restart", a
     .locator("input[type=file]")
     .setInputFiles("tests/fixtures/panorama.png");
   await page
-    .getByRole("combobox", { name: "image coordinates", exact: true })
+    .getByRole("combobox", { name: "Source image coordinates", exact: true })
     .selectOption("equirectangular");
   await page
     .getByLabel("Projection", { exact: true })

@@ -21,7 +21,7 @@ test.describe("independent operation chains",()=>{test.use({hostScenario:"v04-op
  await tokens.getByRole("combobox",{name:"Saved artifact",exact:true}).selectOption({index:1});
  await expect(tokens.getByRole("status",{name:"tokens selection count"})).toHaveText("2 selected");
  await page.getByRole("button",{name:"Run",exact:true}).click();
- await expect(page.getByRole("region",{name:"Operation outputs"}).getByRole("heading")).toHaveCount(2);
+ await expect(page.getByRole("region",{name:"Operation outputs"}).getByRole("article")).toHaveCount(2);
  await page.getByRole("button",{name:"History",exact:true}).click();
  await expect(page.getByRole("dialog",{name:"History"}).getByRole("button",{name:/sample \/ (locate_marker|stamp_marker|soften_token|collect_tokens)/})).toHaveCount(4);
 });});

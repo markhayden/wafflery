@@ -36,12 +36,12 @@ for (const tool of ["rascal", "squint"] as const) {
     await page.getByRole("button", { name: tool === "rascal" ? /Heal a seam/ : /Reference consistency Image/ }).click();
     if (tool === "rascal") {
       await page.locator("input[type=file]").setInputFiles("tests/fixtures/panorama.png");
-      await page.getByRole("combobox", { name: "image coordinates", exact: true }).selectOption("equirectangular");
+      await page.getByRole("combobox", { name: "Source image coordinates", exact: true }).selectOption("equirectangular");
       await page.getByLabel("Projection", { exact: true }).selectOption({ label: "equirectangular" });
     } else {
-      await page.getByRole("region", { name: "candidate", exact: true })
+      await page.getByRole("region", { name: "Candidate image", exact: true })
         .locator("input[type=file]").setInputFiles("tests/fixtures/sample.png");
-      await page.getByRole("region", { name: "references · reference", exact: true })
+      await page.getByRole("region", { name: "References (reference image)", exact: true })
         .locator("input[type=file]").setInputFiles([
           "tests/fixtures/panorama.png", "tests/fixtures/sample.png", "tests/fixtures/panorama.png",
         ]);
@@ -60,7 +60,7 @@ for (const tool of ["rascal", "squint"] as const) {
       expect(saved.result.images.in.filter((image: { slot: string }) => image.slot === "references")
         .map((image: { image: { file_sha256: string } }) => image.image.file_sha256))
         .toEqual(references.map((entry: { asset: { sha256: string } }) => entry.asset.sha256));
-      await page.getByRole("region", { name: "references · reference", exact: true })
+      await page.getByRole("region", { name: "References (reference image)", exact: true })
         .getByRole("button", { name: "Remove image 1", exact: true }).click();
     } else {
       await page.getByLabel("Projection", { exact: true }).selectOption({ label: "flat" });

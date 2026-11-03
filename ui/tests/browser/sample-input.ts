@@ -2,7 +2,7 @@ import { expect, type Page } from "@playwright/test";
 
 /** Establish a usable draft before a test exercises runs, history or layout. */
 export async function prepareSampleInput(page: Page, text: string) {
-  const source = page.getByRole("region", { name: "source", exact: true });
+  const source = page.getByRole("region", { name:"Source image",exact: true });
   await source.locator("input[type=file]").setInputFiles("tests/fixtures/sample.png");
   await expect(source).toHaveAttribute("aria-busy", "false");
   await expect(source.getByRole("img", { name: "Selected image 1" })).toBeVisible();
@@ -26,4 +26,12 @@ export async function editSampleLabel(page: Page, text: string) {
   }, text);
   await expect(label).toHaveValue(text);
   await expect(label).toHaveAttribute("value", text);
+}
+
+/** Unfold "Settings · N optional" (closed by default) so its fields can be edited. */
+export async function openOptionalSettings(page: Page) {
+  const summary = page.locator("summary").filter({ hasText: /^Settings · \d+ optional$/ });
+  await expect(summary).toBeVisible();
+  if (await summary.locator("..").getAttribute("open") === null) await summary.click();
+  await expect(summary.locator("..")).toHaveAttribute("open", "");
 }

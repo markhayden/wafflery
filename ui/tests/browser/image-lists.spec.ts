@@ -6,8 +6,8 @@ test.use({ hostScenario: "image-list" });
 
 test("ordered references can be edited, restored from history and omitted", async ({ page, host }, testInfo) => {
   await host.open(page);
-  const source = page.getByRole("region", {name:"source", exact:true});
-  const refs = page.getByRole("region", {name:"references · reference", exact:true});
+  const source = page.getByRole("region", {name:"Source image",exact:true});
+  const refs = page.getByRole("region", {name:"References (reference image)", exact:true});
   await source.locator("input[type=file]").setInputFiles("tests/fixtures/sample.png");
   await expect(source.getByRole("img")).toBeVisible();
   await expect(refs.locator("input[type=file]")).toHaveAttribute("multiple", "");
@@ -52,13 +52,13 @@ test("ordered references can be edited, restored from history and omitted", asyn
 
 test("duplicate image coordinates follow reorder and survive a saved example", async ({ page, host }) => {
   await host.open(page);
-  const source = page.getByRole("region", {name:"source",exact:true});
-  const refs = page.getByRole("region", {name:"references · reference",exact:true});
+  const source = page.getByRole("region", {name:"Source image",exact:true});
+  const refs = page.getByRole("region", {name:"References (reference image)",exact:true});
   await source.locator("input[type=file]").setInputFiles("tests/fixtures/sample.png");
   await expect(source.getByRole("img")).toBeVisible();
   await refs.locator("input[type=file]").setInputFiles(["tests/fixtures/panorama.png","tests/fixtures/panorama.png"]);
   await expect(refs).toHaveAttribute("aria-busy","false");
-  const frame = (index:number) => refs.getByRole("combobox", {name:`references image ${index} coordinates`,exact:true});
+  const frame = (index:number) => refs.getByRole("combobox", {name:`References (reference image) ${index} coordinates`,exact:true});
   await frame(2).selectOption("equirectangular");
   await refs.getByRole("button", {name:"Move image 2 earlier"}).click();
   await expect(frame(1)).toHaveValue("equirectangular");
@@ -89,8 +89,8 @@ test("duplicate image coordinates follow reorder and survive a saved example", a
 
 test("an import preserves saved-image insertions and cannot overwrite a restored draft", async ({page, host}) => {
   await host.open(page);
-  const source = page.getByRole("region", {name:"source",exact:true});
-  const refs = page.getByRole("region", {name:"references · reference",exact:true});
+  const source = page.getByRole("region", {name:"Source image",exact:true});
+  const refs = page.getByRole("region", {name:"References (reference image)",exact:true});
   await source.locator("input[type=file]").setInputFiles("tests/fixtures/sample.png");
   await expect(source.getByRole("img")).toBeVisible();
   await refs.locator("input[type=file]").setInputFiles("tests/fixtures/sample.png");
@@ -125,7 +125,7 @@ test("an import preserves saved-image insertions and cannot overwrite a restored
       await received;
       if (mode === "append") {
         await page.locator("summary").filter({hasText:"Saved images"}).click();
-        await page.getByText("Use for references",{exact:true}).locator("..").getByRole("button").first().click();
+        await page.getByRole("button",{name:/^Use saved image \d+ × \d+ as references \(reference image\)$/}).first().click();
         await expect(refs.getByRole("listitem")).toHaveCount(2);
       } else {
         await page.getByRole("button",{name:"Examples",exact:true}).click();
@@ -154,7 +154,7 @@ test("input thumbnails never request the full original just to display a card",a
  page.on("request",request=>{if(request.method()==="GET"&&/\/api\/assets\/[a-f0-9]{32}$/.test(new URL(request.url()).pathname))originalReads.push(request.url());});
  await host.open(page);
  const thumbnail=page.waitForResponse(response=>/\/api\/assets\/[a-f0-9]{32}\/thumbnail$/.test(new URL(response.url()).pathname));
- const source=page.getByRole("region",{name:"source",exact:true});
+ const source=page.getByRole("region",{name:"Source image",exact:true});
  await source.locator("input[type=file]").setInputFiles("tests/fixtures/sample.png");
  expect((await thumbnail).status()).toBe(200);
  const image=source.getByRole("img");await expect(image).toBeVisible();

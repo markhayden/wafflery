@@ -1,4 +1,4 @@
-import { prepareSampleInput } from "./sample-input";
+import { openOptionalSettings, prepareSampleInput } from "./sample-input";
 import { test, expect } from "./tool-host";
 import { realpath, writeFile } from "node:fs/promises";
 import { join } from "node:path";
@@ -191,6 +191,7 @@ test.describe("live readiness", () => {
   test("optional setup refuses only the requested filler and a corrected free run completes", async ({ page, host }) => {
     await host.open(page);
     await prepareSampleInput(page, "Optional setup experiment");
+    await openOptionalSettings(page);
     await page.getByLabel("Use optional filler", { exact: true }).selectOption("true");
     await page.getByRole("button", { name: "Run", exact: true }).click();
     await expect(page.getByText("No run created.", { exact: true })).toBeVisible();
@@ -251,7 +252,7 @@ test.describe("restart during work", () => {
   test("setup explains why an active session cannot restart", async ({ page, host }) => {
     await host.open(page);
     await page.locator("input[type=file]").setInputFiles("tests/fixtures/sample.png");
-    const source = page.getByRole("region", { name: "source", exact: true });
+    const source = page.getByRole("region", { name:"Source image",exact: true });
     await expect(source).toHaveAttribute("aria-busy", "false");
     await expect(source.getByRole("img", { name: "Selected image 1" })).toBeVisible();
     const label = page.getByLabel("Label", { exact: true });

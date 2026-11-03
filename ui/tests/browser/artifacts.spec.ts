@@ -6,12 +6,12 @@ test.describe("saved operation artifacts",()=>{test.use({hostScenario:"v04-opera
  await expect(page.getByText(/Image ·/)).toBeVisible();await page.getByRole("button",{name:"Run",exact:true}).click();
  const outputs=page.getByRole("region",{name:"Operation outputs"});
  await outputs.getByRole("button",{name:/Inspect marker/}).click();
- await expect(page.getByRole("dialog",{name:"Marker details"}).getByLabel(/Artifact resource · native record/)).toBeVisible();
+ await expect(page.getByRole("dialog",{name:"Marker details"}).getByLabel("Artifact resource · native record is opaque",{exact:true})).toBeVisible();
  await host.stop();await host.start();await host.open(page);
  await page.getByRole("button",{name:"History",exact:true}).click();
  await page.getByRole("dialog").getByRole("button",{name:/locate_marker/}).first().click();
  await outputs.getByRole("button",{name:/Inspect marker/}).click();
- await expect(page.getByRole("dialog",{name:"Marker details"}).getByLabel(/Artifact resource · native record/)).toBeVisible();
+ await expect(page.getByRole("dialog",{name:"Marker details"}).getByLabel("Artifact resource · native record is opaque",{exact:true})).toBeVisible();
  });});
 test("previewless duplicate output cards keep identity when inspection fails",async({page})=>{
  await page.goto("http://127.0.0.1:6006/iframe.html?id=workspace-artifactoutputs--missing-store&viewMode=story");
