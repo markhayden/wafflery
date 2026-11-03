@@ -2853,6 +2853,30 @@ policy changed.
 **Verify:** paths with spaces/metacharacters, missing owned bytes, draft edits and null invocation.
 **Commit:** `feat: export resolved CLI invocations`.
 
+**As built approach — M5.14:** persist a minimal host-owned launch snapshot before dispatch:
+canonical executable, working directory, the explicitly selected config path and a boolean for
+unresolved extra arguments. Unknown argument values and environment values are never saved. The
+host never reads tool configuration, including to hash it. Historical runs lacking this snapshot
+keep invocation inspection without a claimed runnable command.
+
+The handoff uses only the saved resolved invocation. It verifies owned source image bytes and
+adds file locators without changing expectations, resolved parameters, defaults or caps. It never
+uses output/preview bytes as inputs. The arguments download is named `wafflery-arguments.json`;
+the displayed argv runs from the saved working directory after that file is saved there, with
+explicit `--allow-dir` for that directory and any owned image directory. Every displayed shell
+argument is quoted, and no copied command is executed by the host. Extra serve/store arguments
+withhold a command rather than being copied blindly. The UI labels this as a local, configured-store
+handoff; the saved config identity/effective settings and requirement names remain visible, with
+no credential values or promise that a changed config/default lookup matches the original session.
+A fresh native store still needs explicit import or the later invocation bundle.
+
+**Backend slice complete:** handoff metadata and arguments routes use saved launch context and
+resolved invocation only. Image lists map exact saved argument indices and retain references and
+repeated occurrences. Arguments filenames are absolute under the saved working directory. A separate
+two-slot owned worker pool bounds byte verification even after the HTTP waiter is dropped. Private
+routes accept no caller paths and rebuild/verify on download. Tool configuration is never read.
+The UI and its updated screenshots follow in the second commit.
+
 #### M5.15 — Write canonical invocation bundles
 
 - [ ] Build schema-valid single-step manifests with original result/invocation, ordered image inputs and

@@ -86,7 +86,7 @@ pub async fn archive(
         .collect();
     let manifest = json!({"format":"wafflery-evidence","version":1,"attempt_id":attempt.id,"images_included":include_images,
         "tool":attempt.declaration["document"]["tool"],"contract":attempt.declaration["document"]["contract"],"mcp_protocol":"2025-11-25",
-        "files":files,"assets":references,"limitations":["Evidence package, not a portable native replay bundle.","Recorded paths refer to the original host and may no longer exist.","Provider credentials and host browser sessions are not captured.","Native dependencies, reports and executable CLI export are unavailable."]});
+        "files":files,"assets":references,"limitations":["Evidence package, not a portable native replay bundle.","Recorded paths refer to the original host and may no longer exist.","Provider credentials and host browser sessions are not captured.","Native bytes, tool report files and CLI handoff files are not included in this evidence package."]});
     entries.push((
         "manifest.json".into(),
         serde_json::to_vec_pretty(&manifest)?,

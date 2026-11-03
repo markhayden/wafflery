@@ -261,7 +261,7 @@ impl Coordinator {
                 ));
             }
         }
-        let (prepared, estimate) = if retained {
+        let (mut prepared, estimate) = if retained {
             self.preparations
                 .take(&request, &current, &client.session)?
         } else {
@@ -281,6 +281,7 @@ impl Coordinator {
                 None,
             )
         };
+        prepared.set_launch(&client.descriptor)?;
         let arguments = prepared.arguments().clone();
         let attempt = prepared.persist(&self.attempts, estimate.as_ref()).await?;
         let binding = estimate

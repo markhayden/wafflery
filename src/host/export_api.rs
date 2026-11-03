@@ -9,7 +9,7 @@ use axum::{
     extract::{Path, State},
     http::{StatusCode, header},
     response::{IntoResponse, Response},
-    routing::post,
+    routing::{get, post},
 };
 use std::sync::Arc;
 use tokio::{io::AsyncReadExt, sync::Semaphore};
@@ -17,13 +17,17 @@ use tokio::{io::AsyncReadExt, sync::Semaphore};
 struct ExportState {
     coordinator: Arc<Coordinator>,
     capacity: Arc<Semaphore>,
+    handoff_capacity: Arc<Semaphore>,
 }
 pub fn router(coordinator: Arc<Coordinator>) -> Router {
     Router::new()
         .route("/api/attempts/{id}/export", post(download))
+        .route("/api/attempts/{id}/handoff", get(handoff))
+        .route("/api/attempts/{id}/handoff/arguments", post(arguments))
         .with_state(ExportState {
             coordinator,
             capacity: Arc::new(Semaphore::new(1)),
+            handoff_capacity: Arc::new(Semaphore::new(2)),
         })
 }
 #[derive(serde::Deserialize)]
@@ -71,4 +75,58 @@ async fn download(
         Body::from_stream(stream),
     )
         .into_response())
+}
+
+async fn handoff(
+    State(state): State<ExportState>,
+    Path(id): Path<String>,
+) -> Result<Json<crate::tools::handoff::Handoff>, ApiError> {
+    Ok(Json(saved_handoff(state, id).await?))
+}
+#[derive(serde::Deserialize)]
+#[serde(deny_unknown_fields)]
+struct Empty {}
+async fn arguments(
+    State(state): State<ExportState>,
+    Path(id): Path<String>,
+    Json(_): Json<Empty>,
+) -> Result<Response, ApiError> {
+    let handoff = saved_handoff(state, id).await?;
+    if handoff.state != "local" {
+        return Err(Error::Invalid(handoff.blockers.join(" ")).into());
+    }
+    Ok((
+        StatusCode::OK,
+        [
+            (header::CONTENT_TYPE, "application/json"),
+            (
+                header::CONTENT_DISPOSITION,
+                "attachment; filename=wafflery-arguments.json",
+            ),
+            (header::CACHE_CONTROL, "no-store"),
+        ],
+        serde_json::to_vec_pretty(&handoff.arguments).map_err(Error::Json)?,
+    )
+        .into_response())
+}
+
+async fn saved_handoff(
+    state: ExportState,
+    id: String,
+) -> Result<crate::tools::handoff::Handoff, Error> {
+    let permit = state
+        .handoff_capacity
+        .clone()
+        .try_acquire_owned()
+        .map_err(|_| {
+            Error::Conflict("Two CLI handoff checks are active. Wait before trying again.")
+        })?;
+    // A dropped HTTP waiter cannot release the capacity while its blocking byte verification runs.
+    tokio::spawn(async move {
+        let _permit = permit;
+        let attempt = state.coordinator.attempts.get(&id).await?;
+        crate::tools::handoff::build(&state.coordinator.assets, &attempt).await
+    })
+    .await
+    .map_err(|_| Error::Invalid("CLI handoff worker stopped".into()))?
 }

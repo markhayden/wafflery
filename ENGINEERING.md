@@ -205,6 +205,15 @@ tool-rendered reports can require reinstalling a compatible tool; explain that l
 is a live operation and requires saved declarations/results for the current exact contract. Older
 saved evidence remains readable/exportable without a compatibility renderer or invented invocation.
 
+Resolved CLI handoffs use a minimal launch snapshot saved before dispatch, plus the tool's immutable
+invocation. Unknown launch argument values and environment values are excluded. Tool configuration
+is never read, even for hashing. Owned image bytes are verified before adding local locators; mixed
+lists use recorded argument indices, and previews cannot replace inputs. The command uses the saved
+working directory/config path and explicit input grants, and is withheld for unresolved store flags,
+missing launch context or missing/corrupt owned bytes. It depends on that local store and matching
+configuration; portable invocation bundles are a separate export. Copied commands are never executed
+by the host.
+
 ## Deletion and changing storage location
 
 Keep runs/examples until explicit deletion. Compute references within the host before cleanup;

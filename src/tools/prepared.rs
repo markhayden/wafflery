@@ -15,6 +15,7 @@ pub(super) struct PreparedCall {
     arguments: Value,
     inputs: Value,
     declaration: Value,
+    launch: Option<Value>,
     directory: Option<PathBuf>,
     // Prevent cleanup from removing asset references before the attempt transaction commits.
     _storage: tokio::sync::OwnedRwLockReadGuard<()>,
@@ -49,6 +50,7 @@ impl PreparedCall {
             arguments: Value::Null,
             inputs: Value::Null,
             declaration: Value::Null,
+            launch: None,
             directory: Some(directory.clone()),
             _storage: storage,
         };
@@ -59,6 +61,12 @@ impl PreparedCall {
             super::bindings::materialize(assets, &prepared.request, action, current, &directory)
                 .await?;
         Ok(prepared)
+    }
+    pub fn set_launch(&mut self, descriptor: &super::registration::Descriptor) -> Result<()> {
+        self.launch = Some(serde_json::to_value(super::handoff::launch_context(
+            descriptor,
+        ))?);
+        Ok(())
     }
     pub fn request(&self) -> &Submission {
         &self.request
@@ -71,7 +79,7 @@ impl PreparedCall {
         attempts: &AttemptStore,
         quote: Option<&super::estimate::ValidatedEstimate>,
     ) -> Result<Attempt> {
-        let observations = if let Some(quote) = quote {
+        let mut observations = if let Some(quote) = quote {
             quote.authorize(
                 &self.declaration["document"]["tool"],
                 &self.request.action,
@@ -88,6 +96,9 @@ impl PreparedCall {
         } else {
             serde_json::json!({})
         };
+        if let Some(launch) = self.launch.take() {
+            observations["host_launch"] = launch;
+        }
         let attempt = attempts
             .create_with_observations(
                 self.request.clone(),

@@ -2,6 +2,7 @@
 #[allow(dead_code)]
 #[path = "../../testkit/control_fixtures.rs"]
 mod fixtures;
+pub mod handoff;
 
 mod artifact_io;
 mod artifact_jobs;
