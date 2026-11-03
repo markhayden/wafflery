@@ -408,7 +408,7 @@ export function Workspace({
       selected.preservation.contract === "pending");
   return (
     <WorkspaceFrame connected connection="Connected locally" controls={<Shutdown api={api} />}
-      toolPicker={<Picker compact label="Tool" value={toolId} onChange={chooseTool}
+      toolPicker={<Picker compact wide label="Tool" value={toolId} onChange={chooseTool}
         choices={snapshot.tools.map(toolChoice)} />}>
     <div className={styles.workspace}>
       <div className={styles.toolContext}>

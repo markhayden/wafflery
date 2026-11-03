@@ -11,11 +11,11 @@ export const LongList:Story = {args:{choices:Array.from({length:60},(_,index)=>(
 export const Empty:Story = {args:{choices:[],value:""}};
 export const Disabled:Story = {args:{disabled:true}};
 
-export const Compact:Story = {args:{compact:true,label:"Tool",value:"sample",choices:[{id:"sample",title:"sample-lab",meta:"Version 0.1.0",description:"A local image pipeline tool."}]}};
+export const Compact:Story = {args:{compact:true,wide:true,label:"Tool",value:"sample",choices:[{id:"sample",title:"sample-lab",meta:"Version 0.1.0",description:"A local image pipeline tool."}]}};
 
 const declared=(name:string,version:string,purpose:string,error:string|null=null)=>toolChoice({id:name,error,
   declaration:{document:{tool:{name,version,purpose}}}} as RegisteredTool);
-export const Tools:Story = {args:{compact:true,label:"Tool",value:"rascal",choices:[
+export const Tools:Story = {args:{compact:true,wide:true,label:"Tool",value:"rascal",choices:[
  declared("rascal","0.1.1","Contract purpose."),declared("squint","0.1.0 (6b9bfa327)","Contract purpose."),
  declared("another-tool","0.2.0","Explores a locally installed tool using its declared purpose."),
  declared("offline-tool","0.1.0","This purpose loses to the error.","Cannot start this tool. Check its installation."),

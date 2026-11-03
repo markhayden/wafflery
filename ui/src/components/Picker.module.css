@@ -6,6 +6,7 @@
 .trigger strong { display: block; font-size: 1.25rem; font-weight: 500; overflow-wrap: anywhere; }
 .trigger small { display: block; color: var(--color-muted); margin-top: .2rem; overflow-wrap: anywhere; }
 .dialog { width: min(34rem, calc(100vw - 2rem)); max-height: min(42rem, 85dvh); color: var(--color-text); background: var(--color-surface); border: 1px solid var(--color-line); border-radius: var(--radius-panel); padding: 1.25rem; }
+.dialog.wide { width: min(44rem, calc(100vw - 2rem)); }
 .dialog::backdrop { background: #0009; }
 .head { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 1rem; }
 .head h2 { font-size: 1.125rem; font-weight: 500; }

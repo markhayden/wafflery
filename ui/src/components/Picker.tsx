@@ -17,9 +17,10 @@ type Props = {
   onChange: (value: string) => void;
   disabled?: boolean;
   compact?: boolean;
+  wide?: boolean;
   summary?: string | undefined;
 };
-export function Picker({ label, value, choices, onChange, disabled, compact = false, summary }: Props) {
+export function Picker({ label, value, choices, onChange, disabled, compact = false, wide = false, summary }: Props) {
   const id = useId();
   const trigger = useRef<HTMLButtonElement>(null);
   const search = useRef<HTMLInputElement>(null);
@@ -65,7 +66,7 @@ export function Picker({ label, value, choices, onChange, disabled, compact = fa
         onClose={() => {
           if (!dialog.current?.open) { setOpen(false); trigger.current?.focus(); }
         }}
-        className={styles.dialog}
+        className={`${styles.dialog} ${wide ? styles.wide : ""}`}
         aria-label={`Choose ${label.toLowerCase()}`}
       >
         <div className={styles.head}>

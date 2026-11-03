@@ -146,7 +146,17 @@ For an isolated **two-tool offline test** workspace:
 bun run scripts/dev-pipeline.ts /absolute/path/to/rascal /absolute/path/to/testkit/squint
 ```
 
-Use stable contract 0.4.0 executables; Squint needs the `testkit` feature and its v0.4 M10 implementation. The helper registers both tools and opens through `squint playground`. Select
+Use stable contract 0.4.0 executables; Squint needs the `testkit` feature and its v0.4 M10 implementation.
+The helper checks for `--provider-script` before launching and refuses a normal Squint build
+with a setup explanation. To build a separate testkit executable without changing Squint's
+ordinary build, run from Wafflery:
+
+```sh
+cargo build --manifest-path ../squint/Cargo.toml --locked --features testkit --bin squint --target-dir target/demo-squint
+bun run scripts/dev-pipeline.ts /absolute/path/to/rascal "$PWD/target/demo-squint/debug/squint" --start
+```
+
+The helper registers both tools and opens through `squint playground`. Select
 **Source fidelity** and provide candidate/source images. Squint returns a **scripted fixture
 verdict, not a model judgment**; Rascal runs without a filler. No credentials are supplied.
 The helper prints a reopen command. The estimate journal follow-up is resolved and the probe now

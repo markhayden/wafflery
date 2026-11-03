@@ -3579,6 +3579,33 @@ SIGINT covers both owned tools (probe and serving sessions), exit statuses, fina
 a newline, and large stderr output during close. Closed stdout/stderr plus SIGINT/SIGHUP remain
 safe. Independent task review completed. No full matrix, push or screenshot was requested.
 
+## V21 follow-up — Sticker artwork, picker width and demo readiness
+
+Owner's local UI review: replace the initial blue tool icons with the Rascal/Squint sticker
+artwork, copy the original WebPs into Wafflery, and widen only the tool picker from 34 to 44 rem
+while retaining its narrow viewport bounds. Keep declared versions; investigate Squint's missing
+version rather than inventing it. Small task on `fix-tool-picker-art`, targeted UI checks and local
+merge only; no push, full matrix or screenshot delivery. Rollback: revert the task commit.
+
+The current offline demo selected a normal Squint executable, which rejects `--provider-script`.
+Its MCP probe exits before any description/version can be read. The offline demo requires a
+separate `testkit` build; no sibling source or shared contract changes are needed.
+
+**As built:** original sticker WebPs are owned source assets in `ui/src/assets/tools/`; the blue
+source and emitted assets are removed. Tool-only `wide` presentation uses 44 rem with viewport
+bounds; action/report picker widths are unchanged. All eight chooser snapshots now use sticker art.
+The offline helper checks the selected executable's `serve --help` capability before creating tool
+folders or launching the host, with a bounded timeout and a setup error for missing/rejected help.
+No version is hardcoded. An isolated local Squint testkit build is available at
+`target/demo-squint/debug/squint`; the current review demo must select it when restarted.
+
+**Verified:** 103 UI unit tests, final focused presentation/demo tests, UI/script type checking,
+Storybook build and 10 Chromium/WebKit picker cases passed. Exact sticker byte copies and embedded
+asset MIME/CSP/decoding are verified. A separate real offline host reported Rascal `0.1.1` and
+Squint `0.1.0 (2d90b69c3)`, then shut down cleanly. Review found no blocking picker issues;
+preflight diagnostics and all baseline updates were checked before merge. No paid action, sibling
+source edit, push or full matrix. Revert this task's commit to roll back.
+
 ## Risks and decisions retained
 
 | Risk | Response |

@@ -1,7 +1,9 @@
 # V21 tool chooser
 
-Scope: Choose tool presentation only. The supplied 96 × 96 WebPs are copied unchanged:
-Rascal is 2,420 bytes; Squint is 2,842 bytes. They render decoratively at 40 × 40 CSS pixels.
+Scope: Choose tool presentation only. The owner-selected Rascal and Squint sticker WebPs are
+copied unchanged into `ui/src/assets/tools/rascal-sticker.webp` and `squint-sticker.webp`, replacing
+the initial blue icons. They render decoratively in 40 × 40 CSS pixel boxes with aspect ratio retained.
+The tool dialog is 44 rem wide (previously 34 rem), bounded by a 1 rem viewport margin on each side.
 The map uses the declared tool name. Unknown tools use their contract purpose with reserved,
 aligned logo space; errors replace the description. No sibling, contract or invocation changes.
 
@@ -49,3 +51,20 @@ passed with amendment 2. Earlier Rust/clippy/typecheck and broader browser check
 rerun was stopped as requested. Independent review approved the required corrections. Generated
 assets are included in the single task commit. No push, CI wait or screenshot delivery is part of
 this local UI review. Revert the single V21 commit to roll back; no data/schema migration is needed.
+
+## Owner review follow-up
+
+Sticker art is copied as repository-owned original WebPs; there is no runtime dependency on a
+sibling checkout or website. The tool dialog widens to 44 rem; action/report dialogs retain their
+existing width. All eight normal/narrow/long-version baselines are refreshed for this change.
+
+Squint's apparent unknown version was an MCP startup failure: the demo selected a normal binary
+while passing the test-only `--provider-script` flag. The helper now checks for that capability
+before creating tool folders or starting the host and provides a testkit setup explanation. The
+separate local `target/demo-squint/debug/squint` build was verified through a real host to report
+`0.1.0 (2d90b69c3)`; Rascal reported `0.1.1`. The review demo must use that executable when restarted.
+Declared versions remain unchanged and no version is inferred from the registration name.
+
+The follow-up passed 103 unit tests, focused demo/presentation checks, UI/script type checking,
+Storybook build and all 10 picker cases in Chromium/WebKit. Source copies match the selected
+sticker originals byte-for-byte. Targeted checks only; no push, full matrix or paid calls.

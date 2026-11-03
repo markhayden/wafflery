@@ -13,7 +13,7 @@ for(const width of [1440,320])test(`tool rows show logos, versions and searchabl
   await expect(row.getByText(description!,{exact:true})).toBeVisible();
   const icon=row.locator("img");await expect(icon).toHaveAttribute("alt","");
   await expect(icon).toHaveAttribute("width","40");await expect(icon).toHaveAttribute("height","40");
-  await expect.poll(()=>icon.evaluate((image:HTMLImageElement)=>image.naturalWidth)).toBe(96);
+  await expect.poll(()=>icon.evaluate((image:HTMLImageElement)=>image.naturalWidth)).toBe(900);
   const titleBox=(await row.locator("strong").boundingBox())!;
   const versionBox=(await row.getByText(version!,{exact:true}).boundingBox())!;
   expect(titleBox.x+titleBox.width).toBeLessThanOrEqual(versionBox.x);
@@ -24,6 +24,10 @@ for(const width of [1440,320])test(`tool rows show logos, versions and searchabl
   expect((await row.locator("img").boundingBox())!.y).toBeLessThanOrEqual(titleBox.y+2);
   expect(descBox.y).toBeGreaterThanOrEqual(Math.max(titleBox.y+titleBox.height,versionBox.y+versionBox.height));
  }
+ const rem=await page.evaluate(()=>Number.parseFloat(getComputedStyle(document.documentElement).fontSize));
+ const dialogWidth=(await dialog.boundingBox())!.width;
+ if(width>46*rem)expect(dialogWidth).toBeCloseTo(44*rem,0);
+ else {expect(dialogWidth).toBeLessThanOrEqual(width-2*rem);expect(dialogWidth).toBeGreaterThan(width*.8);}
  const unknown=dialog.getByRole("button",{name:/^another-tool /});
  expect((await unknown.locator("strong").boundingBox())!.x).toBe((await dialog.getByRole("button",{name:/^rascal /}).locator("strong").boundingBox())!.x);
  await expect(unknown).toContainText("Explores a locally installed tool using its declared purpose.");await expect(unknown.locator("img")).toHaveCount(0);
@@ -64,13 +68,13 @@ test("the packaged host serves unchanged WebP logos under its existing CSP",asyn
   const asset=Object.keys(manifest.outputs).find(path=>path.startsWith(`assets/${name}-`)&&path.endsWith(".webp"));expect(asset).toBeDefined();
   const response=await page.request.get(`${host.origin}/${asset}`);expect(response.status()).toBe(200);expect(response.headers()["content-type"]).toBe("image/webp");
   expect(response.headers()["content-security-policy"]).toContain("img-src 'self' blob:");
-  expect(await response.body()).toEqual(await readFile(new URL(`../../src/assets/tools/${name}.webp`,import.meta.url)));
+  expect(await response.body()).toEqual(await readFile(new URL(`../../src/assets/tools/${name}-sticker.webp`,import.meta.url)));
   // Exercise image decoding under the real page's CSP without inventing MCP registrations.
   await unknown.locator("span[aria-hidden=true]").evaluate((mark,src)=>{
    const image=document.createElement("img");image.src=src;image.alt="";image.width=40;image.height=40;
    mark.replaceChildren(image);
   },host.origin+"/"+asset);
-  await expect.poll(()=>unknown.locator("img").evaluate((image:HTMLImageElement)=>image.complete&&image.naturalWidth===96)).toBe(true);
+  await expect.poll(()=>unknown.locator("img").evaluate((image:HTMLImageElement)=>image.complete&&image.naturalWidth===900)).toBe(true);
  }
  expect(errors).toEqual([]);
 });
