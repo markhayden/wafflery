@@ -1978,6 +1978,46 @@ release build and 226 Chromium/WebKit tests (8 opt-in skipped). The temporary po
 removed; lockfiles/prebuilt assets are unchanged. Hostile peer responses, actual post-run ledger
 publication and configured narrowing/restart remain the following wire lifecycle slice.
 
+**b3 preparation (split before building):** the configured independent peer needs its estimate
+reader to obey the same grants and image assertions as execution. Land this first as a five-file
+slice: `testkit/estimates.rs`, `testkit/paid.rs`, `tests/control_wire.rs`,
+`ui/tests/browser/estimates.spec.ts`, and this plan.
+Build bindings from the already-resolved, ordered image fingerprints; never reopen a caller path
+while hashing a binding, especially after resolution was refused. Estimates resolve inputs once
+and report an input refusal without a run on grant/fingerprint/frame failure. The browser coordinate
+case must expect that refusal when the requested frame conflicts with the fake's declared flat
+interpretation, while still proving input order and coordinate edits invalidate earlier quotes.
+Unit tests require no path reads during binding, reject incomplete/extra resolved inputs, preserve
+reference order, and exclude delivery options. Stdio regressions cover refused ungranted paths,
+inline estimates without filesystem grants and malformed reference lists without a hung reply.
+Input-schema failures remain plain `-32602`; resolved input failures use the contract refusal data.
+An omitted optional cap resolves to the configured synthetic cap in both estimate and execution,
+verified by an inline quote/call round trip with synthetic spend only.
+No providers or paid calls are used.
+
+Then **b3a configured peer** changes `testkit/configuration.rs`, `testkit/main.rs`,
+`testkit/estimates.rs`, `testkit/paid.rs`, and this plan: optional startup-only grant configuration,
+canonical intersection, frozen effective grants/config identity and unit tests. The staged
+configuration work stays separate from the binding correction. **b3b wire lifecycle** then adds
+hostile session/estimate observations and Coordinator regressions for retained spending, directory
+removal during work, configured narrowing, refusal before reads and explicit new-session restart.
+Budget those files before building. Effective-access UI follows the live lifecycle evidence.
+
+**b3 binding preparation checkpoint (2026-11-02):** the new stdio regression failed against
+the original reader, which allowed an ungranted path with an empty grant list. Malformed reference
+lists reproduced a reader panic/no reply; input-schema validation now refuses them before reading.
+Binding tests use deliberately unavailable locators to prove no file reopening, check ordered
+fingerprints/frame assertions, reject missing/extra/wrong-slot inputs and exclude delivery flags.
+The inline quote/call regression exposed the omitted-cap mismatch and now completes with the same
+configured synthetic cap; no actual provider or charge is involved. Both wire controls preserve
+zero attempts/spending until an explicit synthetic execution. Browser checks independently verify
+reorder and coordinate invalidation; conflicting frame assertions yield the tool's refusal.
+Independent review and follow-ups approved. The final shared-lock matrix passed fmt/clippy,
+377 Rust tests (4 opt-in ignored), typecheck, 56 UI unit tests, 2 asset tests, Storybook,
+byte-identical check-ui builds, release build and 226 Chromium/WebKit tests (8 opt-in skipped).
+The temporary browser config is removed; lockfiles and prebuilt assets are unchanged. Configured
+narrowing/restart, hostile grant publication and the effective-access UI remain the next slices.
+
 **Checkpoint A:** merge M5.01–03 as a coherent cutover of validation, launch arguments and fake
 defaults; v0.4 is the only supported live contract afterward. Green matrix, an independent fake
 task run and the published exact dependency pin are required.
@@ -2405,6 +2445,6 @@ checkpoint to save time. No backward-compatibility shims are added for unrelease
 | Too much infrastructure before a working screen | M1 import loop and M2 execution loop are visible checkpoints; no speculative packages/services |
 
 M0–M3 and the V01–V19 client are complete. The R3 operations profile and C2 portable invocation
-contract are specified in v0.4; host adoption awaits approval of M5 above and its real-peer
-checkpoint. C3's v0.3 delivery is verified by V14–V18 against Rascal M12/Squint M9. R2 remains optional. Do not imply an Actions-only
+contract are specified in v0.4; host adoption is in progress under the approved M5 plan above
+and still requires its real-peer checkpoint. C3's v0.3 delivery is verified by V14–V18 against Rascal M12/Squint M9. R2 remains optional. Do not imply an Actions-only
 development build satisfies those release requirements. Product choices remain Q1–Q19.

@@ -17,6 +17,19 @@ pub fn start(
 ) {
     std::thread::spawn(move || {
         let arguments = &message["params"]["arguments"]["arguments"];
+        let description = super::readiness::description(&root, "estimates");
+        let action = description["actions"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|action| action["name"] == "price_test")
+            .unwrap();
+        if let Err(error) =
+            super::scenarios::validate(&super::scenarios::input_schema(action), arguments)
+        {
+            super::reject(&output, &message["id"], -32602, &error);
+            return;
+        }
         let label = arguments["label"].as_str().unwrap_or("");
         let mut journal = std::fs::OpenOptions::new()
             .create(true)
@@ -35,7 +48,7 @@ pub fn start(
                 std::thread::sleep(Duration::from_millis(5));
             }
         }
-        let cap = arguments["max_spend_usd"].as_f64().unwrap();
+        let cap = arguments["max_spend_usd"].as_f64().unwrap_or(1.0);
         if cap > 1.0 {
             let mut data = super::control_fixtures::refusal("invalid_arguments");
             data["error"]["reason"] = json!("The requested cap exceeds the configured cap of $1.");
@@ -56,11 +69,17 @@ pub fn start(
             );
             return;
         }
-        let path = arguments["source"]["path"].as_str().unwrap();
-        let bytes =
-            std::fs::read(path).expect("prepared inputs must remain until this reader finishes");
-        let digest = hash(&bytes);
-        std::fs::write(root.join("estimate-read"), &digest).unwrap();
+        let roots = state.lock().unwrap().allow_dirs.clone();
+        let images = match super::scenarios::prepare_images(arguments, &roots) {
+            Ok((images, _, _)) => images,
+            Err(error) => {
+                refuse_input(&output, &message["id"], &error.to_string());
+                return;
+            }
+        };
+        let path = &arguments["source"]["path"];
+        let digest = images[0]["image"]["file_sha256"].as_str().unwrap();
+        std::fs::write(root.join("estimate-read"), digest).unwrap();
         if matches!(label, "ledger" | "drain") {
             let mut state = state.lock().unwrap();
             let spent = state.session["spent_usd"]
@@ -87,9 +106,20 @@ pub fn start(
         if label != "readiness" {
             value["readiness"] = ready;
         }
-        value["cap_usd"] = arguments["max_spend_usd"].clone();
-        value["binding"] =
-            json!(binding(arguments, &value["tool"], &value["effective"], &session).unwrap());
+        value["cap_usd"] = json!(cap);
+        value["binding"] = match binding(
+            arguments,
+            &value["tool"],
+            &value["effective"],
+            &session,
+            &images,
+        ) {
+            Ok(binding) => json!(binding),
+            Err(error) => {
+                refuse_input(&output, &message["id"], &error.to_string());
+                return;
+            }
+        };
         value["expires"] = json!(
             (time::OffsetDateTime::now_utc() + time::Duration::minutes(5))
                 .format(&time::format_description::well_known::Rfc3339)
@@ -111,26 +141,59 @@ pub fn start(
     });
 }
 
+fn refuse_input(output: &Arc<Mutex<io::Stdout>>, id: &Value, reason: &str) {
+    send(
+        output,
+        json!({"jsonrpc":"2.0","id":id,"error":{
+            "code":-32602,"message":"Scripted estimate input was refused",
+            "data":{"reason":"invalid_arguments","run":null,
+                "error":{"code":"input","retryable":false,"reason":reason}}
+        }}),
+    );
+}
+
 pub fn binding(
     arguments: &Value,
     tool: &Value,
     effective: &Value,
     session: &Value,
+    images: &Value,
 ) -> io::Result<String> {
     let mut bound = arguments.clone();
-    bound.as_object_mut().unwrap().remove("return_images");
-    bound.as_object_mut().unwrap().remove("image_blocks");
-    let normalize = |image: &Value| -> io::Result<Value> {
-        let path = image["path"]
-            .as_str()
-            .ok_or_else(|| io::Error::other("missing image path"))?;
-        Ok(json!({"file_sha256":hash(&std::fs::read(path)?),"expect":image["expect"]}))
+    let object = bound
+        .as_object_mut()
+        .ok_or_else(|| io::Error::other("missing arguments"))?;
+    object.remove("return_images");
+    object.remove("image_blocks");
+    let images = images
+        .as_array()
+        .ok_or_else(|| io::Error::other("missing resolved inputs"))?;
+    let references = match arguments.get("references") {
+        Some(value) => value
+            .as_array()
+            .ok_or_else(|| io::Error::other("invalid references"))?
+            .as_slice(),
+        None => &[],
     };
-    bound["source"] = normalize(&arguments["source"])?;
-    if let Some(references) = bound.get_mut("references").and_then(Value::as_array_mut) {
-        for image in references {
-            *image = normalize(image)?;
+    if images.len() != references.len() + 1 {
+        return Err(io::Error::other("resolved input count differs"));
+    }
+    let normalize = |input: &Value, resolved: &Value, slot: &str| -> io::Result<Value> {
+        if !input.is_object() || resolved["slot"] != slot {
+            return Err(io::Error::other("resolved input order or slot differs"));
         }
+        let fingerprint = resolved["image"]["file_sha256"]
+            .as_str()
+            .ok_or_else(|| io::Error::other("missing resolved fingerprint"))?;
+        Ok(json!({"file_sha256":fingerprint,"expect":input["expect"]}))
+    };
+    bound["source"] = normalize(&arguments["source"], &images[0], "source")?;
+    if arguments.get("references").is_some() {
+        bound["references"] = references
+            .iter()
+            .zip(&images[1..])
+            .map(|(input, resolved)| normalize(input, resolved, "references"))
+            .collect::<io::Result<Value>>()?;
     }
     Ok(format!(
         "sha256:{}",
@@ -153,4 +216,71 @@ fn hash(bytes: &[u8]) -> String {
         .iter()
         .map(|byte| format!("{byte:02x}"))
         .collect()
+}
+
+#[cfg(test)]
+mod binding_tests {
+    use super::*;
+    fn bind(arguments: &Value, images: &Value) -> io::Result<String> {
+        binding(
+            arguments,
+            &json!({"name":"sample-lab","version":"1"}),
+            &json!({"model":"offline-script","config_identity":"configured"}),
+            &json!({"id":"session"}),
+            images,
+        )
+    }
+    fn image(slot: &str, digit: &str) -> Value {
+        json!({"slot":slot,"image":{"file_sha256":digit.repeat(64)}})
+    }
+    #[test]
+    fn bindings_use_resolved_fingerprints_without_reopening_paths() {
+        let files = json!([image("source", "a"), image("references", "b")]);
+        let mut arguments = json!({"source":{"path":"/missing/source"},"references":[{"path":"/missing/reference"}],"label":"sample"});
+        let first = bind(&arguments, &files).unwrap();
+        arguments["source"] = json!({"inline":{"data":"deliberately not decoded again"}});
+        arguments["references"][0] = json!({"resource":"sample://unread"});
+        arguments["return_images"] = json!("inline");
+        arguments["image_blocks"] = json!(true);
+        assert_eq!(bind(&arguments, &files).unwrap(), first);
+        let changed = json!([image("source", "a"), image("references", "c")]);
+        assert_ne!(bind(&arguments, &changed).unwrap(), first);
+    }
+    #[test]
+    fn ordered_references_and_expected_frames_remain_part_of_the_binding() {
+        let mut args = json!({"source":{"path":"/missing/source"},"references":[
+            {"path":"/missing/first"},{"path":"/missing/second"}
+        ]});
+        let images = json!([
+            image("source", "a"),
+            image("references", "b"),
+            image("references", "c")
+        ]);
+        let original = bind(&args, &images).unwrap();
+        let reordered = json!([
+            image("source", "a"),
+            image("references", "c"),
+            image("references", "b")
+        ]);
+        assert_ne!(bind(&args, &reordered).unwrap(), original);
+        args["references"][0]["expect"] = json!({"projection":"equirectangular","topology":"wrap"});
+        assert_ne!(bind(&args, &images).unwrap(), original);
+    }
+    #[test]
+    fn missing_duplicate_or_unexpected_resolved_inputs_cannot_make_a_binding() {
+        let args = json!({"source":{"path":"/missing/source"},"references":[{"path":"/missing/reference"}]});
+        for images in [
+            json!([]),
+            json!([image("source", "a")]),
+            json!([image("source", "a"), image("source", "a")]),
+            json!([image("source", "a"), image("extra", "b")]),
+            json!([
+                image("source", "a"),
+                image("references", "b"),
+                image("extra", "c")
+            ]),
+        ] {
+            assert!(bind(&args, &images).is_err());
+        }
+    }
 }

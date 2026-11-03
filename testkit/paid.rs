@@ -91,7 +91,17 @@ pub fn execute(
         );
     }
     let session = state.lock().unwrap().session.clone();
-    let binding = estimates::binding(arguments, &run["tool"], &effective, &session);
+    let binding = if input_error.is_some() {
+        Err(io::Error::other("Inputs were not resolved"))
+    } else {
+        estimates::binding(
+            arguments,
+            &run["tool"],
+            &effective,
+            &session,
+            &run["images"]["in"],
+        )
+    };
     let mut ledger = state.lock().unwrap();
     let stale = params["_meta"]
         .get("table-manners/estimate")
@@ -108,7 +118,7 @@ pub fn execute(
                             <= OffsetDateTime::now_utc()
                     })
         });
-    let cap = arguments["max_spend_usd"].as_f64().unwrap_or(0.0);
+    let cap = arguments["max_spend_usd"].as_f64().unwrap_or(1.0);
     let remaining = ledger.session["remaining_usd"].as_f64().unwrap();
     let error = if let Some(reason) = input_error.as_deref() {
         Some(("invalid", "input", reason))

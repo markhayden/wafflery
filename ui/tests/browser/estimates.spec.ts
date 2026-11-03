@@ -150,13 +150,17 @@ test("ordered image bindings and coordinates invalidate estimates", async ({page
   await estimate(page).click(); await expect(cost(page)).toContainText("Estimate within cap.");
   await refs.getByRole("button",{name:"Move image 2 earlier"}).click();
   await expect(cost(page)).toContainText("Estimate again");
-  await refs.getByRole("combobox").first().selectOption("equirectangular");
   await estimate(page).click(); await expect(cost(page)).toContainText("Estimate within cap.");
+  await refs.getByRole("combobox").first().selectOption("equirectangular");
+  await expect(cost(page)).toContainText("Estimate again");
+  await estimate(page).click();
+  await expect(cost(page)).toContainText("image fingerprint or frame differs from expect");
+  await expect(page.getByRole("button",{name:"Run",exact:true})).toBeDisabled();
   const calls = (await readFile(resolve(host.root,"../tool/estimates.ndjson"),"utf8")).trim().split("\n").map(line => JSON.parse(line));
-  expect(calls).toHaveLength(2);
+  expect(calls).toHaveLength(3);
   expect(calls[0].arguments.arguments.references.map((entry:{expect:{width:number}}) => entry.expect.width)).toEqual([160,2048]);
   expect(calls[1].arguments.arguments.references.map((entry:{expect:{width:number}}) => entry.expect.width)).toEqual([2048,160]);
-  expect(calls[1].arguments.arguments.references[0].expect.projection).toBe("equirectangular");
+  expect(calls[2].arguments.arguments.references[0].expect.projection).toBe("equirectangular");
 });
 
 test("configured cap rejection leaves the user's amount unchanged", async ({page, host}) => {

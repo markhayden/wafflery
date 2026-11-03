@@ -204,3 +204,103 @@ fn control_estimate_errors_and_caps_are_controls_not_runs() {
     peer.assert_no_runs("sample-lab");
     assert_eq!(std::fs::read_dir(root.path()).unwrap().count(), 0);
 }
+
+#[test]
+fn estimates_refuse_ungranted_paths_without_runs_and_accept_inline_inputs() {
+    use base64::{Engine as _, engine::general_purpose::STANDARD};
+    let root = tempfile::tempdir().unwrap();
+    let outside = tempfile::tempdir().unwrap();
+    let path = outside.path().join("source.png");
+    let bytes = include_bytes!("../ui/tests/fixtures/sample.png");
+    std::fs::write(&path, bytes).unwrap();
+    let mut peer = Peer::start(root.path(), "estimates");
+    let before = peer.session("sample-lab");
+    let mut args = json!({"label":"grant check","max_spend_usd":0.5,"source":{"path":path}});
+    let refused = peer.call(
+        60,
+        "tools/call",
+        json!({"name":"estimate","arguments":{"action":"price_test","arguments":args}}),
+    );
+    assert_eq!(refused["error"]["code"], -32602, "{refused}");
+    let data = &refused["error"]["data"];
+    schema::validator("refusal").validate(data).unwrap();
+    assert_eq!(data["reason"], "invalid_arguments");
+    assert_eq!(data["error"]["code"], "input");
+    assert!(
+        data["error"]["reason"]
+            .as_str()
+            .unwrap()
+            .contains("outside input grants")
+    );
+    assert!(!root.path().join("estimate-read").exists());
+    assert_eq!(peer.session("sample-lab"), before);
+    peer.assert_no_runs("sample-lab");
+    args["source"] = json!({"inline":{"media_type":"image/png","data":STANDARD.encode(bytes)}});
+    let allowed = peer.call(
+        61,
+        "tools/call",
+        json!({"name":"estimate","arguments":{"action":"price_test","arguments":args}}),
+    );
+    let quote = &allowed["result"]["structuredContent"];
+    schema::validator("estimate").validate(quote).unwrap();
+    assert_eq!(quote["allowed"], true);
+    args.as_object_mut().unwrap().remove("max_spend_usd");
+    let default_cap = peer.call(
+        64,
+        "tools/call",
+        json!({"name":"estimate","arguments":{"action":"price_test","arguments":args}}),
+    );
+    let quote = &default_cap["result"]["structuredContent"];
+    schema::validator("estimate").validate(quote).unwrap();
+    assert_eq!(quote["cap_usd"], 1.0);
+    assert_eq!(peer.session("sample-lab"), before);
+    peer.assert_no_runs("sample-lab");
+}
+
+#[test]
+fn invalid_estimate_reference_lists_are_refused_without_losing_the_reader() {
+    use base64::{Engine as _, engine::general_purpose::STANDARD};
+    let root = tempfile::tempdir().unwrap();
+    let mut peer = Peer::start(root.path(), "estimates");
+    let before = peer.session("sample-lab");
+    let args = json!({"label":"invalid list","max_spend_usd":0.5,
+        "source":{"inline":{"media_type":"image/png","data":STANDARD.encode(include_bytes!("../ui/tests/fixtures/sample.png"))}},
+        "references":"not a list"});
+    let refused = peer.call(
+        62,
+        "tools/call",
+        json!({"name":"estimate","arguments":{"action":"price_test","arguments":args}}),
+    );
+    assert_eq!(refused["error"]["code"], -32602, "{refused}");
+    assert!(
+        refused["error"].get("data").is_none(),
+        "schema errors are plain invalid params"
+    );
+    assert!(peer.call(63, "ping", json!({}))["result"].is_object());
+    assert_eq!(peer.session("sample-lab"), before);
+    peer.assert_no_runs("sample-lab");
+}
+
+#[test]
+fn inline_estimate_and_execution_share_the_optional_cap_default() {
+    use base64::{Engine as _, engine::general_purpose::STANDARD};
+    let root = tempfile::tempdir().unwrap();
+    let mut peer = Peer::start(root.path(), "estimates");
+    let args = json!({"label":"default cap","source":{"inline":{"media_type":"image/png",
+        "data":STANDARD.encode(include_bytes!("../ui/tests/fixtures/sample.png"))}}});
+    let quoted = peer.call(
+        70,
+        "tools/call",
+        json!({"name":"estimate","arguments":{"action":"price_test","arguments":args}}),
+    );
+    let quote = &quoted["result"]["structuredContent"];
+    schema::validator("estimate").validate(quote).unwrap();
+    assert_eq!(quote["cap_usd"], 1.0);
+    let called = peer.call(71,"tools/call",json!({"name":"price_test","arguments":args,
+        "_meta":{"table-manners/client_run_id":"default-cap-test","table-manners/estimate":quote["binding"]}}));
+    let result = &called["result"]["structuredContent"];
+    schema::validator("result").validate(result).unwrap();
+    assert_eq!(result["status"], "completed", "{result}");
+    assert_eq!(result["spend"]["usd"], 0.08);
+    assert_eq!(peer.session("sample-lab")["spent_usd"], 0.08);
+}
