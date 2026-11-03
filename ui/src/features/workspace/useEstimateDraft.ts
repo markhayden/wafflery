@@ -74,7 +74,7 @@ export function useEstimateDraft(api: LocalApi, key: string, session: string | u
       } else setDisplay({key,state:{kind:"quoted",estimate:quote.estimate}});
     } catch (failure) {
       if (alive.current && currentKey.current === key)
-        setDisplay({key,state:{kind:"error",message:failure instanceof Error ? failure.message : "The estimate could not be read."}});
+        setDisplay({key,state:{kind:"error",message:failure instanceof Error ? failure.message : "The estimate could not be read.",...(failure instanceof ApiError?{bindings:failure.bindings}:{})}});
       else if (draft) discard(draft);
     } finally {
       requesting.current = false;

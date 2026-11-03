@@ -1,3 +1,6 @@
+import {PortEditor} from "../actions/PortEditor";
+import {validatePorts,type PortBindings} from "../actions/ports";
+import {ApiError,bindingIssues as parseBindingIssues,type BindingIssue} from "../../api/client";
 import { ActivityPicker } from "./ActivityPicker";
 import { firstActivity } from "./activities";
 import type { ActivityKind } from "../actions/model";
@@ -111,9 +114,14 @@ export function Workspace({
   const [params, setParams] = useState<Schema>(() =>
     initialParameters(action?.params_schema ?? {}),
   );
+  const [portImporting,setPortImporting]=useState(false);
+  const [portBindings,setPortBindings]=useState<PortBindings>({});
+  const [bindingIssues,setBindingIssues]=useState<BindingIssue[]>([]);
   const [images, setImages] = useState<ImageSelection>({});
   const [savedImages, setSavedImages] = useState<Asset[]>([]);
   const [selected, setSelected] = useState<Attempt | undefined>();
+  const savedRefusal=object(object(selected?.observations)?.refusal);
+  const savedBindingIssues=selected?.request.action===actionId && JSON.stringify(selected.request.params)===JSON.stringify(params) && JSON.stringify(selected.request.bindings??{})===JSON.stringify(portBindings) && savedRefusal ? parseBindingIssues({code:"binding",bindings:savedRefusal.bindings}) : [];
   const recent = snapshot.attempts;
   const [selectedId, setSelectedId] = useState<string | null>();
   const [busy, setBusy] = useState(false),
@@ -179,7 +187,9 @@ export function Workspace({
         setToolId(attempt.request.tool);
         setActionId(attempt.request.action);
         setParams(structuredClone(attempt.request.params));
-        setImages(restored);
+        setImages(attempt.declaration.document.actions.find(a=>a.name===attempt.request.action)?.kind === "operation" ? {} : restored);
+        setPortBindings(structuredClone(attempt.request.bindings??{}));
+        setBindingIssues([]);
         submitted.current = null;
         setSelectedId(id);
         setSelected(attempt);
@@ -204,7 +214,9 @@ export function Workspace({
     setToolId(example.request.tool);
     setActionId(example.request.action);
     setParams(structuredClone(example.request.params));
-    setImages(restored);
+    setImages(current?.document.actions.find(a=>a.name===example.request.action)?.kind==="operation"?{}:restored);
+    setPortBindings(structuredClone(example.request.bindings??{}));
+    setBindingIssues([]);
     setSelectedId(null);
     setSelected(undefined);
     setDraftExample(example);
@@ -222,6 +234,7 @@ export function Workspace({
     setActionId(action?.name ?? "");
     setParams(initialParameters(action?.params_schema ?? {}));
     setImages({});
+    setPortBindings({});setBindingIssues([]);setPortImporting(false);
     setSelectedId(undefined);
     setSelected(undefined);
     setError(undefined);
@@ -238,6 +251,7 @@ export function Workspace({
       ),
     );
     setImages({});
+    setPortBindings({});setBindingIssues([]);setPortImporting(false);
     setSelectedId(undefined);
     setSelected(undefined);
     setError(undefined);
@@ -247,6 +261,7 @@ export function Workspace({
     if (busy) return;
     if (!retry && (!action || !declaration)) return;
     if (!retry && (cost.submission || (action?.cost.may_spend && !cost.canRun))) return;
+    if(portImporting)return;
     setError(undefined);
     setBusy(true);
     try {
@@ -258,6 +273,8 @@ export function Workspace({
         return;
       }
       if (!action || !declaration) return;
+      const portError=validatePorts(action.ports?.in??[],portBindings);if(portError){const invalid=(action.ports?.in??[]).find(port=>validatePorts([port],portBindings));if(invalid)document.querySelector<HTMLElement>(`[data-port="${CSS.escape(invalid.name)}"]`)?.focus();throw new Error(portError);}
+      setBindingIssues([]);
       const {images: bindings, frames} = encodeSelection(
         declaration.document.contract, action.images ?? [], images,
       );
@@ -267,6 +284,7 @@ export function Workspace({
         revision: declaration.revision,
         params,
         images: bindings,
+        bindings: portBindings,
         frames,
       });
       if (submitted.current?.body !== body)
@@ -279,6 +297,7 @@ export function Workspace({
             revision: declaration.revision,
             params: structuredClone(params),
             images: bindings,
+            bindings: structuredClone(portBindings),
             frames,
           },
         };
@@ -289,6 +308,7 @@ export function Workspace({
       setSelected(attempt);
       await updateSnapshot();
     } catch (failure) {
+      if(failure instanceof ApiError)setBindingIssues(failure.bindings);
       setError(
         failure instanceof Error
           ? failure.message
@@ -299,15 +319,16 @@ export function Workspace({
     }
   }
   const estimateKey = JSON.stringify({toolId,actionId,revision:declaration?.revision,sessionId,restarting,
-    draftRevision,estimateEditRevision,params,images:Object.fromEntries(Object.entries(images).map(([slot,items]) =>
+    draftRevision,estimateEditRevision,params,portBindings,images:Object.fromEntries(Object.entries(images).map(([slot,items]) =>
       [slot,items.map(image => ({id:image.id,coordinates:image.coordinates}))]))});
   const cost = useEstimateDraft(api, estimateKey, typeof sessionId === "string" && !restarting ? sessionId : undefined, () => {
     if (!declaration || !action?.cost.may_spend) throw new Error("Choose a paid action before estimating.");
     const cap = positiveCap(params.max_spend_usd);
     if (cap === undefined) throw new Error("Choose a positive spending cap before estimating.");
+    const portError=validatePorts(action.ports?.in??[],portBindings);if(portError){const invalid=(action.ports?.in??[]).find(port=>validatePorts([port],portBindings));if(invalid)document.querySelector<HTMLElement>(`[data-port="${CSS.escape(invalid.name)}"]`)?.focus();throw new Error(portError);}
     const bindings = encodeSelection(declaration.document.contract, action.images ?? [], images);
     return {id:crypto.randomUUID(),tool:toolId,action:actionId,revision:declaration.revision,
-      params:{...structuredClone(params),max_spend_usd:cap},...bindings};
+      params:{...structuredClone(params),max_spend_usd:cap},...bindings,bindings:structuredClone(portBindings)};
   }, updateSnapshot);
   let costSession;
   try { costSession = parseToolSession(declaration?.tool_session); } catch { /* No fabricated allowance. */ }
@@ -380,6 +401,7 @@ export function Workspace({
                 {draftExample.notes ? ` · ${draftExample.notes}` : ""}
               </p>
             )}
+            {action?.kind==="operation" && action.ports && <PortEditor key={`${toolId}/${actionId}/${draftRevision}/${declaration?.revision}`} ports={action.ports.in} value={portBindings} onBusy={setPortImporting} onChange={value=>{setPortBindings(value);setBindingIssues([]);}} assets={savedImages} issues={cost.state.kind==="error"?cost.state.bindings??bindingIssues:bindingIssues.length?bindingIssues:savedBindingIssues} upload={async file=>{const asset=await assets.upload(file);setSavedImages(await assets.list());return asset;}} disabled={busy||!!working||portImporting} />}
             {action ? (
               <ActionForm
                 key={`${toolId}/${actionId}/${draftRevision}/${declaration?.revision}`}
@@ -449,7 +471,7 @@ export function Workspace({
               type="submit"
               busy={busy}
               disabled={
-                !action ||
+                portImporting || !action ||
                 (action.cost.may_spend && !cost.canRun) ||
                 !!cost.submission ||
                 restarting ||

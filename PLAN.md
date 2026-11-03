@@ -2453,16 +2453,30 @@ clippy and UI typecheck passed. UI assets rebuilt. Hosted CI remains the full ga
 
 #### M5.07 — Add port editors to the input pane
 
-- [ ] Render typed port rows before parameters, with image/location editors and a saved-artifact
+- [x] Render typed port rows before parameters, with image/location editors and a saved-artifact
   selection affordance. Many rows support accessible reorder/remove and item-specific refusal text.
-- [ ] Required, optional, empty, resolving and refused states are distinct. Artifact selection does
+- [x] Required, optional, empty, resolving and refused states are distinct. Artifact selection does
   not claim frame validation; unknown compatibility is visible before explicit Run.
-- [ ] Input remains scrollable with fixed Run footer on desktop; long forms and validation focus
+- [x] Input remains scrollable with fixed Run footer on desktop; long forms and validation focus
   work at narrow width and increased text size. Stories cover all port shapes without tool branches.
 
 **Depends:** M5.05–06. **Areas:** port editor component, form state, API adapter, stories/browser tests.
 **Verify:** fresh image/location operation and scalar/list native binding through a fake reference.
 **Commit:** `feat: edit operation ports in the workspace`.
+
+**As built:** typed operation rows precede parameters and use explicit image coordinates, shared
+location JSON and opaque saved-reference choices. Many rows retain duplicate occurrences with
+labelled reorder/remove controls. Importing, empty/required, selected and refused states are
+separate; compatibility remains unconfirmed until the tool resolves it. Existing scrolling input
+pane and Run footer remain. Reopen preserves bindings; edits invalidate preparations. A review
+found asynchronous uploads could overwrite another port: the editor now reads the latest map,
+with a deferred-upload browser regression. Import locks Run; invalid required ports receive focus.
+Task/utility declarations never render operation ports. Stories cover empty, filled shapes,
+previewless references, indexed refusal, pending import and import failure. Targeted checks passed
+1 ordering/cardinality unit, UI typecheck, clippy, and 6 browser cases across Chromium/WebKit;
+the earlier hierarchy regression also passed. Reference-chain browser execution is completed in
+M5.09 after M5.08 supplies the saved-artifact catalogue; M5.06 already verifies the same native
+scalar/list dispatch and shared-location route through the independent peer. No hidden dispatch.
 
 #### M5.08 — Index output references and inspect artifacts
 

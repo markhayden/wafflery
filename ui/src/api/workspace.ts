@@ -104,6 +104,7 @@ function declaration(value: unknown): value is Declaration {
       typeof action.name === "string" &&
       typeof action.title === "string" &&
       typeof action.purpose === "string" &&
+      (action.ports===undefined || (record(action.ports) && [action.ports.in,action.ports.out].every(ports=>Array.isArray(ports)&&ports.every((port:unknown)=>record(port)&&typeof port.name==="string"&&typeof port.type==="string"&&(port.required===undefined||typeof port.required==="boolean")&&(port.many===undefined||typeof port.many==="boolean"))))) &&
       record(action.params_schema) &&
       record(action.cost) &&
       typeof action.cost.may_spend === "boolean" &&

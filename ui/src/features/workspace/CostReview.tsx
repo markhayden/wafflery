@@ -1,3 +1,4 @@
+import type {BindingIssue} from "../../api/client";
 import { useEffect, useId, useRef } from "react";
 import { Button } from "../../components/Button";
 import { positiveCap, type Estimate } from "../../api/estimates";
@@ -6,7 +7,7 @@ import styles from "./CostReview.module.css";
 
 export type CostState = { kind: "idle" | "stale" }
   | { kind: "pending"; stale?: boolean }
-  | { kind: "error"; message: string }
+  | { kind: "error"; message: string; bindings?: BindingIssue[] }
   | { kind: "quoted"; estimate: Estimate };
 type Props = {
   cap: string;

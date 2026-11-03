@@ -1,5 +1,5 @@
 export type BindingIssue = {port:string; index?:number; problem:"wrong_type"|"wrong_version"|"wrong_frame"|"unresolved"; expected:string; got:string; remedy?:string};
-function bindingIssues(error: object): BindingIssue[] {
+export function bindingIssues(error: object): BindingIssue[] {
   if (!("code" in error) || error.code!=="binding" || !("bindings" in error) || !Array.isArray(error.bindings)) return [];
   const values: unknown[]=error.bindings;
   return values.every((item):item is BindingIssue=>{
