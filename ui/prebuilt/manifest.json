@@ -35,9 +35,9 @@
     "ui/src/components/ImageInput.module.css": "375bd375e56d075d186eed761e1aef80333495d4974e6ef7293d884185ffa323",
     "ui/src/components/ImageInput.stories.tsx": "25c1107ff6951736cbaa8dccd42c40114c2d3332c71ed415ec4b6f87a08736ba",
     "ui/src/components/ImageInput.tsx": "216dad25eef1214284a2f01170e52c05d2fcb6d70384474435d0303c63b6b501",
-    "ui/src/components/Picker.module.css": "304fda051c825d0e0fe548c3f3d81685eadbda227861ab4f6ffff5019249af85",
+    "ui/src/components/Picker.module.css": "b86c77e8b6353139b9c1b17f3548e96f5edced538cd854eefa4cc9eefcae5093",
     "ui/src/components/Picker.stories.tsx": "cee576edfab6a1c25fb1be678e376fb53174da19294265ad13eac2c95a3b293d",
-    "ui/src/components/Picker.tsx": "1cffe5717fc97c36ba4b464999560c621b743183cc37e3111c6d6578b15f7f00",
+    "ui/src/components/Picker.tsx": "4aa7ea887f2e453d08a7372e663a80c57aee95031dcbb65c687c9b67ae34b96f",
     "ui/src/components/Shutdown.module.css": "1e2087405b4c401f8b10415ef2c56a6955662f6f0eeb39135c58b39927d1acf1",
     "ui/src/components/Shutdown.tsx": "0921c658b03088c98f6c8c285ffbc4efcb57d911a94cb1c8f523d9755d0278ad",
     "ui/src/components/WorkspaceFrame.stories.tsx": "15e8991d431983d9ba389a208f9f995961e17a9de4e62c6cc476c9df5225f7a6",
@@ -51,9 +51,9 @@
     "ui/src/features/actions/model.ts": "074307638969dcb3b55d4afb2a4d1477fb1ffef55d9b250363ba0c02b78546e5",
     "ui/src/features/actions/ports.ts": "e62adbff513d0e3af4d88787745ef7d54d412c59456ecbf009e95255b87bf27d",
     "ui/src/features/actions/selection.ts": "6ca7edf0f846176734efa323a251c05eef5b7a947cea52de462d82072f48e00c",
-    "ui/src/features/workspace/ActivityPicker.module.css": "39cf6ab6c6b94e6003280e87d2e4f5643aa9916ba1ad58cbd0feb99f18e213d0",
-    "ui/src/features/workspace/ActivityPicker.stories.tsx": "d935dad4dfc6725b191b949847bf9b4c4dcbd847737f34f7861c120e57e0a8d5",
-    "ui/src/features/workspace/ActivityPicker.tsx": "f81f37deb110e425a84e2d29939d758cf79caf05ea654fdb76d7e9df70005797",
+    "ui/src/features/workspace/ActivityPicker.module.css": "581afa77799ddb33eb765d14b19d3ab19eca6edc2bfe77e55fef7af68d948920",
+    "ui/src/features/workspace/ActivityPicker.stories.tsx": "0d866840acba2190e9f93146cac9043cb32c728ba8b2719985bfe99ea86b35e1",
+    "ui/src/features/workspace/ActivityPicker.tsx": "4b55991ad20e70dc26af9a60e477aeeded0faeb3eb5e68f45a0e80aaf97d5380",
     "ui/src/features/workspace/ArtifactOutputs.stories.tsx": "7fe0c90ba304e8929e4eccd5ceded565c633ab310b54b26844bd4ebde674c41f",
     "ui/src/features/workspace/ArtifactOutputs.tsx": "6142d138ad309939e57cce6a7f50497f56ed92289a17794dd05faaa825a7206d",
     "ui/src/features/workspace/BundleChain.tsx": "56053079ac20617c33b7f19c3b5586de0edb04f5c264f4f52bf5dd54ab1b9ba6",
@@ -102,7 +102,7 @@
     "ui/src/features/workspace/ToolSetup.tsx": "36f016aa0b2716041e2619972fcdc3a97cff1cf59d3f35bf09052cff66f67d6e",
     "ui/src/features/workspace/Workspace.module.css": "31a95af1a46b2d19a9aa6120da64ec023f3834e675e26351f8449a14062e6545",
     "ui/src/features/workspace/Workspace.tsx": "4df593cb2aff0df6049eb9fec76d83a24012aeac910a2de1510e58c33699446a",
-    "ui/src/features/workspace/activities.ts": "5b42ff07ca099a1b31eb5231877879ec009bd421574479bdf09e3879eb7040fc",
+    "ui/src/features/workspace/activities.ts": "09b00ab1605ceca504a920a7961b915eadc48918f5dc06dbb58b7354b91ac6d7",
     "ui/src/features/workspace/artifact-transfer.ts": "c7939e8ac842d3fb9e7b91443fcc1f420dffc428415bda9f74cff87bd6705c9b",
     "ui/src/features/workspace/artifacts.ts": "53878b1132361584949a82ed37773fef659ac858c8ca51dff618c319a153793b",
     "ui/src/features/workspace/bundle-replay.ts": "8d064deaaf57a4490debfbe587e17bf4e755bc70b6dc49e0a485203fbc9a1e01",
@@ -118,9 +118,9 @@
     "ui/vite.config.ts": "3aec7d6174ffca99d4d5288bea2f837d5e91335cbd7135a9682e6d18a40476b4"
   },
   "outputs": {
-    "assets/index-BMPvsV6r.css": "a47464817ad45146de536da6dd27a204ccd04ca50f91baaf6da2a931776347b7",
-    "assets/index-BiffsGHT.js": "bdc583725a1d9b0941509c2b9ebf873995d579cbf68c9940eae4015f09de4096",
+    "assets/index-Cfmv4YXP.js": "774a449cfb0fb116be84142da755c471d29b00483463099c4a0df187709f4265",
+    "assets/index-DCHMTYQi.css": "6a224f74b18aad359b1476686070586dd8db42fd90dfca21fdf1e66f9c673b95",
     "assets/wafflery-mark-CML0EpfM.svg": "51bc8a040e26b897a948238598b8cabdf69bf4687c2b1a70613b542de1c99f1f",
-    "index.html": "9b96be5635cc082f5491d8ab02889a979e7d17aec30804623b9d085b7e2d4890"
+    "index.html": "ee1ad6877f56a2697c976d49275e0550abbaa16a2b63311dd5619527f686782e"
   }
 }

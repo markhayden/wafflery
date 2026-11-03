@@ -1,5 +1,5 @@
 .pickers { width: min(32rem,100%); display: grid; gap: 1rem; min-width: 0; }
-.multiple { width: min(64rem,100%); grid-template-columns: minmax(0,1fr) minmax(0,1fr); align-items: start; }
+.multiple { width: min(64rem,100%); grid-template-columns: minmax(0,1fr) minmax(0,1fr); align-items: stretch; }
 .pickers > p { grid-column: 1 / -1; color: var(--color-muted); }
 @media (max-width: 640px) { .multiple { grid-template-columns: minmax(0,1fr); } }
 .readiness { grid-column: 1 / -1; color: var(--color-muted); overflow-wrap: anywhere; }

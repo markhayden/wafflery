@@ -1,4 +1,4 @@
-.picker { min-width: 0; display: grid; gap: .65rem; }
+.picker { min-width: 0; display: grid; grid-template-rows: auto 1fr; gap: .65rem; }
 .label, .group { color: var(--color-muted); font-size: .8125rem; }
 .trigger { width: 100%; min-height: 5.5rem; padding: 1rem 1.25rem; display: flex; align-items: center; justify-content: space-between; gap: 1.5rem; text-align: left; background: var(--color-surface); border: 1px solid var(--color-line); border-radius: var(--radius-panel); }
 .trigger:hover { border-color: var(--color-muted); }

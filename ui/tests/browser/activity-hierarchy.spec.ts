@@ -54,3 +54,10 @@ for(const width of [1440,390]) {
     }
   });
 }
+for(const width of [390,1440])for(const task of [false,true])test(`purpose prose stays in the chooser while ${task?"task":"operation"} controls remain aligned at ${width}`,async({page})=>{
+ await page.setViewportSize({width,height:900});await page.goto(`http://127.0.0.1:6006/iframe.html?id=workspace-activitypicker--${task?"long-task-purpose":"long-purpose"}&viewMode=story`);
+ const activity=page.getByRole("button",{name:task?"Action Repair a sample":"Operation Refine mask",exact:true}),workspace=page.getByRole("button",{name:task?"Workspace Playground":"Workspace Operations",exact:true});
+ await expect(activity).toContainText(task?"Image → Result":"rascal:Mask → rascal:Mask");expect((await activity.boundingBox())!.height).toBe((await workspace.boundingBox())!.height);
+ await expect(page.locator("#storybook-root")).toHaveScreenshot(`activity-long-${task?"task":"purpose"}-${width}.png`,visualPolicy);
+ await activity.click();await expect(page.getByRole("dialog",{name:task?"Choose action":"Choose operation"})).toContainText(task?"A complete sample task with detailed purpose.":"Refine the selected mask independently.");
+});

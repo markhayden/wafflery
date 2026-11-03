@@ -1,14 +1,13 @@
 # Wafflery engineering draft
 
-Status: embedded SQLite choice accepted (Q18); detailed storage and process design proposed,
-2026-10-30. Not an approved build plan or an
-implemented system. [SPEC.md](SPEC.md) owns product decisions; [ACCEPTANCE.md](ACCEPTANCE.md)
-owns observable outcomes. [ADR-0002](docs/decisions/0002-local-library-and-host.md) explains
-the engineering recommendations here. This draft does not invent additions to table-manners.
+Status: implemented macOS host design through M5.21, updated 2026-11-03. Product decisions live in
+[SPEC.md](SPEC.md), observable outcomes in [ACCEPTANCE.md](ACCEPTANCE.md), and scoped implementation
+history in [PLAN.md](PLAN.md). The live pin is published table-manners `=0.4.0`; protocol is
+`2025-11-25`. Older version sections below retain the reasoning behind earlier milestones.
+[The M5 review](docs/reviews/2026-11-03-m5-operations.md) records current acceptance and limitations.
 
-The [foundation runtime](docs/design/foundation-runtime.md) specifies the selected stack,
-private browser API/session boundary, repository layout, planned commands and verification.
-[PLAN.md](PLAN.md) scopes M0–M3 so later tool agreements do not block independent host/UI work.
+The host embeds SQLite and prebuilt Vite/React assets; end users need no frontend runtime.
+[Foundation runtime](docs/design/foundation-runtime.md) documents the build and browser boundary.
 
 ## Scope and source boundary
 
@@ -259,7 +258,7 @@ stable location outside the library. Explicitly disclose that their storage is n
 Verify no opaque native dependency points into a disposable/relocated execution path; any such
 unsupported dependency blocks relocation until resolved, without blocking ordinary v0.1 runs
 whose owned inputs/outputs and stable workspace bindings suffice.
-The library UUID and content digests remain stable. Final relocation tests depend on C2/H1.
+The library UUID and content digests remain stable. Native tool-store relocation is verified against the approved Rascal snapshot; general library relocation/distribution retains its own gates.
 
 ## Host and tool processes
 
@@ -523,16 +522,17 @@ neither may execute with host-session authority.
 
 ## Remaining integration and release work
 
-- Agree the now-drafted H1 launcher proposal with the tool owners; registration/installer subgates
-  remain separate. C2/C3 preservation/report examples and R3 need actual delivery milestones.
-- Review the [C4 v0.2 proposal](docs/handoffs/C4-v0.2-proposal.md) before the contract tag;
-  Wafflery owns advancing this request, not passively waiting on it.
-- Verify the selected foundation dependencies/tooling in M0; browser API, limits, event/session
-  interfaces and commands are specified in the linked runtime design. Final report isolation
-  remains dependent on C3.
-- Establish release macOS minimum/architectures and installer/bootstrap verification at M7.
-- Review the scoped foundation plan before implementation. No application scaffolding is
-  implied by these documentation changes.
+- C1/C2/R3 host integration is verified by M5.21 within declared capability/portability. C3 report
+  framing/lifetime is verified, but reconstructing arbitrary tool-owned report dependencies remains
+  unsupported. Unportable artifact types retain workspace dependencies honestly.
+- H1 uses canonical `wafflery` and `WAFFLERY_BIN`, with compatible-host attachment. Automatic tool
+  discovery, a real installation channel and release packaging remain separate M4/M7 work.
+- Preserve tool-owned session spending and explicit restart boundaries; durable job recovery and
+  a cross-restart spending service are outside this exploratory host.
+- Establish release macOS minimum/architectures and installer verification before M7. Native Safari
+  manual evidence remains separate from Chromium/WebKit automation.
+- Evaluations and agent orchestration require later approved plans. V20 adds import feedback and
+  bounded thumbnails; it does not silently resize source images or infer undeclared tool limits.
 
 ### v0.3 readiness controls
 

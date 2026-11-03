@@ -3360,6 +3360,18 @@ kill-on-drop ownership. No peer or shared-contract change was needed.
 - **M5.22b: acceptance documentation** — acceptance 1 and 3; review links, coverage and hosted CI
   evidence.
 
+**M5.22 as built:** closeout corrects stale foundation-era status in product/engineering/acceptance
+and owner packets, recording C1/C2/R3 integration while retaining real distribution, nonportable
+artifact and tool-owned report dependencies. The real/mock capture exposed long operation-purpose
+prose expanding its picker; a small UI correction uses declared port-type signatures for operations
+and compact image/location summaries for tasks, keeping full purpose in the searchable chooser/form. Matching grid rows preserve picker
+alignment. This is within the approved mock fidelity/closeout scope, with no dispatch or contract
+change. The failing unit/browser tests now pass; 48 targeted Chromium/WebKit cases include paid and
+workspace regressions, with new desktop/mobile long-purpose regions. Current screenshots use the
+approved real Rascal and synthetic image. The [M5 review](docs/reviews/2026-11-03-m5-operations.md)
+records native proof, bounds, rollback and remaining release gates. Final local checks/review and
+hosted CI remain the closeout gate; V20 is the adjacent next task.
+
 ### Approval, checks and remaining coordination
 
 The owner approved `plan-m5-v04` on 2026-11-02, including the published v0.4 pin update.
@@ -3425,6 +3437,6 @@ checkpoint to save time. No backward-compatibility shims are added for unrelease
 | Too much infrastructure before a working screen | M1 import loop and M2 execution loop are visible checkpoints; no speculative packages/services |
 
 M0–M3 and the V01–V19 client are complete. The R3 operations profile and C2 portable invocation
-contract are specified in v0.4; host adoption is in progress under the approved M5 plan above
-and still requires its real-peer checkpoint. C3's v0.3 delivery is verified by V14–V18 against Rascal M12/Squint M9. R2 remains optional. Do not imply an Actions-only
+contract are implemented under v0.4, with M5.21 real-peer acceptance verified. M5.22 records
+closeout; hosted CI and the adjacent V20 remain before the final completion statement. C3's v0.3 delivery is verified by V14–V18 against Rascal M12/Squint M9. R2 remains optional. Do not imply an Actions-only
 development build satisfies those release requirements. Product choices remain Q1–Q19.

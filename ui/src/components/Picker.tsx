@@ -15,8 +15,9 @@ type Props = {
   onChange: (value: string) => void;
   disabled?: boolean;
   compact?: boolean;
+  summary?: string | undefined;
 };
-export function Picker({ label, value, choices, onChange, disabled, compact = false }: Props) {
+export function Picker({ label, value, choices, onChange, disabled, compact = false, summary }: Props) {
   const id = useId();
   const trigger = useRef<HTMLButtonElement>(null);
   const search = useRef<HTMLInputElement>(null);
@@ -50,7 +51,7 @@ export function Picker({ label, value, choices, onChange, disabled, compact = fa
           <strong id={`${id}-value`}>
             {selected?.title ?? `Choose ${label.toLowerCase()}`}
           </strong>
-          {selected?.description && <small>{selected.description}</small>}
+          {(summary??selected?.description) && <small>{summary??selected?.description}</small>}
         </span>
         <svg className={styles.chevron} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg>
       </button>

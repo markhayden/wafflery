@@ -25,3 +25,6 @@ export const EmptyKind:Story={args:{kind:"utility",value:"",actions:actions.filt
 export const LongLabels:Story={args:{actions:[action("Inspect an unusually long declared operation title that must wrap safely even on narrow screens","operation","analyze")],kind:"operation",value:""}};
 export const NeedsSetup:Story={args:{actions:[{...actions[1]!,readiness:{state:"unavailable",requirements:[
   {kind:"dependency",name:"marker-engine",state:"missing",setup:"Install the marker engine to use this operation."}]}}]}};
+export const LongPurpose:Story={args:{actions:[actions[0]!,{...action("Refine mask","operation","refine"),purpose:"Refine the selected mask independently. ".repeat(15),ports:{in:[{name:"mask",type:"rascal:Mask",required:true}],out:[{name:"mask",type:"rascal:Mask",required:true}]}}],value:"Refine mask"}};
+
+export const LongTaskPurpose:Story={args:{actions:[{...action("Repair a sample","task"),purpose:"A complete sample task with detailed purpose. ".repeat(15),images:[{slot:"source",role:"source",required:true}]},actions[1]!],kind:"task",value:"Repair a sample"}};
