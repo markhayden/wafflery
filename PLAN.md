@@ -3649,3 +3649,10 @@ remain separate; no production release is implied. Product choices remain Q1–Q
 - [x] The heading introduces rascal and squint with their longer description and a "Learn more" link
   to their wafflehammock.com page; other tools keep their declared purpose.
 - [x] No widows anywhere: running text uses `text-wrap: pretty`, headings `balance` (tokens.css).
+
+### V26: pickers drop down from their control (owner UI review, 2026-11-03)
+
+- [x] Tool, Workspace and Action pickers open as an anchored dropdown (popover in the top layer)
+  instead of a centred modal: search pinned, options scroll, outside click and Escape close, focus
+  returns to the control; at least the control's width (the tool list 44rem), flipping above when
+  the space below is short.

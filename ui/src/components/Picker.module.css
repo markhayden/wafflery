@@ -5,13 +5,11 @@
 .trigger > span:first-child { min-width: 0; }
 .trigger strong { display: block; font-size: 1.25rem; font-weight: 500; overflow-wrap: anywhere; }
 .trigger small { display: block; color: var(--color-muted); margin-top: .2rem; overflow-wrap: anywhere; }
-.dialog { width: min(34rem, calc(100vw - 2rem)); max-height: min(42rem, 85dvh); color: var(--color-text); background: var(--color-surface); border: 1px solid var(--color-line); border-radius: var(--radius-panel); padding: 1.25rem; }
-.dialog.wide { width: min(44rem, calc(100vw - 2rem)); }
-.dialog::backdrop { background: #0009; }
-.head { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 1rem; }
-.head h2 { font-size: 1.125rem; font-weight: 500; }
-.dialog input { width: 100%; background: var(--color-background); border: 1px solid var(--color-line); border-radius: var(--radius-control); padding: .75rem; }
-.options { margin-top: 1rem; display: grid; gap: .35rem; }
+/* The dropdown: placed by Picker.tsx under (or above) its trigger in the top layer. */
+.dialog { position: fixed; inset: auto; margin: 0; overflow: hidden; color: var(--color-text); background: var(--color-surface); border: 1px solid var(--color-line); border-radius: var(--radius-panel); padding: .75rem; box-shadow: 0 12px 32px #0008; }
+.dialog:popover-open { display: flex; flex-direction: column; }
+.dialog input { flex: none; width: 100%; background: var(--color-background); border: 1px solid var(--color-line); border-radius: var(--radius-control); padding: .75rem; }
+.options { margin-top: .75rem; display: grid; gap: .35rem; overflow-y: auto; min-height: 0; overscroll-behavior: contain; }
 .options button { display: grid; gap: .25rem; width: 100%; text-align: left; border: 1px solid transparent; border-radius: var(--radius-control); background: transparent; padding: .75rem; }
 .options button:hover, .options button[aria-pressed=true] { background: var(--color-fill); border-color: var(--color-line); }
 .options small { color: var(--color-muted); }

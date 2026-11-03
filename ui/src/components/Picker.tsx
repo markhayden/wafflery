@@ -1,5 +1,4 @@
-import { useId, useRef, useState } from "react";
-import { Button } from "./Button";
+import { useEffect, useId, useRef, useState } from "react";
 import styles from "./Picker.module.css";
 export type Choice = {
   id: string;
@@ -33,6 +32,48 @@ export function Picker({ label, value, choices, onChange, disabled, compact = fa
       .toLowerCase()
       .includes(query.toLowerCase()),
   );
+  // A dropdown in the top layer (popover): outside clicks and Escape close it, and the trigger
+  // toggles it. It sits under its trigger, at least as wide, and flips above when below is short.
+  useEffect(() => {
+    const panel = dialog.current;
+    if (!panel) return;
+    const place = () => {
+      const anchor = trigger.current?.getBoundingClientRect();
+      if (!anchor) return;
+      const gap = 6, edge = 16;
+      const rem = Number.parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
+      const width = Math.min(wide ? 44 * rem : Math.max(anchor.width, 24 * rem), window.innerWidth - 2 * edge);
+      const left = Math.min(Math.max(anchor.left, edge), window.innerWidth - edge - width);
+      const below = window.innerHeight - anchor.bottom - gap - edge;
+      const above = anchor.top - gap - edge;
+      const up = below < 320 && above > below;
+      panel.style.width = `${width}px`;
+      panel.style.left = `${left}px`;
+      panel.style.maxHeight = `${Math.min(up ? above : below, 42 * rem)}px`;
+      panel.style.top = up ? "auto" : `${anchor.bottom + gap}px`;
+      panel.style.bottom = up ? `${window.innerHeight - anchor.top + gap}px` : "auto";
+    };
+    const toggled = (event: Event) => {
+      const opening = (event as ToggleEvent).newState === "open";
+      setOpen(opening);
+      if (opening) {
+        place();
+        search.current?.focus();
+      } else if (!document.activeElement || document.activeElement === document.body || panel.contains(document.activeElement)) {
+        trigger.current?.focus();
+      }
+    };
+    const follow = () => { if (panel.matches(":popover-open")) place(); };
+    panel.addEventListener("toggle", toggled);
+    window.addEventListener("resize", follow);
+    window.addEventListener("scroll", follow, true);
+    return () => {
+      panel.removeEventListener("toggle", toggled);
+      window.removeEventListener("resize", follow);
+      window.removeEventListener("scroll", follow, true);
+    };
+  }, [wide]);
+  const close = () => dialog.current?.hidePopover();
   return (
     <div className={`${styles.picker} ${compact ? styles.compact : ""}`}>
       <span id={id} className={styles.label}>
@@ -46,12 +87,8 @@ export function Picker({ label, value, choices, onChange, disabled, compact = fa
         aria-haspopup="dialog"
         aria-expanded={open}
         disabled={disabled}
-        onClick={() => {
-          setQuery("");
-          setOpen(true);
-          dialog.current?.showModal();
-          search.current?.focus();
-        }}
+        popoverTarget={`${id}-choices`}
+        onClick={() => setQuery("")}
       >
         <span>
           <strong id={`${id}-value`}>
@@ -63,16 +100,11 @@ export function Picker({ label, value, choices, onChange, disabled, compact = fa
       </button>
       <dialog
         ref={dialog}
-        onClose={() => {
-          if (!dialog.current?.open) { setOpen(false); trigger.current?.focus(); }
-        }}
-        className={`${styles.dialog} ${wide ? styles.wide : ""}`}
+        id={`${id}-choices`}
+        popover="auto"
+        className={styles.dialog}
         aria-label={`Choose ${label.toLowerCase()}`}
       >
-        <div className={styles.head}>
-          <h2>Choose {label.toLowerCase()}</h2>
-          <Button onClick={() => dialog.current?.close()}>Close</Button>
-        </div>
         <input
           ref={search}
           aria-label={`Search ${label.toLowerCase()}`}
@@ -93,7 +125,7 @@ export function Picker({ label, value, choices, onChange, disabled, compact = fa
                 disabled={choice.disabled}
                 onClick={() => {
                   onChange(choice.id);
-                  dialog.current?.close();
+                  close();
                 }}
               >
                 {choice.meta && <span className={styles.mark} aria-hidden="true">{choice.icon && <img src={choice.icon} width="64" height="64" alt="" />}</span>}

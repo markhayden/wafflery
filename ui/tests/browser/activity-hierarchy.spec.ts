@@ -40,7 +40,7 @@ for(const width of [1440,390]) {
     await page.keyboard.press("Enter");
     await expect(page.getByRole("button",{name:/^Operation Refine/})).toBeFocused();
     await page.getByRole("button",{name:/^Operation Refine/}).click();
-    await dialog.getByRole("heading").click();await page.mouse.move(0,0);
+    await dialog.getByRole("textbox").click();await page.mouse.move(0,0);
     await expect(dialog).toHaveScreenshot(`activity-menu-${width}.png`,visualPolicy);
     await page.keyboard.press("Escape");
     for(const story of ["empty-kind","long-labels","task-only","needs-setup"]) {
