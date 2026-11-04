@@ -58,12 +58,14 @@ test("run a real offline action and inspect immutable evidence after editing the
   await page.getByLabel("Label", { exact: true }).fill("Unsubmitted draft");
   await page.getByRole("button", { name: "Inspect run" }).click();
   const drawer = page.getByRole("dialog", { name: "Run details" });
+  await drawer.getByRole("button", { name: "Inputs", exact: true }).click();
   await expect(drawer.getByLabel("Saved evidence")).toContainText(
     "Saved first experiment",
   );
   await expect(drawer.getByLabel("Saved evidence")).not.toContainText(
     "Unsubmitted draft",
   );
+  await drawer.getByRole("button", { name: "Advanced", exact: true }).click();
   await drawer.getByRole("button", { name: "Resolved invocation", exact: true }).click();
   const resolvedEvidence = drawer.getByLabel("Resolved invocation", { exact: true });
   await expect(resolvedEvidence).toContainText("Saved first experiment");
@@ -81,7 +83,7 @@ test("run a real offline action and inspect immutable evidence after editing the
   await expect(drawer.getByLabel("Saved evidence")).toContainText(
     "Saved first experiment",
   );
-  await drawer.getByRole("button", { name: "Raw result" }).click();
+  await drawer.getByRole("button", { name: "Result", exact: true }).click();
   await expect(drawer.getByLabel("Saved evidence")).toContainText(
     "structuredContent",
   );
@@ -92,8 +94,9 @@ test("run a real offline action and inspect immutable evidence after editing the
   });
   await page.getByRole("button", { name: "History", exact: true }).click();
   await page.getByRole("dialog", { name: "History", exact: true })
-    .getByRole("button", { name: /sample \/ mark_band/ }).click();
+    .getByRole("button", { name: /^Add a test band$/ }).click();
   await page.getByRole("button", { name: "Inspect run" }).click();
+  await drawer.getByRole("button", { name: "Advanced", exact: true }).click();
   await drawer.getByRole("button", { name: "Resolved invocation", exact: true }).click();
   expect(JSON.parse((await resolvedEvidence.textContent())!)).toEqual(savedInvocation);
   await drawer.getByRole("button", { name: "Close" }).click();
@@ -112,17 +115,19 @@ test("run a real offline action and inspect immutable evidence after editing the
     page.getByRole("slider", { name: "Before and after divider" }),
   ).toBeVisible();
   await page.getByRole("button", { name: "Inspect run" }).click();
+  await drawer.getByRole("button", { name: "Inputs", exact: true }).click();
   await expect(drawer.getByLabel("Saved evidence")).toContainText(
     "Saved first experiment",
   );
   await drawer.getByRole("button", { name: "Close" }).click();
   await page.getByRole("button", { name: "History", exact: true }).click();
   const history = page.getByRole("dialog", { name: "History", exact: true });
-  await history.getByRole("button", { name: /sample \/ mark_band/ }).click();
+  await history.getByRole("button", { name: /^Add a test band$/ }).click();
   await expect(page.getByRole("slider")).toBeVisible();
   await page.getByRole("button", { name: "Inspect run" }).click();
-  await drawer.getByRole("button", { name: "Raw result" }).click();
+  await drawer.getByRole("button", { name: "Result", exact: true }).click();
   await expect(drawer.getByLabel("Saved evidence")).toContainText('"contract": "0.2.0"');
+  await drawer.getByRole("button", { name: "Advanced", exact: true }).click();
   await drawer.getByRole("button", { name: "Resolved invocation", exact: true }).click();
   await expect(drawer.getByText("No resolved invocation is available for this saved attempt.", { exact: true })).toBeVisible();
   await expect(resolvedEvidence).toHaveCount(0);

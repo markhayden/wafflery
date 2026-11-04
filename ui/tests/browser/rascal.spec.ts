@@ -77,9 +77,11 @@ test("real Rascal runs offline and preserves browser evidence across restart", a
     name: "Run details",
     exact: true,
   });
+  await inspection.getByRole("button", { name: "Inputs", exact: true }).click();
   await expect(inspection.getByLabel("Saved evidence")).toContainText(
     "equirectangular",
   );
+  await inspection.getByRole("button", { name: "Advanced", exact: true }).click();
   await inspection.getByRole("button", { name: "Recorded call" }).click();
   await expect(inspection.getByLabel("Saved evidence")).toContainText('"seam"');
   await inspection.getByRole("button", { name: "Close", exact: true }).click();
@@ -88,13 +90,10 @@ test("real Rascal runs offline and preserves browser evidence across restart", a
     name: "Use in your pipeline",
     exact: true,
   });
-  await pipeline
-    .getByRole("button", { name: "Evidence archive", exact: true })
-    .click();
   await pipeline.getByLabel("Include image files").check();
   const downloading = page.waitForEvent("download");
   await pipeline
-    .getByRole("button", { name: "Download evidence archive" })
+    .getByRole("button", { name: "Download archive" })
     .click();
   const archive = testInfo.outputPath("rascal-evidence.tar.gz");
   await (await downloading).saveAs(archive);

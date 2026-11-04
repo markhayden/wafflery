@@ -27,7 +27,7 @@ test("explicit paid Run submits the priced draft once and another run needs a fr
   await host.open(page); await quote(page);
   await run(page).click();
   const result = page.getByRole("region",{name:"Result",exact:true});
-  await expect(result).toContainText("completed");
+  await expect(result).toContainText("Completed");
   await expect(result).toContainText("Contract evidence: complete");
   await expect(run(page)).toBeDisabled();
   await expect(cost(page)).toContainText("Estimate again");
@@ -39,6 +39,7 @@ test("explicit paid Run submits the priced draft once and another run needs a fr
   expect(sent[0]._meta["table-manners/estimate"]).toMatch(/^sha256:/);
   expect(requests[0]).not.toHaveProperty("binding");
   await page.getByRole("button",{name:"Inspect run",exact:true}).click();
+  await page.getByRole("button",{name:"Advanced",exact:true}).click();
   await page.getByRole("button",{name:"Recorded call",exact:true}).click();
   await expect(page.getByRole("dialog")).toContainText(sent[0]._meta["table-manners/estimate"]);
   await page.keyboard.press("Escape");

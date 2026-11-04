@@ -1,5 +1,5 @@
 import {expect,test} from "bun:test";
-import {activityChoices,activityKinds,activitySummary,firstActivity,workspaceChoices,workspaceDescription,workspaceSummary} from "../../src/features/workspace/activities";
+import {activityChoices,activityKinds,activitySummary,purposeParts,firstActivity,workspaceChoices,workspaceDescription,workspaceSummary} from "../../src/features/workspace/activities";
 import type {Action} from "../../src/features/actions/model";
 const action=(name:string,kind:Action["kind"],group?:string):Action=>({name,title:name,purpose:"A declared activity",
   kind,...(group?{group}:{}),params_schema:{},cost:{may_spend:false},readiness:{state:"ready",requirements:[]}});
@@ -39,4 +39,10 @@ test("the closed workspace control counts what it holds",()=>{
  expect(workspaceSummary(actions,"task")).toBe("2 complete jobs");
  expect(workspaceSummary(actions,"operation")).toBe("1 operation");
  expect(workspaceSummary(actions,"utility")).toBe("1 utility");
+});
+
+test("a purpose splits into its first sentence and the rest, without reading tool vocabulary",()=>{
+ expect(purposeParts("A line location: a whole column or a path. When to use: a seam. When not to use: an area.")).toEqual({summary:"A line location: a whole column or a path.",more:"When to use: a seam. When not to use: an area."});
+ expect(purposeParts("One sentence only.")).toEqual({summary:"One sentence only.",more:""});
+ expect(purposeParts("No full stop")).toEqual({summary:"No full stop",more:""});
 });

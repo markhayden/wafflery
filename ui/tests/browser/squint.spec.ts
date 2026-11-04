@@ -52,13 +52,10 @@ test("Squint scripted evidence survives export, examples, tool switching and res
     name: "Use in your pipeline",
     exact: true,
   });
-  await pipeline
-    .getByRole("button", { name: "Evidence archive", exact: true })
-    .click();
   await pipeline.getByLabel("Include image files").check();
   const downloading = page.waitForEvent("download");
   await pipeline
-    .getByRole("button", { name: "Download evidence archive" })
+    .getByRole("button", { name: "Download archive" })
     .click();
   const archive = testInfo.outputPath("squint-evidence.tar.gz");
   await (await downloading).saveAs(archive);

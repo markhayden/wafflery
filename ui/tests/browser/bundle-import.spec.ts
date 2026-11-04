@@ -5,7 +5,7 @@ test("an uploaded bundle is reviewed before explicit input import and never star
  await expect(page.getByText("Contract evidence: complete.",{exact:false}).first()).toBeVisible();
  await page.getByRole("button",{name:"Use in your pipeline",exact:true}).click();
  let drawer=page.getByRole("dialog",{name:"Use in your pipeline",exact:true});
- await drawer.getByRole("button",{name:"Invocation bundle",exact:true}).click();await drawer.getByRole("button",{name:"Save bundle for review",exact:true}).click();
+ await drawer.getByText("Replay several runs as a chain",{exact:true}).click();await drawer.getByRole("button",{name:"Save bundle for review",exact:true}).click();
  const downloading=page.waitForEvent("download");await drawer.getByRole("button",{name:"Download saved invocation bundle",exact:true}).click();const download=await downloading;const archive=info.outputPath("import.tar");await download.saveAs(archive);
  await drawer.getByRole("button",{name:"Close",exact:true}).click();await page.getByRole("button",{name:"Bundles",exact:true}).click();
  drawer=page.getByRole("dialog",{name:"Saved invocation bundles",exact:true});
@@ -20,7 +20,7 @@ test("an uploaded bundle is reviewed before explicit input import and never star
  await page.getByRole("button",{name:"Bundles",exact:true}).click();await drawer.getByText("Import an invocation bundle",{exact:true}).click();
  await drawer.getByRole("button",{name:/Review uploaded/}).click();await expect(drawer.getByRole("region",{name:"Uploaded bundle review",exact:true}).getByRole("status")).toContainText("Inputs imported");
  await drawer.getByRole("button",{name:"Close",exact:true}).click();await page.getByRole("button",{name:"History",exact:true}).click();
- await expect(page.getByRole("dialog",{name:"History",exact:true}).getByRole("button",{name:/sample \/ mark_band/})).toHaveCount(1);
+ await expect(page.getByRole("dialog",{name:"History",exact:true}).getByRole("button",{name:/^Add a test band$/})).toHaveCount(1);
 });
 test("an invalid upload reports its refusal without creating a review",async({page,host})=>{
  await host.open(page);await page.getByRole("button",{name:"Bundles",exact:true}).click();const drawer=page.getByRole("dialog",{name:"Saved invocation bundles",exact:true});

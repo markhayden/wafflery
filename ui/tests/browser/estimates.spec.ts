@@ -48,7 +48,7 @@ test("paid draft estimates exact inputs without attempts and edits discard the q
   await expect(page.getByRole("button",{name:"Run",exact:true})).toBeDisabled();
   expect(preparations).toHaveLength(2);
   await page.getByRole("button",{name:"History",exact:true}).click();
-  await expect(page.getByRole("dialog")).toContainText("No saved attempts");
+  await expect(page.getByRole("dialog")).toContainText("No saved runs yet");
   expect(attempts).toBe(0);
 });
 
@@ -196,7 +196,7 @@ test("a later ledger observation keeps the quote and warns about exhausted allow
 test("invalid JSON edits discard the quote and need an explicit estimate after correction", async ({page, host}) => {
   await host.open(page); await paidDraft(page,"JSON draft");
   await openOptionalSettings(page);
-  const tags = page.getByRole("textbox",{name:"Tags · advanced",exact:true});
+  const tags = page.getByRole("textbox",{name:"Tags",exact:true});
   await tags.fill('["original"]');
   await estimate(page).click(); await expect(cost(page)).toContainText("Estimate within cap.");
   await tags.fill('["unfinished"');

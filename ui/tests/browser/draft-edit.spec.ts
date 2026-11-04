@@ -14,6 +14,7 @@ test("fixture edits commit an input event even if focus changes before native in
   await page.getByRole("button", { name: "Run", exact: true }).click();
   await expect(page.getByRole("region", { name: "Result", exact: true })).toContainText("Contract evidence: complete");
   await page.getByRole("button", { name: "Inspect run", exact: true }).click();
+  await page.getByRole("dialog").getByRole("button", { name: "Inputs", exact: true }).click();
   await expect(page.getByLabel("Saved evidence")).toContainText('"label": "committed draft"');
 });
 
@@ -28,5 +29,6 @@ test("native keyboard editing reaches the saved run through the controlled form"
   await page.getByRole("button", { name: "Run", exact: true }).click();
   await expect(page.getByRole("region", { name: "Result", exact: true })).toContainText("Contract evidence: complete");
   await page.getByRole("button", { name: "Inspect run", exact: true }).click();
+  await page.getByRole("dialog").getByRole("button", { name: "Inputs", exact: true }).click();
   await expect(page.getByLabel("Saved evidence")).toContainText('"label": "keyboard draft"');
 });

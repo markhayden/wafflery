@@ -21,7 +21,7 @@ test("a data-only result shows saved data without an empty image comparison", as
   await page.getByRole("button", { name: "Inspect run" }).click();
   await page
     .getByRole("dialog")
-    .getByRole("button", { name: "Raw result" })
+    .getByRole("button", { name: "Result", exact: true })
     .click();
   await expect(page.getByLabel("Saved evidence")).toContainText(
     "Illustrative data-only result",

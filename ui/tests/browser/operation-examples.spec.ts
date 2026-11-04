@@ -7,14 +7,14 @@ test.describe("owned operation examples",()=>{
  test("a native example restores after deleting its source runs and runs only its edited action",async({page,host})=>{
   await host.open(page);await page.getByRole("button",{name:"Workspace Playground",exact:true}).click();
   await page.getByRole("dialog",{name:"Choose workspace"}).getByRole("button",{name:new RegExp("^Operations ")}).click();
-  await page.getByLabel("Import image",{exact:true}).setInputFiles("tests/fixtures/sample.png");
-  await expect(page.getByText(/Image ·/)).toBeVisible();await page.getByRole("button",{name:"Run",exact:true}).click();
+  await page.getByLabel(/^Use your own image as /).first().setInputFiles("tests/fixtures/sample.png");
+  await expect(page.getByRole("status",{name:"image selection count"})).toHaveText("1 selected");await page.getByRole("button",{name:"Run",exact:true}).click();
   await page.getByRole("button",{name:"Use marker item 1 in another action",exact:true}).click();
-  await page.getByRole("dialog",{name:"Send artifact to"}).getByRole("button",{name:/stamp marker.*marker/}).click();
-  await page.getByRole("combobox",{name:"Saved image",exact:true}).selectOption({index:1});
+  await page.getByRole("dialog",{name:"Send artifact to"}).getByRole("button",{name:/^stamp marker/i}).click();
+  await page.locator("summary").filter({hasText:"Recent images"}).first().click();await page.getByRole("button",{name:/^Use recent image /}).first().click();
   await page.getByRole("button",{name:"Run",exact:true}).click();
   await page.getByRole("button",{name:"Use token item 1 in another action",exact:true}).click();
-  await page.getByRole("dialog",{name:"Send artifact to"}).getByRole("button",{name:/soften token.*token/}).click();
+  await page.getByRole("dialog",{name:"Send artifact to"}).getByRole("button",{name:/^soften token/i}).click();
   await page.getByRole("button",{name:"Run",exact:true}).click();
   await expect(page.getByRole("region",{name:"Native preservation"})).toContainText("Native artifacts · preserved");
   await page.getByRole("button",{name:"Examples",exact:true}).click();
@@ -33,8 +33,8 @@ test.describe("owned operation examples",()=>{
   await host.stop();await rm(join(dirname(host.root),"tool/artifacts"),{recursive:true});await host.start();await host.open(page);
   await page.getByRole("button",{name:"Examples",exact:true}).click();
   await examples.getByRole("button",{name:"Open Reusable soften",exact:true}).click();
-  const restore=page.getByRole("dialog",{name:"Restore saved artifact"});
-  await expect(restore).toContainText("Verified native bytes");
+  const restore=page.getByRole("dialog",{name:"Use a saved output"});
+  await expect(restore).toContainText("Wafflery kept a verified copy");
   await restore.getByRole("button",{name:"Import saved copy",exact:true}).click();
   await expect(page.getByRole("region",{name:"Result",exact:true})).toContainText("Example loaded: Reusable soften");
   await openOptionalSettings(page);

@@ -69,6 +69,7 @@ for (const tool of ["rascal", "squint"] as const) {
     const reports = tool === "rascal" ? [["dash", "Live viewer"], ["page", "Document"]] : [["report", "Live viewer"], ["export", "Document"]];
     async function inspect(name: string, kind: string) {
       await page.getByRole("button", { name: "Inspect run", exact: true }).click();
+      await page.getByRole("button",{name:"Advanced",exact:true}).click();
       await page.getByRole("button", { name: "Reports", exact: true }).click();
       await chooseReport(page, name, kind);
       await page.getByRole("button", { name: "Open report", exact: true }).click();
