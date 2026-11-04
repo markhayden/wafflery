@@ -8,6 +8,7 @@ import {InvocationBundles} from "./InvocationBundles";
 import {useArtifactRestore} from "./useArtifactRestore";
 import {NativePreservation} from "./NativePreservation";
 import {useSavedArtifacts} from "./useSavedArtifacts";
+import {SendDestinations} from "./SendDestinations";
 import {compatibleDestinations,transferBinding,encodePortBindings,encodeWorkspaceInputs,savedSources,type ArtifactSource} from "./artifact-transfer";
 import {ArtifactOutputs} from "./ArtifactOutputs";
 import {artifactOccurrences} from "./artifacts";
@@ -53,12 +54,23 @@ import {
 import { restoreSelection, type ImageSelection, type SelectedImage } from "../actions/selection";
 import { ActionForm } from "../actions/ActionForm";
 import { Button } from "../../components/Button";
+import { ActionRow } from "../../components/ActionRow";
+import { RunStatus } from "./RunStatus";
+import { RunProgress } from "./RunProgress";
 import { Picker } from "../../components/Picker";
 import { Drawer } from "../../components/Drawer";
 import { SavedComparison } from "./SavedComparison";
 import { History } from "./History";
 import { Inspector } from "./Inspector";
 import styles from "./Workspace.module.css";
+/** A saved output as a person tells it apart: what made it and when ("Remove · Nov 3, 8:51 PM"),
+ * the output's number when a run made several, and "not kept" when it can't be used again. */
+function savedLabel(source:ArtifactSource):string{
+  const when=source.created?new Date(source.created).toLocaleString(undefined,{month:"short",day:"numeric",hour:"numeric",minute:"2-digit"}):undefined;
+  const parts=[source.title??"Earlier run",when,(source.index??0)>0?`${source.port??"output"} ${(source.index??0)+1}`:undefined,source.kept===false?"not kept":undefined];
+  return parts.filter(Boolean).join(" · ");
+}
+
 export function Workspace({
   api,
   initial,
@@ -145,7 +157,6 @@ export function Workspace({
   const libraryArtifacts=useSavedArtifacts(api,snapshot,JSON.stringify([selected?.id,selected?.preservation,selected?.outputs.length]));
   const savedRefusal=object(object(selected?.observations)?.refusal);
   const savedBindingIssues=selected?.request.action===actionId && JSON.stringify(selected.request.params)===JSON.stringify(params) && JSON.stringify(selected.request.bindings??{})===JSON.stringify(encodePortBindings(portBindings).bindings) && savedRefusal ? parseBindingIssues({code:"binding",bindings:savedRefusal.bindings}) : [];
-  const recent = snapshot.attempts;
   const [selectedId, setSelectedId] = useState<string | null>();
   const [busy, setBusy] = useState(false),
     [error, setError] = useState<string>();
@@ -401,6 +412,9 @@ export function Workspace({
   const setupDeclaration = setupTool?.declaration;
   const setupAction = setupDeclaration?.document.actions.find(action => action.name === (drawer?.action ?? actionId));
   const setupRestarting = restartingTools.has(setupToolId);
+  const selectedPaid = selected?.declaration?.document?.actions?.some(action => action.name === selected.request.action && action.cost.may_spend) ?? false;
+  // A run that has not finished: its progress replaces the outcome and the comparison until it does.
+  const running = !!selected && ["submitted", "running", "cancelling"].includes(selected.execution);
   const working =
     selected &&
     (["submitted", "running", "unconfirmed", "cancelling"].includes(
@@ -417,10 +431,10 @@ export function Workspace({
   const missingPlace=(action?.locations??[]).find(slot=>slot.required&&!portBindings[slot.slot]?.length);
   const missingStep=missingImage?`Choose the ${imageLabel(missingImage).toLowerCase()} to run`
     :missingPlace?((missingPlace.kinds??[]).includes("bbox")?"Draw the area to run":(missingPlace.kinds??[]).includes("stroke")?"Paint over the damage to run":`Add the ${locationLabel(missingPlace.slot,missingPlace.kinds).toLowerCase()} to run`):undefined;
-    const portEditor=<PortEditor drawOn={drawOn} preview={assets.thumbnail} key={`ports/${toolId}/${actionId}/${draftRevision}/${declaration?.revision}`} ports={inputPorts} resolveArtifact={binding=>artifactRestore.choose(binding,toolId)} value={portBindings} onBusy={setPortImporting} onChange={value=>{setPortBindings(value);setBindingIssues([]);}} assets={savedImages} artifacts={(action?.kind==="operation"?libraryArtifacts.sources:[]).flatMap((source,index)=>{const binding=transferBinding(source,declaration!.document.tool.name);return binding?[{id:String(index),label:`${source.port} item ${(source.index??0)+1} · ${source.attempt?.slice(0,8)} · ${String(source.reference.type)}`,reference:source.reference,binding}]:[];})} issues={cost.state.kind==="error"?cost.state.bindings??bindingIssues:bindingIssues.length?bindingIssues:savedBindingIssues} upload={async file=>{const asset=await assets.upload(file);setSavedImages(await assets.list());return asset;}} disabled={busy||!!working||portImporting} />;
+    const portEditor=<PortEditor drawOn={drawOn} preview={assets.thumbnail} key={`ports/${toolId}/${actionId}/${draftRevision}/${declaration?.revision}`} ports={inputPorts} resolveArtifact={binding=>artifactRestore.choose(binding,toolId)} value={portBindings} onBusy={setPortImporting} onChange={value=>{setPortBindings(value);setBindingIssues([]);}} assets={savedImages} artifacts={(action?.kind==="operation"?libraryArtifacts.sources:[]).flatMap((source,index)=>{const binding=transferBinding(source,declaration!.document.tool.name);return binding?[{id:String(index),label:savedLabel(source),reference:source.reference,binding,...(binding.kind==="artifact"&&source.kept===false?{disabled:true}:{})}]:[];})} issues={cost.state.kind==="error"?cost.state.bindings??bindingIssues:bindingIssues.length?bindingIssues:savedBindingIssues} upload={async file=>{const asset=await assets.upload(file);setSavedImages(await assets.list());return asset;}} disabled={busy||!!working||portImporting} />;
   return (
     <WorkspaceFrame connected connection="Connected locally" controls={<Shutdown api={api} />}
-      toolPicker={<Picker compact wide label="Tool" value={toolId} onChange={chooseTool}
+      toolPicker={<Picker header wide label="Tool" value={toolId} onChange={chooseTool}
         choices={snapshot.tools.map(toolChoice)} />}>
     <div className={styles.workspace}>
       <div className={styles.toolContext}>
@@ -482,7 +496,7 @@ export function Workspace({
               </p>
             )}
             {action?.kind==="operation"&&inputPorts.length>0 && portEditor}
-            {action?.kind==="operation" && <><p role="status">{libraryArtifacts.loading?"Loading saved artifacts…":libraryArtifacts.error??"Select a saved artifact to check its availability. Run still validates compatibility."}</p>{libraryArtifacts.more&&<Button type="button" onClick={libraryArtifacts.loadMore}>Load older artifacts</Button>}</>}
+            {action?.kind==="operation" && <>{(libraryArtifacts.loading||libraryArtifacts.error)&&<p role="status" className={styles.note}>{libraryArtifacts.loading?"Loading saved artifacts…":libraryArtifacts.error}</p>}{libraryArtifacts.more&&<Button type="button" onClick={libraryArtifacts.loadMore}>Load older artifacts</Button>}</>}
             {action ? (
               <ActionForm
                 key={`${toolId}/${actionId}/${draftRevision}/${declaration?.revision}`}
@@ -526,6 +540,7 @@ export function Workspace({
             </p>
             <Button
               type="submit"
+              variant="primary"
               busy={busy}
               disabled={
                 chainClaimed || portImporting || unresolvedImport.length>0 || !action ||
@@ -548,13 +563,7 @@ export function Workspace({
         <section className={styles.panel} aria-label="Result">
           <div className={`${styles.resultHeading} ${styles.panelHeading}`}>
             <h2>Result</h2>
-            <span role="status">
-              {selected
-                ? selected.execution === "unconfirmed"
-                  ? "Cancellation requested · outcome unconfirmed"
-                  : selected.execution
-                : "Ready"}
-            </span>
+            <RunStatus attempt={selected} paid={selectedPaid} />
           </div>
           <div
             className={styles.panelBody}
@@ -562,36 +571,24 @@ export function Workspace({
             aria-label="Result content"
             tabIndex={0}
           >
-            {selected &&
-              ["submitted", "running"].includes(selected.execution) && (
-                <Button
-                  onClick={() => {
-                    void client
-                      .cancel(selected.id)
-                      .then(setSelected)
-                      .catch((failure) =>
-                        setError(
-                          failure instanceof Error
-                            ? failure.message
-                            : "Unable to request cancellation.",
-                        ),
-                      );
-                  }}
-                >
-                  Cancel run
-                </Button>
-              )}
+            {selected && running && (
+              <RunProgress action={selected.declaration?.document?.actions?.find(action => action.name === selected.request.action)?.title ?? selected.request.action}
+                message={tool?.progress?.message} cancelling={selected.execution === "cancelling"}
+                onCancel={["submitted", "running"].includes(selected.execution) ? () => {
+                  void client.cancel(selected.id).then(setSelected).catch((failure) =>
+                    setError(failure instanceof Error ? failure.message : "Unable to request cancellation."));
+                } : undefined} />
+            )}
             {selected ? (
               <>
-                {working && tool?.progress?.message && (
-                  <p className={styles.note}>{tool.progress.message}</p>
-                )}
-                <RunOutcome attempt={selected}
-                  paid={selected.declaration?.document?.actions?.some(action => action.name === selected.request.action && action.cost.may_spend) ?? false}
+                {!running && <RunOutcome attempt={selected}
+                  paid={selectedPaid}
                   onSetup={event => setDrawer({opener:event.currentTarget,
-                  view:"setup",tool:selected.request.tool,action:selected.request.action})} />
-                {!noRun && <>
-                {(!artifactOccurrences(selected.result).length || selected.outputs.some(output=>output.role!=="preview")) && <SavedComparison
+                  view:"setup",tool:selected.request.tool,action:selected.request.action})} />}
+                {!noRun && !running && <>
+                {/* The picture of the run: its output images, or, for an operation whose outputs are records (a
+                    location, a mask), the preview the tool drew of them. */}
+                {(!artifactOccurrences(selected.result).length || selected.outputs.length > 0) && <SavedComparison
                   attempt={selected}
                   client={client}
                   load={assets.preview}
@@ -642,37 +639,31 @@ export function Workspace({
           {selected && (
             <div className={`${styles.resultHeading} ${styles.panelFooter}`}>
               <p>Saved attempt · {selected.id.slice(0, 8)}</p>
-              <Button
-                onClick={(event) =>
-                  setDrawer({ opener: event.currentTarget, view: "inspect" })
-                }
-              >
-                Inspect run
-              </Button>
-              <Button
-                onClick={(event) =>
-                  setDrawer({ opener: event.currentTarget, view: "pipeline" })
-                }
-              >
-                Use in your pipeline
-              </Button>
+              <ActionRow flush>
+                <Button
+                  onClick={(event) =>
+                    setDrawer({ opener: event.currentTarget, view: "inspect" })
+                  }
+                >
+                  Inspect run
+                </Button>
+                <Button
+                  onClick={(event) =>
+                    setDrawer({ opener: event.currentTarget, view: "pipeline" })
+                  }
+                >
+                  Use in your pipeline
+                </Button>
+              </ActionRow>
             </div>
           )}
         </section>
       </div>
-      {recent.length > 0 && (
-        <section className={styles.recent} aria-label="Recent attempts">
-          <h2>Recent attempts</h2>
-          {recent.slice(0, 6).map((attempt) => (
-            <Button key={attempt.id} onClick={() => openAttempt(attempt.id)}>
-              {attempt.action} · {attempt.execution} · {attempt.id.slice(0, 8)}
-            </Button>
-          ))}
-        </section>
-      )}
       {artifactRestore.drawer}
-      <Drawer open={!!sendSource} title="Send artifact to" description="Choose a destination port. This fills a new draft without running any tool." onClose={()=>setSendSource(undefined)}>
-        {sendSource && compatibleDestinations(sendSource,snapshot.tools).map(destination=><Button key={`${destination.tool}/${destination.action}/${destination.port}`} onClick={async()=>{
+      <Drawer open={!!sendSource} title="Send artifact to" description="Pick the operation to use it in. This starts a new draft with it filled in; nothing runs until you press Run." onClose={()=>setSendSource(undefined)}>
+        {sendSource && <SendDestinations destinations={compatibleDestinations(sendSource,snapshot.tools)} disabled={busy}
+          groups={Object.fromEntries(snapshot.tools.flatMap(tool=>tool.declaration?[[tool.declaration.document.tool.name,tool.declaration.document.vocabulary?.group??[]]]:[]))}
+          onChoose={async destination=>{
           if(busy)return;
           const target=snapshot.tools.find(tool=>tool.id===destination.tool)?.declaration;
           const action=target?.document.actions.find(action=>action.name===destination.action);
@@ -686,8 +677,7 @@ export function Workspace({
             chooseTool(destination.tool);setActionId(destination.action);setParams(initialParameters(action.params_schema));
             setPortBindings({[destination.port]:[binding]});setSelectedId(null);setSelected(undefined);
           }catch(failure){setError(String(failure));}finally{setBusy(false);}
-        }}>{destination.title}</Button>)}
-        {sendSource&&!compatibleDestinations(sendSource,snapshot.tools).length&&<p>No installed operation declares a compatible receiving port. No tool was run.</p>}
+        }}/>}
       </Drawer>
       <Drawer
         open={drawer !== null}
@@ -740,7 +730,7 @@ export function Workspace({
             {setupTool && <RestartTool key={setupToolId} busy={setupTool.busy || setupRestarting} onRestart={restartToolSession} />}
           </>
         ) : drawer?.view === "history" ? (
-          <History client={client} onOpen={openAttempt} />
+          <History client={client} onOpen={openAttempt} tools={snapshot.tools} preview={assets.thumbnail} />
         ) : drawer?.view === "examples" ? (
           <Examples
             client={examples}
@@ -760,7 +750,7 @@ export function Workspace({
             }}
           />
         ) : (
-          drawer?.view === "inspect" && selected && <Inspector key={selected.id} attempt={selected} reports={reports} retryNative={retryNative} />
+          drawer?.view === "inspect" && selected && <Inspector key={selected.id} attempt={selected} reports={reports} retryNative={retryNative} api={api} />
         )}
       </Drawer>
     </div>

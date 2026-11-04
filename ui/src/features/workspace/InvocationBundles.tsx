@@ -9,6 +9,7 @@ import type {LocalApi} from "../../api/client";
 import type {Attempt} from "../../api/workspace";
 import {object} from "../actions/model";
 import {Button} from "../../components/Button";
+import {CodeBlock} from "../../components/CodeBlock";
 import styles from "./InvocationBundles.module.css";
 function choices(attempt?:Attempt):string[]{
  const action=attempt?.declaration.document?.actions.find(a=>a.name===attempt.request.action);
@@ -75,9 +76,9 @@ export function BundleReview({bundle,busy=false,onDownload,children}:{bundle:Bun
    {!!step.artifacts.length&&<><h4>Native input copies</h4><ul>{step.artifacts.map((entry,index)=><li key={index}>{entry.port} · {String(entry.artifact.type??"Artifact")} · <code>{String(entry.artifact.identity??"")}</code></li>)}</ul></>}
    {!!step.reference_only.length&&<><h4>Omitted inputs</h4><ul>{step.reference_only.map((entry,index)=><li key={index}>{entry.port??entry.slot}: {entry.why}</li>)}</ul></>}
    {!!step.unportable.length&&<><h4>Unresolved native inputs</h4><ul>{step.unportable.map((entry,index)=><li key={index}>{entry.port}: {entry.reason}</li>)}</ul></>}
-   <details><summary>Recorded invocation</summary><pre>{JSON.stringify(step.invocation,null,2)}</pre></details>
+   <details><summary>Recorded invocation</summary><CodeBlock label="Recorded invocation" value={step.invocation}/></details>
   </section>)}
-  {cli&&<section><h4>Use with the tool CLI</h4><p>After downloading, replace both example paths with your saved file and its containing folder. Tool setup and any paid use remain separate.</p><pre aria-label="Bundle CLI example">{`'${cli}' call --bundle '/absolute/path/to/wafflery-invocation.tar' --allow-dir '/absolute/path/to'`}</pre></section>}
+  {cli&&<section><h4>Use with the tool CLI</h4><p>After downloading, replace both example paths with your saved file and its containing folder. Tool setup and any paid use remain separate.</p><CodeBlock label="Bundle CLI example" copyLabel="Copy example command" language="shell" value={`'${cli}' call --bundle '/absolute/path/to/wafflery-invocation.tar' --allow-dir '/absolute/path/to'`}/></section>}
   {!cli&&!bundle.workspace_dependent&&new Set(bundle.manifest.steps.map(s=>s.tool.name)).size>1&&<p>This bundle needs host replay because it uses more than one tool.</p>}
   <Button busy={busy} onClick={onDownload}>Download saved invocation bundle</Button>
   <p>SHA-256: <code>{bundle.sha256}</code>. The saved archive is verified before each download.</p>

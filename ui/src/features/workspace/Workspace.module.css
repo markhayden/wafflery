@@ -49,8 +49,7 @@
 .panelBody:focus-visible {
   outline-offset: -4px;
 }
-.panel h2,
-.recent h2 {
+.panel h2 {
   font-size: 1rem;
   font-weight: 500;
 }
@@ -73,8 +72,6 @@
   border-top: 1px solid var(--color-line);
 }
 .run button {
-  background: var(--color-text);
-  color: var(--color-background);
   min-width: 5rem;
 }
 .empty {
@@ -99,14 +96,12 @@
   margin-top: 0.75rem;
 }
 .saved,
-.saved > div,
-.recent {
+.saved > div {
   display: flex;
   gap: 0.5rem;
   flex-wrap: wrap;
 }
-.saved p,
-.recent h2 {
+.saved p {
   width: 100%;
 }
 .saved {
@@ -153,20 +148,6 @@
     flex: 1;
     min-height: 10rem;
   }
-  .recent {
-    flex: none;
-    flex-wrap: nowrap;
-    align-items: center;
-    overflow-x: auto;
-    padding: 0.25rem;
-  }
-  .recent > * {
-    flex: none;
-  }
-  .recent h2 {
-    width: auto;
-    margin-right: 0.5rem;
-  }
 }
 :global(.comparison-actions) {
   display: flex;
@@ -191,9 +172,6 @@
   :global(.settings-comparison) {
     grid-template-columns: 1fr;
   }
-}
-:global([aria-label="Saved history"] ul) {
-  list-style: none; padding: 0; display: grid; gap: 1rem;
 }
 .resultData {
   white-space: pre-wrap;
@@ -220,7 +198,6 @@
 .outputs { display: grid; gap: 0.5rem; }
 .outputsTitle { margin: 0; font-size: 0.875rem; font-weight: 500; color: var(--color-muted); }
 .output { display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; padding: 0.75rem 1rem; border: 1px solid var(--color-line); border-radius: var(--radius-control); }
-.outputActions { display: flex; gap: 0.5rem; flex-wrap: wrap; }
 .preserve, .preserveFailed { display: grid; gap: 0.375rem; padding: 0.75rem 1rem; border: 1px solid var(--color-line); border-radius: var(--radius-control); font-size: 0.8125rem; }
 .preserve h3, .preserveFailed h3 { margin: 0; font-size: 0.875rem; font-weight: 500; }
 .preserve p, .preserveFailed p { margin: 0; color: var(--color-muted); }

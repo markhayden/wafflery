@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import styles from "./Picker.module.css";
 export type Choice = {
   id: string;
@@ -16,10 +16,18 @@ type Props = {
   onChange: (value: string) => void;
   disabled?: boolean;
   compact?: boolean;
+  /** The application header's picker: one line, bordered, sized to sit level with the brand. */
+  header?: boolean;
   wide?: boolean;
   summary?: string | undefined;
+  /** A short type tag beside the selected title (an operation's Image → Location). */
+  tag?: string | undefined;
+  /** Keep the summary to one line, the full text on hover; for a summary that is a sentence. */
+  oneLine?: boolean;
+  /** Placed after the label, such as an InfoTip about the selected choice. */
+  labelExtra?: ReactNode;
 };
-export function Picker({ label, value, choices, onChange, disabled, compact = false, wide = false, summary }: Props) {
+export function Picker({ label, value, choices, onChange, disabled, compact = false, header = false, wide = false, summary, tag, oneLine = false, labelExtra }: Props) {
   const id = useId();
   const trigger = useRef<HTMLButtonElement>(null);
   const search = useRef<HTMLInputElement>(null);
@@ -75,9 +83,12 @@ export function Picker({ label, value, choices, onChange, disabled, compact = fa
   }, [wide]);
   const close = () => dialog.current?.hidePopover();
   return (
-    <div className={`${styles.picker} ${compact ? styles.compact : ""}`}>
-      <span id={id} className={styles.label}>
-        {label}
+    <div className={`${styles.picker} ${compact ? styles.compact : ""} ${header ? styles.header : ""}`}>
+      <span className={styles.labelRow}>
+        <span id={id} className={styles.label}>
+          {label}
+        </span>
+        {labelExtra}
       </span>
       <button
         ref={trigger}
@@ -91,10 +102,13 @@ export function Picker({ label, value, choices, onChange, disabled, compact = fa
         onClick={() => setQuery("")}
       >
         <span>
-          <strong id={`${id}-value`}>
-            {selected?.title ?? `Choose ${label.toLowerCase()}`}
-          </strong>
-          {(summary??selected?.description) && <small>{summary??selected?.description}</small>}
+          <span className={styles.titleRow}>
+            <strong id={`${id}-value`}>
+              {selected?.title ?? `Choose ${label.toLowerCase()}`}
+            </strong>
+            {tag && <span className={styles.tag}>{tag}</span>}
+          </span>
+          {(summary??selected?.description) && <small className={oneLine ? styles.oneLine : undefined} title={oneLine ? summary??selected?.description : undefined}>{summary??selected?.description}</small>}
         </span>
         <svg className={styles.chevron} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg>
       </button>
@@ -113,29 +127,32 @@ export function Picker({ label, value, choices, onChange, disabled, compact = fa
           onChange={(event) => setQuery(event.target.value)}
         />
         <div className={styles.options}>
-          {open && matches.map((choice, index) => (
-            <div key={choice.id}>
-              {choice.group && choice.group !== matches[index - 1]?.group && (
-                <p className={styles.group}>{choice.group}</p>
-              )}
-              <button
-                type="button"
-                className={choice.meta ? styles.withMeta : undefined}
-                aria-pressed={choice.id === value}
-                disabled={choice.disabled}
-                onClick={() => {
-                  onChange(choice.id);
-                  close();
-                }}
-              >
-                {choice.meta && <span className={styles.mark} aria-hidden="true">{choice.icon && <img src={choice.icon} width="64" height="64" alt="" />}</span>}
-                <span className={styles.optionText}>
-                  <span className={styles.optionHeading}><strong>{choice.title}</strong>
-                    {choice.meta && <small className={styles.meta} title={choice.meta}>{choice.meta}</small>}
+          {open && sections(matches).map((section, index) => (
+            // A group's heading sticks to the top while its options scroll under it, until the
+            // next group's heading pushes it up.
+            <div key={`${section.group ?? ""}-${index}`} className={styles.section}>
+              {section.group && <p className={styles.group}><span>{section.group}</span></p>}
+              {section.choices.map((choice) => (
+                <button
+                  key={choice.id}
+                  type="button"
+                  className={choice.meta ? styles.withMeta : undefined}
+                  aria-pressed={choice.id === value}
+                  disabled={choice.disabled}
+                  onClick={() => {
+                    onChange(choice.id);
+                    close();
+                  }}
+                >
+                  {choice.meta && <span className={styles.mark} aria-hidden="true">{choice.icon && <img src={choice.icon} width="64" height="64" alt="" />}</span>}
+                  <span className={styles.optionText}>
+                    <span className={styles.optionHeading}><strong>{choice.title}</strong>
+                      {choice.meta && <small className={styles.meta} title={choice.meta}>{choice.meta}</small>}
+                    </span>
+                    {choice.description && <small>{choice.description}</small>}
                   </span>
-                  {choice.description && <small>{choice.description}</small>}
-                </span>
-              </button>
+                </button>
+              ))}
             </div>
           ))}
           {open && matches.length === 0 && <p>No matches. Try another search.</p>}
@@ -143,4 +160,15 @@ export function Picker({ label, value, choices, onChange, disabled, compact = fa
       </dialog>
     </div>
   );
+}
+
+/** Consecutive choices of one group, in order; ungrouped runs have no group. */
+function sections(choices: Choice[]): { group?: string; choices: Choice[] }[] {
+  const out: { group?: string; choices: Choice[] }[] = [];
+  for (const choice of choices) {
+    const last = out[out.length - 1];
+    if (last && last.group === choice.group) last.choices.push(choice);
+    else out.push({ ...(choice.group ? { group: choice.group } : {}), choices: [choice] });
+  }
+  return out;
 }

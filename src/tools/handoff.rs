@@ -84,6 +84,19 @@ impl Default for Handoff {
         }
     }
 }
+/// A word as the shell reads it: bare when it holds only characters the shell leaves alone,
+/// otherwise single-quoted.
+pub fn shell_word(value: &str) -> String {
+    if !value.is_empty()
+        && value
+            .bytes()
+            .all(|b| b.is_ascii_alphanumeric() || b"/._-=:@+,%".contains(&b))
+    {
+        value.to_owned()
+    } else {
+        shell_quote(value)
+    }
+}
 pub fn shell_quote(value: &str) -> String {
     format!("'{}'", value.replace('\'', "'\\''"))
 }
@@ -97,14 +110,14 @@ pub async fn build(assets: &AssetStore, attempt: &Attempt) -> Result<Handoff> {
     else {
         handoff
             .blockers
-            .push("This saved attempt has no current resolved invocation.".into());
+            .push("This run hasn't finished, so its final settings aren't known yet.".into());
         return Ok(handoff);
     };
     let invocation = &result["invocation"];
     if invocation.is_null() {
         handoff
             .blockers
-            .push("The tool did not resolve an invocation for this run.".into());
+            .push("The tool refused this run's inputs, so there is nothing to repeat.".into());
         return Ok(handoff);
     }
     if attempt.declaration["document"]["contract"] != "0.4.0"
@@ -115,7 +128,7 @@ pub async fn build(assets: &AssetStore, attempt: &Attempt) -> Result<Handoff> {
     {
         handoff
             .blockers
-            .push("The saved invocation is unavailable or conflicts with this run.".into());
+            .push("The settings saved with this run are missing or don't match it.".into());
         return Ok(handoff);
     }
     handoff.invocation = Some(invocation.clone());
@@ -204,12 +217,12 @@ pub async fn build(assets: &AssetStore, attempt: &Attempt) -> Result<Handoff> {
     handoff.arguments = Some(arguments);
     let launch = serde_json::from_value::<Launch>(attempt.observations["host_launch"].clone()).ok();
     let Some(launch) = launch else {
-        handoff.blockers.push("No launch context was saved with this run. Its invocation remains available for inspection.".into());
+        handoff.blockers.push("Wafflery didn't record how it started the tool for this run. The settings are still in Run details, under Advanced.".into());
         return Ok(handoff);
     };
     handoff.cwd = launch.cwd.clone();
     if launch.unresolved_arguments {
-        handoff.blockers.push("The serving tool used extra launch arguments. Its local store setup must be resolved before a CLI command can be provided.".into());
+        handoff.blockers.push("Wafflery started the tool with its own storage settings, and the command can't include those yet.".into());
     }
     let executable = launch.executable.filter(|path| {
         std::path::Path::new(path).is_absolute() && std::path::Path::new(path).is_file()
@@ -245,13 +258,29 @@ pub async fn build(assets: &AssetStore, attempt: &Attempt) -> Result<Handoff> {
     for directory in directories {
         argv.extend(["--allow-dir".into(), directory]);
     }
+    // The command a person pastes carries the arguments inline (`--arguments -` and a quoted
+    // here-document), so nothing has to be downloaded and moved first; `argv` keeps the file
+    // form for scripts. One flag per line, words quoted only where the shell needs it.
+    let mut lines = vec![format!(
+        "{} call {} --arguments -",
+        shell_word(&argv[0]),
+        shell_word(&attempt.request.action)
+    )];
+    for pair in argv[5..].chunks(2) {
+        lines.push(
+            pair.iter()
+                .map(|arg| shell_word(arg))
+                .collect::<Vec<_>>()
+                .join(" "),
+        );
+    }
+    let inline = serde_json::to_string_pretty(handoff.arguments.as_ref().unwrap_or(&Value::Null))
+        .unwrap_or_else(|_| "null".into());
     handoff.command = Some(format!(
-        "cd {} &&\n{}",
-        shell_quote(&cwd.unwrap()),
-        argv.iter()
-            .map(|arg| shell_quote(arg))
-            .collect::<Vec<_>>()
-            .join(" ")
+        "cd {} && \\\n  {} <<'WAFFLERY_ARGUMENTS'\n{}\nWAFFLERY_ARGUMENTS",
+        shell_word(&cwd.unwrap()),
+        lines.join(" \\\n    "),
+        inline
     ));
     handoff.argv = Some(argv);
     handoff.state = "local";

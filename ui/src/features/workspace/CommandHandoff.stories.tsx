@@ -11,11 +11,11 @@ const meta={title:"Workspace/CommandHandoff",component:CommandHandoff,args:{id:"
 export default meta;type Story=StoryObj<typeof meta>;
 export const Local:Story={};
 export const Loading:Story={args:{api:new PreviewApi(null)}};
-export const UnresolvedStore:Story={args:{api:new PreviewApi({...value,state:"unavailable",blockers:["The serving tool used extra launch arguments. Its local store setup must be resolved before a CLI command can be provided."],argv:null,command:null})}};
-export const UnavailableInvocation:Story={args:{api:new PreviewApi({...value,state:"unavailable",blockers:["The tool did not resolve an invocation for this run."],invocation:null,arguments:null,argv:null,command:null,cwd:null,requirements:[],allowed_dirs:[]})}};
+export const UnresolvedStore:Story={args:{api:new PreviewApi({...value,state:"unavailable",blockers:["Wafflery started the tool with its own storage settings, and the command can't include those yet."],argv:null,command:null})}};
+export const UnavailableInvocation:Story={args:{api:new PreviewApi({...value,state:"unavailable",blockers:["The tool refused this run's inputs, so there is nothing to repeat."],invocation:null,arguments:null,argv:null,command:null,cwd:null,requirements:[],allowed_dirs:[]})}};
 
 function CompletingPreview(args:ComponentProps<typeof CommandHandoff>){
- const [api]=useState(()=>new PreviewApi({...value,state:"unavailable",blockers:["This saved attempt has no current resolved invocation."],invocation:null,arguments:null,command:null,argv:null}));
+ const [api]=useState(()=>new PreviewApi({...value,state:"unavailable",blockers:["This run hasn't finished, so its final settings aren't known yet."],invocation:null,arguments:null,command:null,argv:null}));
  const [revision,setRevision]=useState("running");
  return <Drawer open title="Use in your pipeline" onClose={()=>{}}><Button onClick={()=>{api.set(value);setRevision("completed");}}>Finish saved run</Button><CommandHandoff {...args} api={api} revision={revision}/></Drawer>;
 }

@@ -1,6 +1,5 @@
 .panel { display: grid; gap: 1rem; min-width: 0; }
 .panel p { font-size: .875rem; line-height: 1.6; overflow-wrap: anywhere; }
-.actions { display: flex; flex-wrap: wrap; gap: .5rem; }
 .status { color: var(--color-muted); }
 .frame, .empty { width: 100%; height: min(32rem,60dvh); min-height: 16rem; border: 1px solid var(--color-line); border-radius: var(--radius-control); background: var(--color-background); }
 .frame { display: block; }

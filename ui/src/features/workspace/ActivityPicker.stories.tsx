@@ -28,3 +28,7 @@ export const NeedsSetup:Story={args:{actions:[{...actions[1]!,readiness:{state:"
 export const LongPurpose:Story={args:{actions:[actions[0]!,{...action("Refine mask","operation","refine"),purpose:"Refine the selected mask independently. ".repeat(15),ports:{in:[{name:"mask",type:"rascal:Mask",required:true}],out:[{name:"mask",type:"rascal:Mask",required:true}]}}],value:"Refine mask"}};
 
 export const LongTaskPurpose:Story={args:{actions:[{...action("Repair a sample","task"),purpose:"A complete sample task with detailed purpose. ".repeat(15),images:[{slot:"source",role:"source",required:true}]},actions[1]!],kind:"task",value:"Repair a sample"}};
+/** Rascal's `line`, with its purpose as the contract sends it today (one paragraph). */
+export const DeclaredGuidance:Story={args:{actions:[actions[0]!,{...action("Line","operation","find"),
+  purpose:"A line location: a whole column or a path, with its full width in pixels. When to use: When the region to mask follows a line: the wrap edge at the centre of a cut canvas (column 0.5), a seam, a crease, a scratch that fan will later widen row by row. When not to use: When the mark is a rough hand-drawn stroke to be tightened to the defect (use stroke), or an area (use rect or a polygon).",
+  ports:{in:[{name:"image",type:"image",required:true}],out:[{name:"location",type:"location",required:true}]}}],value:"Line"}};

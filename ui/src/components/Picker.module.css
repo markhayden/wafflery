@@ -1,4 +1,4 @@
-.picker { min-width: 0; display: grid; grid-template-rows: auto 1fr; gap: .65rem; }
+.picker { min-width: 0; display: grid; grid-template-columns: minmax(0, 1fr); grid-template-rows: auto 1fr; gap: .65rem; }
 .label, .group { color: var(--color-muted); font-size: .8125rem; }
 .trigger { width: 100%; min-height: 5.5rem; padding: 1rem 1.25rem; display: flex; align-items: center; justify-content: space-between; gap: 1.5rem; text-align: left; background: var(--color-surface); border: 1px solid var(--color-line); border-radius: var(--radius-panel); }
 .trigger:hover { border-color: var(--color-muted); }
@@ -13,7 +13,12 @@
 .options button { display: grid; gap: .25rem; width: 100%; text-align: left; border: 1px solid transparent; border-radius: var(--radius-control); background: transparent; padding: .75rem; }
 .options button:hover, .options button[aria-pressed=true] { background: var(--color-fill); border-color: var(--color-line); }
 .options small { color: var(--color-muted); }
-.group { padding: .75rem; }
+/* A group heading divides the list: a rule across with the group's name hanging from it as a
+   flag in the brand blue, the rule the same colour so the two read as one piece. */
+.section { display: grid; gap: .35rem; }
+.group { position: sticky; top: 0; z-index: 1; margin: .75rem 0 0; padding: 0 .75rem .5rem; border-top: 1px solid var(--color-brand); background: var(--color-surface); }
+.group span { display: inline-block; padding: .2rem .5rem .25rem; border-radius: 0 0 var(--radius-control) var(--radius-control); background: var(--color-brand); color: var(--color-on-brand); font-size: .6875rem; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; }
+.options > .section:first-child .group { margin-top: 0; }
 
 .chevron { flex: none; color: var(--color-muted); }
 .compact { display: block; }
@@ -31,3 +36,21 @@
 .optionHeading { display: flex; align-items: baseline; justify-content: space-between; gap: .75rem; min-width: 0; }
 .optionHeading strong { min-width: 0; flex: 1; }
 .optionHeading .meta { min-width: 0; max-width: 65%; flex: 0 1 auto; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: right; }
+
+/* The label row carries an optional control after the label (an ⓘ about the selection). */
+.labelRow { display: flex; align-items: center; gap: .25rem; min-height: 1.25rem; }
+/* Title and its type tag share a baseline; the tag wraps under the title when space is short. */
+.titleRow { display: flex; flex-wrap: nowrap; align-items: baseline; column-gap: .625rem; min-width: 0; }
+.titleRow strong { min-width: 0; }
+/* The tag stays on the title's line and shortens with an ellipsis when space runs out. */
+.tag { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; padding: .0625rem .5rem; border: 1px solid var(--color-line); border-radius: 999px; color: var(--color-muted); font-size: .75rem; line-height: 1.5; white-space: nowrap; }
+.titleRow strong { flex: none; }
+.trigger small.oneLine { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; overflow-wrap: normal; }
+
+/* Header: a one-line bordered select, the label read by assistive tech only. */
+.header { display: block; }
+.header .label { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.header .labelRow { display: contents; }
+.header .trigger { min-height: 2.75rem; padding: 0.5rem 0.75rem 0.5rem 1rem; gap: 0.75rem; border-radius: var(--radius-control); }
+.header .trigger strong { font-size: 1rem; font-weight: 500; }
+.header .trigger small { display: none; }

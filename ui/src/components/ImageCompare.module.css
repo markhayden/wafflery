@@ -1,10 +1,10 @@
 .viewer { min-width:0; display:grid;gap:.75rem; }
 .toolbar,.labels {display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap;}
 .toolbar {font-size:.875rem;}
-.toolbar>div {display:flex;gap:.4rem;}
+.toolbar>div {display:flex;flex-wrap:wrap;gap:.4rem;align-items:center;}
 .toolbar button[aria-pressed=true] {border-color:var(--color-muted);background:var(--color-fill);}
 .wipe {position:relative;overflow:hidden;background:#101212;border:1px solid var(--color-line);border-radius:var(--radius-control);}
-.wipe>img {position:absolute;inset:0;width:100%;height:100%;object-fit:contain;}
+.wipe>img {position:absolute;inset:0;width:100%;height:100%;object-fit:contain;transform-origin:0 0;}
 .wipe input {position:absolute;inset:0;width:100%;height:100%;margin:0;opacity:0;cursor:ew-resize;}
 .wipe:focus-within {outline:2px solid var(--color-focus);outline-offset:4px;}
 .divider {position:absolute;top:0;bottom:0;border-left:2px solid #fff;pointer-events:none;}
@@ -12,7 +12,17 @@
 .labels {font-size:.75rem;color:var(--color-muted);overflow-wrap:anywhere;}
 .side {display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:1rem;}
 .pane {margin:0;min-width:0;display:grid;align-content:start;gap:.5rem;}
-.pane img {width:100%;max-height:32rem;object-fit:contain;border:1px solid var(--color-line);border-radius:var(--radius-control);background:#101212;}
-.pane p {min-height:12rem;display:grid;place-items:center;border:1px dashed var(--color-line);padding:1rem;color:var(--color-muted);font-size:.8125rem;}
+/* Each image sits in a frame that clips it, so zooming happens inside the frame. */
+.frame {position:relative;overflow:hidden;border:1px solid var(--color-line);border-radius:var(--radius-control);background:#101212;touch-action:none;}
+.frame[data-zoomed] {cursor:grab;}
+.frame[data-zoomed]:active {cursor:grabbing;}
+.frame img {display:block;width:100%;max-height:32rem;object-fit:contain;transform-origin:0 0;user-select:none;}
+.frame p {margin:0;border:0;}
+.pane p {min-height:12rem;display:grid;place-items:center;padding:1rem;color:var(--color-muted);font-size:.8125rem;}
 .pane figcaption,.note {font-size:.8125rem;color:var(--color-muted);overflow-wrap:anywhere;}
 @media(max-width:36rem){.side{grid-template-columns:1fr;}}
+.zoom {display:inline-flex;gap:0;margin-left:.4rem;}
+.zoom button {border-radius:0;min-width:2.25rem;font-variant-numeric:tabular-nums;}
+.zoom button:first-child {border-radius:var(--radius-control) 0 0 var(--radius-control);}
+.zoom button:last-child {border-radius:0 var(--radius-control) var(--radius-control) 0;}
+.zoom button + button {margin-left:-1px;}

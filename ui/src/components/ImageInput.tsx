@@ -3,6 +3,7 @@ import { cardinalityError, moveImage, type Asset } from "../api/assets";
 import { imageHeader } from "../api/image-header";
 import { ImageImportProgress, type ImageImport } from "./ImageImportProgress";
 import { Button } from "./Button";
+import { ActionRow } from "./ActionRow";
 import styles from "./ImageInput.module.css";
 
 type Props = {
@@ -100,11 +101,11 @@ export function ImageInput({ label, info, value, min, max, onChange, upload, pre
         <Preview asset={asset} load={preview} position={index + 1} />
         <div className={styles.details}><strong>Image {index + 1}</strong><span>{asset.width} × {asset.height} · {Math.max(1, Math.round(asset.size / 1024))} KB</span>
           {renderDetails?.(index, locked)}
-          <div className={styles.actions}>
+          <ActionRow>
             {max > 1 && <><Button disabled={locked || index === 0} onClick={() => onChange(moveImage(value, index, index - 1))} aria-label={`Move image ${index + 1} earlier`}>Earlier</Button>
               <Button disabled={locked || index === value.length - 1} onClick={() => onChange(moveImage(value, index, index + 1))} aria-label={`Move image ${index + 1} later`}>Later</Button></>}
-            <Button disabled={locked} onClick={() => { setError(undefined); onChange(value.filter((_, position) => position !== index)); }} aria-label={`Remove image ${index + 1}`}>Remove</Button>
-          </div>
+            <Button variant="destructive" disabled={locked} onClick={() => { setError(undefined); onChange(value.filter((_, position) => position !== index)); }} aria-label={`Remove image ${index + 1}`}>Remove</Button>
+          </ActionRow>
         </div>
       </li>)}
     </ol>}

@@ -1,0 +1,9 @@
+.status { display: flex; align-items: center; gap: var(--space-3); min-width: 0; flex-wrap: wrap; justify-content: flex-end; }
+.state { display: inline-flex; align-items: center; gap: var(--space-2); font-size: 0.8125rem; color: var(--color-text); }
+.dot { width: 0.5rem; height: 0.5rem; border-radius: 999px; background: var(--color-muted); flex: none; }
+.state[data-tone="running"] .dot { background: var(--color-focus); animation: pulse 1.2s ease-in-out infinite; }
+.state[data-tone="done"] .dot { background: var(--color-ok); }
+.state[data-tone="failed"] .dot { background: var(--color-danger); }
+.spend { padding-left: var(--space-3); border-left: 1px solid var(--color-line); color: var(--color-muted); font-size: 0.8125rem; font-variant-numeric: tabular-nums; }
+@keyframes pulse { 50% { opacity: 0.35; } }
+@media (prefers-reduced-motion: reduce) { .state[data-tone="running"] .dot { animation: none; } }

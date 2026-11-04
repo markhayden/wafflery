@@ -1,6 +1,7 @@
 import type {BindingIssue} from "../../api/client";
 import { useEffect, useId, useRef } from "react";
 import { Button } from "../../components/Button";
+import { ActionRow } from "../../components/ActionRow";
 import { positiveCap, type Estimate } from "../../api/estimates";
 import { usd, type ToolSession } from "../../api/tool-session";
 import styles from "./CostReview.module.css";
@@ -38,11 +39,11 @@ export function CostReview({ cap, onCapChange, state, onEstimate, onSetup, sessi
     </label>
     <p id={`${id}-help`}>{invalid ? "Enter a finite amount greater than zero."
       : "The most you are willing to spend on this run. Estimating does not run the action."}</p>
-    <div className={styles.actions}>
+    <ActionRow>
       <Button disabled={disabled || !valid} busy={pending} onClick={event => {
         if (valid && event.currentTarget.form?.reportValidity() !== false) onEstimate();
       }}>Estimate cost</Button>
-    </div>
+    </ActionRow>
     {state.kind === "pending" && <p role="status">{state.stale ? "Waiting for the previous estimate to finish…" : "Estimating these inputs…"}</p>}
     {(state.kind === "stale" || changedSession) && <p role="status">Estimate again for the current inputs and session.</p>}
     {state.kind === "error" && <p role="alert">{state.message}</p>}

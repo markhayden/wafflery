@@ -13,7 +13,28 @@ struct Views {
     coordinator: Arc<Coordinator>,
     origin: String,
 }
+/// The origin a report server lets frame it: the host's, unless a development page serves the
+/// UI from its own loopback origin (Vite at 127.0.0.1:5173 proxying the host). The dev proxy
+/// rewrites the host's own policies to that origin, but a tool's report server is framed
+/// directly, so it has to be told. Only a loopback `http` origin with a port is accepted.
+fn frame_origin(origin: &str) -> String {
+    std::env::var("WAFFLERY_DEV_PAGE_ORIGIN")
+        .ok()
+        .filter(|value| dev_page_origin(value))
+        .unwrap_or_else(|| origin.into())
+}
+fn dev_page_origin(value: &str) -> bool {
+    let Ok(url) = url::Url::parse(value) else {
+        return false;
+    };
+    // Exactly an origin, as the host passes it on: no path, query or trailing slash.
+    url.scheme() == "http"
+        && matches!(url.host_str(), Some("127.0.0.1" | "localhost"))
+        && url.port().is_some()
+        && url.origin().ascii_serialization() == value
+}
 pub(super) fn router(coordinator: Arc<Coordinator>, origin: &str) -> Router {
+    let origin = frame_origin(origin);
     Router::new()
         .route("/api/attempts/{id}/views", post(open).get(current))
         .route("/api/views/{id}", get(state))
@@ -22,7 +43,7 @@ pub(super) fn router(coordinator: Arc<Coordinator>, origin: &str) -> Router {
         .route("/api/views/{id}/force-close", post(force))
         .with_state(Views {
             coordinator,
-            origin: origin.into(),
+            origin,
         })
 }
 #[derive(Deserialize)]
@@ -82,4 +103,25 @@ async fn current(State(s): State<Views>, Path(id): Path<String>) -> Result<Json<
     Ok(Json(
         serde_json::json!({"view": s.coordinator.current_render(&id).await?}),
     ))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::dev_page_origin;
+    #[test]
+    fn only_a_loopback_http_origin_with_a_port_is_a_dev_page() {
+        assert!(dev_page_origin("http://127.0.0.1:5173"));
+        assert!(dev_page_origin("http://localhost:5173"));
+        for value in [
+            "https://127.0.0.1:5173",
+            "http://example.com:5173",
+            "http://127.0.0.1",
+            "http://127.0.0.1:5173/",
+            "http://127.0.0.1:5173/x",
+            "",
+            "not a url",
+        ] {
+            assert!(!dev_page_origin(value), "{value}");
+        }
+    }
 }

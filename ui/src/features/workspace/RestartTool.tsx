@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Button } from "../../components/Button";
+import { ActionRow } from "../../components/ActionRow";
 import styles from "./ToolSetup.module.css";
 
 type Props = {
@@ -28,10 +29,10 @@ export function RestartTool({ busy, onRestart }: Props) {
       {session && <p role="status">Tool restarted. New session: <code>{session}</code></p>}
       {pending ? <p role="status">Restarting the tool and checking its setup…</p> : confirming ? <>
         <p>This stops the current tool and starts a new session with a new spending ledger. Earlier runs and unknown charges remain in history.</p>
-        <div className={styles.actions}>
+        <ActionRow>
           <Button autoFocus onClick={() => setConfirming(false)}>Keep current session</Button>
-          <Button disabled={busy} onClick={() => void restart()}>Confirm restart</Button>
-        </div>
+          <Button variant="destructive" disabled={busy} onClick={() => void restart()}>Confirm restart</Button>
+        </ActionRow>
       </> : <Button autoFocus={interacted} disabled={busy} onClick={() => { setInteracted(true); setConfirming(true); }}>Restart tool session</Button>}
     </section>
   </div>;

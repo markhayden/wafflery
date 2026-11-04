@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import { Button } from "../../components/Button";
+import { CodeBlock } from "../../components/CodeBlock";
+import { ActionRow } from "../../components/ActionRow";
 import { Picker } from "../../components/Picker";
 import type { ReportSnapshot } from "./report-owner";
 import styles from "./ReportPanel.module.css";
@@ -32,11 +34,11 @@ export function ReportPanel({ attempt, choices, selection, snapshot, onSelect, o
     {choices.length ? <Picker label="Report" value={selection} choices={choices.map(choice => ({
       id:choice.name, title:choice.name, description:choice.kind === "server" ? "Live viewer" : "Document",
     }))} onChange={onSelect} disabled={pending || uncertain} /> : <p>No report views are available for this saved run.</p>}
-    <div className={styles.actions}>
+    <ActionRow>
       <Button onClick={onOpen} disabled={!selection || !choices.length || pending || uncertain || active}>Open report</Button>
       {active && <Button onClick={onClose} disabled={pending || uncertain}>Close report</Button>}
       {((view && relevant) || uncertain) && <Button onClick={onRecover} disabled={pending}>Check report status</Button>}
-    </div>
+    </ActionRow>
     <p role="status" className={styles.status}>{message}</p>
     {(error || (relevant && view?.error)) && <div role="alert" className={styles.notice}>
       <p>{error ?? view?.error}</p><p>Saved inputs and results remain available in the other tabs.</p>
@@ -46,10 +48,10 @@ export function ReportPanel({ attempt, choices, selection, snapshot, onSelect, o
     {view?.phase === "needs_force" && !uncertain && <div className={styles.notice}>
       {confirming ? <>
         <p>Force stop this report and its owned helper processes? The saved run will remain available.</p>
-        <div className={styles.actions}>
+        <ActionRow>
           <Button autoFocus onClick={() => setConfirming(false)}>Keep report</Button>
-          <Button disabled={pending} onClick={() => { setConfirming(false); onForce(); }}>Confirm force stop</Button>
-        </div>
+          <Button variant="destructive" disabled={pending} onClick={() => { setConfirming(false); onForce(); }}>Confirm force stop</Button>
+        </ActionRow>
       </> : <Button autoFocus={interacted} disabled={pending} onClick={() => { setInteracted(true); setConfirming(true); }}>Force stop report</Button>}
     </div>}
     {url && failedUrl !== url ? <iframe key={url} title="Report viewer" src={url} referrerPolicy="no-referrer"
@@ -63,7 +65,7 @@ export function ReportPanel({ attempt, choices, selection, snapshot, onSelect, o
     {view && relevant && <details className={styles.diagnostics}>
       <summary>Report diagnostics</summary>
       <p>{view.name} · {view.phase}{view.exit_code !== null ? ` · Exit ${view.exit_code}` : ""}</p>
-      <pre aria-label="Report diagnostics output">{view.diagnostics || "No diagnostic output."}</pre>
+      <CodeBlock label="Report diagnostics output" copyLabel="Copy diagnostics" value={view.diagnostics || "No diagnostic output."}/>
       {view.diagnostics_truncated && <p>Diagnostic output was truncated.</p>}
     </details>}
     <p className={styles.note}>Reports are opened from the saved run. Closing inspection releases the viewer; inactive reports close automatically.</p>

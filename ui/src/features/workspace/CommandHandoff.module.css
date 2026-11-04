@@ -1,2 +1,17 @@
-.handoff { display: grid; gap: 1rem; min-width: 0; overflow-wrap: anywhere; }
-.actions { display: flex; flex-wrap: wrap; gap: .75rem; }
+.handoff { display: grid; gap: var(--space-4); min-width: 0; overflow-wrap: anywhere; }
+.handoff h3 { margin: 0; font-size: 0.875rem; font-weight: 500; }
+.handoff > p { color: var(--color-muted); font-size: 0.875rem; }
+/* The command to paste, then the file form for scripts, quieter. */
+.run { display: grid; gap: var(--space-2); }
+.run > span { font-size: 0.875rem; }
+.file { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-2) var(--space-4); font-size: 0.8125rem; color: var(--color-muted); }
+.file code { font: 0.75rem ui-monospace, "SF Mono", Menlo, monospace; color: var(--color-text); }
+.warning { margin: 0; padding: var(--space-2) var(--space-3); font-size: 0.8125rem; color: var(--color-text); border-left: 2px solid var(--color-danger); background: var(--color-fill); border-radius: 0 var(--radius-control) var(--radius-control) 0; }
+/* What it needs: a heading, an optional line, then the items as code rows. */
+.section { display: grid; gap: var(--space-2); min-width: 0; }
+.section p { color: var(--color-muted); font-size: 0.8125rem; }
+.items { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-1); min-width: 0; }
+.items code { display: block; padding: 0.375rem 0.625rem; font: 0.75rem/1.5 ui-monospace, "SF Mono", Menlo, monospace; color: var(--color-text); background: var(--color-background); border: 1px solid var(--color-line); border-radius: var(--radius-control); overflow-wrap: anywhere; }
+.blocked { display: grid; gap: var(--space-1); padding: var(--space-3) var(--space-4); border: 1px solid var(--color-line); border-radius: var(--radius-control); background: var(--color-fill); }
+.blocked strong { font-weight: 500; font-size: 0.875rem; }
+.blocked p { color: var(--color-muted); font-size: 0.8125rem; }

@@ -35,7 +35,7 @@ export function activityChoices(actions:Action[],kind:ActivityKind,groups:string
   // Ungrouped choices precede headings so they cannot appear to belong to the last group.
   return [...selected.filter(action=>!action.group),
     ...groupOrder.flatMap(group=>selected.filter(action=>action.group===group))].map(action=>({id:action.name,title:action.title,
-      ...(action.group?{group:action.group}:{}),description:action.purpose}));
+      ...(action.group?{group:action.group}:{}),description:purposeParts(action.purpose).summary}));
 }
 
 // Keep the closed control compact; detailed purpose stays searchable in the chooser and form.
@@ -43,4 +43,13 @@ export function activitySummary(action:Action):string {
   if(action.kind==="task")return `${[...(action.images?.length?["Image"]:[]),...(action.locations?.length?["Location"]:[])].join(" + ")||"Parameters"} → Result`;
   const types=(ports:NonNullable<Action["ports"]>["in"])=>ports.map(port=>`${port.type==="image"?"Image":port.type==="location"?"Location":port.type}${port.many?"[]":""}`).join(" + ");
   return `${types(action.ports?.in??[])||"Parameters"} → ${types(action.ports?.out??[])||"Result"}`;
+}
+
+// A declared purpose is prose. Its first sentence names the activity in the chooser and under the
+// pickers; the rest (when to use it, when not to) waits behind a disclosure. No tool vocabulary is
+// parsed: the split is on the first sentence end only.
+export function purposeParts(purpose:string|undefined):{summary:string;more:string} {
+  const text=(purpose??"").trim();
+  const match=/^(.+?[.!?])(?:\s+(.*))?$/s.exec(text);
+  return match?{summary:match[1]!,more:(match[2]??"").trim()}:{summary:text,more:""};
 }

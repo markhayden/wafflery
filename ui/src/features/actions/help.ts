@@ -77,6 +77,6 @@ export function paramHelp(field: Schema, required: boolean): string {
     parts.push(`${field.type === "integer" ? "A whole number" : "A number"}${bounds.length ? `, ${bounds.join(" and ")}` : ""}.`);
   }
   if (field.default !== undefined) parts.push(`Default: ${String(field.default)}.`);
-  parts.push(required ? "Required." : "Optional: leave it empty to use the tool's default.");
+  if (!required) parts.push(field.default !== undefined ? "Optional: leave it empty to use the tool's default." : "Optional: leave it empty to leave it out.");
   return parts.join(" ");
 }
