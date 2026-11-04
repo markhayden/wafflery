@@ -3673,3 +3673,25 @@ remain separate; no production release is implied. Product choices remain Q1–Q
   status in plain words. JSON everywhere in a CodeBlock (no wrapping, sideways scroll, Copy).
 - [x] Dev: the tools' XDG homes live in the dev library and rascal's export area is an evidence
   directory, so native artifacts preserve in `scripts/dev.sh`.
+
+### V28: operations read as steps you can follow (owner hand-test pass, 2026-11-03)
+
+- [x] Shared controls, each with a story: Button variants (default, primary, destructive), ActionRow,
+  CodeBlock (JSON and shell highlighting), ChoiceCard, ImageThumb/ImageTile, ListRow/RowList, and a
+  segmented ExclusiveChoice for "one of" settings. Screens stop restyling buttons and raw `pre`s.
+- [x] Config: the image chooser leads with "Use your own image", recent images (at most four) fold
+  below; JSON settings show an example placeholder; help says "Optional: leave it empty to leave it
+  out" when a setting has no default.
+- [x] Result: Wipe (starting at 25%), Side by side and Changes (every changed pixel highlighted,
+  with a count); zoom and pan in every view. An operation fed an earlier run's output compares
+  against that run's picture ("Before · from Cut"), walking back up to four steps. Spend sits beside
+  the status; running shows progress in place.
+- [x] Run details: Command / Inputs / Result / Advanced. The command repeats the run with its
+  settings inline (no download first); "Use in your pipeline" is three plain sections.
+- [x] History and "Send artifact to" are row lists (ListRow): name, what it does, when, state.
+  History groups by day and a row's chevron shows its images and settings in place. The Recent
+  attempts strip is gone. Grouped pickers pin each group's heading as a brand-blue flag.
+- [x] The drawer is resizable (remembered per browser); a modal locks the page scroll. Reports load
+  in development (`WAFFLERY_DEV_PAGE_ORIGIN`); a run whose files are gone says so plainly.
+- [ ] Open: keep each run's self-contained report in the library (report retention, rascal and
+  squint); squint's command handoff; screenshot baselines regenerated with this record.
