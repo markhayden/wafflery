@@ -25,7 +25,9 @@ jpeg-decoder = { version = "=0.3.2", default-features = false }
 image = { version = "=0.25.10", default-features = false, features = ["png", "jpeg"] }
 
 rmcp = { version = "=3.8.0", default-features = false, features = ["client", "transport-async-rw"] }
-table-manners = "=0.4.0"
+# M13 builds against the table-manners v0.5 draft by path until rascal PLAN.md 13.15 bumps
+# and publishes it; the crate stays 0.4.0 until then.
+table-manners = { path = "../table-manners", version = "=0.4.0" }
 jsonschema = { version = "=0.60.2", default-features = false }
 url = "=2.5.8"
 

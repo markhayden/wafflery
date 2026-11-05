@@ -42,6 +42,10 @@ pub fn description(root: &Path, scenario: &str) -> Value {
             json!({"type":"number","exclusiveMinimum":0});
         document["actions"].as_array_mut().unwrap().push(paid);
     }
+    if scenario == "checks" {
+        let checked = super::checks::action(root, &document["actions"][0]);
+        document["actions"].as_array_mut().unwrap().push(checked);
+    }
     if !scenario.starts_with("readiness") {
         return document;
     }

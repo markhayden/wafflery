@@ -1204,3 +1204,50 @@ async fn contradictory_invocations_keep_raw_evidence_without_binding_a_result() 
         c.assets.database.shutdown().await.unwrap();
     }
 }
+
+/// A checked run (table-manners 0.5 draft): the optional key never makes the action need setup,
+/// the verdict stays on the saved result, and every saved output keeps the tool's label, so a
+/// reopened run shows the same names.
+#[tokio::test]
+async fn a_checked_run_keeps_its_verdict_and_every_outputs_label() {
+    let (_dir, c, mut request) = setup("checks").await;
+    let description = c.description("example").await.unwrap();
+    let action = description.document["actions"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|action| action["name"] == "checked_band")
+        .unwrap()
+        .clone();
+    assert_eq!(action["answers"], "verdict");
+    assert_eq!(action["readiness"]["state"], "ready");
+    assert_eq!(action["readiness"]["requirements"][0]["optional"], true);
+    assert_eq!(action["readiness"]["requirements"][0]["for"], "checking the result");
+    request.action = "checked_band".into();
+    request.params = json!({"label":"three tries","answer":"fail","tries":3});
+    c.submit(request).await.unwrap();
+    let mut saved = c.attempts.get("attempt-1").await.unwrap();
+    for _ in 0..200 {
+        saved = c.attempts.get("attempt-1").await.unwrap();
+        if saved.preservation["contract"] != "pending" {
+            break;
+        }
+        tokio::time::sleep(std::time::Duration::from_millis(20)).await;
+    }
+    assert_eq!(saved.execution, "completed", "{:?}", saved.notices);
+    assert_eq!(saved.preservation["contract"], "complete", "{:?}", saved.notices);
+    let result = saved.result.as_ref().unwrap();
+    assert_eq!(result["verdict"]["value"], "fail");
+    assert_eq!(result["verdict"]["where"].as_array().unwrap().len(), 1);
+    let labels: Vec<_> = saved
+        .outputs
+        .iter()
+        .map(|output| (output["role"].as_str().unwrap(), output["label"].as_str().unwrap()))
+        .collect();
+    assert_eq!(labels.len(), 9);
+    assert_eq!(labels[0], ("result", "Try 3 · result"));
+    assert_eq!(labels[3], ("result_try_1", "Try 1 · result"));
+    assert_eq!(labels[5], ("mask_try_1", "Try 1 · mask"));
+    finish_host(&c).await;
+    c.assets.database.shutdown().await.unwrap();
+}

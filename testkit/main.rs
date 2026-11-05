@@ -1,4 +1,5 @@
 //! Independent, line-delimited MCP peer. Deliberately does not import rmcp or wafflery.
+mod checks;
 mod configuration;
 mod control_fixtures;
 mod control_peer;
@@ -295,7 +296,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             "tools/call"
                 if initialized
                     && (params["name"] == "mark_band"
-                        || scenario == "estimates" && params["name"] == "price_test") =>
+                        || scenario == "estimates" && params["name"] == "price_test"
+                        || scenario == "checks" && params["name"] == checks::ACTION) =>
             {
                 if let Some(correlation) = params["_meta"]["table-manners/client_run_id"].as_str() {
                     if let Err(error) = scenarios::validate(
