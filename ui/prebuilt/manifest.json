@@ -44,8 +44,8 @@
     "ui/src/components/FieldTag.stories.tsx": "36a7839cf74a769ee09946c95d5711b2347bc15623b2e5870222261a4c72aad1",
     "ui/src/components/FieldTag.tsx": "9e65a2b755ca1c0dd4b0a53c4531a2bf01b0544ff01438beaf605b721a793b3e",
     "ui/src/components/ImageCompare.module.css": "abda9072eb3b9100ccba65d1f9511e0447c6f497248fb5170ea8a9a194b576f9",
-    "ui/src/components/ImageCompare.stories.tsx": "ac4e2d4fdbbe31cc47f51c8fa12bf4d961e2482f9273962707f34d773ae42fd5",
-    "ui/src/components/ImageCompare.tsx": "b8b72528866c93159a668896aab8b31c5ba71d745c6f06230c7da7b93aaf810c",
+    "ui/src/components/ImageCompare.stories.tsx": "e1d60f5f812c77216aba379f179ab8b360f39a306969d51a7e9f8076483c3626",
+    "ui/src/components/ImageCompare.tsx": "286d56f00122952bf59af4ba45f05ea1eb1db3c2c78bc1ad5c3df962b5aec1e7",
     "ui/src/components/ImageImportProgress.tsx": "b393b2ecd66dcbdeb2521032501a30d7cce497ed094e96281b4817459f832846",
     "ui/src/components/ImageInput.module.css": "b639db473b42d68b16b03b854cfe94c1e76e7fe4b65c852576b71166fa9e128f",
     "ui/src/components/ImageInput.stories.tsx": "b9cb7886793b3f2d11901edb6130b1ae90185c3320e0762e665b2e6d10288d98",
@@ -165,11 +165,11 @@
     "ui/vite.config.ts": "1c784d406690c7e5b859cc459f02c6d69451c8c79fa77bd43babffdb9fdee5d8"
   },
   "outputs": {
-    "assets/index-DcwDnekf.js": "1a7c862052322c554e59b180c17521b594a8ac30e986b5279f3946006e670b7f",
+    "assets/index-BIEVtYQ6.js": "6494f96e0b9efced0cdc1aef1778a8dbc5eefcfbb101472f84cb0cf5b15949a8",
     "assets/index-DigzUXcp.css": "5c6717dbb16b94bf4987b0a49e60e9c4de7a4bb977c9f3bce61f3ff98d054a79",
     "assets/rascal-sticker-CmExR_HL.webp": "f1cc408f231167aee5543f0f8c0683f3594a0e447c51dcccc4fb413913e0a803",
     "assets/squint-sticker-CLmixeCt.webp": "3986ab96e919e338a7f8e8d64b552912baa3f79774c863d1e5d14f6a9f02f173",
     "assets/wafflery-mark-CML0EpfM.svg": "51bc8a040e26b897a948238598b8cabdf69bf4687c2b1a70613b542de1c99f1f",
-    "index.html": "a41cc748adfda4fef22fb08de8e5c15c3c32aea4b92d20e13dffbd43f263550e"
+    "index.html": "40f533e48b99a14c883ce2593a200008d73c162da2e7e31fa2dc4ba09ceaa5ee"
   }
 }

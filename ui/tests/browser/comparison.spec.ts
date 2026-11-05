@@ -37,3 +37,30 @@ test("incompatible and missing image frames have explicit states", async ({
   );
   await expect(page.getByText(/saved bytes could not be read/)).toHaveCount(2);
 });
+test("a panorama's seam can be turned to the middle, and a flat pair offers no turn", async ({ page }) => {
+  await page.goto("http://127.0.0.1:6006/iframe.html?id=components-imagecompare--panorama&viewMode=story");
+  const centre = page.getByRole("button", { name: "Centre the seam" });
+  await expect(centre).toHaveAttribute("aria-pressed", "false");
+  await page.getByRole("button", { name: "Side by side" }).click();
+  // The story's panorama has a red marker at each edge; turned, they meet in the middle.
+  const middleRed = () => page.getByRole("img", { name: "Result" }).evaluate(async (node) => {
+    const img = node as HTMLImageElement;
+    await img.decode();
+    const canvas = document.createElement("canvas");
+    canvas.width = img.naturalWidth; canvas.height = img.naturalHeight;
+    const c = canvas.getContext("2d")!;
+    c.drawImage(img, 0, 0);
+    const [r, g, b] = c.getImageData(img.naturalWidth / 2, img.naturalHeight / 2, 1, 1).data;
+    return r! > 200 && g! < 120 && b! < 120;
+  });
+  expect(await middleRed()).toBe(false);
+  await centre.click();
+  await expect(centre).toHaveAttribute("aria-pressed", "true");
+  await expect(page.getByText(/the seam, where the panorama's edges meet, runs down the middle/)).toBeVisible();
+  await expect.poll(middleRed).toBe(true);
+  await centre.click();
+  await expect.poll(middleRed).toBe(false);
+  await page.goto("http://127.0.0.1:6006/iframe.html?id=components-imagecompare--wipe&viewMode=story");
+  await expect(page.getByRole("slider", { name: "Before and after divider" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Centre the seam" })).toHaveCount(0);
+});
