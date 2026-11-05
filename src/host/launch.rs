@@ -154,10 +154,11 @@ pub fn attach(options: &Options) -> io::Result<String> {
     let origin = state["origin"]
         .as_str()
         .ok_or_else(|| io::Error::other("host omitted its address"))?;
-    let mut url = format!("{origin}/");
-    if let Some(tool) = &options.tool {
-        url.push_str(&format!("?tool={tool}"));
-    }
+    // The UI's address for the tool (`/<tool>`, its route), or its start.
+    let mut url = match &options.tool {
+        Some(tool) => format!("{origin}/{tool}"),
+        None => format!("{origin}/"),
+    };
     if options.no_open {
         println!("{url}");
     } else {

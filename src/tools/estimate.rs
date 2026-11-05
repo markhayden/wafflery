@@ -19,15 +19,17 @@ impl ValidatedEstimate {
         value: Value,
         tool: &Value,
         action: &str,
-        cap: f64,
+        cap: Option<f64>,
         session: &Value,
         received: OffsetDateTime,
     ) -> Result<Self> {
         let received_monotonic = tokio::time::Instant::now();
         validate_contract("urn:table-manners:core:estimate", &value)?;
-        if !cap.is_finite() || cap <= 0.0 {
+        // A spending limit is the person's option (table-manners 4.5: a call MAY lower the
+        // tool's cap); without one the tool's own limits decide.
+        if cap.is_some_and(|cap| !cap.is_finite() || cap <= 0.0) {
             return Err(Error::Invalid(
-                "An estimate needs a positive finite user cap".into(),
+                "A spending limit must be a positive finite amount".into(),
             ));
         }
         if value["tool"]["name"] != tool["name"]
@@ -65,13 +67,22 @@ impl ValidatedEstimate {
         // Missing setup may make the effective cap, configuration and price unknowable.
         // Preserve that valid refusal, without granting any authorization or inventing zero.
         if refused != Some("readiness") {
-            let effective_cap = value["cap_usd"]
-                .as_f64()
-                .filter(|cap| cap.is_finite() && *cap > 0.0)
-                .ok_or_else(|| {
-                    Error::Invalid("Estimate has no positive finite effective cap".into())
-                })?;
-            if (effective_cap - cap).abs() > USD_TOLERANCE {
+            // The tool's cap in force: the asked limit when one was given, else its own (none
+            // when it configures none).
+            let effective_cap = match &value["cap_usd"] {
+                Value::Null => None,
+                quoted => Some(
+                    quoted
+                        .as_f64()
+                        .filter(|cap| cap.is_finite() && *cap > 0.0)
+                        .ok_or_else(|| {
+                            Error::Invalid("Estimate has no positive finite effective cap".into())
+                        })?,
+                ),
+            };
+            if let Some(asked) = cap
+                && effective_cap.is_none_or(|effective| (effective - asked).abs() > USD_TOLERANCE)
+            {
                 return Err(Error::Invalid(
                     "Estimate changed the requested spending cap".into(),
                 ));
@@ -83,11 +94,11 @@ impl ValidatedEstimate {
             let remaining = value["session"]["remaining_usd"].as_f64();
             let consistent = match refused {
                 None => {
-                    worst <= effective_cap + USD_TOLERANCE
+                    effective_cap.is_none_or(|cap| worst <= cap + USD_TOLERANCE)
                         && remaining.is_none_or(|left| worst <= left + USD_TOLERANCE)
                 }
                 // Do not reject a conservative refusal over sub-tolerance rounding.
-                Some("cap") => worst + USD_TOLERANCE >= effective_cap,
+                Some("cap") => effective_cap.is_some_and(|cap| worst + USD_TOLERANCE >= cap),
                 Some("budget") => remaining.is_some_and(|left| worst + USD_TOLERANCE >= left),
                 _ => false, // The schema restricts the reasons; keep this boundary closed.
             };
@@ -110,7 +121,7 @@ impl ValidatedEstimate {
         response: &Value,
         tool: &Value,
         action: &str,
-        cap: f64,
+        cap: Option<f64>,
         session: &Value,
         received: OffsetDateTime,
     ) -> Result<Self> {
@@ -149,9 +160,11 @@ impl ValidatedEstimate {
             || self.value["tool"]["version"] != tool["version"]
             || self.value["action"] != action
             || self.value["session_id"] != session["id"]
-            || cap
-                .zip(self.value["cap_usd"].as_f64())
-                .is_none_or(|(requested, quoted)| (requested - quoted).abs() > USD_TOLERANCE)
+            || cap.is_some_and(|requested| {
+                self.value["cap_usd"]
+                    .as_f64()
+                    .is_none_or(|quoted| (requested - quoted).abs() > USD_TOLERANCE)
+            })
         {
             return Err(Error::Conflict(
                 "Estimate belongs to different inputs, cap or session",

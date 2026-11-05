@@ -36,8 +36,8 @@ test("declared form keeps arrays as JSON and invalid edits block submission", as
     "http://127.0.0.1:6006/iframe.html?id=inputs-actionform--declared&viewMode=story",
   );
   await page.getByRole("textbox", { name: "Prompt", exact: true }).fill("A seam");
-  // Optional settings sit folded under "Settings · N optional"; free-form JSON ones are last.
-  await page.locator("summary").filter({ hasText: /^Settings · \d+ optional$/ }).click();
+  // Every setting is visible, each tagged Required or Optional; free-form JSON ones are last.
+  await expect(page.locator("summary").filter({ hasText: /^Settings · \d+ optional$/ })).toHaveCount(0);
   await page.getByRole("combobox", { name: "Enabled", exact: true }).selectOption("true");
   await page.getByRole("textbox", { name: "Tags", exact: true }).fill('["one","two"]');
   await page.getByRole("button", { name: "Validate form" }).click();

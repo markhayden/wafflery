@@ -155,10 +155,8 @@ async fn paid_submission_refuses_missing_refused_changed_expired_or_old_session_
         if scenario == "cap" {
             request.params["max_spend_usd"] = json!(0.01);
         }
-        assert!(
-            c.submit(request.clone()).await.is_err(),
-            "ordinary submit cannot authorize paid work"
-        );
+        // A checked cost binds the run: an estimate that is missing, refused or no longer
+        // matches never authorizes the prepared call. (Running without one is the plain submit.)
         assert!(
             c.submit_prepared(request.clone()).await.is_err(),
             "unprepared paid call"

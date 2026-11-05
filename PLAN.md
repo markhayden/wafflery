@@ -3695,3 +3695,27 @@ remain separate; no production release is implied. Product choices remain Q1–Q
   in development (`WAFFLERY_DEV_PAGE_ORIGIN`); a run whose files are gone says so plainly.
 - [ ] Open: keep each run's self-contained report in the library (report retention, rascal and
   squint); squint's command handoff; screenshot baselines regenerated with this record.
+
+### V29: every place has an address, every output can be shown (owner story walk, 2026-11-04)
+
+- [x] The workspace's address is where it is: `/<tool>/<action>/<run>`, each part optional from the
+  right, with the tool's and action's stable names (`ui/src/features/workspace/route.ts`). A refresh
+  lands in the same place, Back and Forward move between places, and a run's address reopens that
+  run with its draft restored. The host answers any address with the page (an address has no file
+  extension); assets load from the root. `wafflery --tool rascal` opens `/rascal`; `?tool=` is gone.
+- [x] No address, or a tool alone, is an empty state ("Choose what you want to do") with no action
+  picked and no Run bar; an action without a run is a fresh draft. Nothing opens an old run unasked
+  (the latest run of the first action used to load on every visit).
+- [x] The result's Show menu (the shared Picker) offers every image the run returned, in the tool's
+  order, the first shown by default (table-manners 11.1: most telling first; rascal leads with the
+  filled result). It replaces the mask-overlay switch.
+- [x] Spend is optional, never a gate (owner, 2026-11-04; SPEC Q9 revised). Run works for a paid
+  action without an estimate or a cap, in the page and the host: the tool enforces its own
+  limits (table-manners 4.5). The spending limit is an optional field (empty: the tool's cap, or
+  none), Check cost an optional step whose quote binds the run; a stale check leaves Run unbound.
+- [x] Settings are one step, every setting shown (no fold), each marked Required or Optional with
+  the shared FieldTag, in the tool's order (rascal lists the filler first).
+- [x] A lost submission reply still shows the run the host accepted: a submission's id is its
+  run's, so the page reads it back.
+- [ ] Open: Picker's toolbar size sits a little taller than a Button, and its search shows for
+  three choices.

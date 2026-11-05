@@ -205,7 +205,12 @@ async fn force_quit(State(state): State<HostState>, Json(_): Json<Empty>) -> Res
 }
 
 async fn static_asset(uri: Uri) -> Response {
-    match assets::get(uri.path()) {
+    let found = assets::get(uri.path()).or_else(|| {
+        assets::is_page(uri.path())
+            .then(|| assets::get("/index.html"))
+            .flatten()
+    });
+    match found {
         Some(bytes) => {
             let kind = if uri.path().ends_with(".js") {
                 "text/javascript"

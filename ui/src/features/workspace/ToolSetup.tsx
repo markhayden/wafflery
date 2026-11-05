@@ -48,7 +48,7 @@ export function ToolSetup({ tool, action, loadSession, directoryGrants = null }:
         }}>Refresh</Button>
       </div>
       <p>{action.cost.may_spend
-        ? "Paid execution needs provider setup, a current estimate and an enforced run limit. Review the estimate before choosing Run."
+        ? "This action may cost money. The tool applies its own spending limits; you can set a lower one, or check the cost, before Run."
         : "This action is declared free by the tool."}</p>
       <p><strong>{readinessLabel[action.readiness.state]}</strong></p>
       {action.readiness.state === "unavailable"

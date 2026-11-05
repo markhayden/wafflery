@@ -104,12 +104,14 @@ Verify controlled panorama, finder, filler, and missing-dependency fixtures. See
 
 Verify scripted judge outputs, no-match cases, and execution errors separately. See S1/C1.
 
-### AC08 — One click, explicit spend limit
+### AC08 — One click, optional spend limit
 
-- Show the current worst-case estimate, enforced run cap, and remaining **tool session** budget
-  beside Run. Clicking Run authorizes that one attempt; no routine second confirmation.
-- Editing cost-relevant inputs, model, configuration, or budget invalidates the estimate. A
-  stale response cannot re-enable Run for a newer draft. Unknown cost is not displayed as zero.
+- Run works for a paid action with no estimate and no cap: the tool's own limits apply. An
+  optional spending limit lowers the tool's cap; an optional Check cost shows the worst case, the
+  limit in force and the remaining **tool session** budget, and binds the run to that price.
+- Editing cost-relevant inputs, model, configuration, or budget makes a check stale; Run then
+  sends the call unbound. A stale response never binds a newer draft. Unknown cost is not
+  displayed as zero.
 - The tool enforces the submitted cap within configured limits. Exhausted budgets prevent paid
   calls. Multiple tabs do not independently reserve the same available allowance.
 - Show reported spend and its measured/estimated basis, including interrupted attempts. Account

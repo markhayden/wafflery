@@ -99,3 +99,46 @@ async fn browser_boundary_requires_exact_origin_host_and_bearer() {
         StatusCode::FORBIDDEN
     );
 }
+
+/// A workspace address (the UI's route, `/<tool>/<action>/<run>`) is answered with the page, so
+/// a refresh or a shared link lands where it points; a missing file and an unknown API path stay
+/// not found.
+#[tokio::test]
+async fn a_workspace_address_serves_the_page_and_a_missing_file_does_not() {
+    let auth = Auth::new().unwrap();
+    let (quit, _) = tokio::sync::watch::channel(false);
+    let temp = tempfile::tempdir().unwrap();
+    let store = wafflery::library::assets::AssetStore::open(&temp.path().join("Library")).unwrap();
+    let app = api::router(ORIGIN, auth, quit, store);
+    let get = |path: &str| request(path, "GET").body(Body::empty()).unwrap();
+    let root = to_bytes(
+        app.clone().oneshot(get("/")).await.unwrap().into_body(),
+        usize::MAX,
+    )
+    .await
+    .unwrap();
+    for path in [
+        "/rascal",
+        "/rascal/remove",
+        "/rascal/remove/77448f00-9518-43a9",
+    ] {
+        let response = app.clone().oneshot(get(path)).await.unwrap();
+        assert_eq!(response.status(), StatusCode::OK, "{path}");
+        assert!(
+            response.headers()["content-type"]
+                .to_str()
+                .unwrap()
+                .starts_with("text/html"),
+            "{path}"
+        );
+        let body = to_bytes(response.into_body(), usize::MAX).await.unwrap();
+        assert_eq!(body, root, "{path} is the page");
+    }
+    for path in ["/assets/missing.js", "/rascal/remove/missing.png"] {
+        assert_eq!(
+            app.clone().oneshot(get(path)).await.unwrap().status(),
+            StatusCode::NOT_FOUND,
+            "{path}"
+        );
+    }
+}

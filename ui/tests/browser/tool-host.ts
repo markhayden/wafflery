@@ -17,7 +17,8 @@ import { prepareOfflinePipeline } from "./offline-pipeline";
 export type Host = {
   root: string;
   origin: string;
-  open: (page: Page) => Promise<void>;
+  /** Opens the page at `where` (an address such as `/sample`), or the test's usual start. */
+  open: (page: Page, where?: string) => Promise<void>;
   stop: () => Promise<void>;
   start: () => Promise<void>;
 };
@@ -176,9 +177,12 @@ export const test = base.extend<{
       async stop() {
         await lifetime?.stop(teardown);
       },
-      async open(page) {
+      async open(page, where) {
         const { bootstrap } = await control("bootstrap");
-        await page.goto(`${origin}/?tool=${hostKind}#bootstrap=${bootstrap}`);
+        // Tests start at the address they work in (route.ts): the sample tool's one task by
+        // default; a real tool, or an explicit `where`, otherwise.
+        const path = where ?? (hostKind === "sample" ? `/${hostKind}/mark_band` : `/${hostKind}`);
+        await page.goto(`${origin}${path}#bootstrap=${bootstrap}`);
       },
     };
     try {

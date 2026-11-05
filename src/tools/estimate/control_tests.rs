@@ -53,7 +53,7 @@ async fn deadline_spent_waiting_for_ledger_never_dispatches_a_control() {
             &declaration,
             "price_test",
             &arguments,
-            0.5,
+            Some(0.5),
             Instant::now() + Duration::from_millis(20),
         )
         .await;
@@ -70,7 +70,7 @@ async fn late_response_cannot_overwrite_a_newer_session_observation() {
         let client = client.clone();
         async move {
             client
-                .estimate_control(&declaration, "price_test", &arguments, 0.5, deadline)
+                .estimate_control(&declaration, "price_test", &arguments, Some(0.5), deadline)
                 .await
         }
     });
@@ -126,7 +126,7 @@ async fn peer_binding_ignores_delivery_flags_and_locators_but_prices_exact_argum
             &declaration,
             "price_test",
             &arguments,
-            0.5,
+            Some(0.5),
             Instant::now() + Duration::from_secs(5),
         )
         .await
@@ -141,7 +141,7 @@ async fn peer_binding_ignores_delivery_flags_and_locators_but_prices_exact_argum
             &declaration,
             "price_test",
             &arguments,
-            0.5,
+            Some(0.5),
             Instant::now() + Duration::from_secs(5),
         )
         .await
@@ -152,7 +152,7 @@ async fn peer_binding_ignores_delivery_flags_and_locators_but_prices_exact_argum
             &declaration,
             "price_test",
             &arguments,
-            0.6,
+            Some(0.6),
             Instant::now() + Duration::from_secs(5),
         )
         .await

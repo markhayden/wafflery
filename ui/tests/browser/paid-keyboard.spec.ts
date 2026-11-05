@@ -1,5 +1,5 @@
 import { test, expect } from "./tool-host";
-import { prepareSampleInput } from "./sample-input";
+import { openCost, prepareSampleInput } from "./sample-input";
 
 test.use({ hostScenario: "estimates" });
 
@@ -8,9 +8,10 @@ test("native keyboard edits after an uncertain paid reply preserve the original 
   await page.getByRole("button", { name: /^Action / }).click();
   await page.getByRole("button", { name: /^Price a scripted call/ }).click();
   await prepareSampleInput(page, "reviewed paid draft");
-  await page.getByRole("textbox", { name: "Spending cap (USD)", exact: true }).fill("0.5");
-  await page.getByRole("button", { name: "Estimate cost", exact: true }).click();
-  await expect(page.getByRole("region", { name: "Cost", exact: true })).toContainText("Estimate within cap.");
+  await openCost(page);
+  await page.getByRole("textbox", { name: "Spending limit (USD) Optional", exact: true }).fill("0.5");
+  await page.getByRole("button", { name: "Check cost", exact: true }).click();
+  await expect(page.getByRole("region", { name: "Cost options", exact: true })).toContainText("Within the limit. Running uses this price.");
   const submissions: { id: string; params: { label: string } }[] = [];
   await page.route("**/api/preparations/*/submit", async (route) => {
     submissions.push(route.request().postDataJSON());

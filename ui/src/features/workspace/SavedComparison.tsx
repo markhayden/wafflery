@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { workspaceClient, type Attempt, type SavedImage } from "../../api/workspace";
 import { Button } from "../../components/Button";
+import { Picker } from "../../components/Picker";
 import { ImageCompare } from "../../components/ImageCompare";
 import type { Asset } from "../../api/assets";
 import { object } from "../actions/model";
@@ -21,9 +22,9 @@ export function SavedComparison({
 }) {
   const [baseline, setBaseline] = useState<Attempt | null>(null);
   const [compare, setCompare] = useState(false);
-  // A tool's preview of an output (rascal: the mask drawn over the image) shows by default;
-  // turning it off shows the raw output (the black-and-white mask).
-  const [overlay, setOverlay] = useState(true);
+  // Every image the run returned can be shown; the tool lists them most telling first
+  // (table-manners 11.1), so the first is shown until another is picked.
+  const [shown, setShown] = useState<string>();
   const [error, setError] = useState<string>();
   const { tool, action } = attempt.request;
   // An operation fed an earlier run's output (a mask, a location) has no image input: its "before"
@@ -90,10 +91,8 @@ export function SavedComparison({
   }
   const comparing = compare && baseline && baseline.id !== attempt.id;
   const source = Object.values(attempt.inputs).flat()[0] ?? (upstream?.id === upstreamId ? upstream?.image : undefined);
-  const preview = attempt.outputs.find((output) => output.role === "preview");
-  const plain = attempt.outputs.find((output) => output.role !== "preview");
-  const right = (overlay && preview) || plain || attempt.outputs[0];
-  const rightLabel = right === preview ? (plain ? `${humanize(plain.role)} overlay` : "Preview") : humanize(right?.role ?? "result");
+  const right = attempt.outputs.find((output) => output.role === shown) ?? attempt.outputs[0];
+  const rightLabel = humanize(right?.role ?? "result");
   const left = comparing ? baseline.outputs.find((output) => output.role === right?.role) ?? baseline.outputs[0] : source;
   const result = object(attempt.result);
   const declaredImages = object(result?.images)?.out;
@@ -120,11 +119,11 @@ export function SavedComparison({
           }
           right={right ? { ...right, label: rightLabel } : undefined}
           load={load}
-          controls={preview && plain ? (
-            <button type="button" role="switch" aria-checked={overlay} className={styles.switch} onClick={() => setOverlay((value) => !value)}>
-              <span className={styles.track} aria-hidden="true"><span /></span>
-              {`${humanize(plain.role)} overlay`}
-            </button>
+          controls={attempt.outputs.length > 1 ? (
+            <span className={styles.outputs}>
+              <Picker header label="Show" value={right?.role ?? ""} onChange={setShown}
+                choices={attempt.outputs.map((output) => ({ id: output.role, title: humanize(output.role) }))} />
+            </span>
           ) : undefined}
         />
       )}

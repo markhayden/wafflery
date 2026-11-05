@@ -9,13 +9,14 @@ test("an unavailable launcher selection never silently opens another tool", asyn
   await host.open(page);
   // Let the one-use bootstrap establish this tab's session before navigating again.
   await expect(page.getByRole("button", { name: "Tool sample-lab", exact: true })).toBeVisible();
-  await page.goto(`${host.origin}/?tool=not-installed`);
+  await page.goto(`${host.origin}/not-installed`);
   await expect(
     page.getByRole("status").filter({ hasText: "not-installed" }),
   ).toContainText("not registered");
+  // Nothing to run: no action, no Run bar.
   await expect(
     page.getByRole("button", { name: "Run", exact: true }),
-  ).toBeDisabled();
+  ).toHaveCount(0);
   await expect(page.locator("input[type=file]")).toHaveCount(0);
   await page
     .getByRole("button", { name: "Tool Choose tool", exact: true })
@@ -23,9 +24,11 @@ test("an unavailable launcher selection never silently opens another tool", asyn
   const toolRow=page.getByRole("dialog",{name:"Choose tool"}).getByRole("button",{name:/^sample-lab /});
       await expect(toolRow.getByText(/^Version /)).toBeVisible();
       await toolRow.click();
+  // A chosen tool starts at its empty state: the person picks what to do.
   await expect(
-    page.getByRole("button", { name: "Action Add a test band" }),
+    page.getByRole("button", { name: "Action Choose action" }),
   ).toBeVisible();
+  await expect(page).toHaveURL(/\/sample$/);
 });
 test("run a real offline action and inspect immutable evidence after editing the draft", async ({
   page,
@@ -100,6 +103,7 @@ test("run a real offline action and inspect immutable evidence after editing the
   await drawer.getByRole("button", { name: "Resolved invocation", exact: true }).click();
   expect(JSON.parse((await resolvedEvidence.textContent())!)).toEqual(savedInvocation);
   await drawer.getByRole("button", { name: "Close" }).click();
+  const address = new URL(page.url()).pathname;
   await host.stop();
   // An older library record is evidence to inspect, not a live v0.2 tool declaration.
   const legacy = spawnSync("/usr/bin/sqlite3", [join(host.root, "Library", "library.sqlite3"),
@@ -110,7 +114,7 @@ test("run a real offline action and inspect immutable evidence after editing the
   ], { encoding: "utf8" });
   expect(legacy.status, legacy.stderr).toBe(0);
   await host.start();
-  await host.open(page);
+  await host.open(page, address);
   await expect(
     page.getByRole("slider", { name: "Before and after divider" }),
   ).toBeVisible();

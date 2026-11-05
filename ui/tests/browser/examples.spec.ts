@@ -1,4 +1,4 @@
-import { openOptionalSettings, prepareSampleInput } from "./sample-input";
+import { prepareSampleInput } from "./sample-input";
 import { test, expect } from "./tool-host";
 import { readFile } from "node:fs/promises";
 import { resolve } from "node:path";
@@ -8,7 +8,6 @@ test("an example owns saved inputs and opens a draft without execution", async (
 }) => {
   await host.open(page);
   await prepareSampleInput(page, "Saved example input");
-  await openOptionalSettings(page);
   await page.getByLabel("Tags", { exact: true }).fill('["saved tag"]');
   await page.getByRole("button", { name: "Run", exact: true }).click();
   await expect(

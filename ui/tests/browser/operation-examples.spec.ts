@@ -1,7 +1,6 @@
 import {test,expect} from "./tool-host";
 import {readFile,readdir,rm} from "node:fs/promises";
 import {join,dirname} from "node:path";
-import {openOptionalSettings} from "./sample-input";
 test.describe("owned operation examples",()=>{
  test.use({hostScenario:"v04-operations"});
  test("a native example restores after deleting its source runs and runs only its edited action",async({page,host})=>{
@@ -37,7 +36,6 @@ test.describe("owned operation examples",()=>{
   await expect(restore).toContainText("Wafflery kept a verified copy");
   await restore.getByRole("button",{name:"Import saved copy",exact:true}).click();
   await expect(page.getByRole("region",{name:"Result",exact:true})).toContainText("Example loaded: Reusable soften");
-  await openOptionalSettings(page);
   await page.getByLabel("Amount",{exact:true}).fill("0.5");
   await page.getByRole("button",{name:"Run",exact:true}).click();
   await expect(page.getByText("Contract evidence: complete.",{exact:false})).toBeVisible();

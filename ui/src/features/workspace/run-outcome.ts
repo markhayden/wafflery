@@ -7,8 +7,8 @@ type Spend = {usd:number; unresolved:number; basis:"measured" | "estimated"};
 const amount = (value:Json | undefined): value is number => typeof value === "number" && Number.isFinite(value) && value >= 0;
 const guidance: {[code:string]:{title:string; guidance:string; setup:boolean}} = {
   input:{title:"Input refused by tool.",guidance:"Review the tool’s reason and any suggested remedy before starting another run. Original inputs have not been resized.",setup:false},
-  stale_estimate:{title:"Estimate no longer matches.",guidance:"Review the inputs and request a new estimate before running again.",setup:false},
-  credential:{title:"Provider rejected authentication.",guidance:"Check the tool’s credential setup, then estimate again. No retry was started.",setup:true},
+  stale_estimate:{title:"Estimate no longer matches.",guidance:"The checked cost no longer matches these inputs. Check again, or run without it.",setup:false},
+  credential:{title:"Provider rejected authentication.",guidance:"Check the tool’s credential setup, then run again. No retry was started.",setup:true},
   cap:{title:"Spending cap reached.",guidance:"Review the cap and request a new estimate. The cap has not been increased.",setup:false},
   budget:{title:"Session budget reached.",guidance:"Review the tool’s session spending before another attempt. Its budget has not been reset.",setup:true},
 };
@@ -40,7 +40,7 @@ export function runOutcome(attempt: Record) {
       : waiting ? undefined : !terminal ? "Inspect the saved evidence before starting another attempt."
       : code === "credential" && !paid ? "Check the tool’s credential setup before another run. No retry was started."
       : action?.guidance ?? (result.status === "completed" ? undefined : paid
-        ? "Review the result before a new estimate and explicit Run. No retry was started."
+        ? "Review the result, then Run again if you want to. No retry was started."
         : "Review the result before starting another run. No retry was started."),
     reason,code,setup,requirements,spend};
 }

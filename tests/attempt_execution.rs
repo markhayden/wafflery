@@ -104,9 +104,8 @@ async fn duplicate_submissions_dispatch_once_and_mutable_originals_are_not_input
     c.assets.database.shutdown().await.unwrap();
 }
 #[tokio::test]
-async fn paid_missing_malformed_and_stale_cost_declarations_cannot_dispatch() {
+async fn changed_missing_malformed_and_stale_cost_declarations_cannot_dispatch() {
     for scenario in [
-        "paid",
         "becomes-paid",
         "missing-cost",
         "malformed-cost",
@@ -137,7 +136,9 @@ async fn invalid_parameters_and_busy_tool_are_refused() {
     c.assets.database.shutdown().await.unwrap();
 }
 #[tokio::test]
-async fn direct_browser_api_cannot_bypass_no_paid_guard() {
+/// A paid action runs without an estimate (table-manners 4.5: a caller MAY estimate first); the
+/// tool enforces its own spending limits, so the host adds no gate of its own.
+async fn a_paid_action_runs_without_an_estimate() {
     use axum::{
         body::Body,
         http::{Request, StatusCode},
@@ -172,8 +173,14 @@ async fn direct_browser_api_cannot_bypass_no_paid_guard() {
         )
         .await
         .unwrap();
-    assert_eq!(response.status(), StatusCode::CONFLICT);
-    assert!(!dir.path().join("runs/calls.ndjson").exists());
+    assert_eq!(response.status(), StatusCode::ACCEPTED);
+    for _ in 0..100 {
+        if dir.path().join("runs/calls.ndjson").exists() {
+            break;
+        }
+        tokio::time::sleep(std::time::Duration::from_millis(20)).await;
+    }
+    assert!(dir.path().join("runs/calls.ndjson").exists());
     finish_host(&c).await;
     c.assets.database.shutdown().await.unwrap();
 }

@@ -8,7 +8,7 @@ import { waffleryDevHost } from "./dev-host.ts";
 // Refresh so an edited component updates in place. The production build uses neither.
 const library = process.env.WAFFLERY_DATA_DIR;
 export default defineConfig(({ command }) => ({
-  base: "./",
+  base: "/",
   plugins: command === "serve" && library ? [react(), waffleryDevHost(library)] : [],
   server: {
     host: "127.0.0.1",

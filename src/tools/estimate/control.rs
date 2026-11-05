@@ -17,7 +17,7 @@ impl ToolClient {
         declaration: &Declaration,
         action: &str,
         arguments: &Value,
-        cap: f64,
+        cap: Option<f64>,
         deadline: Instant,
     ) -> Result<ValidatedEstimate> {
         let mut previous = timeout_at(deadline, self.observed_session.lock()).await?;

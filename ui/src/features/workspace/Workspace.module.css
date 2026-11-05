@@ -71,8 +71,22 @@
 .run {
   border-top: 1px solid var(--color-line);
 }
-.run button {
+.run button[type="submit"] {
   min-width: 5rem;
+}
+.runActions {
+  display: flex;
+  gap: 0.5rem;
+  margin-left: auto;
+}
+/* Cost options open above the run line, inside the bar: secondary to the steps, one place for
+   every paid action. */
+.costPanel {
+  flex: 1 0 100%;
+  max-height: 50vh;
+  overflow: auto;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--color-line);
 }
 .empty {
   min-height: 22rem;
@@ -202,10 +216,5 @@
 .preserve h3, .preserveFailed h3 { margin: 0; font-size: 0.875rem; font-weight: 500; }
 .preserve p, .preserveFailed p { margin: 0; color: var(--color-muted); }
 .preserveFailed { border-color: color-mix(in srgb, #e5a50a 45%, var(--color-line)); }
+.outputs { display: inline-flex; gap: 0.25rem; margin-right: 0.5rem; }
 .hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
-.switch { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.5rem 0.75rem; color: var(--color-text); background: transparent; border: 1px solid transparent; border-radius: var(--radius-control); font-size: 0.875rem; }
-.switch:hover { background: var(--color-fill); }
-.track { position: relative; width: 2rem; height: 1.125rem; border-radius: 999px; background: var(--color-line); transition: background 0.15s; }
-.track span { position: absolute; top: 0.1875rem; left: 0.1875rem; width: 0.75rem; height: 0.75rem; border-radius: 999px; background: var(--color-muted); transition: transform 0.15s, background 0.15s; }
-.switch[aria-checked="true"] .track { background: var(--color-focus); }
-.switch[aria-checked="true"] .track span { transform: translateX(0.875rem); background: var(--color-background); }

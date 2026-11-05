@@ -1,5 +1,5 @@
 import { test, expect } from "./tool-host";
-import { prepareSampleInput } from "./sample-input";
+import { openCost, prepareSampleInput } from "./sample-input";
 import { readFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import type { Page } from "@playwright/test";
@@ -9,9 +9,10 @@ async function prepare(page:Page,label:string) {
   await page.getByRole("button",{name:/^Action /}).click();
   await page.getByRole("button",{name:/^Price a scripted call/}).click();
   await prepareSampleInput(page,label);
-  await page.getByRole("textbox",{name:"Spending cap (USD)",exact:true}).fill("0.5");
-  await page.getByRole("button",{name:"Estimate cost",exact:true}).click();
-  await expect(page.getByRole("region",{name:"Cost",exact:true})).toContainText("Estimate within cap.");
+  await openCost(page);
+  await page.getByRole("textbox",{name:"Spending limit (USD) Optional",exact:true}).fill("0.5");
+  await page.getByRole("button",{name:"Check cost",exact:true}).click();
+  await expect(page.getByRole("region",{name:"Cost options",exact:true})).toContainText("Within the limit. Running uses this price.");
 }
 for (const [label,title,spend] of [
   ["paid-stale","Estimate no longer matches.","$0.00"],
@@ -25,7 +26,8 @@ for (const [label,title,spend] of [
   await expect(outcome(page)).toContainText(title);
   await expect(page.getByLabel("Reported spend",{exact:true})).toHaveText(spend);
   await expect(page.getByRole("region",{name:"Result",exact:true})).toContainText("Contract evidence: complete");
-  await expect(page.getByRole("button",{name:"Run",exact:true})).toBeDisabled();
+  // The outcome is final: the spent check is not reused and nothing is retried.
+  await expect(page.getByRole("region",{name:"Cost options",exact:true})).toContainText("Check again");
   if (label === "paid-unresolved") {
     await expect(outcome(page)).toContainText("final charge is unknown");
     await outcome(page).scrollIntoViewIfNeeded();
@@ -57,7 +59,7 @@ test("two reviewed drafts explain a later budget refusal without resetting the s
     await host.open(second); await prepare(second,"second paid draft");
     await page.getByRole("button",{name:"Run",exact:true}).click();
     await expect(page.getByRole("region",{name:"Result",exact:true})).toContainText("Contract evidence: complete");
-    await expect(second.getByRole("region",{name:"Cost",exact:true})).toContainText("balance may no longer cover this estimate");
+    await expect(second.getByRole("region",{name:"Cost options",exact:true})).toContainText("balance may no longer cover this estimate");
     await second.getByRole("button",{name:"Run",exact:true}).click();
     await expect(outcome(second)).toContainText("Session budget reached.");
     await expect(second.getByLabel("Reported spend",{exact:true})).toHaveText("$0.00");

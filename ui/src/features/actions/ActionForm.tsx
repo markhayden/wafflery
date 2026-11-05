@@ -1,5 +1,6 @@
 import { useId, useState, type ReactNode } from "react";
 import { InfoTip } from "../../components/InfoTip";
+import { FieldTag } from "../../components/FieldTag";
 import { imageHelp, imageLabel, paramHelp, paramLabel } from "./help";
 import { ImageInput } from "../../components/ImageInput";
 import { ImageThumb, ImageThumbGrid } from "../../components/ImageThumb";
@@ -100,7 +101,7 @@ function ExclusiveChoice({ id, fields, params, disabled, label, onChoose, render
   const [chosen, setChosen] = useState(() => fields.find(([key]) => params[key] !== undefined)?.[0] ?? fields[0]![0]);
   const entry = fields.find(([key]) => key === chosen) ?? fields[0]!;
   return <fieldset className={styles.choice} disabled={disabled}>
-    <legend className={styles.fieldLabel}><span>{fields.map(([key, field]) => label(key, field)).join(" or ")}</span><span className={styles.tag}>Required</span></legend>
+    <legend className={styles.fieldLabel}><span>{fields.map(([key, field]) => label(key, field)).join(" or ")}</span><FieldTag required /></legend>
     <div className={styles.segmented} role="radiogroup" aria-label={`Choose ${fields.map(([key, field]) => label(key, field)).join(" or ")}`}>
       {fields.map(([key, field]) => <label key={key} className={styles.segment}>
         <input type="radio" name={id} value={key} checked={chosen === key} onChange={() => { setChosen(key); onChoose(key); }} />
@@ -164,7 +165,7 @@ export function ActionForm({
           const field = object(entry) ?? {};
           const label = paramLabel(key, field);
           const info = <InfoTip label={label}>{paramHelp(field, required.includes(key))}</InfoTip>;
-          const tag = required.includes(key) ? <span className={styles.tag}>Required</span> : null;
+          const tag = <FieldTag required={required.includes(key)} />;
           const mode = fieldMode(field);
           const value = params[key];
           // Free-form JSON settings need the tool's own syntax: they sort last, marked advanced.
@@ -307,18 +308,14 @@ export function ActionForm({
       ))}
       {locations && <section className={styles.step}>{locations}</section>}
       {simple ? (<>
-        {(requiredFields.length > 0 || exclusiveFields.length > 1) && <section className={styles.step}><h3 className={styles.stepTitle}>Settings</h3>
+        {/* One step, every setting shown: required first, then optional, each marked. */}
+        {(requiredFields.length > 0 || exclusiveFields.length > 1 || optionalFields.length > 0) && <section className={styles.step}><h3 className={styles.stepTitle}>Settings</h3>
           {exclusiveFields.length > 1 && <ExclusiveChoice id={`${id}-choice`} fields={exclusiveFields} params={params} disabled={disabled}
             label={(key, field) => paramLabel(key, object(field) ?? {})}
             onChoose={(key) => { const next = { ...params }; for (const [other] of exclusiveFields) if (other !== key) delete next[other]; onChange(next); }}
             render={renderField} />}
-          {requiredFields.map(renderField)}</section>}
-        {optionalFields.length > 0 && <section className={styles.step}>
-          <details className={styles.optional}>
-            <summary className={styles.stepTitle}>Settings <span className={styles.note}>· {optionalFields.length} optional</span></summary>
-            <div className={styles.form}>{optionalFields.map(renderField)}</div>
-          </details>
-        </section>}
+          {requiredFields.map(renderField)}
+          {optionalFields.map(renderField)}</section>}
         {spendFields.length > 0 && <section className={styles.step}><h3 className={styles.stepTitle}>Spending limit</h3>{spendFields.map(renderField)}</section>}
       </>) : (
         <JsonField

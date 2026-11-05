@@ -1,5 +1,5 @@
 import { test, expect } from "./tool-host";
-import { editSampleLabel, prepareSampleInput } from "./sample-input";
+import { editSampleLabel, openCost, prepareSampleInput } from "./sample-input";
 import { readFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import { spawnSync } from "node:child_process";
@@ -10,9 +10,10 @@ test("cancelled paid evidence survives history, export and a new host session", 
   await page.getByRole("button", { name: /^Action / }).click();
   await page.getByRole("button", { name: /^Price a scripted call/ }).click();
   await prepareSampleInput(page, "paid-held");
-  await page.getByRole("textbox", { name: "Spending cap (USD)", exact: true }).fill("0.5");
-  await page.getByRole("button", { name: "Estimate cost", exact: true }).click();
-  await expect(page.getByRole("region", { name: "Cost", exact: true })).toContainText("Estimate within cap.");
+  await openCost(page);
+  await page.getByRole("textbox", { name: "Spending limit (USD) Optional", exact: true }).fill("0.5");
+  await page.getByRole("button", { name: "Check cost", exact: true }).click();
+  await expect(page.getByRole("region", { name: "Cost options", exact: true })).toContainText("Within the limit. Running uses this price.");
   await page.getByRole("button", { name: "Run", exact: true }).click();
   await expect.poll(async () => readFile(resolve(host.root, "../tool/paid-provider-started"), "utf8").then(() => true, () => false)).toBe(true);
   await expect(page.getByText("Waiting for synthetic provider", { exact: true })).toBeVisible();
@@ -22,7 +23,8 @@ test("cancelled paid evidence survives history, export and a new host session", 
   await expect(result).toContainText("Contract evidence: complete");
   await expect(outcome).toContainText("Run cancelled.");
   await expect(page.getByLabel("Reported spend", { exact: true })).toHaveText("At most $0.12");
-  await expect(page.getByRole("button", { name: "Run", exact: true })).toBeDisabled();
+  // The check was spent on the cancelled run; it never carries over to another one.
+  await expect(page.getByRole("region", { name: "Cost options", exact: true })).toContainText("Check again");
   await editSampleLabel(page, "Unsubmitted edited draft");
   await page.getByRole("button", { name: "History", exact: true }).click();
   await page.getByRole("region", { name: "Saved history" }).getByRole("button").filter({ hasText: /Cancelled/ }).first().click();

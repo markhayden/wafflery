@@ -1,7 +1,6 @@
 import { test, expect } from "./tool-host";
 import { readFile, readdir } from "node:fs/promises";
 import { join, resolve } from "node:path";
-import { openOptionalSettings } from "./sample-input";
 import { spawnSync } from "node:child_process";
 
 test.use({ hostKind: "squint", viewport: { width: 1440, height: 900 } });
@@ -103,13 +102,12 @@ test("Squint scripted evidence survives export, examples, tool switching and res
   await page
     .getByRole("combobox", { name: "Source image coordinates", exact: true })
     .selectOption("equirectangular");
-  await openOptionalSettings(page);
   await page
     .getByLabel("Projection", { exact: true })
     .selectOption({ label: "equirectangular" });
   await page.getByRole("button", { name: "Run", exact: true }).click();
   await expect(
-    page.getByRole("img", { name: "Mask overlay", exact: true }),
+    page.getByRole("img", { name: "Preview", exact: true }),
   ).toBeVisible();
   await expect(
     page.getByText("Contract evidence: complete.", { exact: false }).first(),
@@ -128,7 +126,7 @@ test("Squint scripted evidence survives export, examples, tool switching and res
     '"verdict": "pass"',
   );
   await expect(
-    page.getByRole("img", { name: /^Mask( overlay)?$/ }),
+    page.getByRole("img", { name: /^(Mask|Preview)$/ }),
   ).toHaveCount(0);
   await expect(
     page.getByRole("dialog", { name: "History", exact: true }),

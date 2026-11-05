@@ -32,9 +32,11 @@ test("baseline comparison uses two saved runs and survives restart", async ({
   await expect(page.locator(".settings-comparison")).not.toContainText(
     "Unsubmitted settings",
   );
+  // The run's address brings it back after a restart (route.ts).
+  const address = new URL(page.url()).pathname;
   await host.stop();
   await host.start();
-  await host.open(page);
+  await host.open(page, address);
   await expect(
     page.getByRole("button", { name: "Compare with baseline" }),
   ).toBeVisible();

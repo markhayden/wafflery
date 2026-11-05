@@ -14,6 +14,7 @@ import {InfoTip} from "../../components/InfoTip";
 import {CodeBlock} from "../../components/CodeBlock";
 import {humanize,locationHelp,locationLabel} from "./help";
 import {RectangleDrawer} from "./RectangleDrawer";
+import {FieldTag} from "../../components/FieldTag";
 import {StrokeDrawer} from "./StrokeDrawer";
 import styles from "./ActionForm.module.css";
 export type ArtifactChoice={id:string;label:string;reference:Schema;binding?:InputBinding;disabled?:boolean};
@@ -37,13 +38,13 @@ function PortRow({port,value,onChange,assets,upload,artifacts,issues,disabled,on
  const drawsBox=!!drawKind;
  // Locked until it can be done: an area drawn on an image waits for the image, as one dimmed line.
  if(drawsBox&&!drawOn&&!value.length)return <fieldset data-port={port.name} tabIndex={-1} className={`${styles.form} ${styles.locked}`}>
-  <legend className={styles.legend}><span>{label}</span><span className={styles.tag}>{port.required?"Required":"Optional"}</span><InfoTip label={label}>{help}</InfoTip></legend>
+  <legend className={styles.legend}><span>{label}</span><FieldTag required={!!port.required} /><InfoTip label={label}>{help}</InfoTip></legend>
   <small>Choose a source image above first; you then {drawKind==="stroke"?"paint over the damage":"draw the area"} on it.</small>
   <span role="status" className={styles.hidden} aria-label={`${port.name} selection count`}>0 selected</span>
  </fieldset>;
  function add(item:InputBinding){onChange([...value,item]);setError(undefined);}
  return <fieldset data-port={port.name} tabIndex={-1} className={styles.form} disabled={locked} aria-busy={pending}>
- <legend className={styles.legend}><span>{label}</span><span className={styles.tag}>{port.required?"Required":"Optional"}{port.many?" · List":""}</span><InfoTip label={label}>{help}</InfoTip></legend>
+ <legend className={styles.legend}><span>{label}</span><FieldTag required={!!port.required} extra={port.many?"List":undefined} /><InfoTip label={label}>{help}</InfoTip></legend>
  {!value.length&&port.type!=="image"&&<small>{port.type==="location"?(drawsBox?(drawOn?(drawKind==="stroke"?"Not set yet. Paint over it on your image below.":"Not set yet. Draw it on your image below."):"Choose the image above first, then draw the area on it."):"Not set yet. Paste a location below."):port.required?"Choose an input to continue.":"No input selected."}</small>}
  <span role="status" className={port.many?undefined:styles.hidden} aria-label={`${port.name} selection count`}>{value.length} selected</span>
  {value.length>0&&<ol className={port.many?undefined:styles.single}>{value.map((item,index)=>{const asset=item.kind==="image"?assets.find(candidate=>candidate.id===item.asset):undefined;return <li key={index}>

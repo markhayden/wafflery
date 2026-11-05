@@ -503,7 +503,7 @@ mod tests {
             &response,
             &declaration.document["tool"],
             "price_test",
-            0.5,
+            Some(0.5),
             &declaration.tool_session,
             time::OffsetDateTime::now_utc(),
         )
@@ -568,7 +568,7 @@ mod tests {
             value.clone(),
             &session["tool"],
             "price_test",
-            value["cap_usd"].as_f64().unwrap(),
+            value["cap_usd"].as_f64(),
             &session,
             received,
         )

@@ -23,10 +23,6 @@ const kinds: ActivityKind[] = ["task","operation","utility"];
 export function activityKinds(actions:Action[]):ActivityKind[] {
   return kinds.filter(kind=>actions.some(action=>action.kind===kind));
 }
-export function firstActivity(actions:Action[]):Action|undefined {
-  const first=activityKinds(actions)[0];
-  return actions.find(action=>action.kind===first);
-}
 export function activityChoices(actions:Action[],kind:ActivityKind,groups:string[]):Choice[] {
   const selected=actions.filter(action=>action.kind===kind);
   // Group vocabulary order is presentation metadata; never infer groups from tool/action names.
