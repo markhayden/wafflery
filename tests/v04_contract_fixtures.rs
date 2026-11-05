@@ -30,13 +30,13 @@ fn validator(name: &str) -> jsonschema::Validator {
 
 #[test]
 fn descriptions_are_independent_v04_operations_peers() {
-    assert_eq!(table_manners::CONTRACT_VERSION, "0.4.0");
+    assert_eq!(table_manners::CONTRACT_VERSION, "0.5.0");
     for tool in ["sample-lab", "test-prism"] {
         let description = fixtures::description(tool);
         validator("urn:table-manners:core:description")
             .validate(&description)
             .unwrap();
-        assert_eq!(description["contract"], "0.4.0");
+        assert_eq!(description["contract"], "0.5.0");
         assert_eq!(description["tool"]["name"], tool);
     }
 }

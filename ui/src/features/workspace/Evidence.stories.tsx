@@ -8,7 +8,7 @@ import { Inspector } from "./Inspector";
 import { Pipeline } from "./Pipeline";
 import { ReportOwner } from "./report-owner";
 
-const result = {contract:"0.4.0",status:"completed",action:"mark_band",invocation:{
+const result = {contract:"0.5.0",status:"completed",action:"mark_band",invocation:{
   action:"mark_band",arguments:{label:"A saved experiment",strength:0.5,tone:"blue"},
   effective:{model:null,config_identity:`sha256:${"1".repeat(64)}`},requirements:[],
 }};
@@ -16,7 +16,7 @@ const attempt: Attempt = {
   id:"saved-example",sequence:1,created_ms:0,
   request:{id:"saved-example",tool:"sample-lab",action:"mark_band",revision:"example",params:{label:"A saved experiment",strength:0.5},images:{}},
   arguments:{label:"A saved experiment",strength:0.5},
-  declaration:{revision:"example",generation:1,schemas:{},document:{contract:"0.4.0",
+  declaration:{revision:"example",generation:1,schemas:{},document:{contract:"0.5.0",
     tool:{name:"sample-lab",version:"0.1.0",purpose:"Illustrative offline tool."},
     actions:[{kind:"task",name:"mark_band",title:"Add a test band",purpose:"Illustrative image band.",params_schema:{},
       cost:{may_spend:false},readiness:{state:"ready",requirements:[]}}]}},

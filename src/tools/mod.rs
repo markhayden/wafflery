@@ -79,9 +79,9 @@ pub fn validator(schema: &serde_json::Value) -> Result<jsonschema::Validator> {
         .map_err(|e| Error::Invalid(format!("Invalid schema: {e}")))
 }
 pub fn validate_contract(kind: &str, value: &serde_json::Value) -> Result<()> {
-    if value["contract"] != "0.4.0" {
+    if value["contract"] != "0.5.0" {
         return Err(Error::Invalid(
-            "Unsupported table-manners contract; this build accepts exactly 0.4.0".into(),
+            "Unsupported table-manners contract; this build accepts exactly 0.5.0".into(),
         ));
     }
     let (_, text) = table_manners::SCHEMAS

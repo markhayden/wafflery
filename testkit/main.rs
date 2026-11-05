@@ -53,7 +53,7 @@ impl Default for PeerState {
             &hex[20..]
         );
         Self {
-            session: json!({"contract":"0.4.0","tool":{"name":fixtures::TOOL,"version":"0.1.0"},
+            session: json!({"contract":"0.5.0","tool":{"name":fixtures::TOOL,"version":"0.1.0"},
             "id":id,"started":time::OffsetDateTime::now_utc().format(&time::format_description::well_known::Rfc3339).unwrap(),
             "allowed_dirs":[],"budget_usd":null,"spent_usd":0,"unresolved_usd":0,"reserved_usd":0,"remaining_usd":null}),
             estimates: Default::default(),
@@ -449,7 +449,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     reply(
                         &output,
                         id,
-                        json!({"contents":[{"uri":params["uri"],"mimeType":"application/json","text":json!({"contract":"0.4.0","tool":{"name":fixtures::TOOL,"version":"0.1.0"},"runs":[],"next_cursor":null}).to_string()}]}),
+                        json!({"contents":[{"uri":params["uri"],"mimeType":"application/json","text":json!({"contract":"0.5.0","tool":{"name":fixtures::TOOL,"version":"0.1.0"},"runs":[],"next_cursor":null}).to_string()}]}),
                     );
                     continue;
                 }

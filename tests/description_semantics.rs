@@ -146,7 +146,7 @@ fn core_only_tasks_need_no_image_or_artifact_metadata() {
 
 #[test]
 fn malformed_descriptions_are_rejected_before_relationship_checks() {
-    for value in [json!(null), json!({"contract":"0.4.0"})] {
+    for value in [json!(null), json!({"contract":"0.5.0"})] {
         assert!(validate_contract("urn:table-manners:core:description", &value).is_err());
     }
     let mut value = fixtures::description("test-prism");

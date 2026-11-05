@@ -139,7 +139,7 @@ fn control_discovery_and_estimates_never_allocate_or_spend() {
                 .iter()
                 .all(|action| action["name"] != "estimate" && action["name"] != "describe")
         );
-        assert_eq!(description["contract"], "0.4.0");
+        assert_eq!(description["contract"], "0.5.0");
         assert_eq!(description["tool"]["name"], tool);
         let tools = peer.call(3, "tools/list", json!({}));
         assert!(

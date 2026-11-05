@@ -28,7 +28,7 @@ async fn fixture() -> (tempfile::TempDir, AssetStore, Attempt, Value) {
     let marker = fixtures::artifact("sample", "location");
     let expect = marker["record"]["image"].clone();
     let action = json!({"name":"rasterize","kind":"operation","ports":{"in":[{"name":"pictures","type":"image","many":true,"required":true},{"name":"markers","type":"location","many":true,"required":true}]}});
-    let declaration = json!({"document":{"contract":"0.4.0","tool":{"name":"sample","version":"0.1.0"},"profiles":["operations"],"artifact_types":[{"type":"location","portable":"json"}],"actions":[action]}});
+    let declaration = json!({"document":{"contract":"0.5.0","tool":{"name":"sample","version":"0.1.0"},"profiles":["operations"],"artifact_types":[{"type":"location","portable":"json"}],"actions":[action]}});
     let request=serde_json::from_value(json!({"id":"selected","tool":"peer","action":"rasterize","revision":"r","params":{},"images":{},"bindings":{"pictures":[{"kind":"image","asset":image.id},{"kind":"image","asset":image.id}],"markers":[{"kind":"artifact","reference":marker["artifact"]},{"kind":"artifact","reference":marker["artifact"]}]}})).unwrap();
     let mut attempt=AttemptStore::new(assets.database.clone()).create(request,json!({}),declaration,json!({"pictures":[{"asset":image,"image":expect,"argument_index":0},{"asset":image,"image":expect,"argument_index":1}]})).await.unwrap();
     let mut result = fixtures::result("sample", "completed");
@@ -95,7 +95,7 @@ async fn bundle_is_schema_valid_canonical_and_keeps_every_occurrence_without_dup
     assert_eq!(a.sha256, b.sha256);
     assert_eq!(
         a.sha256,
-        "fc9aaa4051d8141469f9f304acf97a2fc1afdb9eb4ad37d10066691b4e308d7a"
+        "2d265e7c95210b33a6dc8dc220bc51b9e5fb2a7a0ef21f78b390bf8e840e606b"
     );
     assert_eq!(
         std::fs::read(a.file.path()).unwrap(),

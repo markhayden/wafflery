@@ -63,7 +63,7 @@ pub fn description(tool: &str) -> Value {
     actions.push(task);
     actions.push(action("summarize", "utility"));
     json!({
-        "contract":"0.4.0","tool":{"name":tool,"version":"0.1.0","purpose":"Independent, synthetic operation fixtures; no image repair or provider calls."},
+        "contract":"0.5.0","tool":{"name":tool,"version":"0.1.0","purpose":"Independent, synthetic operation fixtures; no image repair or provider calls."},
         "profiles":["images","operations"],"actions":actions,
         "artifact_types":[
             {"type":"location","schema_versions":[1],"purpose":"A shared marker.","portable":"json","preview":true},
@@ -130,12 +130,12 @@ pub fn documents(tool: &str) -> Vec<(&'static str, Value)> {
     ));
     let bytes = serde_json::to_vec(&token).unwrap();
     docs.push(("urn:table-manners:operations:export-response", json!({
-        "contract":"0.4.0","tool":{"name":tool,"version":"0.1.0"},"artifact":native,
+        "contract":"0.5.0","tool":{"name":tool,"version":"0.1.0"},"artifact":native,
         "file":{"path":"/fixture/exports/token.bundle","bytes":bytes.len(),"sha256":digest(&bytes),"media_type":format!("application/x-{tool}-token")}
     })));
     for already in [false, true] {
         docs.push(("urn:table-manners:operations:import-response", json!({
-            "contract":"0.4.0","tool":{"name":tool,"version":"0.1.0"},"artifact":native,"already_present":already
+            "contract":"0.5.0","tool":{"name":tool,"version":"0.1.0"},"artifact":native,"already_present":already
         })));
     }
     docs.push((
@@ -143,7 +143,7 @@ pub fn documents(tool: &str) -> Vec<(&'static str, Value)> {
         json!({"file":{"path":"/fixture/inputs/token.bundle"},"sha256":digest(&bytes)}),
     ));
     docs.push(("urn:table-manners:core:session", json!({
-        "contract":"0.4.0","tool":{"name":tool,"version":"0.1.0"},"id":"11111111-1111-4111-8111-111111111111",
+        "contract":"0.5.0","tool":{"name":tool,"version":"0.1.0"},"id":"11111111-1111-4111-8111-111111111111",
         "started":"2026-11-02T00:00:00Z","allowed_dirs":["/fixture/inputs"],
         "budget_usd":null,"spent_usd":0,"unresolved_usd":0,"reserved_usd":0,"remaining_usd":null
     })));
@@ -195,7 +195,7 @@ pub fn artifact_variant(tool: &str, kind: &str, amount: f64) -> Value {
     if !no_preview {
         reference["on"] = image.clone();
     }
-    json!({"contract":"0.4.0","tool":{"name":tool,"version":"0.1.0"},"artifact":reference,
+    json!({"contract":"0.5.0","tool":{"name":tool,"version":"0.1.0"},"artifact":reference,
         "preview":if no_preview {Value::Null} else {json!({"role":"preview","image":preview,"resource":format!("{resource}/preview")})},
         "record":record})
 }
@@ -206,7 +206,7 @@ pub fn result(tool: &str, status: &str) -> Value {
     let invalid = status == "invalid";
     let invocation = json!({"action":"soften_token","arguments":{"token":token["artifact"],"amount":0.25},
         "effective":{"model":null,"config_identity":format!("sha256:{}", digest(b"built-in-fixture-defaults"))},"requirements":[]});
-    json!({"contract":"0.4.0","tool":{"name":tool,"version":"0.1.0"},"action":"soften_token",
+    json!({"contract":"0.5.0","tool":{"name":tool,"version":"0.1.0"},"action":"soften_token",
         "run":{"id":"fixture-001","resource":format!("{tool}://run/fixture-001/run.json"),"dir":null,"session_id":null,"client_run_id":null},
         "status":status,"error":if matches!(status, "invalid" | "error") {json!({"code":if invalid {"usage"} else {"internal"},"retryable":false,"reason":"Synthetic fixture outcome."})} else {Value::Null},
         "started":"2026-11-02T00:00:00Z","finished":"2026-11-02T00:00:00Z","duration_ms":0,

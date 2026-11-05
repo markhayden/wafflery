@@ -7,7 +7,7 @@ mod schema;
 use schema::validator;
 #[test]
 fn schema_dependency_is_the_approved_contract_version() {
-    assert_eq!(table_manners::CONTRACT_VERSION, "0.4.0");
+    assert_eq!(table_manners::CONTRACT_VERSION, "0.5.0");
     for (id, text) in table_manners::SCHEMAS {
         assert_eq!(serde_json::from_str::<Value>(text).unwrap()["$id"], *id);
     }
@@ -19,7 +19,7 @@ fn independent_control_fixtures_cover_readiness_estimates_and_refusals() {
             let document = fixtures::description(tool, state);
             validator("description").validate(&document).unwrap();
             assert_eq!(document["tool"]["name"], tool);
-            assert_eq!(document["contract"], "0.4.0");
+            assert_eq!(document["contract"], "0.5.0");
             assert_eq!(document["actions"][0]["readiness"]["state"], "ready");
             assert_eq!(document["actions"][1]["readiness"]["state"], state);
             assert!(

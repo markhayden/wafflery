@@ -177,11 +177,11 @@ and the boundary between working mock interactions and future tool integration.
 
 ## Implementation and remaining gates
 
-The exact live contract is published table-manners `=0.4.0`; MCP remains `2025-11-25`. Rascal's M13
-(branch `m13-checker`, task 13.14) builds against the v0.5 draft by path, still versioned 0.4.0, and
-renders what it adds: an action's verdict (`answers: verdict`; a judged result's `verdict` in plain
+The exact live contract is table-manners `=0.5.0` (on branch `m13-checker`, by path until rascal's
+PLAN.md 13.15 publishes it; `main` keeps published `=0.4.0` until the branch merges); MCP remains
+`2025-11-25`. Rascal's M13 (task 13.14) renders what v0.5 adds: an action's verdict (`answers: verdict`; a judged result's `verdict` in plain
 words with its places drawn), optional requirements (never a reason to need setup) and image-out
-labels (the Show menu's names, saved with the run). The version moves with 13.15. Earlier
+labels (the Show menu's names, saved with the run). 13.15 replaced 0.4.0 directly, with no dual support. Earlier
 live contracts are refused, while saved historical evidence stays readable. The independent fake
 exercises generic task/operation/utility discovery, scalar/list ports, image/location/native
 bindings, indexed refusals, session grants, cancellation, invocation capture and portable bundles.
