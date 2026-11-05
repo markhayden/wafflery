@@ -64,3 +64,21 @@ test("a panorama's seam can be turned to the middle, and a flat pair offers no t
   await expect(page.getByRole("slider", { name: "Before and after divider" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Centre the seam" })).toHaveCount(0);
 });
+test("a portrait image fits a short window whole in every mode", async ({ page }) => {
+  await page.setViewportSize({ width: 1600, height: 700 });
+  await page.goto("http://127.0.0.1:6006/iframe.html?id=components-imagecompare--portrait&viewMode=story");
+  const limit = 700 * 0.65 + 1;
+  const wipe = page.getByRole("slider", { name: "Before and after divider" }).locator("..");
+  await expect(wipe).toBeVisible();
+  const box = (await wipe.boundingBox())!;
+  expect(box.height).toBeLessThanOrEqual(limit);
+  expect(box.width / box.height).toBeCloseTo(768 / 1376, 2);
+  await page.getByRole("button", { name: "Changes" }).click();
+  const changes = (await page.getByRole("img", { name: /Changes from/ }).locator("..").boundingBox())!;
+  expect(changes.height).toBeLessThanOrEqual(limit);
+  await page.getByRole("button", { name: "Side by side" }).click();
+  for (const name of ["Source", "Result"]) {
+    const img = (await page.getByRole("img", { name, exact: true }).boundingBox())!;
+    expect(img.height).toBeLessThanOrEqual(limit);
+  }
+});

@@ -1,9 +1,11 @@
-.viewer { min-width:0; display:grid;gap:.75rem; }
+/* The tallest a compared image is drawn: most of the window, never so tall that a portrait image
+   runs past a short window's panel. Wipe and Changes fit their box to it by the image's shape. */
+.viewer { min-width:0; display:grid;gap:.75rem; --compare-max-height: max(18rem, 65vh); }
 .toolbar,.labels {display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap;}
 .toolbar {font-size:.875rem;}
 .toolbar>div {display:flex;flex-wrap:wrap;gap:.4rem;align-items:center;}
 .toolbar button[aria-pressed=true] {border-color:var(--color-muted);background:var(--color-fill);}
-.wipe {position:relative;overflow:hidden;background:#101212;border:1px solid var(--color-line);border-radius:var(--radius-control);}
+.wipe {position:relative;overflow:hidden;justify-self:center;max-width:100%;background:#101212;border:1px solid var(--color-line);border-radius:var(--radius-control);}
 .wipe>img {position:absolute;inset:0;width:100%;height:100%;object-fit:contain;transform-origin:0 0;}
 .wipe input {position:absolute;inset:0;width:100%;height:100%;margin:0;opacity:0;cursor:ew-resize;}
 .wipe:focus-within {outline:2px solid var(--color-focus);outline-offset:4px;}
@@ -16,7 +18,7 @@
 .frame {position:relative;overflow:hidden;border:1px solid var(--color-line);border-radius:var(--radius-control);background:#101212;touch-action:none;}
 .frame[data-zoomed] {cursor:grab;}
 .frame[data-zoomed]:active {cursor:grabbing;}
-.frame img {display:block;width:100%;max-height:32rem;object-fit:contain;transform-origin:0 0;user-select:none;}
+.frame img {display:block;width:100%;max-height:var(--compare-max-height);object-fit:contain;transform-origin:0 0;user-select:none;}
 .frame p {margin:0;border:0;}
 .pane p {min-height:12rem;display:grid;place-items:center;padding:1rem;color:var(--color-muted);font-size:.8125rem;}
 .pane figcaption,.note {font-size:.8125rem;color:var(--color-muted);overflow-wrap:anywhere;}

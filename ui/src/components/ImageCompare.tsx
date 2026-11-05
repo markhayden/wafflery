@@ -152,6 +152,13 @@ function useChanges(before: string | undefined, after: string | undefined, enabl
   return state.key === key ? state : {};
 }
 
+/** A box in the image's shape, as wide as the viewer allows and no taller than
+ * `--compare-max-height`, so a portrait image fits a short window whole. */
+function fitted(image: Coordinates): React.CSSProperties {
+  const ratio = image.width / image.height;
+  return { aspectRatio: `${image.width}/${image.height}`, width: `min(100%, calc(var(--compare-max-height) * ${ratio}))`, justifySelf: "center" };
+}
+
 export function ImageCompare({ left, right, load, controls }: Props) {
   const panorama = isPanorama(left?.image) || isPanorama(right?.image);
   const [centred, setCentred] = useState(false);
@@ -248,7 +255,7 @@ export function ImageCompare({ left, right, load, controls }: Props) {
         <p className={styles.note}>These images have different dimensions or coordinate systems. Compare them side by side.</p>
       )}
       {active === "wipe" && loaded ? (
-        <div ref={viewport} className={styles.wipe} style={{ aspectRatio: `${left!.image.width}/${left!.image.height}` }}>
+        <div ref={viewport} className={styles.wipe} style={fitted(left!.image)}>
           <img src={after.url} alt={right?.label} style={transform} draggable={false} />
           <img src={before.url} alt={left?.label} style={{ ...transform, clipPath: `inset(0 ${clip}% 0 0)` }} draggable={false} />
           <div className={styles.divider} style={{ left: `${position}%` }}><span aria-hidden="true">↔</span></div>
@@ -258,7 +265,7 @@ export function ImageCompare({ left, right, load, controls }: Props) {
       ) : active === "changes" ? (
         <figure className={styles.pane}>
           <div ref={viewport} className={styles.frame} data-zoomed={view.scale > 1 || undefined} {...pan}
-            style={left ? { aspectRatio: `${left.image.width}/${left.image.height}` } : undefined}>
+            style={left ? fitted(left.image) : undefined}>
             {changes.url ? <img src={changes.url} alt={`Changes from ${left?.label} to ${right?.label}`} style={transform} draggable={false} />
               : <p role="status">{changes.error ?? "Finding changes…"}</p>}
           </div>
@@ -272,7 +279,7 @@ export function ImageCompare({ left, right, load, controls }: Props) {
         </div>
       )}
       {active === "wipe" && loaded && (
-        <div className={styles.labels}><span>{left?.label}</span><span>{right?.label}</span></div>
+        <div className={styles.labels} style={{ width: fitted(left!.image).width, justifySelf: "center" }}><span>{left?.label}</span><span>{right?.label}</span></div>
       )}
       {panorama && centred && <p className={styles.note}>Turned half a turn: the seam, where the panorama's edges meet, runs down the middle.</p>}
       <p className={styles.note}>

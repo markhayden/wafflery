@@ -58,7 +58,8 @@ a { color: inherit; }
 .workspace-brand { display: inline-flex; align-items: center; gap: var(--space-3); }
 .workspace-brand img { display: block; flex: none; object-fit: contain; }
 .workspace-connection { color: var(--color-muted); font-size: 0.8125rem; }
-.workspace-main { max-width: 92rem; margin: auto; padding: var(--space-12) var(--space-8); }
+/* Wide enough to use a large monitor: the extra width goes to the result (see .columns). */
+.workspace-main { max-width: 160rem; margin: auto; padding: var(--space-12) var(--space-8); }
 .workspace-main h1 { font-size: 1.75rem; font-weight: 500; letter-spacing: -0.035em; }
 .workspace-intro { color: var(--color-muted); margin-top: var(--space-2); }
 .workspace-empty {

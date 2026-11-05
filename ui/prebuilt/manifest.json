@@ -43,9 +43,9 @@
     "ui/src/components/FieldTag.module.css": "397ab1aa30edd6774f77a66defd5192162911774de2dd8604b3975b9ecbcb774",
     "ui/src/components/FieldTag.stories.tsx": "36a7839cf74a769ee09946c95d5711b2347bc15623b2e5870222261a4c72aad1",
     "ui/src/components/FieldTag.tsx": "9e65a2b755ca1c0dd4b0a53c4531a2bf01b0544ff01438beaf605b721a793b3e",
-    "ui/src/components/ImageCompare.module.css": "abda9072eb3b9100ccba65d1f9511e0447c6f497248fb5170ea8a9a194b576f9",
-    "ui/src/components/ImageCompare.stories.tsx": "e1d60f5f812c77216aba379f179ab8b360f39a306969d51a7e9f8076483c3626",
-    "ui/src/components/ImageCompare.tsx": "286d56f00122952bf59af4ba45f05ea1eb1db3c2c78bc1ad5c3df962b5aec1e7",
+    "ui/src/components/ImageCompare.module.css": "9a978f688d0ccea33ec66a911a87d4d7c5b68d021d431f3182937df054cf1c68",
+    "ui/src/components/ImageCompare.stories.tsx": "da8e2c46564c5cfb3c2e2b3c003fdbb46fd19bf225d47afd26192e91aae1bfd9",
+    "ui/src/components/ImageCompare.tsx": "96d1e0ff4b0e64442a95349a91686808bd43b7a1edc4dbd1f903f151639d631f",
     "ui/src/components/ImageImportProgress.tsx": "b393b2ecd66dcbdeb2521032501a30d7cce497ed094e96281b4817459f832846",
     "ui/src/components/ImageInput.module.css": "b639db473b42d68b16b03b854cfe94c1e76e7fe4b65c852576b71166fa9e128f",
     "ui/src/components/ImageInput.stories.tsx": "b9cb7886793b3f2d11901edb6130b1ae90185c3320e0762e665b2e6d10288d98",
@@ -143,7 +143,7 @@
     "ui/src/features/workspace/ToolSetup.module.css": "53c17da410d359ef4bda7cfa74c27b6551376c5d5904689cbb55308643df50d9",
     "ui/src/features/workspace/ToolSetup.stories.tsx": "3c735f8de366c383333a0264bb2ec3df547025538ee2f47747ddb675573bc9d5",
     "ui/src/features/workspace/ToolSetup.tsx": "f6d5f123ccb18150a734be7d6571e222ac1463db5486329c6aa17431e00e8211",
-    "ui/src/features/workspace/Workspace.module.css": "e9dd5443e4c4f16657318b6f471850b85423666f7cb2f3c9b4f77642fe91f1a5",
+    "ui/src/features/workspace/Workspace.module.css": "a363e676db9ecabb60edf764dfce490a8342e8b3d41c5cb8382ca0e413235433",
     "ui/src/features/workspace/Workspace.tsx": "15099e960ff46f945cdbe41c4684aea6320f4be9f9b9ea8fb29f978319f699ee",
     "ui/src/features/workspace/activities.ts": "1786d4d3e5b77efca1c108e524fa36776817e54401664f22cf83b7166921e820",
     "ui/src/features/workspace/artifact-transfer.ts": "1580167bef0f5acc46967f6a1258d356419d9bde39ca39bce0b867443aef9995",
@@ -160,16 +160,16 @@
     "ui/src/features/workspace/useEstimateDraft.ts": "7da8f6f766c23916925c2cb045223fe8e52d5c314c164470cb2fdb43632462cc",
     "ui/src/features/workspace/useSavedArtifacts.ts": "ec42ccbc8b8a76dcde0ffaba45a7f76cdd8292150a403765cb156595d01defb9",
     "ui/src/main.tsx": "03b2482769b6e395650dff286faa5e047805a68788a2d0c019ca79ca59b5cadf",
-    "ui/src/tokens.css": "d717a373ebc1d3e395d997dee2c2fc7741e3dfa85a17cf46f7b1a9d4c9af9426",
+    "ui/src/tokens.css": "3044461bb4607efb57bd3ee2242c03cfc2b5196539ef39856ec984a91e9c7615",
     "ui/tsconfig.json": "3fcd89fe837f1fe4d42988ab28bdbd534d231128c02705d0702f6812a05627ce",
     "ui/vite.config.ts": "1c784d406690c7e5b859cc459f02c6d69451c8c79fa77bd43babffdb9fdee5d8"
   },
   "outputs": {
-    "assets/index-BIEVtYQ6.js": "6494f96e0b9efced0cdc1aef1778a8dbc5eefcfbb101472f84cb0cf5b15949a8",
-    "assets/index-DigzUXcp.css": "5c6717dbb16b94bf4987b0a49e60e9c4de7a4bb977c9f3bce61f3ff98d054a79",
+    "assets/index-ARBQWuek.css": "bd1da1834e8a27c2d51161638278e73a35240fa8b3b431241d6a788b730cb2f3",
+    "assets/index-Cl-Bo15V.js": "69dd0e20a6ee98c6819887c00ec41d2ce5b938b49a832d44022cf005f7875e25",
     "assets/rascal-sticker-CmExR_HL.webp": "f1cc408f231167aee5543f0f8c0683f3594a0e447c51dcccc4fb413913e0a803",
     "assets/squint-sticker-CLmixeCt.webp": "3986ab96e919e338a7f8e8d64b552912baa3f79774c863d1e5d14f6a9f02f173",
     "assets/wafflery-mark-CML0EpfM.svg": "51bc8a040e26b897a948238598b8cabdf69bf4687c2b1a70613b542de1c99f1f",
-    "index.html": "40f533e48b99a14c883ce2593a200008d73c162da2e7e31fa2dc4ba09ceaa5ee"
+    "index.html": "f79c568e7fc4c1cf3867249b5c1141e16dee016fdbd5ef0045087156ee54fa73"
   }
 }

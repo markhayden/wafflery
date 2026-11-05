@@ -11,7 +11,9 @@
 .library button:hover:enabled { color: var(--color-text); }
 .columns {
   display: grid;
-  grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+  /* Config keeps a readable width (two fifths, at most 44rem); Result takes everything else,
+     so a large screen shows the images larger. Below ~110rem this is the 2:3 split. */
+  grid-template-columns: minmax(0, min(40%, 44rem)) minmax(0, 1fr);
   gap: 1.5rem;
   align-items: start;
 }

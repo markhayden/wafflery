@@ -33,3 +33,11 @@ const pano=async()=>{const canvas=document.createElement("canvas");canvas.width=
 const panoImage={width:800,height:400,projection:"equirectangular",topology:"wrap"};
 const panoAsset={...asset,id:"f".repeat(32),width:800,height:400};
 export const Panorama:Story={render:()=><ImageCompare left={{asset:panoAsset,image:panoImage,label:"Source"}} right={{asset:{...panoAsset,id:"0".repeat(32)},image:panoImage,label:"Result"}} load={pano}/>};
+
+/** A tall portrait photo in a short window: Wipe draws it whole, centred, no taller than the window allows. */
+const portrait={width:768,height:1376,projection:"flat",topology:"bounded"};
+const tall=async()=>{const canvas=document.createElement("canvas");canvas.width=768;canvas.height=1376;const c=canvas.getContext("2d")!;
+ c.fillStyle="#6b4f35";c.fillRect(0,0,768,1376);c.fillStyle="#e8d9b5";c.beginPath();c.arc(384,300,120,0,7);c.fill();c.beginPath();c.arc(384,1076,120,0,7);c.fill();
+ return await new Promise<Blob>(resolve=>canvas.toBlob(blob=>resolve(blob!),"image/png"));};
+const portraitAsset={...asset,id:"1".repeat(32),width:768,height:1376};
+export const Portrait:Story={render:()=><ImageCompare left={{asset:portraitAsset,image:portrait,label:"Source"}} right={{asset:{...portraitAsset,id:"2".repeat(32)},image:portrait,label:"Result"}} load={tall}/>};
