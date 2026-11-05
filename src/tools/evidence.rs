@@ -75,7 +75,7 @@ pub fn check_association(attempt: &Attempt, result: &Value) -> Result<Vec<String
             if !preview.is_null()
                 && !result["images"]["out"]
                     .as_array()
-                    .is_some_and(|outputs| outputs.contains(preview))
+                    .is_some_and(|outputs| outputs.iter().any(|output| same_image(preview, output)))
             {
                 notices.push("An artifact preview was not reported among the output images; preview preservation is incomplete.".into());
             }
@@ -349,9 +349,49 @@ async fn capture_image(
     Ok(asset)
 }
 
+/// Whether an artifact's preview is this image out: the same image at the same place (its
+/// reference and its locator). Role and label are how an out is named and shown, so a preview
+/// listed under a try's own role (`preview_try_2`) is still the one image (table-manners 4.7).
+fn same_image(preview: &Value, output: &Value) -> bool {
+    preview["image"] == output["image"]
+        && ["path", "inline", "resource"]
+            .iter()
+            .any(|locator| !preview[*locator].is_null() && preview[*locator] == output[*locator])
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn a_preview_is_its_image_out_whatever_its_role_or_label() {
+        let image = json!({"file_sha256":"a".repeat(64),"width":8,"height":4,"projection":"flat","topology":"bounded"});
+        let preview = json!({"role":"preview","label":"Try 1 · preview","image":image,"path":"/run/tries/1/preview-mask.png"});
+        // Listed under the try's own role: the same image at the same place.
+        assert!(same_image(
+            &preview,
+            &json!({"role":"preview_try_1","label":"Try 1 · preview","image":image,"path":"/run/tries/1/preview-mask.png"})
+        ));
+        assert!(same_image(
+            &preview,
+            &json!({"role":"preview","image":image,"path":"/run/tries/1/preview-mask.png"})
+        ));
+        // Another place, or another image, is not it.
+        assert!(!same_image(
+            &preview,
+            &json!({"role":"preview","image":image,"path":"/run/preview-mask.png"})
+        ));
+        assert!(!same_image(
+            &preview,
+            &json!({"role":"preview","image":{"file_sha256":"b".repeat(64)},"path":"/run/tries/1/preview-mask.png"})
+        ));
+        assert!(
+            !same_image(
+                &json!({"role":"preview","image":image}),
+                &json!({"role":"preview","image":image})
+            ),
+            "no locator to match"
+        );
+    }
     fn frame(name: &str) -> Value {
         json!({"file_sha256":name.repeat(64),"width":8,"height":4,"projection":"flat","topology":"bounded"})
     }

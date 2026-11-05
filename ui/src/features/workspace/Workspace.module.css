@@ -11,7 +11,9 @@
 .library button:hover:enabled { color: var(--color-text); }
 .columns {
   display: grid;
-  grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+  /* Config keeps a readable width (two fifths, at most 44rem); Result takes everything else,
+     so a large screen shows the images larger. Below ~110rem this is the 2:3 split. */
+  grid-template-columns: minmax(0, min(40%, 44rem)) minmax(0, 1fr);
   gap: 1.5rem;
   align-items: start;
 }
@@ -73,6 +75,25 @@
 }
 .run button[type="submit"] {
   min-width: 5rem;
+}
+/* Why Run is unavailable: in the text colour with an attention mark, so it reads as the thing
+   to resolve rather than a footnote. */
+.run p[data-blocked] {
+  color: var(--color-text);
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  flex: 1 1 16rem;
+  min-width: 0;
+}
+.run p[data-blocked]::before {
+  content: "";
+  flex: none;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 999px;
+  background: var(--color-attention);
+  transform: translateY(-0.05rem);
 }
 .runActions {
   display: flex;

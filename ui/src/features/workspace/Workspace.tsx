@@ -25,6 +25,7 @@ import { Shutdown } from "../../components/Shutdown";
 import { reportClient } from "../../api/reports";
 import { ReportOwner } from "./report-owner";
 import { RunOutcome } from "./RunOutcome";
+import { runBlocker } from "./runBlocker";
 import { CheckVerdict } from "./CheckVerdict";
 import { CostReview, type CostState } from "./CostReview";
 import { useEstimateDraft } from "./useEstimateDraft";
@@ -472,6 +473,15 @@ export function Workspace({
   const missingStep=missingImage?`Choose the ${imageLabel(missingImage).toLowerCase()} to run`
     :missingPlace?((missingPlace.kinds??[]).includes("bbox")?"Draw the area to run":(missingPlace.kinds??[]).includes("stroke")?"Paint over the damage to run":`Add the ${locationLabel(missingPlace.slot,missingPlace.kinds).toLowerCase()} to run`):undefined;
     const portEditor=<PortEditor drawOn={drawOn} preview={assets.thumbnail} key={`ports/${toolId}/${actionId}/${draftRevision}/${declaration?.revision}`} ports={inputPorts} resolveArtifact={binding=>artifactRestore.choose(binding,toolId)} value={portBindings} onBusy={setPortImporting} onChange={value=>{setPortBindings(value);setBindingIssues([]);}} assets={savedImages} artifacts={(action?.kind==="operation"?libraryArtifacts.sources:[]).flatMap((source,index)=>{const binding=transferBinding(source,declaration!.document.tool.name);return binding?[{id:String(index),label:savedLabel(source),reference:source.reference,binding,...(binding.kind==="artifact"&&source.kept===false?{disabled:true}:{})}]:[];})} issues={cost.state.kind==="error"?cost.state.bindings??bindingIssues:bindingIssues.length?bindingIssues:savedBindingIssues} upload={async file=>{const asset=await assets.upload(file);setSavedImages(await assets.list());return asset;}} disabled={busy||!!working||portImporting} />;
+  // Run is unavailable exactly when there is a reason to give: the same sentence greys the
+  // button out and says, beside it, what to resolve.
+  const blocker=action?runBlocker({tool:declaration?.document.tool.name??toolId??"The tool",chainClaimed,
+    importing:portImporting,unresolved:unresolvedImport.length,submitting:!!cost.submission,restarting,
+    readiness:action.readiness,
+    selected:selected?{execution:selected.execution,saving:selected.preservation.contract==="pending"}:undefined,
+    toolBusy:!!tool?.busy,
+    toolHeld:!!tool?.busy&&!snapshot.attempts.some(attempt=>attempt.tool===toolId&&["submitted","running","cancelling","unconfirmed"].includes(attempt.execution)),
+    missingStep}):undefined;
   return (
     <WorkspaceFrame connected connection="Connected locally" controls={<Shutdown api={api} />}
       toolPicker={<Picker header wide label="Tool" value={toolId} onChange={chooseTool}
@@ -580,8 +590,8 @@ export function Workspace({
                   disabled={chainClaimed || busy || unresolvedImport.length>0 || !!cost.submission || restarting || typeof sessionId !== "string"}
                   {...(costSession ? {session:costSession} : {})} />
               </div>}
-              <p>
-                {missingStep ?? (action.cost.may_spend
+              <p id="run-status" data-blocked={blocker?"":undefined}>
+                {blocker ?? (action.cost.may_spend
                   ? costSummary(cost.state, spendingLimit(params))
                   : "Free action · Inputs are saved locally")}
               </p>
@@ -592,18 +602,8 @@ export function Workspace({
                 type="submit"
                 variant="primary"
                 busy={busy}
-                disabled={
-                  chainClaimed || portImporting || unresolvedImport.length>0 || !action ||
-                  !!cost.submission ||
-                  restarting ||
-                  action.readiness.state === "unavailable" ||
-                  !!working ||
-                  !!tool?.busy ||
-                  (action.images ?? []).some(
-                    (slot) => slot.required && !images[slot.slot]?.length,
-                  ) ||
-                  (action.locations ?? []).some((slot) => slot.required&&!portBindings[slot.slot]?.length)
-                }
+                disabled={!!blocker}
+                aria-describedby="run-status"
               >
                 Run
               </Button>
