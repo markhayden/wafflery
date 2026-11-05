@@ -12,6 +12,9 @@ export type Requirement = {
   name: string;
   state: "missing" | "present" | "valid" | "invalid" | "unknown";
   setup?: string;
+  /** Never blocks the action: it serves only the part `for` names (table-manners 3.1). */
+  optional?: boolean;
+  for?: string;
 };
 export type Readiness = {
   state: "ready" | "needs_setup" | "unavailable";
@@ -31,6 +34,8 @@ export type Action = {
   renders?: { name: string; kind: "server" | "document" }[];
   cost: { may_spend: boolean };
   readiness: Readiness;
+  /** A completed result may carry a verdict (table-manners 2.4). */
+  answers?: "verdict";
 };
 export type Declaration = {
   document: {

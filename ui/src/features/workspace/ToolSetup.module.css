@@ -17,3 +17,4 @@
 @media (max-width: 24rem) { .amounts { grid-template-columns: minmax(0, 1fr); } }
 
 .restart { margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid var(--color-line); }
+.setup p.optional { color: var(--color-text); }

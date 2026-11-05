@@ -2,6 +2,7 @@ import type {Action,ActivityKind} from "../actions/model";
 import {Picker} from "../../components/Picker";
 import {InfoTip} from "../../components/InfoTip";
 import {activityChoices,activityKinds,activityTitles,activitySummary,purposeParts,workspaceChoices,workspaceSummary} from "./activities";
+import { blocking } from "./checks";
 import styles from "./ActivityPicker.module.css";
 export function ActivityPicker({actions,tool,groups=[],kind,value,onKind,onAction,disabled=false}: {
   actions:Action[]; tool:string; groups?:string[]; kind:ActivityKind; value:string;
@@ -23,7 +24,7 @@ export function ActivityPicker({actions,tool,groups=[],kind,value,onKind,onActio
       choices={choices}/>
     {selected && selected.readiness.state!=="ready" && <div role="status" className={styles.readiness}>
       <p>{selected.readiness.state==="unavailable" ? "This activity is unavailable." : "This activity needs setup."} Open Tool setup to review requirements.</p>
-      <ul>{selected.readiness.requirements.map((requirement,index)=><li key={`${requirement.name}-${index}`}>
+      <ul>{blocking(selected.readiness.requirements).map((requirement,index)=><li key={`${requirement.name}-${index}`}>
         {requirement.name}: {requirement.state}{requirement.setup ? ` — ${requirement.setup}` : ""}
       </li>)}</ul>
     </div>}

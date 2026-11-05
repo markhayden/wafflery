@@ -7,6 +7,7 @@ import type { Asset } from "../../api/assets";
 import { object } from "../actions/model";
 import { humanize } from "../actions/help";
 import { CodeBlock } from "../../components/CodeBlock";
+import { imageName } from "./checks";
 import styles from "./Workspace.module.css";
 
 export function SavedComparison({
@@ -92,7 +93,7 @@ export function SavedComparison({
   const comparing = compare && baseline && baseline.id !== attempt.id;
   const source = Object.values(attempt.inputs).flat()[0] ?? (upstream?.id === upstreamId ? upstream?.image : undefined);
   const right = attempt.outputs.find((output) => output.role === shown) ?? attempt.outputs[0];
-  const rightLabel = humanize(right?.role ?? "result");
+  const rightLabel = right ? imageName(right, humanize) : humanize("result");
   const left = comparing ? baseline.outputs.find((output) => output.role === right?.role) ?? baseline.outputs[0] : source;
   const result = object(attempt.result);
   const declaredImages = object(result?.images)?.out;
@@ -122,7 +123,7 @@ export function SavedComparison({
           controls={attempt.outputs.length > 1 ? (
             <span className={styles.outputs}>
               <Picker header label="Show" value={right?.role ?? ""} onChange={setShown}
-                choices={attempt.outputs.map((output) => ({ id: output.role, title: humanize(output.role) }))} />
+                choices={attempt.outputs.map((output) => ({ id: output.role, title: imageName(output, humanize) }))} />
             </span>
           ) : undefined}
         />

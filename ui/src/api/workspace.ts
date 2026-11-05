@@ -3,7 +3,8 @@ import { LocalApi } from "./client";
 import { isAsset, type Asset } from "./assets";
 import type { Declaration, Json, Readiness, Schema } from "../features/actions/model";
 import type { Coordinates } from "../components/comparison";
-export type SavedImage = { asset: Asset; image: Coordinates; role: string };
+/** A saved image: its role and, when the tool gave one, the label a person sees in its place. */
+export type SavedImage = { asset: Asset; image: Coordinates; role: string; label?: string };
 export type BindingOrigin=({attempt:string}|{example:string})&{port:string;occurrence:number};
 export type InputBinding = (
   | {kind: "image"; asset: string; frame?: {projection:"flat"|"equirectangular";topology:"bounded"|"wrap"}}
@@ -85,7 +86,9 @@ export function isReadiness(value: unknown): value is Readiness {
       record(item) && typeof item.name === "string" && item.name.length > 0 &&
       typeof item.kind === "string" && ["config", "credential", "env", "model", "file", "dependency"].includes(item.kind) &&
       typeof item.state === "string" && ["missing", "present", "valid", "invalid", "unknown"].includes(item.state) &&
-      (item.setup === undefined || typeof item.setup === "string"));
+      (item.setup === undefined || typeof item.setup === "string") &&
+      (item.optional === undefined || typeof item.optional === "boolean") &&
+      (item.for === undefined || (item.optional === true && typeof item.for === "string")));
 }
 function declaration(value: unknown): value is Declaration {
   if (
@@ -128,7 +131,8 @@ function savedImage(value: unknown): value is SavedImage {
     typeof value.image.height === "number" &&
     typeof value.image.projection === "string" &&
     typeof value.image.topology === "string" &&
-    typeof value.role === "string"
+    typeof value.role === "string" &&
+    (value.label === undefined || typeof value.label === "string")
   );
 }
 function normalizedSubmission(request: Submission) {

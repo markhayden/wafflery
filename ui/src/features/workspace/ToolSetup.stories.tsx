@@ -38,3 +38,11 @@ export const UnavailableAction: Story = { args: { action: { ...meta.args.action,
 
 export const NarrowedAccess: Story = {};
 export const NoFileAccess: Story = {args:{loadSession:async () => ({...session,allowed_dirs:[]})}};
+/** A checking key the action can run without: the action stays ready, and the key says what it
+ * is for. */
+export const OptionalRequirement: Story = { args: { action: { ...meta.args.action, answers: "verdict", readiness: {
+  state: "ready", requirements: [
+    { kind: "credential", name: "EXAMPLE_CHECK_KEY", state: "missing", optional: true, for: "checking the result",
+      setup: "Set EXAMPLE_CHECK_KEY where the tool starts, then refresh. Without it the result is not checked." },
+  ],
+} } } };

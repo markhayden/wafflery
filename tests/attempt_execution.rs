@@ -1222,7 +1222,10 @@ async fn a_checked_run_keeps_its_verdict_and_every_outputs_label() {
     assert_eq!(action["answers"], "verdict");
     assert_eq!(action["readiness"]["state"], "ready");
     assert_eq!(action["readiness"]["requirements"][0]["optional"], true);
-    assert_eq!(action["readiness"]["requirements"][0]["for"], "checking the result");
+    assert_eq!(
+        action["readiness"]["requirements"][0]["for"],
+        "checking the result"
+    );
     request.action = "checked_band".into();
     request.params = json!({"label":"three tries","answer":"fail","tries":3});
     c.submit(request).await.unwrap();
@@ -1235,14 +1238,23 @@ async fn a_checked_run_keeps_its_verdict_and_every_outputs_label() {
         tokio::time::sleep(std::time::Duration::from_millis(20)).await;
     }
     assert_eq!(saved.execution, "completed", "{:?}", saved.notices);
-    assert_eq!(saved.preservation["contract"], "complete", "{:?}", saved.notices);
+    assert_eq!(
+        saved.preservation["contract"], "complete",
+        "{:?}",
+        saved.notices
+    );
     let result = saved.result.as_ref().unwrap();
     assert_eq!(result["verdict"]["value"], "fail");
     assert_eq!(result["verdict"]["where"].as_array().unwrap().len(), 1);
     let labels: Vec<_> = saved
         .outputs
         .iter()
-        .map(|output| (output["role"].as_str().unwrap(), output["label"].as_str().unwrap()))
+        .map(|output| {
+            (
+                output["role"].as_str().unwrap(),
+                output["label"].as_str().unwrap(),
+            )
+        })
         .collect();
     assert_eq!(labels.len(), 9);
     assert_eq!(labels[0], ("result", "Try 3 · result"));
