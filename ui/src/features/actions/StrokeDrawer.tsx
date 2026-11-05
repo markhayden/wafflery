@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Button } from "../../components/Button";
+import { ActionRow } from "../../components/ActionRow";
 import type { Asset } from "../../api/assets";
 import type { SelectedImage } from "./selection";
 import type { Json } from "./model";
@@ -91,12 +92,12 @@ export function StrokeDrawer({ image, preview, onUse, disabled = false }: Props)
       <input type="range" min={1} max={Math.max(8, Math.round(longest / 20))} value={radius} disabled={disabled}
         onChange={(event) => setRadius(Number(event.target.value))} />
     </label>
-    <div className={styles.actions}>
+    <ActionRow>
       <Button type="button" disabled={disabled || !strokes.length} onClick={() => { onUse(strokeLocation(image, strokes)); setStrokes([]); }}>
         {strokes.length > 1 ? `Use these ${strokes.length} strokes` : "Use this stroke"}
       </Button>
       {strokes.length > 0 && <Button type="button" disabled={disabled} onClick={() => setStrokes((values) => values.slice(0, -1))}>Undo last</Button>}
-      {strokes.length > 1 && <Button type="button" disabled={disabled} onClick={() => setStrokes([])}>Clear</Button>}
-    </div>
+      {strokes.length > 1 && <Button type="button" variant="destructive" disabled={disabled} onClick={() => setStrokes([])}>Clear</Button>}
+    </ActionRow>
   </div>;
 }

@@ -8,6 +8,7 @@ import {InvocationBundles} from "./InvocationBundles";
 import {useArtifactRestore} from "./useArtifactRestore";
 import {NativePreservation} from "./NativePreservation";
 import {useSavedArtifacts} from "./useSavedArtifacts";
+import {SendDestinations} from "./SendDestinations";
 import {compatibleDestinations,transferBinding,encodePortBindings,encodeWorkspaceInputs,savedSources,type ArtifactSource} from "./artifact-transfer";
 import {ArtifactOutputs} from "./ArtifactOutputs";
 import {artifactOccurrences} from "./artifacts";
@@ -17,17 +18,17 @@ import {imageLabel,locationLabel} from "../actions/help";
 import {ApiError,bindingIssues as parseBindingIssues,type BindingIssue} from "../../api/client";
 import { toolChoice, toolIntroduction } from "./tool-presentation";
 import { ActivityPicker } from "./ActivityPicker";
-import { firstActivity } from "./activities";
+import { parseRoute, routePath } from "./route";
 import type { ActivityKind } from "../actions/model";
 import { WorkspaceFrame } from "../../components/WorkspaceFrame";
 import { Shutdown } from "../../components/Shutdown";
 import { reportClient } from "../../api/reports";
 import { ReportOwner } from "./report-owner";
 import { RunOutcome } from "./RunOutcome";
-import { CostReview } from "./CostReview";
+import { CostReview, type CostState } from "./CostReview";
 import { useEstimateDraft } from "./useEstimateDraft";
-import { positiveCap } from "../../api/estimates";
-import { parseToolSession } from "../../api/tool-session";
+import { callParams, spendingLimit } from "../../api/estimates";
+import { parseToolSession, usd } from "../../api/tool-session";
 import { RestartTool } from "./RestartTool";
 import { ToolSetup } from "./ToolSetup";
 import { readToolSession } from "../../api/tool-session";
@@ -53,12 +54,23 @@ import {
 import { restoreSelection, type ImageSelection, type SelectedImage } from "../actions/selection";
 import { ActionForm } from "../actions/ActionForm";
 import { Button } from "../../components/Button";
+import { ActionRow } from "../../components/ActionRow";
+import { RunStatus } from "./RunStatus";
+import { RunProgress } from "./RunProgress";
 import { Picker } from "../../components/Picker";
 import { Drawer } from "../../components/Drawer";
 import { SavedComparison } from "./SavedComparison";
 import { History } from "./History";
 import { Inspector } from "./Inspector";
 import styles from "./Workspace.module.css";
+/** A saved output as a person tells it apart: what made it and when ("Remove · Nov 3, 8:51 PM"),
+ * the output's number when a run made several, and "not kept" when it can't be used again. */
+function savedLabel(source:ArtifactSource):string{
+  const when=source.created?new Date(source.created).toLocaleString(undefined,{month:"short",day:"numeric",hour:"numeric",minute:"2-digit"}):undefined;
+  const parts=[source.title??"Earlier run",when,(source.index??0)>0?`${source.port??"output"} ${(source.index??0)+1}`:undefined,source.kept===false?"not kept":undefined];
+  return parts.filter(Boolean).join(" · ");
+}
+
 export function Workspace({
   api,
   initial,
@@ -76,9 +88,11 @@ export function Workspace({
   const [draftExample, setDraftExample] = useState<Example>();
   const [bundleOrigin,setBundleOrigin]=useState<SourceBundle>();
   const [unresolvedImport,setUnresolvedImport]=useState<UnresolvedInput[]>([]);
-  const preferred = new URLSearchParams(window.location.search).get("tool");
+  // The address says where to start (route.ts); an action without a run starts a fresh draft and
+  // no action shows the empty state, so a reload never opens an unrelated old run.
+  const [start] = useState(() => parseRoute(window.location.pathname));
   const [toolId, setToolId] = useState(
-    preferred ?? snapshot.tools[0]?.id ?? "",
+    start.tool ?? snapshot.tools[0]?.id ?? "",
   );
   const [drawer, setDrawer] = useState<{
     opener: HTMLElement;
@@ -122,11 +136,12 @@ export function Workspace({
     }
   }, [client, setupToolId, updateSnapshot]);
   const [actionId, setActionId] = useState(
-    firstActivity(declaration?.document.actions ?? [])?.name ?? "",
+    declaration?.document.actions.some((a) => a.name === start.action) ? start.action! : "",
   );
   const action = declaration?.document.actions.find((a) => a.name === actionId);
   const inputPorts=action?.kind==="operation"?action.ports?.in??[]:(action?.locations??[]).map(slot=>({name:slot.slot,type:"location",required:slot.required,many:false,...(slot.kinds?{kinds:slot.kinds}:{})}));
   const [emptyKind, setEmptyKind] = useState<ActivityKind>("task");
+  const [costOpen, setCostOpen] = useState(false);
   const activityKind = action?.kind ?? emptyKind;
   const [draftRevision, setDraftRevision] = useState(0);
   const [estimateEditRevision, setEstimateEditRevision] = useState(0);
@@ -145,7 +160,6 @@ export function Workspace({
   const libraryArtifacts=useSavedArtifacts(api,snapshot,JSON.stringify([selected?.id,selected?.preservation,selected?.outputs.length]));
   const savedRefusal=object(object(selected?.observations)?.refusal);
   const savedBindingIssues=selected?.request.action===actionId && JSON.stringify(selected.request.params)===JSON.stringify(params) && JSON.stringify(selected.request.bindings??{})===JSON.stringify(encodePortBindings(portBindings).bindings) && savedRefusal ? parseBindingIssues({code:"binding",bindings:savedRefusal.bindings}) : [];
-  const recent = snapshot.attempts;
   const [selectedId, setSelectedId] = useState<string | null>();
   const [busy, setBusy] = useState(false),
     [error, setError] = useState<string>();
@@ -172,13 +186,7 @@ export function Workspace({
   }, [api, updateSnapshot, initial.event_session]);
   useEffect(() => {
     let active = true;
-    const id =
-      selectedId === null
-        ? undefined
-        : (selectedId ??
-          snapshot.attempts.find(
-            (a) => a.tool === toolId && a.action === actionId,
-          )?.id);
+    const id = selectedId ?? undefined;
     if (!id) {
       setSelected(undefined);
       return;
@@ -201,7 +209,7 @@ export function Workspace({
     };
   }, [client, snapshot, selectedId, toolId, actionId]);
   function openAttempt(id: string) {
-    void client
+    return client
       .attempt(id)
       .then((attempt) => {
         const restored = restoreSelection(attempt.inputs,attempt.request.lineage);
@@ -293,11 +301,10 @@ export function Workspace({
     setDraftRevision((value) => value + 1);
     setDraftExample(undefined);setBundleOrigin(undefined);setUnresolvedImport([]);
     setToolId(id);
-    const action = firstActivity(snapshot.tools.find((t) => t.id === id)?.declaration
-      ?.document.actions ?? []);
+    // A new tool starts at its empty state: the person picks what to do.
     setEmptyKind("task");
-    setActionId(action?.name ?? "");
-    setParams(initialParameters(action?.params_schema ?? {}));
+    setActionId("");
+    setParams({});
     setImages({});
     setPortBindings({});setBindingIssues([]);setPortImporting(false);
     setSelectedId(undefined);
@@ -322,15 +329,51 @@ export function Workspace({
     setError(undefined);
     submitted.current = null;
   }
+  // The address follows the workspace (route.ts): a new place is pushed, so Back returns to the
+  // previous one; the first render only tidies the address it was opened with.
+  const routed = useRef(false);
+  const opening = useRef(start.run);
+  useEffect(() => {
+    // Opened at a run's address: it stays as it is until that run has opened (below).
+    if (opening.current) return;
+    const path = routePath({ tool: toolId, action: actionId, ...(selectedId ? { run: selectedId } : {}) });
+    if (path !== window.location.pathname) {
+      if (routed.current) window.history.pushState(null, "", path);
+      else window.history.replaceState(null, "", path);
+    }
+    routed.current = true;
+  }, [toolId, actionId, selectedId]);
+  // Opened at a run's address: that run, its draft restored, as History opens it.
+  useEffect(() => {
+    if (start.run) void openAttempt(start.run).finally(() => { opening.current = undefined; });
+    // Once, for the address the page was opened with.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  // Back and Forward: go where the address now says.
+  const go = useRef<(path: string) => void>(() => {});
+  go.current = (path: string) => {
+    const route = parseRoute(path);
+    if (route.run) return void openAttempt(route.run);
+    if ((route.tool ?? toolId) !== toolId) chooseTool(route.tool!);
+    if (route.action) chooseAction(route.action);
+    else if (actionId) chooseAction("");
+  };
+  useEffect(() => {
+    const back = () => go.current(window.location.pathname);
+    window.addEventListener("popstate", back);
+    return () => window.removeEventListener("popstate", back);
+  }, []);
   async function run(retry = false) {
     if (busy) return;
     if (!retry && (!action || !declaration || chainClaimed)) return;
-    if (!retry && (cost.submission || (action?.cost.may_spend && !cost.canRun))) return;
+    if (!retry && cost.submission) return;
     if(portImporting||unresolvedImport.length)return;
     setError(undefined);
     setBusy(true);
     try {
-      if (retry || action?.cost.may_spend) {
+      // A checked cost binds the run to that estimate; otherwise a paid action runs like any
+      // other and the tool's own limits apply (table-manners 4.5).
+      if (retry || (action?.cost.may_spend && cost.canRun)) {
         const attempt = await cost.submit();
         setSelectedId(attempt.id);
         setSelected(attempt);
@@ -338,6 +381,7 @@ export function Workspace({
         return;
       }
       if (!action || !declaration) return;
+      if (spendingLimit(params) === null) throw new Error("A spending limit must be an amount above zero, or left empty.");
       const portError=validatePorts(inputPorts,portBindings);if(portError){const invalid=inputPorts.find(port=>validatePorts([port],portBindings));if(invalid)document.querySelector<HTMLElement>(`[data-port="${CSS.escape(invalid.name)}"]`)?.focus();throw new Error(portError);}
       setBindingIssues([]);
       const inputs = encodeWorkspaceInputs(declaration.document.contract, action.images ?? [], images,portBindings);
@@ -345,7 +389,7 @@ export function Workspace({
         tool: toolId,
         action: actionId,
         revision: declaration.revision,
-        params,
+        params: callParams(params),
         ...(bundleOrigin?{source_bundle:bundleOrigin}:{}),
         ...inputs,
       });
@@ -357,7 +401,7 @@ export function Workspace({
             tool: toolId,
             action: actionId,
             revision: declaration.revision,
-            params: structuredClone(params),
+            params: callParams(params),
             ...(bundleOrigin?{source_bundle:bundleOrigin}:{}),
             ...inputs,
           },
@@ -370,6 +414,12 @@ export function Workspace({
       await updateSnapshot();
     } catch (failure) {
       if(failure instanceof ApiError)setBindingIssues(failure.bindings);
+      // A lost reply may follow a run the host accepted: a submission's id is its run's, so
+      // show that run when it exists. The submission is kept, so Run retries the same id.
+      else if (submitted.current) {
+        const id = submitted.current.request.id;
+        void client.attempt(id).then((attempt) => { setSelectedId(id); setSelected(attempt); setError(undefined); }).catch(() => {});
+      }
       setError(
         failure instanceof Error
           ? failure.message
@@ -385,12 +435,12 @@ export function Workspace({
   const cost = useEstimateDraft(api, estimateKey, typeof sessionId === "string" && !restarting ? sessionId : undefined, () => {
     if (!declaration || !action?.cost.may_spend) throw new Error("Choose a paid action before estimating.");
     if(unresolvedImport.length)throw new Error("Resolve imported inputs explicitly before estimating.");
-    const cap = positiveCap(params.max_spend_usd);
-    if (cap === undefined) throw new Error("Choose a positive spending cap before estimating.");
+    const limit = spendingLimit(params);
+    if (limit === null) throw new Error("A spending limit must be an amount above zero, or left empty.");
     const portError=validatePorts(inputPorts,portBindings);if(portError){const invalid=inputPorts.find(port=>validatePorts([port],portBindings));if(invalid)document.querySelector<HTMLElement>(`[data-port="${CSS.escape(invalid.name)}"]`)?.focus();throw new Error(portError);}
     const bindings = encodeWorkspaceInputs(declaration.document.contract, action.images ?? [], images,portBindings);
     return {id:crypto.randomUUID(),tool:toolId,action:actionId,revision:declaration.revision,
-      params:{...structuredClone(params),max_spend_usd:cap},...(bundleOrigin?{source_bundle:bundleOrigin}:{}),...bindings};
+      params:callParams(params),...(bundleOrigin?{source_bundle:bundleOrigin}:{}),...bindings};
   }, updateSnapshot);
   let costSession;
   try { costSession = parseToolSession(declaration?.tool_session); } catch { /* No fabricated allowance. */ }
@@ -401,6 +451,9 @@ export function Workspace({
   const setupDeclaration = setupTool?.declaration;
   const setupAction = setupDeclaration?.document.actions.find(action => action.name === (drawer?.action ?? actionId));
   const setupRestarting = restartingTools.has(setupToolId);
+  const selectedPaid = selected?.declaration?.document?.actions?.some(action => action.name === selected.request.action && action.cost.may_spend) ?? false;
+  // A run that has not finished: its progress replaces the outcome and the comparison until it does.
+  const running = !!selected && ["submitted", "running", "cancelling"].includes(selected.execution);
   const working =
     selected &&
     (["submitted", "running", "unconfirmed", "cancelling"].includes(
@@ -417,10 +470,10 @@ export function Workspace({
   const missingPlace=(action?.locations??[]).find(slot=>slot.required&&!portBindings[slot.slot]?.length);
   const missingStep=missingImage?`Choose the ${imageLabel(missingImage).toLowerCase()} to run`
     :missingPlace?((missingPlace.kinds??[]).includes("bbox")?"Draw the area to run":(missingPlace.kinds??[]).includes("stroke")?"Paint over the damage to run":`Add the ${locationLabel(missingPlace.slot,missingPlace.kinds).toLowerCase()} to run`):undefined;
-    const portEditor=<PortEditor drawOn={drawOn} preview={assets.thumbnail} key={`ports/${toolId}/${actionId}/${draftRevision}/${declaration?.revision}`} ports={inputPorts} resolveArtifact={binding=>artifactRestore.choose(binding,toolId)} value={portBindings} onBusy={setPortImporting} onChange={value=>{setPortBindings(value);setBindingIssues([]);}} assets={savedImages} artifacts={(action?.kind==="operation"?libraryArtifacts.sources:[]).flatMap((source,index)=>{const binding=transferBinding(source,declaration!.document.tool.name);return binding?[{id:String(index),label:`${source.port} item ${(source.index??0)+1} · ${source.attempt?.slice(0,8)} · ${String(source.reference.type)}`,reference:source.reference,binding}]:[];})} issues={cost.state.kind==="error"?cost.state.bindings??bindingIssues:bindingIssues.length?bindingIssues:savedBindingIssues} upload={async file=>{const asset=await assets.upload(file);setSavedImages(await assets.list());return asset;}} disabled={busy||!!working||portImporting} />;
+    const portEditor=<PortEditor drawOn={drawOn} preview={assets.thumbnail} key={`ports/${toolId}/${actionId}/${draftRevision}/${declaration?.revision}`} ports={inputPorts} resolveArtifact={binding=>artifactRestore.choose(binding,toolId)} value={portBindings} onBusy={setPortImporting} onChange={value=>{setPortBindings(value);setBindingIssues([]);}} assets={savedImages} artifacts={(action?.kind==="operation"?libraryArtifacts.sources:[]).flatMap((source,index)=>{const binding=transferBinding(source,declaration!.document.tool.name);return binding?[{id:String(index),label:savedLabel(source),reference:source.reference,binding,...(binding.kind==="artifact"&&source.kept===false?{disabled:true}:{})}]:[];})} issues={cost.state.kind==="error"?cost.state.bindings??bindingIssues:bindingIssues.length?bindingIssues:savedBindingIssues} upload={async file=>{const asset=await assets.upload(file);setSavedImages(await assets.list());return asset;}} disabled={busy||!!working||portImporting} />;
   return (
     <WorkspaceFrame connected connection="Connected locally" controls={<Shutdown api={api} />}
-      toolPicker={<Picker compact wide label="Tool" value={toolId} onChange={chooseTool}
+      toolPicker={<Picker header wide label="Tool" value={toolId} onChange={chooseTool}
         choices={snapshot.tools.map(toolChoice)} />}>
     <div className={styles.workspace}>
       <div className={styles.toolContext}>
@@ -482,7 +535,7 @@ export function Workspace({
               </p>
             )}
             {action?.kind==="operation"&&inputPorts.length>0 && portEditor}
-            {action?.kind==="operation" && <><p role="status">{libraryArtifacts.loading?"Loading saved artifacts…":libraryArtifacts.error??"Select a saved artifact to check its availability. Run still validates compatibility."}</p>{libraryArtifacts.more&&<Button type="button" onClick={libraryArtifacts.loadMore}>Load older artifacts</Button>}</>}
+            {action?.kind==="operation" && <>{(libraryArtifacts.loading||libraryArtifacts.error)&&<p role="status" className={styles.note}>{libraryArtifacts.loading?"Loading saved artifacts…":libraryArtifacts.error}</p>}{libraryArtifacts.more&&<Button type="button" onClick={libraryArtifacts.loadMore}>Load older artifacts</Button>}</>}
             {action ? (
               <ActionForm
                 key={`${toolId}/${actionId}/${draftRevision}/${declaration?.revision}`}
@@ -503,14 +556,10 @@ export function Workspace({
                 saved={savedImages}
               />
             ) : (
-              <p>No supported action is available.</p>
+              <p>{declaration?.document.actions.length
+                ? "Choose what you want to do from the Action menu above."
+                : "No supported action is available."}</p>
             )}
-            {action?.cost.may_spend && <CostReview cap={capText} state={cost.state}
-              onCapChange={value => setParams(current => ({...current,max_spend_usd:value}))}
-              onEstimate={() => { void cost.estimate(); }}
-              onSetup={opener => setDrawer({opener,view:"setup"})}
-              disabled={chainClaimed || busy || unresolvedImport.length>0 || !!cost.submission || restarting || typeof sessionId !== "string"}
-              {...(costSession ? {session:costSession} : {})} />}
             {cost.submission === "uncertain" && <div role="status">
               <p>The submission was not acknowledged. Retry sends the original reviewed inputs with
                 the same run ID; it cannot create a second attempt. Your current edits are kept separately.</p>
@@ -518,43 +567,53 @@ export function Workspace({
             </div>}
             {error && <p role="alert">{error}</p>}
           </div>
-          <div className={styles.run}>
-            <p>
-              {missingStep ?? (action?.cost.may_spend
-                ? "Paid action · Review the estimate before Run"
-                : "Free action · Inputs are saved locally")}
-            </p>
-            <Button
-              type="submit"
-              busy={busy}
-              disabled={
-                chainClaimed || portImporting || unresolvedImport.length>0 || !action ||
-                (action.cost.may_spend && !cost.canRun) ||
-                !!cost.submission ||
-                restarting ||
-                action.readiness.state === "unavailable" ||
-                !!working ||
-                !!tool?.busy ||
-                (action.images ?? []).some(
-                  (slot) => slot.required && !images[slot.slot]?.length,
-                ) ||
-                (action.locations ?? []).some((slot) => slot.required&&!portBindings[slot.slot]?.length)
-              }
-            >
-              Run
-            </Button>
-          </div>
+          {action && (
+            <div className={styles.run}>
+              {/* Cost is optional and the same for every paid action, so it sits with Run, not
+                  among the steps: a summary here, the limit and Check cost behind Cost options. */}
+              {action.cost.may_spend && costOpen && <div className={styles.costPanel}>
+                <CostReview cap={capText} state={cost.state}
+                  onCapChange={value => setParams(current => ({...current,max_spend_usd:value}))}
+                  onEstimate={() => { void cost.estimate(); }}
+                  onSetup={opener => setDrawer({opener,view:"setup"})}
+                  disabled={chainClaimed || busy || unresolvedImport.length>0 || !!cost.submission || restarting || typeof sessionId !== "string"}
+                  {...(costSession ? {session:costSession} : {})} />
+              </div>}
+              <p>
+                {missingStep ?? (action.cost.may_spend
+                  ? costSummary(cost.state, spendingLimit(params))
+                  : "Free action · Inputs are saved locally")}
+              </p>
+              <div className={styles.runActions}>
+              {action.cost.may_spend && <Button aria-expanded={costOpen} onClick={() => setCostOpen(open => !open)}>
+                Cost options</Button>}
+              <Button
+                type="submit"
+                variant="primary"
+                busy={busy}
+                disabled={
+                  chainClaimed || portImporting || unresolvedImport.length>0 || !action ||
+                  !!cost.submission ||
+                  restarting ||
+                  action.readiness.state === "unavailable" ||
+                  !!working ||
+                  !!tool?.busy ||
+                  (action.images ?? []).some(
+                    (slot) => slot.required && !images[slot.slot]?.length,
+                  ) ||
+                  (action.locations ?? []).some((slot) => slot.required&&!portBindings[slot.slot]?.length)
+                }
+              >
+                Run
+              </Button>
+              </div>
+            </div>
+          )}
         </form>
         <section className={styles.panel} aria-label="Result">
           <div className={`${styles.resultHeading} ${styles.panelHeading}`}>
             <h2>Result</h2>
-            <span role="status">
-              {selected
-                ? selected.execution === "unconfirmed"
-                  ? "Cancellation requested · outcome unconfirmed"
-                  : selected.execution
-                : "Ready"}
-            </span>
+            <RunStatus attempt={selected} paid={selectedPaid} />
           </div>
           <div
             className={styles.panelBody}
@@ -562,36 +621,24 @@ export function Workspace({
             aria-label="Result content"
             tabIndex={0}
           >
-            {selected &&
-              ["submitted", "running"].includes(selected.execution) && (
-                <Button
-                  onClick={() => {
-                    void client
-                      .cancel(selected.id)
-                      .then(setSelected)
-                      .catch((failure) =>
-                        setError(
-                          failure instanceof Error
-                            ? failure.message
-                            : "Unable to request cancellation.",
-                        ),
-                      );
-                  }}
-                >
-                  Cancel run
-                </Button>
-              )}
+            {selected && running && (
+              <RunProgress action={selected.declaration?.document?.actions?.find(action => action.name === selected.request.action)?.title ?? selected.request.action}
+                message={tool?.progress?.message} cancelling={selected.execution === "cancelling"}
+                onCancel={["submitted", "running"].includes(selected.execution) ? () => {
+                  void client.cancel(selected.id).then(setSelected).catch((failure) =>
+                    setError(failure instanceof Error ? failure.message : "Unable to request cancellation."));
+                } : undefined} />
+            )}
             {selected ? (
               <>
-                {working && tool?.progress?.message && (
-                  <p className={styles.note}>{tool.progress.message}</p>
-                )}
-                <RunOutcome attempt={selected}
-                  paid={selected.declaration?.document?.actions?.some(action => action.name === selected.request.action && action.cost.may_spend) ?? false}
+                {!running && <RunOutcome attempt={selected}
+                  paid={selectedPaid}
                   onSetup={event => setDrawer({opener:event.currentTarget,
-                  view:"setup",tool:selected.request.tool,action:selected.request.action})} />
-                {!noRun && <>
-                {(!artifactOccurrences(selected.result).length || selected.outputs.some(output=>output.role!=="preview")) && <SavedComparison
+                  view:"setup",tool:selected.request.tool,action:selected.request.action})} />}
+                {!noRun && !running && <>
+                {/* The picture of the run: its output images, or, for an operation whose outputs are records (a
+                    location, a mask), the preview the tool drew of them. */}
+                {(!artifactOccurrences(selected.result).length || selected.outputs.length > 0) && <SavedComparison
                   attempt={selected}
                   client={client}
                   load={assets.preview}
@@ -642,37 +689,31 @@ export function Workspace({
           {selected && (
             <div className={`${styles.resultHeading} ${styles.panelFooter}`}>
               <p>Saved attempt · {selected.id.slice(0, 8)}</p>
-              <Button
-                onClick={(event) =>
-                  setDrawer({ opener: event.currentTarget, view: "inspect" })
-                }
-              >
-                Inspect run
-              </Button>
-              <Button
-                onClick={(event) =>
-                  setDrawer({ opener: event.currentTarget, view: "pipeline" })
-                }
-              >
-                Use in your pipeline
-              </Button>
+              <ActionRow flush>
+                <Button
+                  onClick={(event) =>
+                    setDrawer({ opener: event.currentTarget, view: "inspect" })
+                  }
+                >
+                  Inspect run
+                </Button>
+                <Button
+                  onClick={(event) =>
+                    setDrawer({ opener: event.currentTarget, view: "pipeline" })
+                  }
+                >
+                  Use in your pipeline
+                </Button>
+              </ActionRow>
             </div>
           )}
         </section>
       </div>
-      {recent.length > 0 && (
-        <section className={styles.recent} aria-label="Recent attempts">
-          <h2>Recent attempts</h2>
-          {recent.slice(0, 6).map((attempt) => (
-            <Button key={attempt.id} onClick={() => openAttempt(attempt.id)}>
-              {attempt.action} · {attempt.execution} · {attempt.id.slice(0, 8)}
-            </Button>
-          ))}
-        </section>
-      )}
       {artifactRestore.drawer}
-      <Drawer open={!!sendSource} title="Send artifact to" description="Choose a destination port. This fills a new draft without running any tool." onClose={()=>setSendSource(undefined)}>
-        {sendSource && compatibleDestinations(sendSource,snapshot.tools).map(destination=><Button key={`${destination.tool}/${destination.action}/${destination.port}`} onClick={async()=>{
+      <Drawer open={!!sendSource} title="Send artifact to" description="Pick the operation to use it in. This starts a new draft with it filled in; nothing runs until you press Run." onClose={()=>setSendSource(undefined)}>
+        {sendSource && <SendDestinations destinations={compatibleDestinations(sendSource,snapshot.tools)} disabled={busy}
+          groups={Object.fromEntries(snapshot.tools.flatMap(tool=>tool.declaration?[[tool.declaration.document.tool.name,tool.declaration.document.vocabulary?.group??[]]]:[]))}
+          onChoose={async destination=>{
           if(busy)return;
           const target=snapshot.tools.find(tool=>tool.id===destination.tool)?.declaration;
           const action=target?.document.actions.find(action=>action.name===destination.action);
@@ -686,8 +727,7 @@ export function Workspace({
             chooseTool(destination.tool);setActionId(destination.action);setParams(initialParameters(action.params_schema));
             setPortBindings({[destination.port]:[binding]});setSelectedId(null);setSelected(undefined);
           }catch(failure){setError(String(failure));}finally{setBusy(false);}
-        }}>{destination.title}</Button>)}
-        {sendSource&&!compatibleDestinations(sendSource,snapshot.tools).length&&<p>No installed operation declares a compatible receiving port. No tool was run.</p>}
+        }}/>}
       </Drawer>
       <Drawer
         open={drawer !== null}
@@ -740,7 +780,7 @@ export function Workspace({
             {setupTool && <RestartTool key={setupToolId} busy={setupTool.busy || setupRestarting} onRestart={restartToolSession} />}
           </>
         ) : drawer?.view === "history" ? (
-          <History client={client} onOpen={openAttempt} />
+          <History client={client} onOpen={openAttempt} tools={snapshot.tools} preview={assets.thumbnail} />
         ) : drawer?.view === "examples" ? (
           <Examples
             client={examples}
@@ -760,10 +800,20 @@ export function Workspace({
             }}
           />
         ) : (
-          drawer?.view === "inspect" && selected && <Inspector key={selected.id} attempt={selected} reports={reports} retryNative={retryNative} />
+          drawer?.view === "inspect" && selected && <Inspector key={selected.id} attempt={selected} reports={reports} retryNative={retryNative} api={api} />
         )}
       </Drawer>
     </div>
     </WorkspaceFrame>
   );
+}
+
+/** The run bar's line for a paid action: what the tool's limits, the person's limit or a cost
+ * check say about this run, so the cost options need not be open to see it. */
+function costSummary(state: CostState, limit: number | undefined | null): string {
+  if (state.kind === "quoted" && state.estimate.allowed && state.estimate.worst_case_usd !== null)
+    return `May cost money · checked: up to ${usd(state.estimate.worst_case_usd)}`;
+  if (state.kind === "quoted" && !state.estimate.allowed) return "May cost money · the check was refused (see Cost options)";
+  if (typeof limit === "number") return `May cost money · your limit ${usd(limit)}`;
+  return "May cost money · the tool's spending limits apply";
 }

@@ -22,5 +22,8 @@ test("lineage is separate from tool arguments and follows duplicate occurrence r
 test("multiple compatible destinations remain explicit port choices",()=>{
  const source={reference:{type:"image",tool:"study",identity:"sha256:abc"},asset:{id:"owned",sha256:"abc",width:10,height:5}};
  const tools=[{id:"other",declaration:{document:{tool:{name:"other"},actions:[{name:"compare",title:"Compare",kind:"operation",ports:{in:[{name:"source",type:"image"},{name:"candidate",type:"image"}]}}]}}}];
- expect(compatibleDestinations(source,tools as never).map(item=>item.port)).toEqual(["source","candidate"]);
+ const destinations=compatibleDestinations(source,tools as never);
+ expect(destinations.map(item=>item.port)).toEqual(["source","candidate"]);
+ // Each names the role the source takes there, so the two rows read differently.
+ expect(destinations.map(item=>item.title)).toEqual(["Compare · as source","Compare · as candidate"]);
 });

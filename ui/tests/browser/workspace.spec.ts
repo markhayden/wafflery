@@ -9,13 +9,14 @@ test("an unavailable launcher selection never silently opens another tool", asyn
   await host.open(page);
   // Let the one-use bootstrap establish this tab's session before navigating again.
   await expect(page.getByRole("button", { name: "Tool sample-lab", exact: true })).toBeVisible();
-  await page.goto(`${host.origin}/?tool=not-installed`);
+  await page.goto(`${host.origin}/not-installed`);
   await expect(
     page.getByRole("status").filter({ hasText: "not-installed" }),
   ).toContainText("not registered");
+  // Nothing to run: no action, no Run bar.
   await expect(
     page.getByRole("button", { name: "Run", exact: true }),
-  ).toBeDisabled();
+  ).toHaveCount(0);
   await expect(page.locator("input[type=file]")).toHaveCount(0);
   await page
     .getByRole("button", { name: "Tool Choose tool", exact: true })
@@ -23,9 +24,11 @@ test("an unavailable launcher selection never silently opens another tool", asyn
   const toolRow=page.getByRole("dialog",{name:"Choose tool"}).getByRole("button",{name:/^sample-lab /});
       await expect(toolRow.getByText(/^Version /)).toBeVisible();
       await toolRow.click();
+  // A chosen tool starts at its empty state: the person picks what to do.
   await expect(
-    page.getByRole("button", { name: "Action Add a test band" }),
+    page.getByRole("button", { name: "Action Choose action" }),
   ).toBeVisible();
+  await expect(page).toHaveURL(/\/sample$/);
 });
 test("run a real offline action and inspect immutable evidence after editing the draft", async ({
   page,
@@ -58,12 +61,14 @@ test("run a real offline action and inspect immutable evidence after editing the
   await page.getByLabel("Label", { exact: true }).fill("Unsubmitted draft");
   await page.getByRole("button", { name: "Inspect run" }).click();
   const drawer = page.getByRole("dialog", { name: "Run details" });
+  await drawer.getByRole("button", { name: "Inputs", exact: true }).click();
   await expect(drawer.getByLabel("Saved evidence")).toContainText(
     "Saved first experiment",
   );
   await expect(drawer.getByLabel("Saved evidence")).not.toContainText(
     "Unsubmitted draft",
   );
+  await drawer.getByRole("button", { name: "Advanced", exact: true }).click();
   await drawer.getByRole("button", { name: "Resolved invocation", exact: true }).click();
   const resolvedEvidence = drawer.getByLabel("Resolved invocation", { exact: true });
   await expect(resolvedEvidence).toContainText("Saved first experiment");
@@ -81,7 +86,7 @@ test("run a real offline action and inspect immutable evidence after editing the
   await expect(drawer.getByLabel("Saved evidence")).toContainText(
     "Saved first experiment",
   );
-  await drawer.getByRole("button", { name: "Raw result" }).click();
+  await drawer.getByRole("button", { name: "Result", exact: true }).click();
   await expect(drawer.getByLabel("Saved evidence")).toContainText(
     "structuredContent",
   );
@@ -92,11 +97,13 @@ test("run a real offline action and inspect immutable evidence after editing the
   });
   await page.getByRole("button", { name: "History", exact: true }).click();
   await page.getByRole("dialog", { name: "History", exact: true })
-    .getByRole("button", { name: /sample \/ mark_band/ }).click();
+    .getByRole("button", { name: /^Add a test band$/ }).click();
   await page.getByRole("button", { name: "Inspect run" }).click();
+  await drawer.getByRole("button", { name: "Advanced", exact: true }).click();
   await drawer.getByRole("button", { name: "Resolved invocation", exact: true }).click();
   expect(JSON.parse((await resolvedEvidence.textContent())!)).toEqual(savedInvocation);
   await drawer.getByRole("button", { name: "Close" }).click();
+  const address = new URL(page.url()).pathname;
   await host.stop();
   // An older library record is evidence to inspect, not a live v0.2 tool declaration.
   const legacy = spawnSync("/usr/bin/sqlite3", [join(host.root, "Library", "library.sqlite3"),
@@ -107,22 +114,24 @@ test("run a real offline action and inspect immutable evidence after editing the
   ], { encoding: "utf8" });
   expect(legacy.status, legacy.stderr).toBe(0);
   await host.start();
-  await host.open(page);
+  await host.open(page, address);
   await expect(
     page.getByRole("slider", { name: "Before and after divider" }),
   ).toBeVisible();
   await page.getByRole("button", { name: "Inspect run" }).click();
+  await drawer.getByRole("button", { name: "Inputs", exact: true }).click();
   await expect(drawer.getByLabel("Saved evidence")).toContainText(
     "Saved first experiment",
   );
   await drawer.getByRole("button", { name: "Close" }).click();
   await page.getByRole("button", { name: "History", exact: true }).click();
   const history = page.getByRole("dialog", { name: "History", exact: true });
-  await history.getByRole("button", { name: /sample \/ mark_band/ }).click();
+  await history.getByRole("button", { name: /^Add a test band$/ }).click();
   await expect(page.getByRole("slider")).toBeVisible();
   await page.getByRole("button", { name: "Inspect run" }).click();
-  await drawer.getByRole("button", { name: "Raw result" }).click();
+  await drawer.getByRole("button", { name: "Result", exact: true }).click();
   await expect(drawer.getByLabel("Saved evidence")).toContainText('"contract": "0.2.0"');
+  await drawer.getByRole("button", { name: "Advanced", exact: true }).click();
   await drawer.getByRole("button", { name: "Resolved invocation", exact: true }).click();
   await expect(drawer.getByText("No resolved invocation is available for this saved attempt.", { exact: true })).toBeVisible();
   await expect(resolvedEvidence).toHaveCount(0);

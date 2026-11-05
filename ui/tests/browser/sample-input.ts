@@ -28,10 +28,11 @@ export async function editSampleLabel(page: Page, text: string) {
   await expect(label).toHaveAttribute("value", text);
 }
 
-/** Unfold "Settings · N optional" (closed by default) so its fields can be edited. */
-export async function openOptionalSettings(page: Page) {
-  const summary = page.locator("summary").filter({ hasText: /^Settings · \d+ optional$/ });
-  await expect(summary).toBeVisible();
-  if (await summary.locator("..").getAttribute("open") === null) await summary.click();
-  await expect(summary.locator("..")).toHaveAttribute("open", "");
+/** Open the Run bar's Cost options (closed by default; cost is optional) and return the panel. */
+export async function openCost(page: Page) {
+  const toggle = page.getByRole("button", { name: "Cost options", exact: true });
+  if ((await toggle.getAttribute("aria-expanded")) !== "true") await toggle.click();
+  const panel = page.getByRole("region", { name: "Cost options", exact: true });
+  await expect(panel).toBeVisible();
+  return panel;
 }

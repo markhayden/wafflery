@@ -253,14 +253,10 @@ impl Coordinator {
             .as_array()
             .and_then(|actions| actions.iter().find(|a| a["name"] == request.action))
             .ok_or(Error::Missing("Action not declared"))?;
+        // A paid action runs with or without an estimate: the tool enforces its own limits
+        // (table-manners 4.5); an estimate the person asked for binds the call when given.
         match action["cost"]["may_spend"].as_bool() {
-            Some(false) => (),
-            Some(true) if retained => (),
-            Some(true) => {
-                return Err(Error::Conflict(
-                    "Paid actions require an owned preparation and allowed estimate",
-                ));
-            }
+            Some(_) => (),
             None => {
                 return Err(Error::Conflict(
                     "Action spending declaration is unavailable",

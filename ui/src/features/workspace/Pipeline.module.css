@@ -1,0 +1,13 @@
+/* Sections a person reads top to bottom: a heading, one line on what it is for, then the action. */
+.pipeline { display: grid; gap: var(--space-8); min-width: 0; }
+.section { display: grid; gap: var(--space-4); min-width: 0; }
+.section header { display: grid; gap: var(--space-1); }
+.section h3 { margin: 0; font-size: 1rem; font-weight: 500; }
+.section header p { color: var(--color-muted); font-size: 0.875rem; }
+.check { display: flex; align-items: baseline; gap: var(--space-2); font-size: 0.875rem; }
+.check small { margin-left: var(--space-2); color: var(--color-muted); font-size: 0.8125rem; }
+.more { border-top: 1px solid var(--color-line); padding-top: var(--space-4); display: grid; gap: var(--space-3); }
+.more summary { cursor: pointer; font-size: 0.875rem; color: var(--color-muted); width: fit-content; }
+.more summary:hover { color: var(--color-text); }
+.more > p { color: var(--color-muted); font-size: 0.8125rem; }
+.notice { color: var(--color-muted); font-size: 0.8125rem; }

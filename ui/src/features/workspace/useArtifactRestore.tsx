@@ -2,6 +2,7 @@ import {useEffect,useRef,useState} from "react";
 import type {BindingOrigin,InputBinding,workspaceClient} from "../../api/workspace";
 import {Drawer} from "../../components/Drawer";
 import {Button} from "../../components/Button";
+import {ActionRow} from "../../components/ActionRow";
 import {nativeEntries} from "./NativePreservation";
 type Pending={binding:InputBinding;target:string;message:string;owned:boolean;finish:(value:InputBinding|undefined)=>void};
 export function useArtifactRestore(client:ReturnType<typeof workspaceClient>,context:string){
@@ -34,12 +35,18 @@ export function useArtifactRestore(client:ReturnType<typeof workspaceClient>,con
    if(current.current===value)finish(value.binding);
   }catch(failure){if(current.current===value){const changed={...value,message:String(failure)};current.current=changed;setPending(changed);setBusy(false);}}
  }
- const drawer=<Drawer open={!!pending} title="Restore saved artifact" onClose={()=>{generation.current++;finish();}} description="No binding is added until the current tool store resolves the saved identity. No action will run.">
-  {pending&&<><p role="alert">{pending.message}</p><p>{pending.owned?"Verified native bytes are saved in this library. Import a copy into the receiving tool store to continue.":pending.binding.origin&&"example" in pending.binding.origin?"This example has no verified native copy. Use the original tool store or choose a replacement input.":"No verified native copy is recorded. Retry preservation from the saved run while its original store is available."}</p>
-  <div style={{display:"flex",flexWrap:"wrap",gap:8}}>{pending.owned&&<Button disabled={busy} onClick={()=>void restore(true)}>Import saved copy</Button>}
-  <Button disabled={busy} onClick={()=>void restore(false)}>Check availability again</Button>
-  <Button onClick={()=>{generation.current++;finish();}}>Cancel selection</Button></div>
-  {busy&&<p role="status">Restoring and verifying the saved identity…</p>}</>}
+ const drawer=<Drawer open={!!pending} title="Use a saved output" onClose={()=>{generation.current++;finish();}} description="Wafflery checks that the tool can still use this output before adding it. Nothing runs.">
+  {pending&&<>{!pending.owned&&!(pending.binding.origin&&"example" in pending.binding.origin)
+   ? <><p role="alert">This output is from an older run, and Wafflery didn't keep a copy of it, so it can't be used again. Run that step again to make a new one.</p>
+     <details><summary>Details</summary><p>{pending.message}</p></details></>
+   : pending.owned
+     ? <><p>The tool no longer has this output, but Wafflery kept a verified copy. Import the copy into the tool to use it here.</p>
+       <details><summary>Details</summary><p>{pending.message}</p></details></>
+     : <><p role="alert">{pending.message}</p><p>This example has no verified copy. Use the original tool store or choose a replacement input.</p></>}
+  <ActionRow><Button onClick={()=>{generation.current++;finish();}}>Cancel selection</Button>
+  {!pending.owned&&<Button disabled={busy} onClick={()=>void restore(false)}>Check availability again</Button>}
+  {pending.owned&&<Button variant="primary" busy={busy} onClick={()=>void restore(true)}>Import saved copy</Button>}</ActionRow>
+  {busy&&<p role="status">Importing and checking the copy…</p>}</>}
  </Drawer>;
  return {choose,drawer};
 }

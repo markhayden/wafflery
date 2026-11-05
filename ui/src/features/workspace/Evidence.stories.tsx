@@ -27,7 +27,7 @@ const attempt: Attempt = {
 const unavailable = async (): Promise<never> => { throw new Error("No report process is launched by this story."); };
 class PreviewApi extends LocalApi {
   override async request(path:string): Promise<Response> {
-    if(path.endsWith("/handoff"))return Response.json({state:"unavailable",blockers:["No launch context was saved with this run. Its invocation remains available for inspection."],invocation:result.invocation,arguments:result.invocation.arguments,arguments_filename:"wafflery-arguments.json",argv:null,command:null,cwd:null,allowed_dirs:[],requirements:[]});
+    if(path.endsWith("/handoff"))return Response.json({state:"unavailable",blockers:["Wafflery didn't record how it started the tool for this run. The settings are still in Run details, under Advanced."],invocation:result.invocation,arguments:result.invocation.arguments,arguments_filename:"wafflery-arguments.json",argv:null,command:null,cwd:null,allowed_dirs:[],requirements:[]});
     throw new Error("Archive download requires a running local workspace.");
   }
 }

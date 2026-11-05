@@ -7,7 +7,7 @@ test("a bundle reviews the selected saved inputs and still downloads after sourc
  await page.getByLabel("Label",{exact:true}).fill("Draft changed later");
  await page.getByRole("button",{name:"Use in your pipeline",exact:true}).click();
  const drawer=page.getByRole("dialog",{name:"Use in your pipeline",exact:true});
- await drawer.getByRole("button",{name:"Invocation bundle",exact:true}).click();
+ await drawer.getByText("Replay several runs as a chain",{exact:true}).click();
  await drawer.getByRole("button",{name:"Save bundle for review",exact:true}).click();
  const review=drawer.getByRole("region",{name:"Saved bundle review",exact:true});await expect(review).toContainText("Inputs included");
  await review.getByText("Recorded invocation",{exact:true}).click();await expect(review.locator("pre").first()).toContainText("Frozen bundle label");await expect(review).not.toContainText("Draft changed later");

@@ -1,0 +1,30 @@
+.grid { display: grid; gap: var(--space-2); grid-auto-rows: 1fr; }
+.card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-start;
+  gap: var(--space-1);
+  width: 100%;
+  min-width: 0;
+  padding: var(--space-3) var(--space-4);
+  text-align: left;
+  color: var(--color-text);
+  background: var(--color-surface);
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-control);
+  cursor: pointer;
+}
+.card:hover:not(:disabled) { border-color: var(--color-muted); }
+.card[aria-pressed="true"] { border-color: var(--color-text); background: var(--color-fill); }
+.card:disabled { cursor: not-allowed; opacity: 0.6; }
+.title { font-size: 0.875rem; font-weight: 500; }
+.description { font-size: 0.8125rem; line-height: 1.45; color: var(--color-muted); }
+
+/* List: rows that keep their shape. Title in a fixed column, its line beside it; stacked when narrow. */
+.list { display: grid; gap: var(--space-1); }
+.list .card { flex-direction: row; align-items: baseline; gap: var(--space-4); padding: var(--space-2) var(--space-3); }
+.list .title { flex: 0 0 10rem; }
+.list .description { flex: 1 1 auto; min-width: 0; }
+@container (max-width: 30rem) { .list .card { flex-direction: column; gap: 0.125rem; } .list .title { flex: none; } }
+@media (max-width: 30rem) { .list .card { flex-direction: column; gap: 0.125rem; } .list .title { flex: none; } }

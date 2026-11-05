@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Button } from "../../components/Button";
+import { ActionRow } from "../../components/ActionRow";
 import type { Asset } from "../../api/assets";
 import type { SelectedImage } from "./selection";
 import type { Json } from "./model";
@@ -84,9 +85,9 @@ export function RectangleDrawer({ image, preview, onUse, disabled = false }: Pro
           <input type="number" min={key === "width" || key === "height" ? 1 : 0} step={1} value={box?.[key] ?? ""} onChange={(event) => edit(key, event.target.value)} />
         </label>)}
     </fieldset>
-    <div className={styles.actions}>
+    <ActionRow>
       <Button type="button" disabled={disabled || !box} onClick={() => { if (box) { onUse(bboxLocation(image, box)); setBox(undefined); } }}>Use this rectangle</Button>
-      {box && <Button type="button" disabled={disabled} onClick={() => setBox(undefined)}>Clear</Button>}
-    </div>
+      {box && <Button type="button" variant="destructive" disabled={disabled} onClick={() => setBox(undefined)}>Clear</Button>}
+    </ActionRow>
   </div>;
 }

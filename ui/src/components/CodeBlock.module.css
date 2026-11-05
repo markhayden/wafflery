@@ -31,3 +31,13 @@
   border-radius: var(--radius-control);
 }
 .copy:hover { color: var(--color-text); }
+/* Syntax colours: keys and commands carry the eye, values sit back, punctuation recedes. */
+.key, .command { color: var(--syntax-key); }
+.string, .path { color: var(--syntax-string); }
+.number, .literal { color: var(--syntax-number); }
+.flag { color: var(--syntax-flag); }
+.punct { color: var(--color-muted); }
+/* The global "no widows" rule gives every span text-wrap: pretty, which turns wrapping back on
+   inside a pre; code never wraps. */
+.code span { text-wrap: nowrap; }
+.block .fill { max-height: none; }

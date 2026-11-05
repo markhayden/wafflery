@@ -158,9 +158,9 @@ test("bootstrap is removed, credentials stay local and reload reuses the tab ses
   });
   const errors: string[] = [];
   page.on("pageerror", (error) => errors.push(error.message));
-  await page.goto(`${origin}/?tool=rascal#bootstrap=${bootstrap}`);
+  await page.goto(`${origin}/rascal#bootstrap=${bootstrap}`);
   await expect(page.getByRole("status")).toHaveText("Connected locally");
-  expect(page.url()).toBe(`${origin}/?tool=rascal`);
+  expect(page.url()).toBe(`${origin}/rascal`);
   await page.reload();
   await expect(page.getByRole("status")).toHaveText("Connected locally");
   expect(

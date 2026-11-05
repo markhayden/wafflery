@@ -6,6 +6,7 @@ import {ChainSetup} from "./ChainReplays";
 import type {ReplayStatus} from "../../api/chain-replays";
 import {ChainDependencies} from "./BundleChain";
 import {Button} from "../../components/Button";
+import {CodeBlock} from "../../components/CodeBlock";
 import styles from "./InvocationBundles.module.css";
 
 export function BundleImports({api,onOpen,onChainStarted}:{api:LocalApi;onOpen?:((upload:BundleUpload)=>Promise<void>)|undefined;onChainStarted?:((status:ReplayStatus)=>void)|undefined}){
@@ -36,7 +37,7 @@ export function BundleImports({api,onOpen,onChainStarted}:{api:LocalApi;onOpen?:
   <p>Upload an uncompressed invocation tar (up to 256 MiB) to review it. Uploading verifies declared files; it does not install tools, change setup or run an action. Two reviews can remain open.</p>
   <label>Upload invocation bundle<input type="file" accept=".tar,application/x-tar" disabled={locked} onChange={event=>{const file=event.target.files?.[0];event.target.value="";if(file)void upload(file);}}/></label>
   {(busy||loading)&&<p role="status">{loading?"Reading uploaded reviews…":"Uploading or checking bundle data…"}</p>}
-  {!!reviews.length&&<ul aria-label="Uploaded bundle list">{reviews.map(review=><li key={review.id}><Button disabled={locked} onClick={()=>void open(review.id)}>Review uploaded {review.bundle.slice(0,8)}</Button> <span>{selected?.id===review.id?selected.import?.phase??review.phase:review.phase}</span> <Button disabled={locked} onClick={()=>void remove(review.id)}>Dismiss {review.bundle.slice(0,8)}</Button></li>)}</ul>}
+  {!!reviews.length&&<ul aria-label="Uploaded bundle list">{reviews.map(review=><li key={review.id}><Button disabled={locked} onClick={()=>void open(review.id)}>Review uploaded {review.bundle.slice(0,8)}</Button> <span>{selected?.id===review.id?selected.import?.phase??review.phase:review.phase}</span> <Button variant="destructive" disabled={locked} onClick={()=>void remove(review.id)}>Dismiss {review.bundle.slice(0,8)}</Button></li>)}</ul>}
   {selected&&current&&<section className={styles.review} aria-label="Uploaded bundle review">
    <h3>Declared files verified</h3><p>Archive {selected.record.id.slice(0,12)} · {(selected.record.size/1024).toFixed(1)} KB. Current tool declarations still determine which inputs it can accept.</p>
    <ChainDependencies bundle={selected.record}/>{onChainStarted&&selected.record.manifest.steps.length>1&&<ChainSetup api={api} record={selected.record} uploadId={selected.id} onStarted={onChainStarted}/>}
@@ -46,7 +47,7 @@ export function BundleImports({api,onOpen,onChainStarted}:{api:LocalApi;onOpen?:
    {!!current.reference_only.length&&<><h4>Omitted inputs</h4><ul>{current.reference_only.map((r,i)=><li key={i}>{r.port??r.slot}: {r.why}</li>)}</ul></>}
    {!!current.unportable.length&&<><h4>Unportable inputs</h4><ul>{current.unportable.map((r,i)=><li key={i}>{r.port}: {r.reason}</li>)}</ul></>}
    <h4>Included files</h4><ul>{[...current.inputs,...current.artifacts].map((r,i)=><li key={i}><code title={r.member}>{r.member.replace(/([a-f0-9]{12})[a-f0-9]{52}/g,"$1…")}</code></li>)}</ul>
-   <details><summary>Original invocation</summary><pre>{JSON.stringify(current.invocation,null,2)}</pre></details>
+   <details><summary>Original invocation</summary><CodeBlock label="Original invocation" value={current.invocation}/></details>
    <label>Receiving installation<select disabled={locked||compatible.length===0} value={receiver?.id??""} onChange={event=>setTarget(event.target.value)}>{!compatible.length&&<option value="">Tool is not installed</option>}{compatible.map(t=><option key={t.id} value={t.id}>{t.declaration!.document.tool.name} · {t.id}</option>)}</select></label>
    {!receiver&&<p>Install and register {current.tool.name} separately, then reopen this drawer. Uploading cannot install it.</p>}
    {receiver&&!action&&<p>The selected installation does not declare this action.</p>}

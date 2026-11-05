@@ -5,8 +5,8 @@ for (const width of [1440,390]) {
     await page.setViewportSize({width,height:900});
     await page.goto('http://127.0.0.1:6006/iframe.html?id=workspace-evidence--run-details&viewMode=story');
     const nav=page.getByRole('navigation',{name:'Run evidence'});
-    const first=nav.getByRole('button',{name:'Saved inputs'});
-    const last=nav.getByRole('button',{name:'Reports',exact:true});
+    const first=nav.getByRole('button',{name:'Inputs'});
+    const last=nav.getByRole('button',{name:'Advanced',exact:true});
     await expect(first).toBeVisible();
     expect((await first.boundingBox())!.y).toBe((await last.boundingBox())!.y);
     await first.focus();
@@ -18,15 +18,11 @@ for (const width of [1440,390]) {
     await page.mouse.move(0,0);
     await expect(page.getByRole('dialog')).toHaveScreenshot(`inspector-${width}.png`,visualPolicy);
     await page.goto('http://127.0.0.1:6006/iframe.html?id=workspace-evidence--use-in-pipeline&viewMode=story');
-    await expect(page.getByRole('navigation',{name:'Pipeline views'})).toBeVisible();
+    await expect(page.getByRole('heading',{name:'Run it from your terminal',exact:true})).toBeVisible();
     await page.getByRole('heading',{name:'Use in your pipeline',exact:true}).click();
     await page.mouse.move(0,0);
     await expect(page.getByRole('dialog')).toHaveScreenshot(`pipeline-${width}.png`,visualPolicy);
-    const pipeline=page.getByRole('navigation',{name:'Pipeline views'});
-    await pipeline.getByRole('button',{name:'Recorded MCP call'}).focus();
-    for(let i=0;i<2;i++) await page.keyboard.press(browserName==='webkit' && process.platform==='darwin'?'Alt+Tab':'Tab');
-    await expect(pipeline.getByRole('button',{name:'Evidence archive'})).toBeFocused();
-    await expect(pipeline.getByRole('button',{name:'Evidence archive'})).toBeInViewport();
+    await expect(page.getByRole('button',{name:'Download archive',exact:true})).toBeInViewport();
     expect(await page.locator('dialog[open]').evaluate(node=>node.scrollWidth<=node.clientWidth)).toBe(true);
   });
 }
@@ -51,6 +47,7 @@ for (const width of [1440,390]) {
       await page.setViewportSize({width,height:900});
       await page.goto(`http://127.0.0.1:6006/iframe.html?id=workspace-evidence--${story}&viewMode=story`);
       const drawer=page.getByRole('dialog');
+      await drawer.getByRole('button',{name:'Advanced',exact:true}).click();
       await drawer.getByRole('button',{name:'Resolved invocation',exact:true}).click();
       await expect(drawer.getByText(message,{exact:true})).toBeVisible();
       const evidence=drawer.getByLabel('Resolved invocation',{exact:true});

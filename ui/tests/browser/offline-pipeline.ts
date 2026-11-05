@@ -1,6 +1,5 @@
 import { execFileSync } from "node:child_process";
-import { rascalServeArgs } from "./rascal-args";
-import { access, copyFile, mkdir, realpath } from "node:fs/promises";
+import { access, copyFile, mkdir, realpath, writeFile } from "node:fs/promises";
 import { constants } from "node:fs";
 import { isAbsolute, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -38,7 +37,11 @@ export async function prepareOfflinePipeline(
     let args: string[];
     let config: string | undefined;
     if (id === "rascal") {
-      args = rascalServeArgs(cwd);
+      // The store and the runs are named in rascal's configuration, not in flags, so the host
+      // can hand the same --config to a terminal's `rascal call` and land in the same places.
+      config = join(cwd, "rascal.toml");
+      await writeFile(config, 'config_version = 1\n[workspace]\ndir = "workspace"\n[serve]\nruns = "runs"\n', { mode: 0o600 });
+      args = ["serve"];
     } else {
       for (const name of ["config.toml", referenceCheck ? "references-held.json" : "held.json"]) {
         await copyFile(

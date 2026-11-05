@@ -38,7 +38,7 @@ test("ordered references can be edited, restored from history and omitted", asyn
   expect(first.references.map((entry: {expect:{width:number}}) => entry.expect.width)).toEqual([2048,160]);
   await refs.getByRole("button", {name:"Remove image 1"}).click();
   await page.getByRole("button", {name:"History",exact:true}).click();
-  await page.getByRole("dialog", {name:"History",exact:true}).getByRole("button", {name:/sample \/ mark_band · completed/}).click();
+  await page.getByRole("dialog", {name:"History",exact:true}).getByRole("button", {name:/^Add a test band$/}).click();
   await expect(refs.getByRole("listitem")).toHaveCount(2);
   await expect(refs.getByRole("listitem").first()).toContainText("2048 × 1024");
   await expect(label).toHaveValue("Ordered references");
@@ -124,8 +124,8 @@ test("an import preserves saved-image insertions and cannot overwrite a restored
       await refs.locator("input[type=file]").setInputFiles("tests/fixtures/panorama.png");
       await received;
       if (mode === "append") {
-        await page.locator("summary").filter({hasText:"Saved images"}).click();
-        await page.getByRole("button",{name:/^Use saved image \d+ × \d+ as references \(reference image\)$/}).first().click();
+        await page.locator("summary").filter({hasText:"Recent images"}).click();
+        await page.getByRole("button",{name:/^Use recent image \d+ × \d+ as references \(reference image\)$/}).first().click();
         await expect(refs.getByRole("listitem")).toHaveCount(2);
       } else {
         await page.getByRole("button",{name:"Examples",exact:true}).click();
@@ -134,7 +134,7 @@ test("an import preserves saved-image insertions and cannot overwrite a restored
       }
       release();
       await page.unrouteAll({behavior:"wait"});
-      await expect(page.locator("summary").filter({hasText:"Saved images"})).toContainText("(3)");
+      await expect(page.locator("summary").filter({hasText:"Recent images"})).toBeVisible();
       if (mode === "append") {
         await expect(refs).toHaveAttribute("aria-busy","false");
         await expect(refs.getByRole("listitem")).toHaveCount(3);

@@ -1,14 +1,15 @@
+import {expectSavedRuns} from "./history";
 import {test,expect} from "./tool-host";
 import {prepareSampleInput,editSampleLabel} from "./sample-input";
 test("explicit ordered selection exports only selected runs and never dispatches",async({page,host})=>{
  await host.open(page);await prepareSampleInput(page,"First chain step");await page.getByRole("button",{name:"Run",exact:true}).click();await expect(page.getByText("Contract evidence: complete.",{exact:false}).first()).toBeVisible();
- await editSampleLabel(page,"Second chain step");await page.getByRole("button",{name:"Run",exact:true}).click();await expect(page.getByRole("region",{name:"Recent attempts",exact:true}).getByRole("button")).toHaveCount(2);
+ await editSampleLabel(page,"Second chain step");await page.getByRole("button",{name:"Run",exact:true}).click();await expectSavedRuns(page,2);
  await page.getByRole("button",{name:"Bundles",exact:true}).click();const drawer=page.getByRole("dialog",{name:"Saved invocation bundles",exact:true});await drawer.getByText("Build a bundle from saved runs",{exact:true}).click();
  const builder=drawer.getByRole("region",{name:"Chain selection",exact:true});await expect(builder.getByRole("checkbox")).toHaveCount(2);await builder.getByRole("checkbox").nth(1).check();await builder.getByRole("checkbox").nth(0).check();
  await builder.getByRole("button",{name:"Move step 2 up",exact:true}).click();await expect(builder.getByRole("list",{name:"Selected step order"}).getByRole("listitem")).toHaveCount(2);
  await builder.getByRole("button",{name:"Save selected chain for review",exact:true}).click();const review=drawer.getByRole("region",{name:"Saved bundle review",exact:true});await expect(review.getByLabel("Bundle step 2",{exact:true})).toBeVisible();
  await review.getByLabel("Bundle step 1",{exact:true}).getByText("Recorded invocation",{exact:true}).click();await expect(review.getByLabel("Bundle step 1",{exact:true})).toContainText("Second chain step");await expect(review.getByRole("region",{name:"Chain dependencies",exact:true})).toContainText("external inputs");
- await drawer.getByRole("button",{name:"Close",exact:true}).click();await expect(page.getByRole("region",{name:"Recent attempts",exact:true}).getByRole("button")).toHaveCount(2);
+ await drawer.getByRole("button",{name:"Close",exact:true}).click();await expectSavedRuns(page,2);
 });
 import {visualPolicy} from "./visual-policy";
 for(const width of [390,1440])for(const state of ["chain","mixed-tools","ambiguous-chain"])test(`chain review ${state} at ${width}`,async({page})=>{

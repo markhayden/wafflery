@@ -5,6 +5,7 @@ import type {Json} from "../actions/model";
 import {humanize} from "../actions/help";
 import {artifactOccurrences} from "./artifacts";
 import {Button} from "../../components/Button";
+import {ActionRow} from "../../components/ActionRow";
 import {CodeBlock} from "../../components/CodeBlock";
 import {Drawer} from "../../components/Drawer";
 import styles from "./Workspace.module.css";
@@ -23,10 +24,10 @@ export function ArtifactOutputs({attempt,inspect,restore,onSend,disabled=false}:
   <h3 className={styles.outputsTitle}>Outputs</h3>
   {items.map(item=><article key={item.index} className={styles.output}>
    <div><strong>{humanize(item.port)}{items.filter(other=>other.port===item.port).length>1?` ${item.index+1}`:""}</strong><span className={styles.note}> · {String(item.reference.type)}</span></div>
-   <div className={styles.outputActions}>
+   <ActionRow>
     <Button type="button" aria-label={`Inspect ${item.port} item ${item.index+1}`} onClick={()=>void open(item.index)}>Details</Button>
     {onSend&&<Button type="button" disabled={disabled} aria-label={`Use ${item.port} item ${item.index+1} in another action`} onClick={()=>onSend(item.index)}>Use in another action…</Button>}
-   </div>
+   </ActionRow>
   </article>)}
   <Drawer open={!!view} onClose={()=>setView(undefined)} title={shown?`${humanize(shown.port)} details`:"Output details"}
    description="The exact record the tool saved for this output. You don't need it to use the output; it identifies it precisely, for example in your own code.">

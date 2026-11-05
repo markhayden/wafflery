@@ -23,6 +23,23 @@ const amount = (value: unknown): value is number =>
   typeof value === "number" && Number.isFinite(value) && value >= 0;
 
 /** Keep incomplete editor text intact; only explicit positive decimal values become a cap. */
+/** The person's optional spending limit (`max_spend_usd`): absent or empty is no limit, so the
+ * tool's own caps apply; `null` when what was typed is not an amount above zero. */
+export function spendingLimit(params: Record<string, unknown>): number | undefined | null {
+  const value = params.max_spend_usd;
+  if (value === undefined || value === null || (typeof value === "string" && !value.trim())) return undefined;
+  return positiveCap(value) ?? null;
+}
+
+/** The settings as the call sends them: the spending limit as a number, or left out. */
+export function callParams<T extends Record<string, unknown>>(params: T): T {
+  const call: Record<string, unknown> = structuredClone(params);
+  const limit = spendingLimit(params);
+  if (typeof limit === "number") call.max_spend_usd = limit;
+  else delete call.max_spend_usd;
+  return call as T;
+}
+
 export function positiveCap(value: unknown): number | undefined {
   if (typeof value === "string") {
     const text = value.trim();
@@ -72,7 +89,7 @@ export function estimateClient(api: LocalApi) {
   async function readQuote(receipt: Preparation, session: string, init?: RequestInit): Promise<PreparedEstimate> {
     const quote = parseEstimate(await (await api.request(`/api/preparations/${encodeURIComponent(receipt.id)}/estimate`, init)).json());
     if (!(["id", "tool", "action", "revision", "expires_ms", "bytes"] as const).every(key => quote.preparation[key] === receipt[key]) || quote.estimate.session.id !== session)
-      throw new Error("The estimate belongs to different inputs or a different tool session. Estimate again.");
+      throw new Error("The estimate belongs to different inputs or a different tool session. Check the cost again, or run without it.");
     return quote;
   }
   return {

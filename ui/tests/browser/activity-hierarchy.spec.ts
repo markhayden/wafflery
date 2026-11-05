@@ -1,6 +1,5 @@
 import {test,expect} from "./tool-host";
 import {visualPolicy} from "./visual-policy";
-import {openOptionalSettings} from "./sample-input";
 test.describe("live operations hierarchy",()=>{
   test.use({hostScenario:"v04-operations"});
   test("kinds and groups use declarations and changing activity resets the draft",async({page,host})=>{
@@ -14,7 +13,6 @@ test.describe("live operations hierarchy",()=>{
     await expect(picker.getByText("shape",{exact:true})).toBeVisible();
     await picker.getByRole("button",{name:/^soften token/}).click();
     const amount=page.getByLabel("Amount",{exact:true});
-    await openOptionalSettings(page);
     await amount.fill("0.8");
     await page.getByRole("button",{name:"Workspace Operations",exact:true}).click();
     await page.getByRole("dialog",{name:"Choose workspace"}).getByRole("button",{name:new RegExp("^Utilities ")}).click();

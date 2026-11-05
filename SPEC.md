@@ -118,9 +118,11 @@ and the boundary between working mock interactions and future tool integration.
   submitting another run. Stop run and Quit Wafflery are separate controls; quitting while
   work is active requires confirmation. Process launch/detachment and crash recovery still
   require an implementation design.
-- **Q9, confirmed:** Show paid-run estimates and remaining tool session budget beside Run.
-  Clicking Run authorizes that attempt within the displayed/enforced cap; no second routine
-  confirmation step. Changed inputs require a refreshed estimate. Results show reported spend
+- **Q9, revised 2026-11-04 (owner):** spend is optional, never a gate. Run works for a paid
+  action without an estimate or a cap; the tool enforces its own spending limits (table-manners
+  4.5) and refuses before spending. A spending limit is an optional field that may lower the
+  tool's cap, and Check cost an optional step; a checked cost binds the run to that price, and
+  edits make the check stale (Run still works, unbound). No second confirmation. Results show reported spend
   and its measured/estimated basis, including cancelled runs. Local examples show no provider
   cost. Provider configuration/credentials are prerequisites where needed; keys alone do not
   supply pricing or account balance. The current preview uses explicitly simulated cost data.
@@ -190,8 +192,8 @@ are not promised.
 
 The workspace keeps tool choice in the header and groups declared activities below it. Port editors
 bind saved artifacts and images without rerunning upstream operations. The shared drawer reviews
-ordered experiment chains; each step requires its own ordinary Run, and each paid step needs a fresh
-cap and bound estimate. This is guided replay, not unattended orchestration or a node editor.
+ordered experiment chains; each step requires its own ordinary Run (a paid step may check its cost
+first; the tool's limits apply either way). This is guided replay, not unattended orchestration or a node editor.
 
 [Acceptance gates](ACCEPTANCE.md#feature-and-release-gates) retain actual distribution work: installer
 channel, automatic installed-tool discovery, supported macOS architectures/minimum version and release

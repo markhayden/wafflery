@@ -9,6 +9,7 @@ const drawer = (page: Page) => page.getByRole("dialog", { name:"Run details", ex
 const report = (page: Page) => page.frameLocator('iframe[title="Report viewer"]').frameLocator('iframe[title="Tool report"]');
 async function inspect(page: Page) {
   await page.getByRole("button", { name:"Inspect run", exact:true }).click();
+  await page.getByRole("button",{name:"Advanced",exact:true}).click();
   await page.getByRole("button", { name:"Reports", exact:true }).click();
 }
 async function open(page: Page, name: string, kind = "Document") {
@@ -85,7 +86,7 @@ test("a force-required view remains owned across drawer dismissal and reopening"
   expect((await api(`/api/views/${view.id}`)).phase).toBe("needs_force");
   await page.getByRole("button",{name:"Confirm force stop",exact:true}).click();
   await expect.poll(async () => (await api(`/api/views/${view.id}`)).phase).toBe("exited");
-  await page.getByRole("button",{name:"Raw result",exact:true}).click();
+  await page.getByRole("button",{name:"Result",exact:true}).click();
   await expect(page.getByLabel("Saved evidence")).toBeVisible();
   expect((await api(`/api/attempts/${id}`)).execution).toBe("completed");
 });
@@ -135,7 +136,7 @@ test("hidden inspection sends no activity and returning observes expiry without 
     await expect(page.locator('iframe[title="Report viewer"]')).toHaveCount(0);
     await expect(page.getByRole("button",{name:"Open report",exact:true})).toBeEnabled();
     expect(opens).toBe(0);
-    await page.getByRole("button",{name:"Raw result",exact:true}).click();
+    await page.getByRole("button",{name:"Result",exact:true}).click();
     await expect(page.getByLabel("Saved evidence")).toBeVisible();
   } finally { await page.unrouteAll({behavior:"wait"}); }
 });

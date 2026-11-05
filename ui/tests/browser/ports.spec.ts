@@ -12,13 +12,13 @@ test("typed ports keep list occurrences and show indexed refusal at narrow width
 test.describe("operation images",()=>{test.use({hostScenario:"v04-operations"});test("an image port runs through the workspace",async({page,host})=>{
  await host.open(page);await page.getByRole("button",{name:"Workspace Playground",exact:true}).click();
  await page.getByRole("dialog",{name:"Choose workspace"}).getByRole("button",{name:new RegExp("^Operations ")}).click();
- await page.getByLabel("Import image",{exact:true}).setInputFiles("tests/fixtures/sample.png");
- await expect(page.getByText(/Image ·/)).toBeVisible();await page.getByRole("button",{name:"Run",exact:true}).click();
+ await page.getByLabel(/^Use your own image as /).first().setInputFiles("tests/fixtures/sample.png");
+ await expect(page.getByRole("status",{name:"image selection count"})).toHaveText("1 selected");await page.getByRole("button",{name:"Run",exact:true}).click();
  await expect(page.getByText("Saved attempt",{exact:false})).toBeVisible();
  });});
 test("a deferred import preserves edits to another port",async({page})=>{
  await page.goto("http://127.0.0.1:6006/iframe.html?id=workspace-porteditor--deferred-import&viewMode=story");
- await page.getByLabel("Import image",{exact:true}).setInputFiles("tests/fixtures/sample.png");
+ await page.getByLabel(/^Use your own image as /).first().setInputFiles("tests/fixtures/sample.png");
  await expect(page.getByRole("status").filter({hasText:"Importing"})).toBeVisible();
  const masks=page.locator("fieldset").filter({has:page.locator("legend",{hasText:"masks"})});
  await masks.getByLabel("Saved artifact").selectOption("mask");

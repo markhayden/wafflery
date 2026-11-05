@@ -7,7 +7,7 @@ const choices = [{id:"sample",title:"sample-lab",description:"Version 0.1.0"},
 function Example() {
   const [tool,setTool] = useState("sample");
   return <WorkspaceFrame connection="Connected locally" connected
-    toolPicker={<Picker compact label="Tool" choices={choices} value={tool} onChange={setTool} />}>
+    toolPicker={<Picker header label="Tool" choices={choices} value={tool} onChange={setTool} />}>
     <h1>{choices.find(choice => choice.id === tool)?.title}</h1>
     <p className="workspace-intro">Try a tool. Inspect its output. Keep the evidence.</p>
   </WorkspaceFrame>;

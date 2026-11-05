@@ -152,7 +152,7 @@ mod tests {
             value,
             &declaration.document["tool"],
             "mark",
-            0.5,
+            Some(0.5),
             &declaration.tool_session,
             time::OffsetDateTime::now_utc(),
         )
@@ -306,7 +306,7 @@ mod tests {
             value.clone(),
             &value["tool"],
             value["action"].as_str().unwrap(),
-            value["cap_usd"].as_f64().unwrap(),
+            value["cap_usd"].as_f64(),
             &value["session"],
             time::OffsetDateTime::now_utc(),
         )

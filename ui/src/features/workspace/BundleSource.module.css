@@ -8,4 +8,3 @@
 .source summary { cursor: pointer; font-size: .875rem; }
 .source pre { white-space: pre-wrap; overflow-wrap: anywhere; }
 
-.actions { display: flex; gap: .5rem; flex-wrap: wrap; }

@@ -1,7 +1,7 @@
-.drawer { position: fixed; inset: 0; margin: 0 0 0 auto; padding: 0; width: min(44rem,100vw); max-width: 100vw; height: 100dvh; max-height: 100dvh; border: 0; border-left: 1px solid var(--color-line); background: var(--color-surface); color: var(--color-text); box-shadow: -1rem 0 3rem #0003; }
+.drawer { position: fixed; inset: 0; margin: 0 0 0 auto; padding: 0; overflow: hidden; width: min(var(--drawer-width, 66rem), 100vw); max-width: 100vw; height: 100dvh; max-height: 100dvh; border: 0; border-left: 1px solid var(--color-line); background: var(--color-surface); color: var(--color-text); box-shadow: -1rem 0 3rem #0003; }
 .drawer[open] { display: grid; grid-template-rows: auto minmax(0,1fr) auto; }
 .drawer::backdrop { background: #0007; }
-.close { flex: 0 0 max(2.75rem,44px); width: max(2.75rem,44px); padding: 0; border-color: transparent; background: transparent; }
+.close { flex: 0 0 max(2.75rem,44px); width: max(2.75rem,44px); height: max(2.75rem,44px); min-height: max(2.75rem,44px); padding: 0; border-color: transparent; background: transparent; }
 .header { display: flex; align-items: flex-start; gap: 1.5rem; justify-content: space-between; padding: 1.5rem; border-bottom: 1px solid var(--color-line); }
 .header h2 { font-weight: 500; font-size: 1.25rem; overflow-wrap: anywhere; }
 .header p { color: var(--color-muted); font-size: .8125rem; margin-top: .5rem; overflow-wrap: anywhere; }
@@ -9,3 +9,10 @@
 .content pre { white-space: pre; overflow: auto; max-height: 24rem; overflow-wrap: normal; font: .75rem/1.55 ui-monospace,monospace; padding: 1rem; border: 1px solid var(--color-line); border-radius: var(--radius-control); background: var(--color-background); }
 .footer { display: flex; flex-wrap: wrap; gap: .75rem; padding: 1rem 1.5rem; border-top: 1px solid var(--color-line); }
 @media(max-width:40rem) { .header,.content {padding:1rem;} }
+/* The resize handle: a strip on the left edge, a line on hover or focus. */
+.resize { position: absolute; inset: 0 auto 0 0; width: 0.5rem; cursor: col-resize; touch-action: none; z-index: 1; }
+.resize::after { content: ""; position: absolute; inset: 0 auto 0 0; width: 2px; background: transparent; transition: background 0.15s; }
+.resize:hover::after, .resize:focus-visible::after { background: var(--color-focus); }
+.resize:focus-visible { outline: none; }
+@media (max-width: 40rem) { .resize { display: none; } }
+@media (prefers-reduced-motion: reduce) { .resize::after { transition: none; } }

@@ -7,7 +7,14 @@ fn now() -> OffsetDateTime {
     OffsetDateTime::parse("2026-11-01T00:00:00Z", &Rfc3339).unwrap()
 }
 fn validate(value: Value, session: &Value, cap: f64) -> Result<ValidatedEstimate> {
-    ValidatedEstimate::validate(value, &session["tool"], "price_test", cap, session, now())
+    ValidatedEstimate::validate(
+        value,
+        &session["tool"],
+        "price_test",
+        Some(cap),
+        session,
+        now(),
+    )
 }
 #[test]
 fn accepts_ready_and_refused_independent_quotes_without_inventing_unknown_cost() {
@@ -160,7 +167,7 @@ fn requires_successful_structured_estimates_instead_of_text_or_run_results() {
             &response,
             &session["tool"],
             "price_test",
-            0.5,
+            Some(0.5),
             &session,
             now()
         )
@@ -176,7 +183,7 @@ fn requires_successful_structured_estimates_instead_of_text_or_run_results() {
                 &response,
                 &session["tool"],
                 "price_test",
-                0.5,
+                Some(0.5),
                 &session,
                 now()
             )
@@ -216,4 +223,25 @@ fn estimate_binding_refusals_match_the_requested_operation_and_exact_list_item()
     let mut known_run = data;
     known_run["run"] = json!({"id":"allocated"});
     assert!(validate_refusal(&error(known_run), &action, &arguments).is_err());
+}
+/// No spending limit given: the tool's own cap decides, or none when it configures none; a
+/// quote over that cap still says so (table-manners 4.5).
+#[test]
+fn a_quote_without_a_limit_follows_the_tools_own_cap() {
+    let session = fixtures::session("sample-lab");
+    let value = fixtures::estimate("sample-lab", &session, None);
+    let session = value["session"].clone();
+    let unlimited = |value: Value| {
+        ValidatedEstimate::validate(value, &session["tool"], "price_test", None, &session, now())
+    };
+    assert!(
+        unlimited(value.clone()).is_ok(),
+        "the tool's configured cap"
+    );
+    let mut no_cap = value.clone();
+    no_cap["cap_usd"] = Value::Null;
+    assert!(unlimited(no_cap).is_ok(), "no cap configured anywhere");
+    let mut over = value;
+    over["worst_case_usd"] = json!(over["cap_usd"].as_f64().unwrap() + 1.0);
+    assert!(unlimited(over).is_err(), "allowed above the tool's own cap");
 }

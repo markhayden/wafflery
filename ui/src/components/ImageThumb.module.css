@@ -1,0 +1,6 @@
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(6.5rem, 1fr)); gap: var(--space-2); }
+.thumb { display: grid; gap: var(--space-1); padding: var(--space-1); background: transparent; border: 1px solid var(--color-line); border-radius: var(--radius-control); text-align: left; }
+.thumb:hover:not(:disabled) { border-color: var(--color-muted); background: var(--color-fill); }
+.thumb img, .thumb span { display: block; width: 100%; aspect-ratio: 4 / 3; object-fit: cover; border-radius: calc(var(--radius-control) - 2px); background: var(--color-background); }
+.thumb small { color: var(--color-muted); font-size: 0.75rem; padding: 0 var(--space-1) var(--space-1); }
+.tile { display: block; flex: none; width: 4rem; aspect-ratio: 4 / 3; object-fit: cover; border-radius: calc(var(--radius-control) - 2px); background: var(--color-background); border: 1px solid var(--color-line); }

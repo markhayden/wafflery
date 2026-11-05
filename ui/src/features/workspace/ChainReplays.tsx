@@ -4,6 +4,7 @@ import {chainReplays,type ReplayStatus} from "../../api/chain-replays";
 import {bundleClient,type BundleRecord} from "../../api/bundles";
 import {workspaceClient,type RegisteredTool} from "../../api/workspace";
 import {Button} from "../../components/Button";
+import {CodeBlock} from "../../components/CodeBlock";
 import styles from "./InvocationBundles.module.css";
 export function ChainSetup({api,record,uploadId,onStarted}:{api:LocalApi;record:BundleRecord;uploadId?:string|undefined;onStarted:(status:ReplayStatus)=>void}){
  const client=useMemo(()=>chainReplays(api),[api]),generation=useRef(0);
@@ -37,14 +38,14 @@ export function ChainReplays({api,activeId,onOpen}:{api:LocalApi;activeId?:strin
    <ol aria-label="Chain step progress">{status.tools.map((tool,index)=><li key={index} aria-current={index===status.step?"step":undefined}>{record?.manifest.steps[index]?.tool.name??tool} / {record?.manifest.steps[index]?.invocation.action??"Loading action…"}<span>{index<status.step?"Completed":index===status.step?status.phase.replaceAll("_"," "):"Waiting"}</span></li>)}</ol>
    {status.phase==="ready"&&<Button disabled={busy} onClick={()=>void operation(()=>client.stage(status.id))}>Prepare step {status.step+1}</Button>}
    {["preparing","importing","running"].includes(status.phase)&&<p role="status">{status.phase==="running"?"The ordinary run and its preservation are still owned. Wait for the saved outcome.":"Checking fresh outputs and importing this step's external inputs…"}</p>}
-   {status.import&&<section aria-label="Chain input review"><h4>Current inputs</h4><ul>{status.import.inputs.map((input,index)=><li key={index}>{input.name} item {input.index+1} · {input.status}{input.changed&&<p>Output identity changed. This step will use the newly produced output.</p>}{input.reason&&<p>{input.reason}</p>}</li>)}</ul><details><summary>Current step parameters</summary><pre>{JSON.stringify(status.import.params,null,2)}</pre></details></section>}
+   {status.import&&<section aria-label="Chain input review"><h4>Current inputs</h4><ul>{status.import.inputs.map((input,index)=><li key={index}>{input.name} item {input.index+1} · {input.status}{input.changed&&<p>Output identity changed. This step will use the newly produced output.</p>}{input.reason&&<p>{input.reason}</p>}</li>)}</ul><details><summary>Current step parameters</summary><CodeBlock label="Chain step settings" value={status.import.params}/></details></section>}
    {status.phase==="awaiting_run"&&<><p>Inputs are ready for review. Opening the draft runs nothing. Choose a new cap and estimate for any paid action.</p>{onOpen&&<Button disabled={busy||!record} onClick={()=>void operation(async()=>{await onOpen(status);})}>Open step for review</Button>}</>}
    {status.error&&<p role="alert">{status.error}</p>}
    {["blocked","stopped"].includes(status.phase)&&<><p>Resume is explicit. Completed outputs are verified again; a failed step gets a new review, with fresh paid approval.</p><Button disabled={busy||status.settling} onClick={()=>void operation(()=>client.stage(status.id,true))}>Resume chain review</Button></>}
    {status.settling&&status.phase==="stopped"&&<p role="status">Waiting for owned input work or preservation to settle before resume.</p>}
    {status.attempts.length>0&&<section><h4>Saved attempts</h4><ul>{status.attempts.map(run=><li key={run.attempt}>Step {run.step+1} · {run.attempt.slice(0,8)} · {run.outcome}</li>)}</ul></section>}
    {!["stopped","completed"].includes(status.phase)&&<Button disabled={busy} onClick={()=>void operation(()=>client.stop(status.id))}>Stop chain</Button>}
-   {["stopped","completed"].includes(status.phase)&&<Button disabled={busy||status.settling} onClick={()=>void operation(async()=>{const current=generation.current;await client.remove(status.id);if(current===generation.current){setItems(previous=>previous.filter(item=>item.id!==status.id));setSelected(undefined);}})}>Dismiss chain review</Button>}
+   {["stopped","completed"].includes(status.phase)&&<Button variant="destructive" disabled={busy||status.settling} onClick={()=>void operation(async()=>{const current=generation.current;await client.remove(status.id);if(current===generation.current){setItems(previous=>previous.filter(item=>item.id!==status.id));setSelected(undefined);}})}>Dismiss chain review</Button>}
   </section>}
   {notice&&<p role="alert">{notice}</p>}
  </section>;

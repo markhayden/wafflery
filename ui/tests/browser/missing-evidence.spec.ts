@@ -17,9 +17,10 @@ test("history reports missing saved image bytes without changing the recorded ou
   );
   const hash = run.images.out[0].image.file_sha256 as string;
   await rm(join(host.root, "Library/assets/sha256", hash.slice(0, 2), hash));
+  const address = new URL(page.url()).pathname;
   await host.stop();
   await host.start();
-  await host.open(page);
+  await host.open(page, address);
   await expect(
     page.getByText("Image unavailable. The saved bytes could not be read."),
   ).toBeVisible();

@@ -49,8 +49,7 @@
 .panelBody:focus-visible {
   outline-offset: -4px;
 }
-.panel h2,
-.recent h2 {
+.panel h2 {
   font-size: 1rem;
   font-weight: 500;
 }
@@ -72,10 +71,22 @@
 .run {
   border-top: 1px solid var(--color-line);
 }
-.run button {
-  background: var(--color-text);
-  color: var(--color-background);
+.run button[type="submit"] {
   min-width: 5rem;
+}
+.runActions {
+  display: flex;
+  gap: 0.5rem;
+  margin-left: auto;
+}
+/* Cost options open above the run line, inside the bar: secondary to the steps, one place for
+   every paid action. */
+.costPanel {
+  flex: 1 0 100%;
+  max-height: 50vh;
+  overflow: auto;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--color-line);
 }
 .empty {
   min-height: 22rem;
@@ -99,14 +110,12 @@
   margin-top: 0.75rem;
 }
 .saved,
-.saved > div,
-.recent {
+.saved > div {
   display: flex;
   gap: 0.5rem;
   flex-wrap: wrap;
 }
-.saved p,
-.recent h2 {
+.saved p {
   width: 100%;
 }
 .saved {
@@ -153,20 +162,6 @@
     flex: 1;
     min-height: 10rem;
   }
-  .recent {
-    flex: none;
-    flex-wrap: nowrap;
-    align-items: center;
-    overflow-x: auto;
-    padding: 0.25rem;
-  }
-  .recent > * {
-    flex: none;
-  }
-  .recent h2 {
-    width: auto;
-    margin-right: 0.5rem;
-  }
 }
 :global(.comparison-actions) {
   display: flex;
@@ -191,9 +186,6 @@
   :global(.settings-comparison) {
     grid-template-columns: 1fr;
   }
-}
-:global([aria-label="Saved history"] ul) {
-  list-style: none; padding: 0; display: grid; gap: 1rem;
 }
 .resultData {
   white-space: pre-wrap;
@@ -220,15 +212,9 @@
 .outputs { display: grid; gap: 0.5rem; }
 .outputsTitle { margin: 0; font-size: 0.875rem; font-weight: 500; color: var(--color-muted); }
 .output { display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; padding: 0.75rem 1rem; border: 1px solid var(--color-line); border-radius: var(--radius-control); }
-.outputActions { display: flex; gap: 0.5rem; flex-wrap: wrap; }
 .preserve, .preserveFailed { display: grid; gap: 0.375rem; padding: 0.75rem 1rem; border: 1px solid var(--color-line); border-radius: var(--radius-control); font-size: 0.8125rem; }
 .preserve h3, .preserveFailed h3 { margin: 0; font-size: 0.875rem; font-weight: 500; }
 .preserve p, .preserveFailed p { margin: 0; color: var(--color-muted); }
 .preserveFailed { border-color: color-mix(in srgb, #e5a50a 45%, var(--color-line)); }
+.outputs { display: inline-flex; gap: 0.25rem; margin-right: 0.5rem; }
 .hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
-.switch { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.5rem 0.75rem; color: var(--color-text); background: transparent; border: 1px solid transparent; border-radius: var(--radius-control); font-size: 0.875rem; }
-.switch:hover { background: var(--color-fill); }
-.track { position: relative; width: 2rem; height: 1.125rem; border-radius: 999px; background: var(--color-line); transition: background 0.15s; }
-.track span { position: absolute; top: 0.1875rem; left: 0.1875rem; width: 0.75rem; height: 0.75rem; border-radius: 999px; background: var(--color-muted); transition: transform 0.15s, background 0.15s; }
-.switch[aria-checked="true"] .track { background: var(--color-focus); }
-.switch[aria-checked="true"] .track span { transform: translateX(0.875rem); background: var(--color-background); }

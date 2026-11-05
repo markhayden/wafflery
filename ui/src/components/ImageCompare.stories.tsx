@@ -13,3 +13,13 @@ export const Unavailable:Story={args:{load:async()=>{throw new Error("Missing by
 export const LongLabels:Story={args:{left:{asset,image,label:"A very long source image name from a saved experiment"}}};
 
 export const Loading:Story = {args:{load:()=>new Promise(()=>{})}};
+/** A mask before and after `close`: the zig-zag's notches fill in. Changes highlights exactly that. */
+const draw=(filled:boolean)=>async()=>{const canvas=document.createElement("canvas");canvas.width=480;canvas.height=300;const c=canvas.getContext("2d")!;
+ c.fillStyle="#6b5a45";c.fillRect(0,0,480,300);c.strokeStyle="rgba(240,60,230,0.85)";c.lineWidth=24;c.lineJoin="round";c.lineCap="round";
+ c.beginPath();[[60,200],[120,90],[180,200],[240,90],[300,200],[360,90],[420,200]].forEach(([x,y],i)=>i?c.lineTo(x!,y!):c.moveTo(x!,y!));c.stroke();
+ if(filled){c.fillStyle="rgba(240,60,230,0.85)";for(const x of [120,240,360])c.fill(new Path2D(`M${x-38} 160 L${x} 100 L${x+38} 160 Z`));for(const x of [180,300])c.fill(new Path2D(`M${x-38} 130 L${x} 190 L${x+38} 130 Z`));}
+ return await new Promise<Blob>(resolve=>canvas.toBlob(blob=>resolve(blob!),"image/png"));};
+const maskImage={width:480,height:300,projection:"flat",topology:"bounded"};
+const before={...asset,id:"d".repeat(32),width:480,height:300},after={...asset,id:"e".repeat(32),width:480,height:300};
+export const MaskClosed:Story={render:()=><ImageCompare left={{asset:before,image:maskImage,label:"Before · from Rasterize"}} right={{asset:after,image:maskImage,label:"Preview"}}
+ load={(value)=>draw(value.id===after.id)()}/>};

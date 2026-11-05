@@ -82,9 +82,9 @@ can call from an image pipeline.
    environment-variable names. Wafflery does not store provider keys.
 3. Choose a supported check. Supply the candidate image, references where relevant, and the
    brief/rules the check requires. Optional dependencies affect only checks that need them.
-4. Review the tool's estimate and remaining session budget beside Run. Clicking Run authorizes
-   that attempt within the displayed cap; no additional routine confirmation is needed. Changed
-   inputs refresh the estimate before Run becomes available. Inspect live progress; cancellation
+4. Run. For a paid action, optionally set a spending limit or check the cost first; without
+   either, the tool's own spending limits apply. No additional confirmation is needed; a check
+   made before an edit no longer binds the run. Inspect live progress; cancellation
    reports the resulting state and spend rather than claiming a refund.
 5. Review findings, evidence, locations, and the tool's own detailed report. A failed or
    interrupted run remains inspectable. No direct access to internal evidence tools is assumed

@@ -1,6 +1,7 @@
 import type {BindingIssue} from "../../api/client";
 import { useEffect, useId, useRef } from "react";
 import { Button } from "../../components/Button";
+import { FieldTag } from "../../components/FieldTag";
 import { positiveCap, type Estimate } from "../../api/estimates";
 import { usd, type ToolSession } from "../../api/tool-session";
 import styles from "./CostReview.module.css";
@@ -20,40 +21,40 @@ type Props = {
 };
 export function CostReview({ cap, onCapChange, state, onEstimate, onSetup, session, disabled = false }: Props) {
   const id = useId(), input = useRef<HTMLInputElement>(null);
-  const valid = positiveCap(cap) !== undefined;
-  const invalid = cap.length > 0 && !valid;
-  useEffect(() => { input.current?.setCustomValidity(valid ? "" : "Enter a finite amount greater than zero."); }, [valid]);
+  // Optional: empty means the tool's own limits apply.
+  const invalid = cap.trim().length > 0 && positiveCap(cap) === undefined;
+  useEffect(() => { input.current?.setCustomValidity(invalid ? "Enter an amount above zero, or leave it empty." : ""); }, [invalid]);
   const observed = state.kind === "quoted" ? state.estimate : undefined;
   const changedSession = !!observed && !!session && observed.session.id !== session.id;
   const quote = changedSession ? undefined : observed;
   const ledger = session ?? quote?.session;
   const pending = state.kind === "pending";
-  return <section className={styles.cost} aria-labelledby={`${id}-heading`} aria-busy={pending}>
-    <h3 id={`${id}-heading`}>Cost</h3>
-    <label className={styles.cap} htmlFor={`${id}-cap`}>
-      <span>Spending cap (USD)</span>
-      <input ref={input} id={`${id}-cap`} type="text" inputMode="decimal" required
-        value={cap} disabled={disabled} aria-invalid={invalid} aria-describedby={`${id}-help`}
-        onChange={event => onCapChange(event.target.value)} />
-    </label>
-    <p id={`${id}-help`}>{invalid ? "Enter a finite amount greater than zero."
-      : "The most you are willing to spend on this run. Estimating does not run the action."}</p>
-    <div className={styles.actions}>
-      <Button disabled={disabled || !valid} busy={pending} onClick={event => {
-        if (valid && event.currentTarget.form?.reportValidity() !== false) onEstimate();
-      }}>Estimate cost</Button>
+  return <section className={styles.cost} aria-label="Cost options" aria-busy={pending}>
+    <div className={styles.cap}>
+      <label className={styles.label} htmlFor={`${id}-cap`}>Spending limit (USD) <FieldTag required={false} /></label>
+      <span className={styles.capRow}>
+        <input ref={input} id={`${id}-cap`} type="text" inputMode="decimal" placeholder="The tool's own limit"
+          value={cap} disabled={disabled} aria-invalid={invalid} aria-describedby={`${id}-help`}
+          onChange={event => onCapChange(event.target.value)} />
+        <Button disabled={disabled || invalid} busy={pending} onClick={event => {
+          event.preventDefault();
+          if (!invalid && event.currentTarget.form?.reportValidity() !== false) onEstimate();
+        }}>Check cost</Button>
+      </span>
     </div>
-    {state.kind === "pending" && <p role="status">{state.stale ? "Waiting for the previous estimate to finish…" : "Estimating these inputs…"}</p>}
-    {(state.kind === "stale" || changedSession) && <p role="status">Estimate again for the current inputs and session.</p>}
+    <p id={`${id}-help`}>{invalid ? "Enter an amount above zero, or leave it empty."
+      : "The most this run may spend. Check cost shows what it may cost; nothing runs."}</p>
+    {state.kind === "pending" && <p role="status">{state.stale ? "Waiting for the previous check to finish…" : "Checking what this run may cost…"}</p>}
+    {(state.kind === "stale" || changedSession) && <p role="status">The inputs changed since the last check. Check again, or just run.</p>}
     {state.kind === "error" && <p role="alert">{state.message}</p>}
     {quote && <div className={styles.estimate}>
-      <p role="status" className={styles.decision}>{quote.allowed ? "Estimate within cap." :
+      <p role="status" className={styles.decision}>{quote.allowed ? "Within the limit. Running uses this price." :
         quote.refused === "readiness" ? (quote.readiness.state === "unavailable"
           ? "This action is unavailable in the current tool environment." : "Setup is needed before these inputs can run.") :
-        quote.refused === "cap" ? "Estimated cost exceeds this cap." : "The tool’s remaining session budget is too low."}</p>
+        quote.refused === "cap" ? "This run may cost more than the limit." : "The tool’s remaining session budget is too low."}</p>
       <dl className={styles.amounts}>
         <div><dt>Worst case</dt><dd>{quote.worst_case_usd === null ? "Cost unavailable" : usd(quote.worst_case_usd)}</dd></div>
-        <div><dt>Estimated cap</dt><dd>{quote.cap_usd === null ? "Unavailable" : usd(quote.cap_usd)}</dd></div>
+        <div><dt>Limit</dt><dd>{quote.cap_usd === null ? "None" : usd(quote.cap_usd)}</dd></div>
         {quote.effective.model !== null && <div><dt>Model</dt><dd>{quote.effective.model}</dd></div>}
       </dl>
       {quote.refused === "readiness" && <div className={styles.requirements}>
@@ -67,12 +68,13 @@ export function CostReview({ cap, onCapChange, state, onEstimate, onSetup, sessi
         <dt>Expires</dt><dd>{new Date(quote.expires).toLocaleString()}</dd>
       </dl></details>
     </div>}
-    {ledger && <div className={styles.ledger}>
-      <dl className={styles.amounts}><div><dt>Session remaining</dt><dd>{ledger.remaining_usd === null ? "No session limit" : usd(ledger.remaining_usd)}</dd></div></dl>
+    {/* Only a tool with a session budget (its config's total across runs) has anything to say. */}
+    {ledger && (ledger.budget_usd !== null || ledger.unresolved_usd > 0) && <div className={styles.ledger}>
+      {ledger.budget_usd !== null && ledger.remaining_usd !== null && <p>Left to spend this session:{" "}
+        <span className={styles.value}>{usd(ledger.remaining_usd)} of {usd(ledger.budget_usd)}</span></p>}
       {ledger.unresolved_usd > 0 && <p>Reported spend includes {usd(ledger.unresolved_usd)} whose final charge is unknown.</p>}
       {quote?.allowed && quote.worst_case_usd !== null && ledger.remaining_usd !== null && quote.worst_case_usd > ledger.remaining_usd + 1e-6 &&
         <p role="status">The current session balance may no longer cover this estimate.</p>}
-      <p>The tool checks the current budget again when you run. An estimate does not reserve funds.</p>
     </div>}
   </section>;
 }

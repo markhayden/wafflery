@@ -22,8 +22,9 @@ test("images and locations get plain labels and help for newcomers",()=>{
 test("settings use the schema's title, else the key, and explain what they accept",()=>{
  expect(paramLabel("max_spend_usd",{})).toBe("Max spend (USD)");
  expect(paramLabel("x",{title:"Exact title"})).toBe("Exact title");
- expect(paramHelp({description:"Cap.",type:"number",exclusiveMinimum:0},false)).toBe("Cap. A number, above 0. Optional: leave it empty to use the tool's default.");
- expect(paramHelp({type:"string",enum:["flat","equirectangular"]},true)).toBe("Choices: flat, equirectangular. Required.");
+ expect(paramHelp({description:"Cap.",type:"number",exclusiveMinimum:0},false)).toBe("Cap. A number, above 0. Optional: leave it empty to leave it out.");
+ expect(paramHelp({type:"number",default:0.5},false)).toBe("A number. Default: 0.5. Optional: leave it empty to use the tool's default.");
+ expect(paramHelp({type:"string",enum:["flat","equirectangular"]},true)).toBe("Choices: flat, equirectangular.");
  expect(paramHelp({type:"boolean",default:false},false)).toContain("Default: false.");
 });
 test("a drawn rectangle becomes the contract's bbox location on the original image",()=>{

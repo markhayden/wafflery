@@ -40,12 +40,18 @@ impl Coordinator {
                 "Only paid actions need a bound cost estimate",
             ));
         }
-        let cap = lease.arguments()["max_spend_usd"]
-            .as_f64()
-            .filter(|cap| cap.is_finite() && *cap > 0.0)
-            .ok_or_else(|| {
-                Error::Invalid("Choose a positive spending cap before estimating".into())
-            })?;
+        // Optional: without a limit the tool's own caps decide (table-manners 4.5).
+        let cap = match &lease.arguments()["max_spend_usd"] {
+            serde_json::Value::Null => None,
+            asked => Some(
+                asked
+                    .as_f64()
+                    .filter(|cap| cap.is_finite() && *cap > 0.0)
+                    .ok_or_else(|| {
+                        Error::Invalid("A spending limit must be a positive amount".into())
+                    })?,
+            ),
+        };
         let (sender, receiver) = tokio::sync::oneshot::channel();
         let mut workers = timeout_at(deadline, self.workers.lock()).await?;
         workers.retain(|worker| !worker.is_finished());

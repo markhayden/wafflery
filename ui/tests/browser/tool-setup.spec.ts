@@ -1,4 +1,4 @@
-import { openOptionalSettings, prepareSampleInput } from "./sample-input";
+import { prepareSampleInput } from "./sample-input";
 import { test, expect } from "./tool-host";
 import { realpath, writeFile } from "node:fs/promises";
 import { join } from "node:path";
@@ -10,7 +10,7 @@ test("setup shows reported allowances and never promotes a credential name to re
   await expect(page.getByText("EXAMPLE_API_KEY", { exact: true })).toBeVisible();
   await expect(page.getByText("Present · not validated", { exact: true })).toBeVisible();
   await expect(page.getByText(/A present credential has not necessarily been validated/)).toBeVisible();
-  await expect(page.getByText(/Paid execution needs/)).toContainText("Review the estimate");
+  await expect(page.getByText(/^This action may cost money\./)).toContainText("The tool applies its own spending limits; you can set a lower one, or check the cost, before Run.");
   for (const width of [320, 768, 1024, 1440]) {
     await page.setViewportSize({ width, height: 900 });
     await expect(page.getByRole("button", { name: "Refresh" })).toBeVisible();
@@ -62,7 +62,7 @@ test.describe("paid action setup", () => {
   test("opening setup never enables paid execution", async ({ page, host }) => {
     await host.open(page);
     await page.getByRole("button", { name: "Tool setup", exact: true }).click();
-    await expect(page.getByRole("dialog")).toContainText("Review the estimate");
+    await expect(page.getByRole("dialog")).toContainText("The tool applies its own spending limits");
     await page.keyboard.press("Escape");
     await expect(page.getByRole("button", { name: "Run", exact: true })).toBeDisabled();
   });
@@ -151,7 +151,8 @@ test.describe("live readiness", () => {
     }
     await page.keyboard.press("Escape");
     await expect(page.getByRole("button", { name: "Action Price a scripted call" })).toBeVisible();
-    await expect(page.getByRole("button", { name: "Run", exact: true })).toBeDisabled();
+    // Spend never gates Run: refreshing setup leaves it available and runs nothing.
+    await expect(page.getByRole("button", { name: "Run", exact: true })).toBeEnabled();
     expect(attempts).toBe(0);
   });
   test("a delayed setup response cannot restore stale readiness after another tab refreshes", async ({ page, context, host }) => {
@@ -191,7 +192,6 @@ test.describe("live readiness", () => {
   test("optional setup refuses only the requested filler and a corrected free run completes", async ({ page, host }) => {
     await host.open(page);
     await prepareSampleInput(page, "Optional setup experiment");
-    await openOptionalSettings(page);
     await page.getByLabel("Use optional filler", { exact: true }).selectOption("true");
     await page.getByRole("button", { name: "Run", exact: true }).click();
     await expect(page.getByText("No run created.", { exact: true })).toBeVisible();

@@ -21,13 +21,14 @@ export function InfoTip({ label, children }: { label: string; children: React.Re
       tip.style.top = up ? "auto" : `${anchor.bottom + 6}px`;
       tip.style.bottom = up ? `${window.innerHeight - anchor.top + 6}px` : "auto";
     };
-    const toggled = (event: Event) => { if ((event as ToggleEvent).newState === "open") place(); };
+    // beforetoggle fires before the popover paints, so it never shows a frame unplaced.
+    const opening = (event: Event) => { if ((event as ToggleEvent).newState === "open") place(); };
     const follow = () => { if (tip.matches(":popover-open")) place(); };
-    tip.addEventListener("toggle", toggled);
+    tip.addEventListener("beforetoggle", opening);
     window.addEventListener("resize", follow);
     window.addEventListener("scroll", follow, true);
     return () => {
-      tip.removeEventListener("toggle", toggled);
+      tip.removeEventListener("beforetoggle", opening);
       window.removeEventListener("resize", follow);
       window.removeEventListener("scroll", follow, true);
     };

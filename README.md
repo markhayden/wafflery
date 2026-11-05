@@ -60,9 +60,10 @@ configuration may narrow. An empty list means **No file paths allowed**. Refresh
 list while checking access; a failed refresh shows **Unavailable**, never an empty or inferred grant.
 Changing registration folders requires stopping Wafflery; changing the tool's configuration requires
 restarting that tool session. The session now carries the v0.4 `allowed_dirs` field.
-Paid actions expose explicit cap and estimate controls. Edits, declaration/session changes and
-expiry invalidate the quote. **Run** sends the exact reviewed preparation; another paid attempt
-requires a fresh estimate. If acknowledgement is lost, **Retry submission** keeps the original run
+Paid actions run like any other: the tool enforces its own spending limits. An optional
+**Spending limit** lowers the tool's cap, and an optional **Check cost** shows what the run may
+cost; a checked run is bound to that price. Edits, declaration/session changes and expiry make a
+check stale, and **Run** then sends the call unbound. If acknowledgement is lost, **Retry submission** keeps the original run
 ID and inputs while preserving later edits separately. There is no automatic paid retry.
 The result summary explains stale estimates, credential rejection, caps and session budgets.
 Failed and cancelled runs retain their reported spend; unresolved charges are shown as “at most,”
@@ -349,8 +350,8 @@ bundle deletion is not available yet. Downloads return the same verified archive
 A bundle with omitted or unpreserved inputs is labelled **Workspace-dependent**. Native previews are
 never substituted. Complete single-tool bundles show a standard `call --bundle` example with paths
 to replace after download. Install/configure the named tool and supply requirements separately;
-credentials/config contents are not included, and model judgments may differ. Host paid replay needs
-a fresh bound estimate/cap review. A direct CLI command follows that tool's configured spending policy;
+credentials/config contents are not included, and model judgments may differ. Host paid replay runs under the
+tool's limits like any paid run (a cost check is optional). A direct CLI command follows that tool's configured spending policy;
 review its configuration and supported cap before invoking it.
 
 In **Bundles → Import an invocation bundle**, upload an uncompressed tar to review its original
@@ -367,8 +368,8 @@ archives and imported image bytes survive restart.
 Choose **Open as new draft** after import to experiment with that step. Opening starts no run. Current
 inputs and parameters can be changed; the original archive stays unchanged and the new run records
 its source bundle. Any unresolved port, including an optional one, blocks Run until you explicitly
-confirm replacement inputs or omit that optional port. Paid drafts start with a blank spending cap:
-choose a new cap and request a fresh estimate before Run. The current tool session and allowance
+confirm replacement inputs or omit that optional port. Paid drafts start with a blank spending
+limit, so the tool's own limits apply unless you set one. The current tool session and allowance
 remain in use; opening does not restart the tool or replenish its budget. Different output identities
 are shown as new results and do not by themselves mean failure.
 
@@ -383,8 +384,8 @@ chain uses the same connection resolver, and individual steps can still be impor
 
 To replay a selected chain, choose **Start chain review** on its saved/uploaded review, select the
 receiving installations, and prepare the first step. **Open step for review** fills an ordinary
-draft and runs nothing. Review its parameters and external inputs, choose a fresh cap/estimate for a
-paid step, then use **Run**. **Continue chain** observes that saved outcome and offers the next step.
+draft and runs nothing. Review its parameters and external inputs, optionally check a paid step's
+cost, then use **Run**. **Continue chain** observes that saved outcome and offers the next step.
 Connected inputs use the new producer's public output port/item; an identity change is shown.
 Missing/ambiguous outputs stop before a consumer, with no silent upstream rerun.
 

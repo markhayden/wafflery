@@ -116,7 +116,14 @@ impl ResolvedRender {
         if !Path::new(raw).is_absolute() {
             return Err(invalid("Run directory must be absolute"));
         }
-        let run_dir = Path::new(raw).canonicalize()?;
+        // A run whose folder is gone (the tool's store was cleared or reset) can't be shown; say so,
+        // rather than surface the operating system's "No such file or directory".
+        let run_dir = Path::new(raw).canonicalize().map_err(|error| match error.kind() {
+            std::io::ErrorKind::NotFound => Error::Missing(
+                "This run's files are no longer on disk, so its report can't be shown. Run it again to get a report.",
+            ),
+            _ => error.into(),
+        })?;
         if !descriptor
             .evidence_dirs
             .iter()

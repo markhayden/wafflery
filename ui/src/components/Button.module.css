@@ -1,16 +1,29 @@
+/* Compact by default for mouse use; a coarse pointer (touch) keeps the 44px target. */
 .button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: var(--space-2);
-  min-height: max(2.75rem, 44px);
+  min-height: 2rem;
   max-width: 100%;
-  padding: var(--space-2) var(--space-4);
+  padding: var(--space-1) var(--space-3);
   border: 1px solid var(--color-line);
   border-radius: var(--radius-control);
   background: var(--color-surface);
   color: var(--color-text);
+  font-size: 0.875rem;
+  line-height: 1.25;
   text-align: center;
   overflow-wrap: anywhere;
 }
 .button:hover:enabled { background: var(--color-fill); }
+
+.primary { background: var(--color-text); border-color: var(--color-text); color: var(--color-background); }
+.primary:hover:enabled { background: var(--color-muted); border-color: var(--color-muted); }
+
+.destructive { background: var(--color-danger); border-color: var(--color-danger); color: var(--color-on-danger); }
+.destructive:hover:enabled { background: var(--color-danger-hover); border-color: var(--color-danger-hover); }
+
+@media (pointer: coarse) {
+  .button { min-height: max(2.75rem, 44px); padding: var(--space-2) var(--space-4); }
+}
