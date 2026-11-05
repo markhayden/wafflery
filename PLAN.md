@@ -3719,3 +3719,30 @@ remain separate; no production release is implied. Product choices remain Q1–Q
   run's, so the page reads it back.
 - [ ] Open: Picker's toolbar size sits a little taller than a Button, and its search shows for
   three choices.
+
+### V30: Wafflery shows checks (rascal M13 task 13.14, 2026-11-05)
+
+On `m13-checker`, against the table-manners v0.5 draft by path (`../table-manners`, version
+`=0.4.0`; every document keeps `"contract": "0.4.0"` until 13.15 bumps and publishes 0.5.0).
+Wafflery renders what the tools report and holds no logic about checkers.
+
+- [x] Readiness: a requirement with `optional: true` shows in Tool setup as "Needed for <for>
+  (optional)" and never makes an action need setup; the activity picker's and Check cost's
+  setup lists leave optional requirements out (`ui/src/features/workspace/checks.ts`).
+- [x] The `check` setting is an ordinary optional yes-or-no setting from the params schema.
+- [x] A result with a `verdict` says it near the result (shared `CheckVerdict`): "Check passed",
+  or "The check still sees it" with the places in `where` drawn on the saved image they name
+  (shared `PlaceMarks`), with the run's notes. A result with no verdict shows a "Not checked: …"
+  or "The check could not run: …" note plainly.
+- [x] The Show menu, the result's caption and History's peek use each image out's `label`, else
+  the role; capture keeps the label (`src/tools/evidence.rs`), so a reopened run shows the same
+  names.
+- [x] The sample peer's `checks` scenario adds "Add a checked band" (`answers: verdict`, an
+  optional `EXAMPLE_CHECK_KEY`, a `check` setting; `answer` and `tries` script a pass, a fail
+  with a place, or a three-try run with labels).
+- [x] Tests: `tests/unit/checks.test.ts` (wording), `tests/browser/checks.spec.ts` (Chromium and
+  WebKit: an optional key missing with the action ready, a pass, a fail with places, three tries
+  with try 1's mask opened, and a reopened run after a restart keeping labels and verdict), and
+  `a_checked_run_keeps_its_verdict_and_every_outputs_label` in `tests/attempt_execution.rs`.
+- [ ] Open: 13.15 moves the pin to the published `=0.5.0` and the documents to `"contract":
+  "0.5.0"`; until then CI on this branch needs the sibling table-manners checkout.

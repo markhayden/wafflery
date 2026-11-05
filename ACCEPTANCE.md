@@ -64,6 +64,9 @@ Verify schema-driven fixtures, keyboard picker behavior, and catalogue searches.
   mask-only tasks remain available with their own prerequisites.
 - Required provider/model configuration and missing credential-variable names have actionable
   setup states. A present key alone does not establish authenticated provider readiness.
+- A requirement the tool marks optional (table-manners 3.1, v0.5 draft) shows what it is for
+  ("Needed for checking the result (optional)") and never makes the action need setup; only the
+  tool's own readiness state does.
 - Tool configuration owns secrets and provider defaults. Wafflery neither stores keys nor
   includes them in history, examples, copied code, logs shown to users, or downloads.
 
@@ -100,6 +103,10 @@ Verify controlled panorama, finder, filler, and missing-dependency fixtures. See
 - Candidate/source/reference inputs and rules/brief requirements follow the chosen use case.
 - Findings, evidence, locations, confidence words, and verdict retain the tool's vocabulary.
   A completed check that judges an image unsuitable is not an execution failure.
+- A result with a verdict (table-manners 2.4, v0.5 draft) says it near the result in plain words:
+  "Check passed", or "The check still sees it" with the places it named drawn on the image it
+  judged. A completed result without one shows the tool's reason when its notes give one ("Not
+  checked: …", "The check could not run: …"). Wafflery holds no logic about checkers.
 - Standalone evidence tools appear only when advertised as independently callable operations.
 
 Verify scripted judge outputs, no-match cases, and execution errors separately. See S1/C1.
@@ -216,6 +223,9 @@ Verify two attempts, subsequent draft edits, task switching, pin reload, and dif
   sides: Source/Result, Source/Mask overlay, Source/Location overlay, or Baseline/Attempt.
 - Preserve aspect ratios and declared frames. Do not stretch unrelated images into apparent
   alignment or use a mask preview as evidence of an edited result.
+- The Show menu offers every output image by the tool's label when it gives one ("Try 1 · mask",
+  table-manners 10.2), else by its role in words; the label is saved with the run, so a run
+  reopened after a restart shows the same names.
 - The divider supports pointer/touch and keyboard adjustment, with accessible names and values.
   Raw data remains available for non-image outputs; specialized charts stay tool-owned.
 

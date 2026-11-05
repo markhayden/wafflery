@@ -66,6 +66,12 @@ cost; a checked run is bound to that price. Edits, declaration/session changes a
 check stale, and **Run** then sends the call unbound. If acknowledgement is lost, **Retry submission** keeps the original run
 ID and inputs while preserving later edits separately. There is no automatic paid retry.
 The result summary explains stale estimates, credential rejection, caps and session budgets.
+When a tool checks its own result (an action that answers with a verdict), the result says so in
+plain words: **Check passed**, or **The check still sees it** with the places it named drawn on
+the result; a result the tool did not check shows the tool's reason ("Not checked: …"). A
+requirement the tool marks optional shows in Tool setup as "Needed for … (optional)" and never
+makes the action need setup. The **Show** menu names each output by the tool's label when it
+gives one ("Try 2 · result"), else by its role, and a reopened run keeps the same names.
 Failed and cancelled runs retain their reported spend; unresolved charges are shown as “at most,”
 not zero. **Review tool setup** opens setup for that saved run’s tool and action.
 
@@ -106,9 +112,11 @@ the opt-in real Rascal offline smoke. Automatic discovery and installation remai
 [CI](.github/workflows/ci.yml) runs the full PLAN matrix on `macos-15` for pull requests,
 pushes to main and manual dispatch. Action revisions and runtime versions are pinned; Cargo
 and Bun dependencies are cached, and matching Chromium/WebKit browsers are installed explicitly.
-CI uses the independent offline peer without provider keys. Local and hosted builds resolve
-exactly table-manners 0.4.0 from crates.io using Cargo.lock; no sibling contract checkout is
-required. Five Rust checks and six browser real-tool journeys remain explicit opt-ins. Checked-in UI assets are verified
+CI uses the independent offline peer without provider keys. On `main`, local and hosted builds
+resolve exactly table-manners 0.4.0 from crates.io using Cargo.lock; no sibling contract checkout
+is required. The `m13-checker` branch builds against the table-manners v0.5 draft by path
+(`../table-manners`, branch `v0.5`, still versioned 0.4.0) until rascal's PLAN.md 13.15 publishes
+0.5.0, so it needs that sibling checkout. Five Rust checks and six browser real-tool journeys remain explicit opt-ins. Checked-in UI assets are verified
 before any build can regenerate them. Failure diagnostics include Playwright traces, screenshots and an allowlisted attempt summary.
 See the [CI checkpoint](docs/reviews/2026-11-01-ci.md) for local versus hosted verification.
 
