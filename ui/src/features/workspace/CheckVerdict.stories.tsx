@@ -18,6 +18,8 @@ export const StillSeesIt: Story = { args: { result: { status: "completed", verdi
   notes: ["Checked: up to 3 tries within the spend limits.", "Kept try 3 of 3. The check still sees the band in 1 place (fail)."] } } };
 export const Unsure: Story = { args: { result: { status: "completed", verdict: { value: "unsure", where: [band] },
   notes: ["Kept try 3 of 3. The check still sees the band in 1 place (unsure)."] } } };
+export const NotSure: Story = { args: { result: { status: "completed", verdict: { value: "unsure", where: [] },
+  notes: ["Checked: up to 3 tries within the spend limits.", "Kept try 1 of 1. The check was not sure and named no place."] } } };
 export const NoPlaces: Story = { args: { result: { status: "completed", verdict: { value: "fail", where: [] }, notes: [] } } };
 export const NotChecked: Story = { args: { result: { status: "completed", notes: ["Not checked: the checker needs ANTHROPIC_API_KEY."] } } };
 export const CouldNotRun: Story = { args: { result: { status: "completed", notes: ["Kept try 1 of 1.", "The check could not run: the checker gave no answer in 120 s."] } } };

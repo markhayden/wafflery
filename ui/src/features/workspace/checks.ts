@@ -51,10 +51,12 @@ export function checkView(result: Json | undefined, outputs: SavedImage[]): Chec
   const image = typeof judged === "string" ? outputs.find((output) =>
     (output.image as { file_sha256?: unknown }).file_sha256 === judged || output.asset.sha256 === judged) : undefined;
   const unsure = verdict.value === "unsure" ? "The check was not sure. " : "";
-  const detail = places.length === 0 ? `${unsure}It did not say where.`
+  const detail = places.length === 0 ? "It did not say where."
     : image ? `${unsure}Marked in ${count(places.length)} on the result.`
       : `${unsure}It named ${count(places.length)}, on an image this run did not keep.`;
-  return { kind: "attention", title: "The check still sees it", detail, places, ...(image ? { image } : {}), notes };
+  // An unsure that names no place is doubt, not a sighting: say so rather than "still sees it".
+  const title = verdict.value === "unsure" && places.length === 0 ? "The check wasn't sure" : "The check still sees it";
+  return { kind: "attention", title, detail, places, ...(image ? { image } : {}), notes };
 }
 
 /** The name a saved image shows: the tool's label when it gave one, else its role in words. */

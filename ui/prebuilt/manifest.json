@@ -96,7 +96,7 @@
     "ui/src/features/workspace/ChainReplays.stories.tsx": "2ec7a252b89ab081a13b676775bc958f06070fad14eaa414caa8d90755668a74",
     "ui/src/features/workspace/ChainReplays.tsx": "cecb80a943b244431af82a2ab4fd49aa9cdc7973aedb1f45b988784e3cbff5ce",
     "ui/src/features/workspace/CheckVerdict.module.css": "fdff9b621d4c806a1588665258606e6a784285d90dc0c76af4ca1adf3d378cd8",
-    "ui/src/features/workspace/CheckVerdict.stories.tsx": "1fdb6635cc68bf9ba52f376ef52e40b1dcf71b9184e3dc40fb6188c3d346966c",
+    "ui/src/features/workspace/CheckVerdict.stories.tsx": "c32983abadd11f13c17417aa77221341baf3df6086bbf1e6bdb6146f8cc1cd02",
     "ui/src/features/workspace/CheckVerdict.tsx": "2b0137445510b5dfb13bc8d6b40b70aaa25ce3ba05ad633ee69c07206530078a",
     "ui/src/features/workspace/Cleanup.tsx": "e8f52f789f6d805829ba39ef948dc14d6c3417233ab93885b2f888e677212df5",
     "ui/src/features/workspace/CommandHandoff.module.css": "7e2627c96f45f0297f2418c25dd0b15ff6d947bc2b1fd5c031c9bdc5c707dce3",
@@ -143,17 +143,18 @@
     "ui/src/features/workspace/ToolSetup.module.css": "53c17da410d359ef4bda7cfa74c27b6551376c5d5904689cbb55308643df50d9",
     "ui/src/features/workspace/ToolSetup.stories.tsx": "3c735f8de366c383333a0264bb2ec3df547025538ee2f47747ddb675573bc9d5",
     "ui/src/features/workspace/ToolSetup.tsx": "f6d5f123ccb18150a734be7d6571e222ac1463db5486329c6aa17431e00e8211",
-    "ui/src/features/workspace/Workspace.module.css": "2694e8d591e37d0894e1677841548fe8e932c79832fc31677c7f5b906b72cf56",
-    "ui/src/features/workspace/Workspace.tsx": "46480f48157ea17431bb555b7b598f8a1692b9729c886348cafc43c467d8871a",
+    "ui/src/features/workspace/Workspace.module.css": "e9dd5443e4c4f16657318b6f471850b85423666f7cb2f3c9b4f77642fe91f1a5",
+    "ui/src/features/workspace/Workspace.tsx": "15099e960ff46f945cdbe41c4684aea6320f4be9f9b9ea8fb29f978319f699ee",
     "ui/src/features/workspace/activities.ts": "1786d4d3e5b77efca1c108e524fa36776817e54401664f22cf83b7166921e820",
     "ui/src/features/workspace/artifact-transfer.ts": "1580167bef0f5acc46967f6a1258d356419d9bde39ca39bce0b867443aef9995",
     "ui/src/features/workspace/artifacts.ts": "53878b1132361584949a82ed37773fef659ac858c8ca51dff618c319a153793b",
     "ui/src/features/workspace/bundle-replay.ts": "8d064deaaf57a4490debfbe587e17bf4e755bc70b6dc49e0a485203fbc9a1e01",
-    "ui/src/features/workspace/checks.ts": "a3119ec48e261ef97c2439f2b489ccc23113ef3786708ff23f28ef06a05c8a06",
+    "ui/src/features/workspace/checks.ts": "15c735b49e8fdb087017a16e3d1eefbd4c8bb21e845603a98e17191dc66f495b",
     "ui/src/features/workspace/invocation.ts": "a9dc20fe83fa2cdce45dea6565fea376518c1f93bb31a97a2e60dc505266f566",
     "ui/src/features/workspace/report-owner.ts": "ebabc35cd81b37c83126eb54327fd1c8a6ed8370fab21c981518eaa0f2d68857",
     "ui/src/features/workspace/route.ts": "d734a11120d88524198c55b16dcc7f755a51a8dd4c820b10a3795108b1ed1e2d",
     "ui/src/features/workspace/run-outcome.ts": "5e1b84a3d2b480c69d4511390c308a35370a306597aa2121ed464bf5a3ba142f",
+    "ui/src/features/workspace/runBlocker.ts": "50c7245282a3757a243f828bba634e66848d776ffdaac7e3670e5c975140e8d4",
     "ui/src/features/workspace/tool-presentation.ts": "54b3a92a4fec9b438b73ff0a4d1ed15ec55c282a451672108876c61d2a3423ad",
     "ui/src/features/workspace/useArtifactRestore.tsx": "403cd85c827b9360323eb06820f865bf2662f2a3cad014543f88e9e413d63e13",
     "ui/src/features/workspace/useEstimateDraft.ts": "7da8f6f766c23916925c2cb045223fe8e52d5c314c164470cb2fdb43632462cc",
@@ -164,11 +165,11 @@
     "ui/vite.config.ts": "1c784d406690c7e5b859cc459f02c6d69451c8c79fa77bd43babffdb9fdee5d8"
   },
   "outputs": {
-    "assets/index-CCZBgyi3.css": "c5bbcc8efaa508954d6d00cc7963cd133be138aeb8f148ccb4e424a8b8d2d07e",
-    "assets/index-CZJ_4-qz.js": "b6d366cc4497297b8298c094373873052359475e6d228cbd336dceb0c28913c6",
+    "assets/index-DcwDnekf.js": "1a7c862052322c554e59b180c17521b594a8ac30e986b5279f3946006e670b7f",
+    "assets/index-DigzUXcp.css": "5c6717dbb16b94bf4987b0a49e60e9c4de7a4bb977c9f3bce61f3ff98d054a79",
     "assets/rascal-sticker-CmExR_HL.webp": "f1cc408f231167aee5543f0f8c0683f3594a0e447c51dcccc4fb413913e0a803",
     "assets/squint-sticker-CLmixeCt.webp": "3986ab96e919e338a7f8e8d64b552912baa3f79774c863d1e5d14f6a9f02f173",
     "assets/wafflery-mark-CML0EpfM.svg": "51bc8a040e26b897a948238598b8cabdf69bf4687c2b1a70613b542de1c99f1f",
-    "index.html": "a4a72d01eb66f4a59c73aafbec3a88a1bf2875ed3a9df09bfeb530600ab9c4e5"
+    "index.html": "a41cc748adfda4fef22fb08de8e5c15c3c32aea4b92d20e13dffbd43f263550e"
   }
 }

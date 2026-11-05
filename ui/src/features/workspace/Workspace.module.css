@@ -74,6 +74,25 @@
 .run button[type="submit"] {
   min-width: 5rem;
 }
+/* Why Run is unavailable: in the text colour with an attention mark, so it reads as the thing
+   to resolve rather than a footnote. */
+.run p[data-blocked] {
+  color: var(--color-text);
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  flex: 1 1 16rem;
+  min-width: 0;
+}
+.run p[data-blocked]::before {
+  content: "";
+  flex: none;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 999px;
+  background: var(--color-attention);
+  transform: translateY(-0.05rem);
+}
 .runActions {
   display: flex;
   gap: 0.5rem;

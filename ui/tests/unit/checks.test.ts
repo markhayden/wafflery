@@ -47,6 +47,13 @@ test("a fail or unsure says the check still sees it, and where", () => {
   const nowhere = checkView(run({ verdict: { value: "fail", where: [] } }), outputs);
   if (nowhere?.kind !== "attention") throw new Error("expected attention");
   expect(nowhere.detail).toBe("It did not say where.");
+  expect(nowhere.title).toBe("The check still sees it");
+  // An unsure that names no place is doubt, not a sighting.
+  const doubt = checkView(run({ verdict: { value: "unsure", where: [] } }, ["Kept try 1 of 1. The check was not sure and named no place."]), outputs);
+  if (doubt?.kind !== "attention") throw new Error("expected attention");
+  expect(doubt.title).toBe("The check wasn't sure");
+  expect(doubt.detail).toBe("It did not say where.");
+  expect(doubt.places).toEqual([]);
   // A place on an image this run did not keep is counted, never drawn on another image.
   const elsewhere = checkView(run({ verdict: { value: "fail", where: [place("c")] } }), outputs);
   if (elsewhere?.kind !== "attention") throw new Error("expected attention");
