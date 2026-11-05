@@ -3724,7 +3724,8 @@ remain separate; no production release is implied. Product choices remain Q1–Q
 
 On `m13-checker`, against the table-manners v0.5 draft by path (`../table-manners`, version
 `=0.4.0`; every document keeps `"contract": "0.4.0"` until 13.15 bumps and publishes 0.5.0).
-Wafflery renders what the tools report and holds no logic about checkers.
+Wafflery renders what the tools report and holds no logic about checkers. (2026-11-05, 13.15:
+table-manners 0.5.0 published; Wafflery now adopts it and pins `=0.5.0` from crates.io.)
 
 - [x] Readiness: a requirement with `optional: true` shows in Tool setup as "Needed for <for>
   (optional)" and never makes an action need setup; the activity picker's and Check cost's

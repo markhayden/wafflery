@@ -2,8 +2,7 @@
 
 ## v0.5 adoption — 2026-11-05
 
-Branch `m13-checker` pins table-manners `=0.5.0` by path to the `v0.5` checkout until rascal's
-PLAN.md 13.15 publishes it; the pin then moves to crates.io. Every live check of the contract
+Wafflery pins table-manners `=0.5.0` from crates.io (published 2026-11-05, rascal PLAN.md 13.15). Every live check of the contract
 version (`src/tools/mod.rs`, the handoff and bundle code, the bundle reader, the UI's
 `tool-session.ts`, `workspace.ts`, `bundles.ts`, `invocation.ts` and `encodeBindings()`) accepts
 exactly 0.5.0; 0.4.0 is refused like any earlier version, with no dual support. The independent

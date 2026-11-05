@@ -112,11 +112,9 @@ the opt-in real Rascal offline smoke. Automatic discovery and installation remai
 [CI](.github/workflows/ci.yml) runs the full PLAN matrix on `macos-15` for pull requests,
 pushes to main and manual dispatch. Action revisions and runtime versions are pinned; Cargo
 and Bun dependencies are cached, and matching Chromium/WebKit browsers are installed explicitly.
-CI uses the independent offline peer without provider keys. On `main`, local and hosted builds
-resolve exactly table-manners 0.4.0 from crates.io using Cargo.lock; no sibling contract checkout
-is required. The `m13-checker` branch has adopted table-manners 0.5.0 and pins `=0.5.0` by path
-(`../table-manners`, branch `v0.5`) until rascal's PLAN.md 13.15 publishes 0.5.0, so it needs
-that sibling checkout; the pin then moves to crates.io. Five Rust checks and six browser real-tool journeys remain explicit opt-ins. Checked-in UI assets are verified
+CI uses the independent offline peer without provider keys. Local and hosted builds resolve
+exactly table-manners 0.5.0 from crates.io using Cargo.lock; no sibling contract checkout is
+required. Five Rust checks and six browser real-tool journeys remain explicit opt-ins. Checked-in UI assets are verified
 before any build can regenerate them. Failure diagnostics include Playwright traces, screenshots and an allowlisted attempt summary.
 See the [CI checkpoint](docs/reviews/2026-11-01-ci.md) for local versus hosted verification.
 
