@@ -3,7 +3,7 @@ import { LocalApi } from "../../src/api/client";
 import { workspaceClient } from "../../src/api/workspace";
 import type { Declaration } from "../../src/features/actions/model";
 const declaration: Declaration = {
-  revision: "current", generation: 0, schemas: {}, document: { contract: "0.4.0", tool: { name: "arbitrary", version: "1", purpose: "Boundary fixture" },
+  revision: "current", generation: 0, schemas: {}, document: { contract: "0.5.0", tool: { name: "arbitrary", version: "1", purpose: "Boundary fixture" },
     actions: [{kind:"task",name:"check",title:"Check",purpose:"Test",params_schema:{},cost:{may_spend:false},readiness:{state:"ready",requirements:[]}}] }
 };
 class ResponseApi extends LocalApi {

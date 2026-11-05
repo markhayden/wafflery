@@ -11,7 +11,7 @@ function record(value: Json | undefined): value is Schema {
 
 /** Read saved result evidence only; never derive an invocation from a request or current draft. */
 export function savedInvocation(result: Json): InvocationView {
-  if (!record(result) || result.contract !== "0.4.0" || !Object.hasOwn(result, "invocation"))
+  if (!record(result) || result.contract !== "0.5.0" || !Object.hasOwn(result, "invocation"))
     return { state: "unavailable" };
   const invocation = result.invocation;
   if (invocation === null && result.status === "invalid") return { state: "unresolved" };

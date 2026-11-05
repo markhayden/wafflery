@@ -3,9 +3,9 @@ import {importedDraft} from "../../src/features/workspace/bundle-replay";
 import type {Action,Declaration} from "../../src/features/actions/model";
 import type {BundleUpload} from "../../src/api/bundle-imports";
 const action:Action={kind:"operation",name:"shape",title:"Shape",purpose:"Test",params_schema:{type:"object"},cost:{may_spend:false},readiness:{state:"ready",requirements:[]},ports:{in:[{name:"pictures",type:"image",required:true,many:true},{name:"tokens",type:"sample:Token",many:true}],out:[]}};
-const declaration:Declaration={document:{contract:"0.4.0",tool:{name:"sample",version:"2.0.0",purpose:"Test"},actions:[action]},revision:"current",generation:1,schemas:{}};
+const declaration:Declaration={document:{contract:"0.5.0",tool:{name:"sample",version:"2.0.0",purpose:"Test"},actions:[action]},revision:"current",generation:1,schemas:{}};
 const image={id:"b".repeat(32),sha256:"c".repeat(64),width:160,height:100,size:1024,media_type:"image/png" as const};
-function review():BundleUpload{return {id:"d".repeat(32),record:{id:"a".repeat(64),sha256:"a".repeat(64),size:2048,manifest:{bundle_version:1,steps:[{contract:"0.4.0",tool:{name:"sample",version:"1.0.0"},invocation:{action:"shape",arguments:{},effective:{},requirements:[]},result:{},inputs:[],artifacts:[],reference_only:[],unportable:[]}]},members:[],workspace_dependent:false},import:{phase:"completed",bundle:"a".repeat(64),step:0,tool:"installed",action:"shape",params:{amount:0.75},inputs:[{name:"pictures",index:0,status:"completed",binding:{kind:"image",asset:image.id,frame:{projection:"equirectangular",topology:"wrap"}},reason:null},{name:"pictures",index:1,status:"completed",binding:{kind:"image",asset:image.id},reason:null},{name:"tokens",index:0,status:"unresolved",binding:null,reason:"No export"}],error:null}};}
+function review():BundleUpload{return {id:"d".repeat(32),record:{id:"a".repeat(64),sha256:"a".repeat(64),size:2048,manifest:{bundle_version:1,steps:[{contract:"0.5.0",tool:{name:"sample",version:"1.0.0"},invocation:{action:"shape",arguments:{},effective:{},requirements:[]},result:{},inputs:[],artifacts:[],reference_only:[],unportable:[]}]},members:[],workspace_dependent:false},import:{phase:"completed",bundle:"a".repeat(64),step:0,tool:"installed",action:"shape",params:{amount:0.75},inputs:[{name:"pictures",index:0,status:"completed",binding:{kind:"image",asset:image.id,frame:{projection:"equirectangular",topology:"wrap"}},reason:null},{name:"pictures",index:1,status:"completed",binding:{kind:"image",asset:image.id},reason:null},{name:"tokens",index:0,status:"unresolved",binding:null,reason:"No export"}],error:null}};}
 test("imported operation inputs keep duplicate order and unresolved optional ports block replay until acknowledged",async()=>{
  const upload=review(),original=structuredClone(upload);
  const draft=await importedDraft(upload,"installed",declaration,async()=>image);
@@ -43,6 +43,6 @@ test("guided replay preserves fresh origins in operations and core image slots w
 import {encodeWorkspaceInputs} from "../../src/features/workspace/artifact-transfer";
 test("core image and operation origins merge without losing either provenance map",()=>{
  const origin={attempt:"fresh-producer",port:"picture",occurrence:2};const other={attempt:"marker-producer",port:"marker",occurrence:0};
- const value=encodeWorkspaceInputs("0.4.0",[{slot:"source",role:"source",required:true}],{source:[{...image,origin}]},{region:[{kind:"location",value:{kind:"line"},origin:other}]});
+ const value=encodeWorkspaceInputs("0.5.0",[{slot:"source",role:"source",required:true}],{source:[{...image,origin}]},{region:[{kind:"location",value:{kind:"line"},origin:other}]});
  expect(value.lineage).toEqual({source:[origin],region:[other]});expect(value.bindings.region?.[0]).not.toHaveProperty("origin");expect(value.images.source).toEqual([image.id]);
 });

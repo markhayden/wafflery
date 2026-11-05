@@ -137,12 +137,12 @@ async fn assemble_step(
         .result
         .as_ref()
         .ok_or(Error::Missing("No saved result to bundle"))?;
-    if result["contract"] != "0.4.0"
-        || attempt.declaration["document"]["contract"] != "0.4.0"
+    if result["contract"] != "0.5.0"
+        || attempt.declaration["document"]["contract"] != "0.5.0"
         || result["invocation"].is_null()
     {
         return Err(Error::Invalid(
-            "A bundle needs a resolved v0.4 invocation".into(),
+            "A bundle needs a resolved v0.5 invocation".into(),
         ));
     }
     check_schema("urn:table-manners:core:result", result)?;

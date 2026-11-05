@@ -122,7 +122,7 @@ pub fn serve(scenario: &str) -> Result<(), Box<dyn std::error::Error>> {
     };
     let mut document = fixtures::description(tool, state);
     if scenario == "control-legacy" {
-        document["contract"] = json!("0.3.0");
+        document["contract"] = json!("0.4.0");
     }
     if scenario == "control-no-cap" {
         document["actions"][1]["params_schema"]["properties"]
@@ -196,7 +196,7 @@ pub fn serve(scenario: &str) -> Result<(), Box<dyn std::error::Error>> {
                     Some(session.clone())
                 } else if params["uri"] == format!("{tool}://runs") {
                     Some(
-                        json!({"contract":"0.4.0","tool":session["tool"],"runs":[],"next_cursor":null}),
+                        json!({"contract":"0.5.0","tool":session["tool"],"runs":[],"next_cursor":null}),
                     )
                 } else {
                     None

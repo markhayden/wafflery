@@ -311,7 +311,7 @@ impl Runs {
             .map(|(_, entry)| entry)
             .collect();
         Ok(
-            json!({"contract":"0.4.0","tool":{"name":self.tool,"version":"0.1.0"},"runs":entries,"next_cursor":next}),
+            json!({"contract":"0.5.0","tool":{"name":self.tool,"version":"0.1.0"},"runs":entries,"next_cursor":next}),
         )
     }
 }

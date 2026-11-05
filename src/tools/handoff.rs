@@ -106,7 +106,7 @@ pub async fn build(assets: &AssetStore, attempt: &Attempt) -> Result<Handoff> {
     let Some(result) = attempt
         .result
         .as_ref()
-        .filter(|result| result["contract"] == "0.4.0")
+        .filter(|result| result["contract"] == "0.5.0")
     else {
         handoff
             .blockers
@@ -120,7 +120,7 @@ pub async fn build(assets: &AssetStore, attempt: &Attempt) -> Result<Handoff> {
             .push("The tool refused this run's inputs, so there is nothing to repeat.".into());
         return Ok(handoff);
     }
-    if attempt.declaration["document"]["contract"] != "0.4.0"
+    if attempt.declaration["document"]["contract"] != "0.5.0"
         || !super::validator(&json!({"$ref":"urn:table-manners:core:result#/$defs/invocation"}))?
             .is_valid(invocation)
         || invocation["action"] != attempt.request.action

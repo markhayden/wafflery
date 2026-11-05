@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from "@storybook/react-vite";
 import { ToolSetup } from "./ToolSetup";
 import type { ToolSession } from "../../api/tool-session";
 const session: ToolSession = {
-  contract: "0.4.0", tool: { name: "sample-lab", version: "0.1.0" },
+  contract: "0.5.0", tool: { name: "sample-lab", version: "0.1.0" },
   id: "bb8f5520-a822-4cdc-a9eb-f1a72018e000", started: "2026-11-01T10:00:00Z",
   budget_usd: 2, spent_usd: 0.16, unresolved_usd: 0.04, reserved_usd: 0.04, remaining_usd: 1.8,
   allowed_dirs: ["/work/reference images/approved"],
@@ -38,3 +38,11 @@ export const UnavailableAction: Story = { args: { action: { ...meta.args.action,
 
 export const NarrowedAccess: Story = {};
 export const NoFileAccess: Story = {args:{loadSession:async () => ({...session,allowed_dirs:[]})}};
+/** A checking key the action can run without: the action stays ready, and the key says what it
+ * is for. */
+export const OptionalRequirement: Story = { args: { action: { ...meta.args.action, answers: "verdict", readiness: {
+  state: "ready", requirements: [
+    { kind: "credential", name: "EXAMPLE_CHECK_KEY", state: "missing", optional: true, for: "checking the result",
+      setup: "Set EXAMPLE_CHECK_KEY where the tool starts, then refresh. Without it the result is not checked." },
+  ],
+} } } };

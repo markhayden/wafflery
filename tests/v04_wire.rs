@@ -763,7 +763,7 @@ fn wire_lifecycle_controls_and_progress_remain_live_while_execution_is_held() {
     );
     assert_eq!(
         description["result"]["structuredContent"]["contract"],
-        "0.4.0"
+        "0.5.0"
     );
     let artifact = fixtures::artifact_variant("sample-lab", "sample-lab:Token", 0.75);
     let imported = control(

@@ -16,9 +16,9 @@ use std::{
 
 pub fn description(scenario: &str) -> Value {
     let mut document = fixtures::description(if scenario == "unsupported-contract" {
-        "0.3.0"
-    } else {
         "0.4.0"
+    } else {
+        "0.5.0"
     });
     if scenario == "paid" {
         document["actions"][0]["cost"]["may_spend"] = json!(true);
@@ -142,6 +142,7 @@ pub fn execute(
     let params = &message["params"]["arguments"];
     let started = Instant::now();
     let mut run = fixtures::result("completed");
+    run["action"] = message["params"]["name"].clone();
     let id = format!("run-{:04}", state.lock().unwrap().runs.len() + 1);
     let directory = root.join(&id);
     let resource = format!("{}://run/{id}/run.json", fixtures::TOOL);
@@ -206,7 +207,7 @@ pub fn execute(
                 .append(true)
                 .open(root.join("calls.ndjson"))?,
             "{}",
-            json!({"name":"mark_band","arguments":params})
+            json!({"name":message["params"]["name"],"arguments":params})
         )?;
         notify("Started");
         if scenario == "exit-during-call" {
@@ -215,7 +216,13 @@ pub fn execute(
         let roots = state.lock().unwrap().allow_dirs.clone();
         let (images, output_reference, output_bytes) = prepare_images(params, &roots)?;
         run["images"]["in"] = images;
-        let action = &super::readiness::description(&root, &scenario)["actions"][0];
+        let description = super::readiness::description(&root, &scenario);
+        let action = description["actions"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|action| action["name"] == message["params"]["name"])
+            .unwrap_or(&description["actions"][0]);
         run["invocation"] = super::task_invocation::build(
             action,
             params,
@@ -268,6 +275,11 @@ pub fn execute(
                     notify("Waiting in the offline test tool");
                 }
             }
+        }
+        if message["params"]["name"] == super::checks::ACTION {
+            super::checks::complete(&mut run, params, &root, &directory, &roots, &id)?;
+            notify("Illustrative checked band saved");
+            return Ok(());
         }
         if scenario == "data-only" {
             run["images"]["out"] = json!([]);
@@ -429,7 +441,7 @@ pub(super) fn prepare_images(
     Ok((json!(images), candidate, bytes))
 }
 
-fn mark(
+pub(super) fn mark(
     params: &Value,
     roots: &[PathBuf],
 ) -> Result<(Value, Value, Vec<u8>), Box<dyn std::error::Error>> {
@@ -514,7 +526,7 @@ pub fn resource(state: &PeerState, root: &Path, uri: &str) -> Option<Value> {
     if uri == format!("{}://runs", fixtures::TOOL) {
         let runs: Vec<_> = state.runs.iter().rev().map(|run| json!({"id":run["run"]["id"],"action":run["action"],"status":run["status"],"started":run["started"],"resource":run["run"]["resource"],"session_id":run["run"]["session_id"],"client_run_id":run["run"]["client_run_id"]})).collect();
         return Some(
-            json!({"uri":uri,"mimeType":"application/json","text":json!({"contract":"0.4.0","next_cursor":null,"tool":{"name":fixtures::TOOL,"version":"0.1.0"},"runs":runs}).to_string()}),
+            json!({"uri":uri,"mimeType":"application/json","text":json!({"contract":"0.5.0","next_cursor":null,"tool":{"name":fixtures::TOOL,"version":"0.1.0"},"runs":runs}).to_string()}),
         );
     }
     for run in &state.runs {
@@ -527,6 +539,12 @@ pub fn resource(state: &PeerState, root: &Path, uri: &str) -> Option<Value> {
             "run.json" => "run.json",
             "journal" => "journal.ndjson",
             "candidate.png" => "candidate.png",
+            name if name.starts_with("try-")
+                && name.ends_with(".png")
+                && !name.contains(['/', '\\']) =>
+            {
+                name
+            }
             _ => continue,
         };
         let bytes = fs::read(root.join(id).join(file)).ok()?;

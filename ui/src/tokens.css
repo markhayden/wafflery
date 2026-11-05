@@ -11,6 +11,8 @@
   --color-brand: #8ec5ff;
   --color-on-brand: #0e1a26;
   --color-ok: #4fae74;
+  /* What a check still sees: drawn on a result and beside its words. */
+  --color-attention: #f0b45a;
   --syntax-key: #b8a5ff;
   --syntax-string: #9fd6a8;
   --syntax-number: #f0c08a;

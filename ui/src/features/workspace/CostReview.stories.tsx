@@ -6,7 +6,7 @@ const quote: Estimate = {
   effective: {model:"scripted-model", config_identity:`sha256:${"a".repeat(64)}`},
   worst_case_usd:0.12, cap_usd:0.5, allowed:true, refused:null,
   readiness:{state:"ready",requirements:[]}, expires:"2030-01-01T00:00:00Z",
-  session:{contract:"0.4.0",tool:{name:"sample-lab",version:"0.1.0"},
+  session:{contract:"0.5.0",tool:{name:"sample-lab",version:"0.1.0"},
     id:"22222222-2222-4222-8222-222222222222",started:"2026-11-01T00:00:00Z",
     budget_usd:2,spent_usd:0.16,reserved_usd:0.04,unresolved_usd:0.04,remaining_usd:1.8,allowed_dirs:[]},
 };

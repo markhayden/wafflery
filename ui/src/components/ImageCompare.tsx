@@ -11,7 +11,8 @@ type Props = {
   /** Extra controls in the toolbar, such as a toggle for what the right side shows. */
   controls?: ReactNode;
 };
-function useImage(asset: Asset | undefined, load: Props["load"]) {
+/** An asset's bytes as an object URL, read with `load` and revoked when the asset changes. */
+export function useImage(asset: Asset | undefined, load: (asset: Asset) => Promise<Blob>) {
   // Tagged with the asset it was read for, so a new label never shows the previous image's bytes
   // in the render before the new read starts.
   const [state, setState] = useState<{ for?: Asset; url?: string; error?: string }>({});

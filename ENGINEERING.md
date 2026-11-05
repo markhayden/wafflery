@@ -2,7 +2,7 @@
 
 Status: implemented macOS host design through M5.21, updated 2026-11-03. Product decisions live in
 [SPEC.md](SPEC.md), observable outcomes in [ACCEPTANCE.md](ACCEPTANCE.md), and scoped implementation
-history in [PLAN.md](PLAN.md). The live pin is published table-manners `=0.4.0`; protocol is
+history in [PLAN.md](PLAN.md). The live pin is table-manners `=0.5.0` (by path on `m13-checker` until it is published); protocol is
 `2025-11-25`. Older version sections below retain the reasoning behind earlier milestones.
 [The M5 review](docs/reviews/2026-11-03-m5-operations.md) records current acceptance and limitations.
 
@@ -474,7 +474,7 @@ limits do not shrink the agreed first-release acceptance criteria. Add an opt-in
 contract version must pass the same validation. Squint already has a testkit scripted-provider
 path, but it must not be used to bypass a live `may_spend: true` declaration in this milestone.
 
-Live execution accepts exactly published table-manners =0.4.0 from crates.io. Older saved records remain readable without migration or replay. Paid
+Live execution accepts exactly table-manners =0.5.0 (rascal PLAN.md 13.15; 0.4.0 is refused, with no dual support). Older saved records remain readable without migration or replay. Paid
 actions must declare a positive max_spend_usd and expose the reserved estimate MCP control,
 which is excluded from the Actions catalogue. Paid dispatch requires the owned priced preparation.
 List slots preserve input order and frames. M5.02 replaced MCP roots with explicit launch grants

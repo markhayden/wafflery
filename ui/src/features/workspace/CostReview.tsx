@@ -4,6 +4,7 @@ import { Button } from "../../components/Button";
 import { FieldTag } from "../../components/FieldTag";
 import { positiveCap, type Estimate } from "../../api/estimates";
 import { usd, type ToolSession } from "../../api/tool-session";
+import { blocking } from "./checks";
 import styles from "./CostReview.module.css";
 
 export type CostState = { kind: "idle" | "stale" }
@@ -58,7 +59,7 @@ export function CostReview({ cap, onCapChange, state, onEstimate, onSetup, sessi
         {quote.effective.model !== null && <div><dt>Model</dt><dd>{quote.effective.model}</dd></div>}
       </dl>
       {quote.refused === "readiness" && <div className={styles.requirements}>
-        {quote.readiness.requirements.length > 0 && <ul>{quote.readiness.requirements.map((item, index) =>
+        {blocking(quote.readiness.requirements).length > 0 && <ul>{blocking(quote.readiness.requirements).map((item, index) =>
           <li key={`${item.kind}:${item.name}:${index}`}><p><code>{item.name}</code> · {item.state}</p>{item.setup && <p>{item.setup}</p>}</li>)}</ul>}
         <Button onClick={event => onSetup(event.currentTarget)}>Tool setup</Button>
       </div>}

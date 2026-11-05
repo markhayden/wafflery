@@ -218,7 +218,7 @@ async fn control_discovery_accepts_unconfigured_tools_without_exposing_reserved_
         let declaration = client.describe().await;
         assert!(client.close().await.unwrap());
         let declaration = declaration.unwrap();
-        assert_eq!(declaration.document["contract"], "0.4.0");
+        assert_eq!(declaration.document["contract"], "0.5.0");
         assert_eq!(declaration.document["tool"]["name"], name);
         assert!(declaration.schemas.contains_key("estimate"));
         assert!(
@@ -236,7 +236,7 @@ async fn control_discovery_accepts_unconfigured_tools_without_exposing_reserved_
 async fn control_discovery_rejects_legacy_live_contract_and_paid_declarations_missing_controls_or_caps()
  {
     for (scenario, reason) in [
-        ("control-legacy", "exactly 0.4.0"),
+        ("control-legacy", "exactly 0.5.0"),
         ("control-no-estimate", "estimate"),
         ("control-no-cap", "max_spend_usd"),
     ] {

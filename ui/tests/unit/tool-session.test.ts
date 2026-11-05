@@ -1,7 +1,7 @@
 import { expect, test } from "bun:test";
 import { parseToolSession, usd } from "../../src/api/tool-session";
 const observation = {
-  contract: "0.4.0", tool: { name: "fixture", version: "1" },
+  contract: "0.5.0", tool: { name: "fixture", version: "1" },
   id: "bb8f5520-a822-4cdc-a9eb-f1a72018e000", started: "2026-11-01T00:00:00Z",
   budget_usd: 2, spent_usd: 0.16, unresolved_usd: 0.04, reserved_usd: 0.04, remaining_usd: 1.8,
   allowed_dirs: ["/work/approved"],

@@ -42,7 +42,7 @@ pub fn reference(bytes: &[u8], width: u32, height: u32) -> Value {
 pub fn result(status: &str) -> Value {
     let reference = reference(SAMPLE, 160, 100);
     json!({
-        "contract": "0.4.0", "tool": {"name": TOOL, "version": "0.1.0"}, "action": "mark_band",
+        "contract": "0.5.0", "tool": {"name": TOOL, "version": "0.1.0"}, "action": "mark_band",
         "run": {"id": "fixture-001", "resource": format!("{TOOL}://run/fixture-001/run.json"), "dir": null, "session_id": null, "client_run_id": null},
         "status": status, "error": null, "started": "2026-01-01T00:00:00.000Z", "finished": "2026-01-01T00:00:00.000Z", "duration_ms": 0,
         "invocation":{"action":"mark_band","arguments":{"label":"Fixture","tone":"blue","strength":0.5,"source":{"expect":reference}},

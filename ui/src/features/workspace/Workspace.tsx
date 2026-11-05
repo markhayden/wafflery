@@ -25,6 +25,7 @@ import { Shutdown } from "../../components/Shutdown";
 import { reportClient } from "../../api/reports";
 import { ReportOwner } from "./report-owner";
 import { RunOutcome } from "./RunOutcome";
+import { CheckVerdict } from "./CheckVerdict";
 import { CostReview, type CostState } from "./CostReview";
 import { useEstimateDraft } from "./useEstimateDraft";
 import { callParams, spendingLimit } from "../../api/estimates";
@@ -636,6 +637,7 @@ export function Workspace({
                   onSetup={event => setDrawer({opener:event.currentTarget,
                   view:"setup",tool:selected.request.tool,action:selected.request.action})} />}
                 {!noRun && !running && <>
+                <CheckVerdict result={selected.result} outputs={selected.outputs} load={assets.preview} />
                 {/* The picture of the run: its output images, or, for an operation whose outputs are records (a
                     location, a mask), the preview the tool drew of them. */}
                 {(!artifactOccurrences(selected.result).length || selected.outputs.length > 0) && <SavedComparison

@@ -227,14 +227,14 @@ fn validate_step<'a>(
     bytes: &[u8],
     named: &mut BTreeSet<&'a str>,
 ) -> Result<()> {
-    if step["contract"] != "0.4.0"
+    if step["contract"] != "0.5.0"
         || step["result"]["contract"] != step["contract"]
         || step["tool"] != step["result"]["tool"]
         || step["invocation"] != step["result"]["invocation"]
         || step["invocation"]["action"] != step["result"]["action"]
     {
         return Err(invalid(
-            "Bundle step conflicts with its original v0.4 result or invocation",
+            "Bundle step conflicts with its original v0.5 result or invocation",
         ));
     }
     for input in step["inputs"].as_array().unwrap() {

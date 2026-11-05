@@ -231,9 +231,7 @@ pub async fn capture(
     for output in result["images"]["out"].as_array().into_iter().flatten() {
         let saved = capture_image(assets, client, output).await;
         match saved {
-            Ok(asset) => {
-                outputs.push(json!({"role":output["role"],"image":output["image"],"asset":asset}))
-            }
+            Ok(asset) => outputs.push(saved_output(output, asset)),
             Err(error) => notices.push(format!("Output could not be preserved: {error}")),
         }
     }
@@ -273,6 +271,15 @@ pub async fn capture(
         }
     }
     (outputs, journal, notices)
+}
+/// A preserved output: its role, its reference, the saved asset and, when the tool gave one, the
+/// label a person sees in place of the role (table-manners 10.2).
+fn saved_output(output: &Value, asset: crate::library::assets::Asset) -> Value {
+    let mut saved = json!({"role":output["role"],"image":output["image"],"asset":asset});
+    if let Some(label) = output["label"].as_str() {
+        saved["label"] = json!(label);
+    }
+    saved
 }
 async fn capture_image(
     assets: &AssetStore,
@@ -433,6 +440,25 @@ mod tests {
             wrong["images"]["in"][0]["role"] = json!("source");
             assert!(check_association(&attempt, &wrong).is_err());
         }
+    }
+
+    #[test]
+    fn a_saved_output_keeps_the_tools_label_and_omits_an_absent_one() {
+        let asset = crate::library::assets::Asset {
+            id: "asset".into(),
+            sha256: "a".repeat(64),
+            size: 1,
+            width: 8,
+            height: 4,
+            media_type: "image/png".into(),
+        };
+        let labelled = json!({"role":"result_try_2","label":"Try 2 · result","image":frame("a"),"path":"/run/2.png"});
+        let saved = saved_output(&labelled, asset.clone());
+        assert_eq!(saved["label"], "Try 2 · result");
+        assert_eq!(saved["role"], "result_try_2");
+        assert!(saved.get("path").is_none());
+        let plain = saved_output(&json!({"role":"result","image":frame("a")}), asset);
+        assert!(plain.get("label").is_none());
     }
 
     #[test]

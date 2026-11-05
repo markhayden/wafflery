@@ -1,6 +1,6 @@
 import type { LocalApi } from "./client";
 export type ToolSession = {
-  contract: "0.4.0";
+  contract: "0.5.0";
   tool: { name: string; version: string };
   id: string;
   started: string;
@@ -21,7 +21,7 @@ const directories = (value: unknown): value is string[] =>
     typeof path === "string" && !path.includes("\0") &&
     (path === "/" || path.startsWith("/") && path.slice(1).split("/").every(part => part !== "" && part !== "." && part !== "..")));
 export function parseToolSession(value: unknown): ToolSession {
-  if (!record(value) || value.contract !== "0.4.0" || !record(value.tool) ||
+  if (!record(value) || value.contract !== "0.5.0" || !record(value.tool) ||
       typeof value.tool.name !== "string" || typeof value.tool.version !== "string" ||
       typeof value.id !== "string" || !/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/.test(value.id) ||
       typeof value.started !== "string" || !Number.isFinite(Date.parse(value.started)) ||

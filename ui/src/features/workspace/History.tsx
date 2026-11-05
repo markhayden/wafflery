@@ -106,7 +106,7 @@ function RunPeek({ id, client, preview, onOpen }: { id: string; client: ReturnTy
   const settings = Object.entries(object(attempt.request.params) ?? {}).filter(([, value]) => value !== undefined && value !== null && value !== "");
   const images: { label: string; image: SavedImage }[] = [
     ...Object.entries(attempt.inputs).flatMap(([port, list]) => list.map((image, index) => ({ label: Object.keys(attempt.inputs).length > 1 || list.length > 1 ? `Input · ${port}${list.length > 1 ? ` ${index + 1}` : ""}` : "Input", image }))),
-    ...attempt.outputs.map((image, index) => ({ label: attempt.outputs.length > 1 ? `Result ${index + 1}` : "Result", image })),
+    ...attempt.outputs.map((image, index) => ({ label: image.label ?? (attempt.outputs.length > 1 ? `Result ${index + 1}` : "Result"), image })),
   ];
   return <div className={styles.peek} data-images={images.length > 0 || undefined}>
     {images.length > 0 && <ul className={styles.images} aria-label="Images">

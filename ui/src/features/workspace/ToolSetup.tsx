@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Button } from "../../components/Button";
 import type { Action, Readiness, Requirement } from "../actions/model";
 import { usd, type ToolSession } from "../../api/tool-session";
+import { requirementPurpose } from "./checks";
 import styles from "./ToolSetup.module.css";
 
 const readinessLabel: Record<Readiness["state"], string> = {
@@ -59,9 +60,11 @@ export function ToolSetup({ tool, action, loadSession, directoryGrants = null }:
         <ul>{action.readiness.requirements.map((item, index) => <li key={`${item.kind}:${item.name}:${index}`}>
           <p><code>{item.name}</code> · <span>{requirementState[item.state]}</span></p>
           <p>{requirementKind[item.kind]}</p>
+          {item.optional && <p className={styles.optional}>{requirementPurpose(item)}</p>}
           {item.setup && <p>{item.setup}</p>}
         </li>)}</ul>
         <p>These states are reported by the tool. A present credential has not necessarily been validated. Configure credentials outside the playground.</p>
+        {action.readiness.requirements.some((item) => item.optional) && <p>An optional requirement never stops the action from running; without it, the action runs without that part and says so in its result.</p>}
       </> : <p>No setup requirements are declared for this action.</p>}
 
     </section>

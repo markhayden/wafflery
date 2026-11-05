@@ -1,5 +1,13 @@
 # Integration source inventory
 
+## v0.5 adoption — 2026-11-05
+
+Wafflery pins table-manners `=0.5.0` from crates.io (published 2026-11-05, rascal PLAN.md 13.15). Every live check of the contract
+version (`src/tools/mod.rs`, the handoff and bundle code, the bundle reader, the UI's
+`tool-session.ts`, `workspace.ts`, `bundles.ts`, `invocation.ts` and `encodeBindings()`) accepts
+exactly 0.5.0; 0.4.0 is refused like any earlier version, with no dual support. The independent
+peer and its fixtures speak 0.5.0. The v0.4 sections below are history.
+
 ## Current v0.4 cutover — 2026-11-02
 
 Live execution resolves published crates.io `table-manners =0.4.0` with Cargo.lock. The packaged
