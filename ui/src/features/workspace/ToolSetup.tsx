@@ -61,6 +61,7 @@ export function ToolSetup({ tool, action, loadSession, directoryGrants = null }:
           <p><code>{item.name}</code> · <span>{requirementState[item.state]}</span></p>
           <p>{requirementKind[item.kind]}</p>
           {item.optional && <p className={styles.optional}>{requirementPurpose(item)}</p>}
+          {item.for_choice && <p className={styles.optional}>Needed only when {item.for_choice.param} is {item.for_choice.value}.</p>}
           {item.setup && <p>{item.setup}</p>}
         </li>)}</ul>
         <p>These states are reported by the tool. A present credential has not necessarily been validated. Configure credentials outside the playground.</p>

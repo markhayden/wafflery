@@ -18,6 +18,10 @@ pub fn router(coordinator: Arc<Coordinator>) -> Router {
         .route("/api/tools/{id}/session", get(session))
         .route("/api/tools/{id}/refresh", post(refresh))
         .route("/api/tools/{id}/restart", post(restart))
+        .route(
+            "/api/tools/{id}/installables/{installable}/{control}",
+            post(installable_control),
+        )
         .route("/api/preparations", post(prepare))
         .route(
             "/api/preparations/{id}",
@@ -125,6 +129,19 @@ async fn restart(
     Json(input): Json<Restart>,
 ) -> Result<Json<crate::tools::client::Declaration>, ApiError> {
     Ok(Json(c.restart(&id, input.confirmed).await?))
+}
+async fn installable_control(
+    State(c): State<Arc<Coordinator>>,
+    Path((id, installable, control)): Path<(String, String, String)>,
+    Json(_): Json<Empty>,
+) -> Result<(StatusCode, Json<serde_json::Value>), ApiError> {
+    use crate::tools::coordinator::installables::Control;
+    let (status, control) = match control.as_str() {
+        "install" => (StatusCode::ACCEPTED, Control::Install),
+        "uninstall" => (StatusCode::OK, Control::Uninstall),
+        _ => return Err(crate::tools::Error::Missing("Unknown installable control").into()),
+    };
+    Ok((status, Json(c.installable_control(&id, &installable, control).await?)))
 }
 async fn submit(
     State(c): State<Arc<Coordinator>>,

@@ -22,7 +22,7 @@
     "ui/src/api/reports.ts": "5241156e5e9c94f7a20b77310c2430a3e04c9294e98f6b3e1ae6ff0412c69083",
     "ui/src/api/session.ts": "22a57c63cccc806b23b8170f852ea091550787d04e89fc7df9d253a3df424f84",
     "ui/src/api/tool-session.ts": "cd75e191f9915458b519a3b243f60cd8c85445a25c514b5e5941b329e477dbeb",
-    "ui/src/api/workspace.ts": "6d9c0586503319a0ec4b48bc9861e037fcc34c8b81da40a911c900f709d7da2a",
+    "ui/src/api/workspace.ts": "e72f707a69e95892e6f5ffc6fb8b982e903767504e79e8fe8937e5ded11b731d",
     "ui/src/assets/tools/rascal-sticker.webp": "f1cc408f231167aee5543f0f8c0683f3594a0e447c51dcccc4fb413913e0a803",
     "ui/src/assets/tools/squint-sticker.webp": "3986ab96e919e338a7f8e8d64b552912baa3f79774c863d1e5d14f6a9f02f173",
     "ui/src/assets/wafflery-mark.svg": "51bc8a040e26b897a948238598b8cabdf69bf4687c2b1a70613b542de1c99f1f",
@@ -79,7 +79,7 @@
     "ui/src/features/actions/RectangleDrawer.tsx": "c70aa9095b0bf64c049cbbf6ae542eaa6cbe993415c0fc1a4321e3f394e378b6",
     "ui/src/features/actions/StrokeDrawer.tsx": "e3d2505076eec76af4c871c6c13024dcc5075a346e2706b8668b049c99147419",
     "ui/src/features/actions/help.ts": "37f71d0c7c639fffc02d4b9e6b1088b0fb832fa39eacdd0fe2954b032c4b5a62",
-    "ui/src/features/actions/model.ts": "c8f676bc5ac112fa5b8bf37d0dc5948f4dea4e4aa5a85d7dc85ea127d2cbec7f",
+    "ui/src/features/actions/model.ts": "6f7e071b128602b352967673a0f36e702790ecc306bb3c0788fa58a1ec4413f4",
     "ui/src/features/actions/ports.ts": "d27f4f3c6f160841752002049249b1b9952d0439cd4f3fe5b1e651aa85b91091",
     "ui/src/features/actions/selection.ts": "6ca7edf0f846176734efa323a251c05eef5b7a947cea52de462d82072f48e00c",
     "ui/src/features/workspace/ActivityPicker.module.css": "581afa77799ddb33eb765d14b19d3ab19eca6edc2bfe77e55fef7af68d948920",
@@ -115,6 +115,9 @@
     "ui/src/features/workspace/History.module.css": "41c2377ba92956b0091f6805fe4363afe22d81163d809b4b776803c96da88dc4",
     "ui/src/features/workspace/History.tsx": "c30da80065fc33e5039fa79dd56e3673320a7679bb99eb1c1c87cbe830890216",
     "ui/src/features/workspace/Inspector.tsx": "ae2fb236439baf05e788f1d680fae714af8e453b864c6b75c20adda97252d349",
+    "ui/src/features/workspace/Installables.module.css": "7d029ffd713d4b84af65dfb0131d058ed98e7ccd5cb6aa8d2964c40d32955234",
+    "ui/src/features/workspace/Installables.stories.tsx": "33f1e276becbfdf5003fba5720f6d4c1eb9275450b82a83b27dc634fbb296ed6",
+    "ui/src/features/workspace/Installables.tsx": "98bcff4d963165a4defe5378d62cbd1b73810d517a388c2733c1f69eab783f91",
     "ui/src/features/workspace/InvocationBundles.module.css": "fe313bfd791e09c0085aa73bbd8e0b0f0854e9cd7ffd1093bc9c1e52d8656c72",
     "ui/src/features/workspace/InvocationBundles.stories.tsx": "2294f30efcd630aeda64d43e509fda09bcaa9898eced8c732d8dfb1ba7dd5593",
     "ui/src/features/workspace/InvocationBundles.tsx": "edfbeb82c44edc881d5928cf7e7ebed6244390398a6b01214ea1474334b1845c",
@@ -142,9 +145,9 @@
     "ui/src/features/workspace/SendDestinations.tsx": "92a2e51227570fcf28147f4ea47b7273158bdeb38110922c5b9b2da89d7b8ad3",
     "ui/src/features/workspace/ToolSetup.module.css": "53c17da410d359ef4bda7cfa74c27b6551376c5d5904689cbb55308643df50d9",
     "ui/src/features/workspace/ToolSetup.stories.tsx": "3c735f8de366c383333a0264bb2ec3df547025538ee2f47747ddb675573bc9d5",
-    "ui/src/features/workspace/ToolSetup.tsx": "f6d5f123ccb18150a734be7d6571e222ac1463db5486329c6aa17431e00e8211",
+    "ui/src/features/workspace/ToolSetup.tsx": "a23f070a7f23e3b4a162d360ec0fcbedd941d54e76e9db0d5c564cdbaedddf33",
     "ui/src/features/workspace/Workspace.module.css": "a363e676db9ecabb60edf764dfce490a8342e8b3d41c5cb8382ca0e413235433",
-    "ui/src/features/workspace/Workspace.tsx": "15099e960ff46f945cdbe41c4684aea6320f4be9f9b9ea8fb29f978319f699ee",
+    "ui/src/features/workspace/Workspace.tsx": "558bd8a6d59178a21c7187f00e1743ee56fcc9b2cb068379f79b29cc7bd5436a",
     "ui/src/features/workspace/activities.ts": "1786d4d3e5b77efca1c108e524fa36776817e54401664f22cf83b7166921e820",
     "ui/src/features/workspace/artifact-transfer.ts": "1580167bef0f5acc46967f6a1258d356419d9bde39ca39bce0b867443aef9995",
     "ui/src/features/workspace/artifacts.ts": "53878b1132361584949a82ed37773fef659ac858c8ca51dff618c319a153793b",
@@ -165,11 +168,11 @@
     "ui/vite.config.ts": "1c784d406690c7e5b859cc459f02c6d69451c8c79fa77bd43babffdb9fdee5d8"
   },
   "outputs": {
-    "assets/index-ARBQWuek.css": "bd1da1834e8a27c2d51161638278e73a35240fa8b3b431241d6a788b730cb2f3",
-    "assets/index-Cl-Bo15V.js": "69dd0e20a6ee98c6819887c00ec41d2ce5b938b49a832d44022cf005f7875e25",
+    "assets/index-B2E37l37.css": "c2894430cac3539a743103a356161dc73bebd4def926a278152348a9a7da1259",
+    "assets/index-BPl6IBvj.js": "3b4feca1ae3fe1c4c84ff9ac5f06c76458d180453a6218d8711ed9d8fc0d9f3f",
     "assets/rascal-sticker-CmExR_HL.webp": "f1cc408f231167aee5543f0f8c0683f3594a0e447c51dcccc4fb413913e0a803",
     "assets/squint-sticker-CLmixeCt.webp": "3986ab96e919e338a7f8e8d64b552912baa3f79774c863d1e5d14f6a9f02f173",
     "assets/wafflery-mark-CML0EpfM.svg": "51bc8a040e26b897a948238598b8cabdf69bf4687c2b1a70613b542de1c99f1f",
-    "index.html": "f79c568e7fc4c1cf3867249b5c1141e16dee016fdbd5ef0045087156ee54fa73"
+    "index.html": "7266dcd9b3cffbfd1232ab7420d756c476c317555e86ff770dc192a829f45792"
   }
 }

@@ -5,6 +5,7 @@ mod control_fixtures;
 mod control_peer;
 mod estimates;
 mod fixtures;
+mod installables;
 mod paid;
 mod paid_scenarios;
 mod readiness;
@@ -239,6 +240,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 if let Some(configuration) = &configuration {
                     description = configuration.describe(description);
                 }
+                if scenario == "installables" {
+                    description = installables::describe(&root, description);
+                }
                 if params.get("cursor").is_none() {
                     let mut controls = vec![
                         json!({"name":"describe","description":"Shared contract description","inputSchema":{"type":"object","additionalProperties":false}}),
@@ -251,6 +255,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                             .any(|action| action["cost"]["may_spend"] == true)
                     {
                         controls.push(json!({"name":"estimate","description":"Reserved paid control","inputSchema":{"type":"object"}}));
+                    }
+                    if scenario == "installables" {
+                        controls.extend(installables::tools());
                     }
                     reply(
                         &output,
@@ -282,11 +289,21 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 if let Some(configuration) = &configuration {
                     description = configuration.describe(description);
                 }
+                if scenario == "installables" {
+                    description = installables::describe(&root, description);
+                }
                 reply(
                     &output,
                     id,
                     json!({"content":[{"type":"text","text":description.to_string()}],"structuredContent":description,"isError":false}),
                 );
+            }
+            "tools/call"
+                if initialized
+                    && scenario == "installables"
+                    && matches!(params["name"].as_str(), Some("install" | "uninstall")) =>
+            {
+                installables::call(root.clone(), output.clone(), message.clone());
             }
             "tools/call"
                 if initialized && params["name"] == "estimate" && scenario == "estimates" =>

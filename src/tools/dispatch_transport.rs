@@ -53,7 +53,7 @@ impl<T: Transport<RoleClient, Error = io::Error>> Transport<RoleClient> for Reco
                 if value["method"] == "tools/call"
                     && !matches!(
                         value["params"]["name"].as_str(),
-                        Some("describe" | "estimate" | "export" | "import")
+                        Some("describe" | "estimate" | "export" | "import" | "install" | "uninstall")
                     ) =>
             {
                 Some(self.gate.lock().unwrap_or_else(|e| e.into_inner()).take())

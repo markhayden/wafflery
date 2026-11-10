@@ -306,8 +306,17 @@ impl ToolClient {
                 "Tool declarations changed while reading".into(),
             ));
         }
+        // An installable's live progress changes while it installs; it is not a new declaration.
+        let mut stable = document.clone();
+        if let Some(items) = stable["installables"].as_array_mut() {
+            for item in items {
+                if let Some(item) = item.as_object_mut() {
+                    item.remove("progress");
+                }
+            }
+        }
         let revision = Sha256::digest(serde_json::to_vec(&json!([
-            document,
+            stable,
             schemas,
             generation,
             self.session

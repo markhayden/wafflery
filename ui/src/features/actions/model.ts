@@ -15,6 +15,26 @@ export type Requirement = {
   /** Never blocks the action: it serves only the part `for` names (table-manners 3.1). */
   optional?: boolean;
   for?: string;
+  /** Needed only when a call picks this choice (table-manners 0.6 draft, 3.1). */
+  for_choice?: { param: string; value: string };
+  /** The installable that satisfies this requirement (table-manners 0.6 draft, 3.5). */
+  installable?: string;
+};
+export type InstallError = { code: "unavailable" | "busy" | "failed" | "cancelled"; message: string };
+/** Something the tool can install on request, such as a model (table-manners 0.6 draft, 3.5). */
+export type Installable = {
+  id: string;
+  title: string;
+  kind: "model";
+  download_bytes: number;
+  installed_bytes: number;
+  licence: string;
+  state: "installed" | "not_installed" | "installing" | "unavailable";
+  progress?: number;
+  requirements: Requirement[];
+  notes?: string;
+  last_outcome: null | { action: "install" | "uninstall"; state: "succeeded" | "failed" | "cancelled"; error: InstallError | null; at: string };
+  [extension: `x-${string}`]: Json | undefined;
 };
 export type Readiness = {
   state: "ready" | "needs_setup" | "unavailable";
@@ -43,6 +63,7 @@ export type Declaration = {
     tool: { name: string; version: string; purpose: string };
     actions: Action[];
     vocabulary?: { group?: string[] };
+    installables?: Installable[];
   };
   tool_session?: Json;
   revision: string;

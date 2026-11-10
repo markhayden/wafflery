@@ -33,6 +33,7 @@ import { callParams, spendingLimit } from "../../api/estimates";
 import { parseToolSession, usd } from "../../api/tool-session";
 import { RestartTool } from "./RestartTool";
 import { ToolSetup } from "./ToolSetup";
+import { Installables } from "./Installables";
 import { readToolSession } from "../../api/tool-session";
 import { Cleanup } from "./Cleanup";
 import { Pipeline } from "./Pipeline";
@@ -119,6 +120,10 @@ export function Workspace({
     await client.refresh(setupToolId);
     return readToolSession(api, setupToolId);
   }, [api, client, setupToolId]);
+  // Installs are the tool's; refreshing emits an invalidation and the ordered snapshot follows.
+  const refreshSetupTool = useCallback(async () => { await client.refresh(setupToolId); }, [client, setupToolId]);
+  const installModel = useCallback((id: string) => client.install(setupToolId, id), [client, setupToolId]);
+  const uninstallModel = useCallback((id: string) => client.uninstall(setupToolId, id), [client, setupToolId]);
   const tool = snapshot.tools.find((tool) => tool.id === toolId);
   const declaration = tool?.declaration;
   const sessionId = object(declaration?.tool_session)?.id;
@@ -779,6 +784,9 @@ export function Workspace({
             ) : (
               <p role="status">Setup is unavailable because this tool or action is no longer available.</p>
             )}
+            {!setupRestarting && setupDeclaration?.document.installables?.length ? <Installables
+              installables={setupDeclaration.document.installables}
+              onInstall={installModel} onUninstall={uninstallModel} onRefresh={refreshSetupTool} /> : null}
             {setupTool && <RestartTool key={setupToolId} busy={setupTool.busy || setupRestarting} onRestart={restartToolSession} />}
           </>
         ) : drawer?.view === "history" ? (

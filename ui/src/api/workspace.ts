@@ -221,6 +221,18 @@ export function workspaceClient(api: LocalApi) {
       if (!declaration(value)) throw new Error("Tool declaration is unsupported.");
       return value;
     },
+    /** Starts an install the tool owns; the description reports its progress and outcome. */
+    async install(tool: string, installable: string): Promise<void> {
+      await api.request(`/api/tools/${encodeURIComponent(tool)}/installables/${encodeURIComponent(installable)}/install`, {
+        method: "POST", headers: { "Content-Type": "application/json" }, body: "{}",
+      });
+    },
+    /** Removes an installed one, or cancels one that is installing. */
+    async uninstall(tool: string, installable: string): Promise<void> {
+      await api.request(`/api/tools/${encodeURIComponent(tool)}/installables/${encodeURIComponent(installable)}/uninstall`, {
+        method: "POST", headers: { "Content-Type": "application/json" }, body: "{}",
+      });
+    },
     async restart(id: string): Promise<Declaration> {
       const value: unknown = await (await api.request(`/api/tools/${encodeURIComponent(id)}/restart`, {
         method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ confirmed: true }),
