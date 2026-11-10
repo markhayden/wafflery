@@ -2,7 +2,7 @@
 
 Status: implemented macOS host design through M5.21, updated 2026-11-03. Product decisions live in
 [SPEC.md](SPEC.md), observable outcomes in [ACCEPTANCE.md](ACCEPTANCE.md), and scoped implementation
-history in [PLAN.md](PLAN.md). The live pin is table-manners `=0.6.0`, by path on branch `m14-installables` until rascal PLAN.md 14.13 publishes it; protocol is
+history in [PLAN.md](PLAN.md). The live pin is table-manners `=0.6.0` (rascal PLAN.md 14.13); protocol is
 `2025-11-25`. Older version sections below retain the reasoning behind earlier milestones.
 [The M5 review](docs/reviews/2026-11-03-m5-operations.md) records current acceptance and limitations.
 

@@ -2,7 +2,7 @@
 
 ## Current disposition — 2026-11-03
 
-2026-11-10: the live contract is `=0.6.0` (rascal PLAN.md 14.13; by path until published), replacing
+2026-11-10: the live contract is `=0.6.0` (rascal PLAN.md 14.13; published), replacing
 0.5.0 directly: per-choice readiness, installables, `install` and `uninstall`.
 
 2026-11-05: the live contract was `=0.5.0` (rascal PLAN.md 13.15; by path until published), replacing

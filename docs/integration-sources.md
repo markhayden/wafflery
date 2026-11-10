@@ -2,7 +2,7 @@
 
 ## v0.6 adoption — 2026-11-10
 
-Wafflery pins table-manners `=0.6.0`, by path until rascal PLAN.md 14.13 publishes it. Every live
+Wafflery pins table-manners `=0.6.0` from crates.io (rascal PLAN.md 14.13). Every live
 check of the contract version accepts exactly 0.6.0; 0.5.0 is refused like any earlier version,
 with no dual support. The independent peer and its fixtures speak 0.6.0, and the legacy and
 unsupported-contract scenarios send 0.5.0. The v0.5 section below is history.
