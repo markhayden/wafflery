@@ -568,8 +568,8 @@ export function Workspace({
                   setSavedImages(await assets.list());
                   return asset;
                 }}
-onOpenSetup={opener => setDrawer({opener,view:"setup"})}
-                                preview={assets.thumbnail}
+                onOpenSetup={opener => setDrawer({opener,view:"setup"})}
+                preview={assets.thumbnail}
                 locations={action.kind!=="operation"&&inputPorts.length>0?portEditor:undefined}
                 saved={savedImages}
               />

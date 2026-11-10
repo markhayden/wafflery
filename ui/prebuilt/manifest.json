@@ -118,7 +118,7 @@
     "ui/src/features/workspace/Inspector.tsx": "ae2fb236439baf05e788f1d680fae714af8e453b864c6b75c20adda97252d349",
     "ui/src/features/workspace/Installables.module.css": "7d029ffd713d4b84af65dfb0131d058ed98e7ccd5cb6aa8d2964c40d32955234",
     "ui/src/features/workspace/Installables.stories.tsx": "33f1e276becbfdf5003fba5720f6d4c1eb9275450b82a83b27dc634fbb296ed6",
-    "ui/src/features/workspace/Installables.tsx": "98bcff4d963165a4defe5378d62cbd1b73810d517a388c2733c1f69eab783f91",
+    "ui/src/features/workspace/Installables.tsx": "5deda8589eb7a0521c288a699ff84d236dc17d73937eb51b8ece57fbb953a803",
     "ui/src/features/workspace/InvocationBundles.module.css": "fe313bfd791e09c0085aa73bbd8e0b0f0854e9cd7ffd1093bc9c1e52d8656c72",
     "ui/src/features/workspace/InvocationBundles.stories.tsx": "56715fd61305cf4ec04da7161b09b5c0771ba43de3339e00c08295c3b4c74a21",
     "ui/src/features/workspace/InvocationBundles.tsx": "edfbeb82c44edc881d5928cf7e7ebed6244390398a6b01214ea1474334b1845c",
@@ -148,7 +148,7 @@
     "ui/src/features/workspace/ToolSetup.stories.tsx": "7a4d6302a50e9881e35389a431a1c2646b8d5096031555f6010994e2c8d22815",
     "ui/src/features/workspace/ToolSetup.tsx": "a23f070a7f23e3b4a162d360ec0fcbedd941d54e76e9db0d5c564cdbaedddf33",
     "ui/src/features/workspace/Workspace.module.css": "a1737a721b5f043c8c6339f8fa020a6833b993996e322fc5843873b354cb266d",
-    "ui/src/features/workspace/Workspace.tsx": "34b8bd27bf4f60b764bf03cb2e080d3af9f704a9e7785c112aa1c45f9bbfb1ff",
+    "ui/src/features/workspace/Workspace.tsx": "0a992235b2c666a5aab0ca1b01f8389577d5c8a4ac752789dfe23f53773e0f39",
     "ui/src/features/workspace/activities.ts": "1786d4d3e5b77efca1c108e524fa36776817e54401664f22cf83b7166921e820",
     "ui/src/features/workspace/artifact-transfer.ts": "1580167bef0f5acc46967f6a1258d356419d9bde39ca39bce0b867443aef9995",
     "ui/src/features/workspace/artifacts.ts": "53878b1132361584949a82ed37773fef659ac858c8ca51dff618c319a153793b",
@@ -170,10 +170,10 @@
   },
   "outputs": {
     "assets/index-CxlLJo7k.css": "1c82f05e47ad8887434d487dfbd250b509257b7f32620c6eda8eef29c045eeca",
-    "assets/index-zjpDp2kQ.js": "359d18a7a65896f614b25c26e6216ddf606537cbfa8c41375f362e5d36fa7568",
+    "assets/index-DYcKtl0W.js": "857cee7fd4db07cf1afe8ec5b1eea792dda8265d7ddb1183cea2a29d0a975e88",
     "assets/rascal-sticker-CmExR_HL.webp": "f1cc408f231167aee5543f0f8c0683f3594a0e447c51dcccc4fb413913e0a803",
     "assets/squint-sticker-CLmixeCt.webp": "3986ab96e919e338a7f8e8d64b552912baa3f79774c863d1e5d14f6a9f02f173",
     "assets/wafflery-mark-CML0EpfM.svg": "51bc8a040e26b897a948238598b8cabdf69bf4687c2b1a70613b542de1c99f1f",
-    "index.html": "8567f7fb9afa77978402c6bdd8be69ce2023209fd86e0840baaf0b7d25804fe0"
+    "index.html": "c58821c4c6327c8c13a19daeb237412e6fd725f6959b4b831c6792fe742c37a5"
   }
 }
