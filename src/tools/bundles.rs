@@ -137,8 +137,8 @@ async fn assemble_step(
         .result
         .as_ref()
         .ok_or(Error::Missing("No saved result to bundle"))?;
-    if result["contract"] != "0.5.0"
-        || attempt.declaration["document"]["contract"] != "0.5.0"
+    if result["contract"] != "0.6.0"
+        || attempt.declaration["document"]["contract"] != "0.6.0"
         || result["invocation"].is_null()
     {
         return Err(Error::Invalid(

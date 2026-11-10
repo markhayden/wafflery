@@ -1,0 +1,15 @@
+.installables { display: grid; gap: 1rem; }
+.installables h3 { font-size: 1rem; font-weight: 500; }
+.installables p { font-size: .875rem; color: var(--color-muted); line-height: 1.6; }
+.installables ul { display: grid; gap: .75rem; margin: 0; padding: 0; list-style: none; }
+.row { display: grid; gap: .5rem; padding: .875rem 1rem; border: 1px solid var(--color-line); border-radius: .5rem; min-width: 0; }
+.head { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
+.head strong { font-size: .9375rem; font-weight: 500; overflow-wrap: anywhere; }
+.state { font-size: .8125rem; color: var(--color-muted); }
+.state[data-state="installed"] { color: var(--color-text); }
+.facts { font-variant-numeric: tabular-nums; }
+.track { height: .25rem; border-radius: 999px; background: var(--color-line); overflow: hidden; }
+.bar { display: block; height: 100%; background: var(--color-text); transition: width .3s ease; }
+.actions { display: flex; gap: .5rem; flex-wrap: wrap; }
+.confirm { display: grid; gap: .5rem; }
+.installables p.confirm, .confirm p { color: var(--color-text); }

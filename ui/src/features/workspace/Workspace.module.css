@@ -239,3 +239,5 @@
 .preserveFailed { border-color: color-mix(in srgb, #e5a50a 45%, var(--color-line)); }
 .outputs { display: inline-flex; gap: 0.25rem; margin-right: 0.5rem; }
 .hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.chosen { margin: 0; font-size: .875rem; color: var(--color-muted); }
+.chosen strong { font-weight: 500; color: var(--color-text); }

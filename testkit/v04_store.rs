@@ -238,7 +238,7 @@ impl Store {
         }
         let already_present = self.remember(&document)?;
         Ok(
-            json!({"contract":"0.5.0","tool":{"name":self.tool,"version":"0.1.0"},"artifact":document["artifact"],"already_present":already_present}),
+            json!({"contract":"0.6.0","tool":{"name":self.tool,"version":"0.1.0"},"artifact":document["artifact"],"already_present":already_present}),
         )
     }
     pub fn export(&self, request: Value) -> Result<Value> {
@@ -261,7 +261,7 @@ impl Store {
         staged.write_all(&bytes).map_err(internal)?;
         staged.persist(&destination).map_err(internal)?;
         Ok(
-            json!({"contract":"0.5.0","tool":{"name":self.tool,"version":"0.1.0"},"artifact":document["artifact"],
+            json!({"contract":"0.6.0","tool":{"name":self.tool,"version":"0.1.0"},"artifact":document["artifact"],
             "file":{"path":destination,"bytes":bytes.len(),"sha256":hash(&bytes),"media_type":media(&self.tool,kind)}}),
         )
     }

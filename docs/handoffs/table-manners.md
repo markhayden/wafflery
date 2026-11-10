@@ -2,7 +2,10 @@
 
 ## Current disposition — 2026-11-03
 
-2026-11-05: the live contract is `=0.5.0` (rascal PLAN.md 13.15; by path until published), replacing
+2026-11-10: the live contract is `=0.6.0` (rascal PLAN.md 14.13; published), replacing
+0.5.0 directly: per-choice readiness, installables, `install` and `uninstall`.
+
+2026-11-05: the live contract was `=0.5.0` (rascal PLAN.md 13.15; by path until published), replacing
 0.4.0 directly. Until then, published `=0.4.0` at `d1c49a7` was the live contract. C1 readiness/estimates, C2 invocation/native
 portability/bundles, C3 renders, C4 association/session boundaries and the operations profile are
 adopted by the host. M5.21 verifies the approved real peers and independent fake. Explicit

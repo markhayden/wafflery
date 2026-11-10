@@ -2,7 +2,7 @@
 
 Status: implemented macOS host design through M5.21, updated 2026-11-03. Product decisions live in
 [SPEC.md](SPEC.md), observable outcomes in [ACCEPTANCE.md](ACCEPTANCE.md), and scoped implementation
-history in [PLAN.md](PLAN.md). The live pin is table-manners `=0.5.0` (by path on `m13-checker` until it is published); protocol is
+history in [PLAN.md](PLAN.md). The live pin is table-manners `=0.6.0` (rascal PLAN.md 14.13); protocol is
 `2025-11-25`. Older version sections below retain the reasoning behind earlier milestones.
 [The M5 review](docs/reviews/2026-11-03-m5-operations.md) records current acceptance and limitations.
 
@@ -474,7 +474,7 @@ limits do not shrink the agreed first-release acceptance criteria. Add an opt-in
 contract version must pass the same validation. Squint already has a testkit scripted-provider
 path, but it must not be used to bypass a live `may_spend: true` declaration in this milestone.
 
-Live execution accepts exactly table-manners =0.5.0 (rascal PLAN.md 13.15; 0.4.0 is refused, with no dual support). Older saved records remain readable without migration or replay. Paid
+Live execution accepts exactly table-manners =0.6.0 (rascal PLAN.md 14.13; 0.5.0 is refused, with no dual support). Older saved records remain readable without migration or replay. Paid
 actions must declare a positive max_spend_usd and expose the reserved estimate MCP control,
 which is excluded from the Actions catalogue. Paid dispatch requires the owned priced preparation.
 List slots preserve input order and frames. M5.02 replaced MCP roots with explicit launch grants
@@ -536,6 +536,23 @@ neither may execute with host-session authority.
   V20 implements bounded header feedback, streaming PNG/scaled JPEG preview generation, private
   derived-cache repair/cleanup and separate original/thumbnail endpoints. The [import review](docs/reviews/2026-11-03-image-import.md)
   records codec memory limits and release measurements.
+
+### v0.6 draft: installables and per-choice readiness
+
+A description may list `installables` (models a tool installs on request) and give an `enum`
+parameter `x-requirements`, with readiness requirements carrying `for_choice`. A description with
+installables must expose the reserved `install` and `uninstall` controls. `POST
+/api/tools/{id}/installables/{installable}/install` checks the installable is listed, then starts
+the control in a task the HTTP request does not own and answers 202; the tool owns the install
+from then on, so closing the page does not stop it. `.../uninstall` waits for the tool's result
+(removing an installed one, or cancelling one that is installing). Neither is an action: no
+attempt, no history, no spend, no execution permit (the dispatch gate exempts both, as it does
+`describe`, `estimate`, `export` and `import`). Results are checked against `install-result`,
+refusals against `refusal`. The page follows an install by rereading the description while
+anything is `installing` (state, `progress` and `last_outcome` come from the tool); an
+installable's `progress` is left out of the declaration revision so polling does not invalidate
+preparations. The action form shows each choice's state, lists the default first, disables a
+choice that is not installed and links to setup; a result names the choice it ran with.
 
 ### v0.3 readiness controls
 

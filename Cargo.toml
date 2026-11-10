@@ -25,7 +25,7 @@ jpeg-decoder = { version = "=0.3.2", default-features = false }
 image = { version = "=0.25.10", default-features = false, features = ["png", "jpeg"] }
 
 rmcp = { version = "=3.8.0", default-features = false, features = ["client", "transport-async-rw"] }
-table-manners = "=0.5.0"
+table-manners = "=0.6.0"
 jsonschema = { version = "=0.60.2", default-features = false }
 url = "=2.5.8"
 

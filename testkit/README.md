@@ -4,7 +4,7 @@
 in for Rascal's repair operations or Squint's judgments. Its wire implementation does not use
 rmcp or Wafflery's coordinator/client. It may use the published contract's data/schema crate.
 
-The fixtures target `table-manners =0.5.0` (by path until it is published). `fixtures.rs` builds deterministic
+The fixtures target `table-manners =0.6.0` (by path until it is published). `fixtures.rs` builds deterministic
 description/result documents. The owned PNG is `ui/tests/fixtures/sample.png`, a generated RGB
 gradient; its byte fingerprint is computed, not copied from another tool's output. The fixture
 input identity is a documented placeholder until the wire peer computes actual request identity.
@@ -50,7 +50,7 @@ export XDG_CACHE_HOME="$probe_root/cache"
 export XDG_DATA_HOME="$probe_root/data"
 ```
 
-Then select the approved contract 0.5.0 binary:
+Then select the approved contract 0.6.0 binary:
 
 ```sh
 WAFFLERY_RASCAL_BIN=/absolute/path/to/rascal cargo test --locked --test rascal_smoke -- --ignored --nocapture
@@ -84,7 +84,7 @@ WAFFLERY_RASCAL_BIN=/absolute/path/to/rascal bun run --cwd ui test:browser
 The optional Chromium/WebKit journey uses explicit registration and the same generic UI as any
 tool. It checks a real seam mask, saved inputs, recorded call, image evidence download, independent
 example loading, and history/output preservation across a host restart. Without the environment
-variable those two cases are reported skipped. Choose a stable contract 0.5.0 executable; rebuilding
+variable those two cases are reported skipped. Choose a stable contract 0.6.0 executable; rebuilding
 a selected binary against a newer draft during the suite will correctly make it unavailable.
 
 `ui/tests/fixtures/panorama.png` is an owned, procedurally generated 2048×1024 RGBA gradient:
@@ -98,7 +98,7 @@ alignment. With no filler this verifies mask preparation, not a repaired image o
 
 ## Optional Squint and two-tool integration
 
-Use an explicitly selected, stable contract 0.5.0 Squint binary built with `--features testkit`
+Use an explicitly selected, stable contract 0.6.0 Squint binary built with `--features testkit`
 at coordinator-approved revision `6dd1e3a` (M10). The coordinator
 probe owns config/script/files, uses the host environment allowlist with the isolated XDG directories above, and supplies no credentials:
 
@@ -294,7 +294,7 @@ operations and that unapproved origins receive no navigation request.
 ## v0.4 operation peer (M5.01)
 
 `v04_fixtures.rs` owns synthetic operation/task/utility descriptions, resolved results, references,
-previews and control examples. `table-manners =0.5.0` is now the single exact dependency
+previews and control examples. `table-manners =0.6.0` is now the single exact dependency
 for both the live client and independent peers. Schema and cross-document checks live in
 `tests/v04_contract_fixtures.rs`. No host types or real tool output construct these fixtures.
 Token and Memo are test-only native types. Location is the shared type. Preview fingerprints

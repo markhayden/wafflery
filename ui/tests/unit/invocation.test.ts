@@ -11,7 +11,7 @@ const invocation = {
 
 test("resolved invocation stays exact across all terminal outcomes", () => {
   for (const status of ["completed", "cancelled", "error", "invalid"]) {
-    const result = { contract: "0.5.0", status, invocation: structuredClone(invocation) };
+    const result = { contract: "0.6.0", status, invocation: structuredClone(invocation) };
     const before = JSON.stringify(result);
     expect(savedInvocation(result)).toEqual({ state: "resolved", value: invocation });
     expect(JSON.stringify(result)).toBe(before);
@@ -19,10 +19,10 @@ test("resolved invocation stays exact across all terminal outcomes", () => {
 });
 
 test("only explicit null on an invalid run means inputs did not resolve", () => {
-  expect(savedInvocation({ contract: "0.5.0", status: "invalid", invocation: null }))
+  expect(savedInvocation({ contract: "0.6.0", status: "invalid", invocation: null }))
     .toEqual({ state: "unresolved" });
-  for (const result of [null, {}, { contract: "0.5.0", status: "invalid" },
-    { contract: "0.5.0", status: "completed", invocation: null },
+  for (const result of [null, {}, { contract: "0.6.0", status: "invalid" },
+    { contract: "0.6.0", status: "completed", invocation: null },
     { contract: "0.3.0", status: "invalid", invocation: null }]) {
     expect(savedInvocation(result)).toEqual({ state: "unavailable" });
   }
@@ -34,7 +34,7 @@ test("older or malformed evidence never becomes a reconstructed invocation", () 
   }
   for (const malformed of [[], "unknown", {}, { ...invocation, arguments: [] },
     { ...invocation, effective: null }, { ...invocation, requirements: [{ value: "not a name" }] }]) {
-    expect(savedInvocation({ contract: "0.5.0", status: "completed", invocation: malformed } as Json))
+    expect(savedInvocation({ contract: "0.6.0", status: "completed", invocation: malformed } as Json))
       .toEqual({ state: "unavailable" });
   }
 });

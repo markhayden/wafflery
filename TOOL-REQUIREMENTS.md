@@ -1,7 +1,7 @@
 # Tool and contract handoffs
 
 Current status, 2026-11-03. The original requests below retain their IDs and historical audit.
-The live contract is `=0.5.0` (rascal PLAN.md 13.15; by path until published); the v0.4 host was verified
+The live contract is `=0.6.0` (rascal PLAN.md 14.13); the v0.4 host was verified
 against approved Rascal `eed6397` and Squint `6dd1e3a`. See [M5 acceptance](docs/reviews/2026-11-03-m5-operations.md).
 
 | Request | Current disposition |

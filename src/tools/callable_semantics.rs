@@ -20,6 +20,15 @@ pub(super) fn validate(document: &Value, schemas: &BTreeMap<String, Value>) -> R
             }
         }
     }
+    if !entries(&document["installables"]).is_empty() {
+        for control in ["install", "uninstall"] {
+            if !schemas.contains_key(control) {
+                return Err(Error::Invalid(format!(
+                    "Installables require the {control} MCP control"
+                )));
+            }
+        }
+    }
     let images = entries(&document["profiles"])
         .iter()
         .any(|profile| profile == "images");
@@ -120,6 +129,16 @@ mod tests {
         let mut paid = document;
         paid["actions"][0]["cost"]["may_spend"] = json!(true);
         assert!(validate(&paid, &schemas).is_err());
+    }
+    #[test]
+    fn installables_require_both_install_controls() {
+        let (mut document, mut schemas) = peer();
+        document["installables"] = json!([{"id":"small"}]);
+        assert!(validate(&document, &schemas).is_err());
+        schemas.insert("install".into(), json!({"type":"object"}));
+        assert!(validate(&document, &schemas).is_err());
+        schemas.insert("uninstall".into(), json!({"type":"object"}));
+        validate(&document, &schemas).unwrap();
     }
     #[test]
     fn missing_profile_inputs_and_parameters_name_the_action_and_argument() {

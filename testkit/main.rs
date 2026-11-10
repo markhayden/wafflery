@@ -5,6 +5,7 @@ mod control_fixtures;
 mod control_peer;
 mod estimates;
 mod fixtures;
+mod installables;
 mod paid;
 mod paid_scenarios;
 mod readiness;
@@ -53,7 +54,7 @@ impl Default for PeerState {
             &hex[20..]
         );
         Self {
-            session: json!({"contract":"0.5.0","tool":{"name":fixtures::TOOL,"version":"0.1.0"},
+            session: json!({"contract":"0.6.0","tool":{"name":fixtures::TOOL,"version":"0.1.0"},
             "id":id,"started":time::OffsetDateTime::now_utc().format(&time::format_description::well_known::Rfc3339).unwrap(),
             "allowed_dirs":[],"budget_usd":null,"spent_usd":0,"unresolved_usd":0,"reserved_usd":0,"remaining_usd":null}),
             estimates: Default::default(),
@@ -239,6 +240,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 if let Some(configuration) = &configuration {
                     description = configuration.describe(description);
                 }
+                if scenario == "installables" {
+                    description = installables::describe(&root, description);
+                }
                 if params.get("cursor").is_none() {
                     let mut controls = vec![
                         json!({"name":"describe","description":"Shared contract description","inputSchema":{"type":"object","additionalProperties":false}}),
@@ -251,6 +255,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                             .any(|action| action["cost"]["may_spend"] == true)
                     {
                         controls.push(json!({"name":"estimate","description":"Reserved paid control","inputSchema":{"type":"object"}}));
+                    }
+                    if scenario == "installables" {
+                        controls.extend(installables::tools());
                     }
                     reply(
                         &output,
@@ -282,11 +289,21 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 if let Some(configuration) = &configuration {
                     description = configuration.describe(description);
                 }
+                if scenario == "installables" {
+                    description = installables::describe(&root, description);
+                }
                 reply(
                     &output,
                     id,
                     json!({"content":[{"type":"text","text":description.to_string()}],"structuredContent":description,"isError":false}),
                 );
+            }
+            "tools/call"
+                if initialized
+                    && scenario == "installables"
+                    && matches!(params["name"].as_str(), Some("install" | "uninstall")) =>
+            {
+                installables::call(root.clone(), output.clone(), message.clone());
             }
             "tools/call"
                 if initialized && params["name"] == "estimate" && scenario == "estimates" =>
@@ -449,7 +466,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     reply(
                         &output,
                         id,
-                        json!({"contents":[{"uri":params["uri"],"mimeType":"application/json","text":json!({"contract":"0.5.0","tool":{"name":fixtures::TOOL,"version":"0.1.0"},"runs":[],"next_cursor":null}).to_string()}]}),
+                        json!({"contents":[{"uri":params["uri"],"mimeType":"application/json","text":json!({"contract":"0.6.0","tool":{"name":fixtures::TOOL,"version":"0.1.0"},"runs":[],"next_cursor":null}).to_string()}]}),
                     );
                     continue;
                 }

@@ -2,6 +2,7 @@ mod artifact_controls;
 pub(super) mod artifacts;
 mod bundle_imports;
 mod estimates;
+pub mod installables;
 mod native_preservation;
 mod preparation;
 mod readiness;

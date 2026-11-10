@@ -12,10 +12,10 @@ async fn fixture() -> (tempfile::TempDir, AssetStore, Attempt) {
     std::fs::write(&path, include_bytes!("../ui/tests/fixtures/sample.png")).unwrap();
     let image = assets.import_path(path).await.unwrap();
     let request:Submission=serde_json::from_value(json!({"id":"saved","tool":"peer","action":"shape","revision":"saved","params":{"amount":0.2},"images":{"source":[image.id]}})).unwrap();
-    let declaration = json!({"document":{"contract":"0.5.0","tool":{"name":"study","version":"1.0.0"},"actions":[{"name":"shape","kind":"task","images":[{"slot":"source","required":true}]}]}});
+    let declaration = json!({"document":{"contract":"0.6.0","tool":{"name":"study","version":"1.0.0"},"actions":[{"name":"shape","kind":"task","images":[{"slot":"source","required":true}]}]}});
     let mut attempt=AttemptStore::new(assets.database.clone()).create(request,json!({}),declaration,json!({"source":[{"asset":image,"image":{"file_sha256":image.sha256,"width":image.width,"height":image.height,"projection":"flat","topology":"bounded"},"role":"source","argument_index":0}]})).await.unwrap();
     attempt.result = Some(
-        json!({"contract":"0.5.0","status":"completed","action":"shape","invocation":{"action":"shape","arguments":{"source":{"expect":{"file_sha256":image.sha256,"width":image.width,"height":image.height,"projection":"flat","topology":"bounded"}},"amount":0.75,"max_spend_usd":0.3},"effective":{"model":"saved-model","config_identity":format!("sha256:{}","a".repeat(64))},"requirements":["PROVIDER_KEY","settings.toml"]}}),
+        json!({"contract":"0.6.0","status":"completed","action":"shape","invocation":{"action":"shape","arguments":{"source":{"expect":{"file_sha256":image.sha256,"width":image.width,"height":image.height,"projection":"flat","topology":"bounded"}},"amount":0.75,"max_spend_usd":0.3},"effective":{"model":"saved-model","config_identity":format!("sha256:{}","a".repeat(64))},"requirements":["PROVIDER_KEY","settings.toml"]}}),
     );
     attempt.execution = "completed".into();
     attempt.preservation["contract"] = json!("complete");

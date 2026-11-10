@@ -16,9 +16,9 @@ use std::{
 
 pub fn description(scenario: &str) -> Value {
     let mut document = fixtures::description(if scenario == "unsupported-contract" {
-        "0.4.0"
-    } else {
         "0.5.0"
+    } else {
+        "0.6.0"
     });
     if scenario == "paid" {
         document["actions"][0]["cost"]["may_spend"] = json!(true);
@@ -526,7 +526,7 @@ pub fn resource(state: &PeerState, root: &Path, uri: &str) -> Option<Value> {
     if uri == format!("{}://runs", fixtures::TOOL) {
         let runs: Vec<_> = state.runs.iter().rev().map(|run| json!({"id":run["run"]["id"],"action":run["action"],"status":run["status"],"started":run["started"],"resource":run["run"]["resource"],"session_id":run["run"]["session_id"],"client_run_id":run["run"]["client_run_id"]})).collect();
         return Some(
-            json!({"uri":uri,"mimeType":"application/json","text":json!({"contract":"0.5.0","next_cursor":null,"tool":{"name":fixtures::TOOL,"version":"0.1.0"},"runs":runs}).to_string()}),
+            json!({"uri":uri,"mimeType":"application/json","text":json!({"contract":"0.6.0","next_cursor":null,"tool":{"name":fixtures::TOOL,"version":"0.1.0"},"runs":runs}).to_string()}),
         );
     }
     for run in &state.runs {

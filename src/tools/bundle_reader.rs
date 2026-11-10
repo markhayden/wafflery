@@ -227,7 +227,7 @@ fn validate_step<'a>(
     bytes: &[u8],
     named: &mut BTreeSet<&'a str>,
 ) -> Result<()> {
-    if step["contract"] != "0.5.0"
+    if step["contract"] != "0.6.0"
         || step["result"]["contract"] != step["contract"]
         || step["tool"] != step["result"]["tool"]
         || step["invocation"] != step["result"]["invocation"]

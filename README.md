@@ -113,18 +113,18 @@ the opt-in real Rascal offline smoke. Automatic discovery and installation remai
 pushes to main and manual dispatch. Action revisions and runtime versions are pinned; Cargo
 and Bun dependencies are cached, and matching Chromium/WebKit browsers are installed explicitly.
 CI uses the independent offline peer without provider keys. Local and hosted builds resolve
-exactly table-manners 0.5.0 from crates.io using Cargo.lock; no sibling contract checkout is
+exactly table-manners 0.6.0 from crates.io using Cargo.lock; no sibling contract checkout is
 required. Five Rust checks and six browser real-tool journeys remain explicit opt-ins. Checked-in UI assets are verified
 before any build can regenerate them. Failure diagnostics include Playwright traces, screenshots and an allowlisted attempt summary.
 See the [CI checkpoint](docs/reviews/2026-11-01-ci.md) for local versus hosted verification.
 
 ### Try real Rascal
 
-The live client now accepts only v0.5 (contract 0.5.0; 0.4.0 and earlier are refused), with the
+The live client now accepts only v0.6 (contract 0.6.0; 0.5.0 and earlier are refused), with the
 independent peer as its required check target.
 Approved M10 snapshots are Rascal `eed6397` and Squint `6dd1e3a`; M5.21 verifies their operations/task, report and portable bundle integration.
 Earlier live contracts are rejected; V18's v0.3 results remain historical evidence.
-With a stable contract 0.5.0 Rascal binary already built or installed, select its absolute path:
+With a stable contract 0.6.0 Rascal binary already built or installed, select its absolute path:
 
 The tool's `playground` launcher must also implement the renamed H1 interface (`wafflery` and
 `WAFFLERY_BIN`). Older contract-compatible binaries still work for direct MCP tests, but must not
@@ -154,7 +154,7 @@ For an isolated **two-tool offline test** workspace:
 bun run scripts/dev-pipeline.ts /absolute/path/to/rascal /absolute/path/to/testkit/squint
 ```
 
-Use stable contract 0.5.0 executables; Squint needs the `testkit` feature and its v0.5 (`m13-verdict`) implementation.
+Use stable contract 0.6.0 executables; Squint needs the `testkit` feature and its v0.6 (`m14-contract`) build.
 The helper checks for `--provider-script` before launching and refuses a normal Squint build
 with a setup explanation. To build a separate testkit executable without changing Squint's
 ordinary build, run from Wafflery:
@@ -170,7 +170,7 @@ verdict, not a model judgment**; Rascal runs without a filler. No credentials ar
 The helper prints a reopen command. The estimate journal follow-up is resolved and the probe now
 preserves complete evidence. No existing library is modified.
 
-The host executes exactly table-manners 0.5.0. Earlier saved history remains readable and
+The host executes exactly table-manners 0.6.0. Earlier saved history remains readable and
 exportable without rewriting its evidence. Launching a report viewer requires a saved v0.5
 declaration/result because it starts a live tool; older previews and raw evidence remain available.
 **Inspect run → Session** shows the server ledger before/after a run and any structured run

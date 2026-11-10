@@ -1,4 +1,6 @@
-import { useId, useState, type ReactNode } from "react";
+import { Fragment, useId, useState, type ReactNode } from "react";
+import { Button } from "../../components/Button";
+import { choiceStates, hasChoiceRequirements, orderedChoices } from "./choices";
 import { InfoTip } from "../../components/InfoTip";
 import { FieldTag } from "../../components/FieldTag";
 import { imageHelp, imageLabel, paramHelp, paramLabel } from "./help";
@@ -27,6 +29,8 @@ type Props = {
   /** Images saved earlier in this library, offered in each image step. */
   saved?: Asset[];
   disabled?: boolean;
+  /** Opens the tool's setup, where a choice that is not installed can be got. */
+  onOpenSetup?: (opener: HTMLElement) => void;
 };
 /** A setting typed as JSON (a box, a list of points). Its label reads like any other field's;
  * the tool's own example, when it declares one, is the placeholder; short values get a short box. */
@@ -123,6 +127,7 @@ export function ActionForm({
   locations,
   saved = [],
   disabled = false,
+  onOpenSetup,
 }: Props) {
   const id = useId();
   const schema = action.params_schema;
@@ -168,6 +173,9 @@ export function ActionForm({
           const tag = <FieldTag required={required.includes(key)} />;
           const mode = fieldMode(field);
           const value = params[key];
+          // A choice with its own requirements (a model to install) shows each option's state.
+          const choices = mode === "enum" && hasChoiceRequirements(field) ? choiceStates(action, key) : undefined;
+          const chosen = choices?.get(String(value ?? field.default));
           // Free-form JSON settings need the tool's own syntax: they sort last, marked advanced.
           if (mode === "json")
             return (
@@ -183,8 +191,13 @@ export function ActionForm({
                 disabled={disabled}
               />
             );
+          const note = chosen && !chosen.ready && <div className={styles.choiceNote} role="status">
+            <p>{String(value ?? field.default)} is not installed{chosen.setup ? `: ${chosen.setup}` : "."}</p>
+            {onOpenSetup && <Button onClick={event => onOpenSetup(event.currentTarget)}>Open tool setup</Button>}
+          </div>;
           return (
-            <label className={styles.field} key={key} htmlFor={`${id}-${key}`}>
+            <Fragment key={key}>
+            <label className={styles.field} htmlFor={`${id}-${key}`}>
               <span className={styles.fieldLabel}><span id={`${id}-${key}-label`}>{label}</span>{tag}{info}</span>
               {mode === "enum" ? (
                 <select
@@ -203,11 +216,12 @@ export function ActionForm({
                   }
                 >
                   <option value="">{emptyText(key, field)}</option>
-                  {(field.enum as Json[]).map((option, index) => (
-                    <option key={index} value={JSON.stringify(option)}>
-                      {String(option)}
-                    </option>
-                  ))}
+                  {(choices ? orderedChoices(field) : field.enum as Json[]).map((option, index) => {
+                    const state = choices?.get(String(option));
+                    return <option key={index} value={JSON.stringify(option)} disabled={state ? !state.ready : undefined}>
+                      {String(option)}{state && !state.ready ? " · not installed" : ""}
+                    </option>;
+                  })}
                 </select>
               ) : mode === "boolean" ? (
                 <select
@@ -259,6 +273,8 @@ export function ActionForm({
                 <small>{field.description}</small>
               )}
             </label>
+            {note}
+            </Fragment>
           );
   };
   return (
