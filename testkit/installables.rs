@@ -19,7 +19,14 @@ fn dir(root: &Path) -> PathBuf {
 fn state(root: &Path, id: &str) -> String {
     std::fs::read_to_string(dir(root).join(id))
         .map(|text| text.trim().to_owned())
-        .unwrap_or_else(|_| if id == "small" { "installed" } else { "not_installed" }.into())
+        .unwrap_or_else(|_| {
+            if id == "small" {
+                "installed"
+            } else {
+                "not_installed"
+            }
+            .into()
+        })
 }
 fn set(root: &Path, id: &str, value: &str) {
     std::fs::write(dir(root).join(id), value).unwrap();
@@ -61,12 +68,17 @@ pub fn describe(root: &Path, mut document: Value) -> Value {
         "type":"string","title":"Model","enum":IDS,"default":"small",
         "x-requirements":{"small":["model:small"],"large":["model:large"]}
     });
-    let requirements: Vec<Value> = IDS.iter().map(|id| json!({
-        "kind":"file","name":format!("model:{id}"),
-        "state": if state(root, id) == "installed" { "present" } else { "missing" },
-        "for_choice":{"param":"model","value":id},"installable":id,
-        "setup":format!("Get the {id} model in the tool's setup.")
-    })).collect();
+    let requirements: Vec<Value> = IDS
+        .iter()
+        .map(|id| {
+            json!({
+                "kind":"file","name":format!("model:{id}"),
+                "state": if state(root, id) == "installed" { "present" } else { "missing" },
+                "for_choice":{"param":"model","value":id},"installable":id,
+                "setup":format!("Get the {id} model in the tool's setup.")
+            })
+        })
+        .collect();
     let default_ready = state(root, "small") == "installed";
     action["readiness"] = json!({
         "state": if default_ready { "ready" } else { "needs_setup" },
@@ -95,11 +107,17 @@ fn structured(value: Value) -> Value {
 /// Replies on another thread so describe and uninstall stay answerable while an install waits.
 pub fn call(root: PathBuf, output: Arc<Mutex<io::Stdout>>, message: Value) {
     let name = message["params"]["name"].as_str().unwrap_or("").to_owned();
-    let id = message["params"]["arguments"]["id"].as_str().unwrap_or("").to_owned();
+    let id = message["params"]["arguments"]["id"]
+        .as_str()
+        .unwrap_or("")
+        .to_owned();
     let request = message["id"].clone();
     if !IDS.contains(&id.as_str()) {
-        super::send(&output, json!({"jsonrpc":"2.0","id":request,"error":{"code":-32602,"message":"unknown installable",
-            "data":{"reason":"unknown_installable","run":null,"installable":id}}}));
+        super::send(
+            &output,
+            json!({"jsonrpc":"2.0","id":request,"error":{"code":-32602,"message":"unknown installable",
+            "data":{"reason":"unknown_installable","run":null,"installable":id}}}),
+        );
         return;
     }
     std::fs::write(root.join(format!("{name}-calls")), &id).ok();
@@ -111,7 +129,10 @@ pub fn call(root: PathBuf, output: Arc<Mutex<io::Stdout>>, message: Value) {
             outcome(&root, &id, "uninstall", "succeeded", Value::Null);
         }
         let value = result(&root, &id, Value::Null);
-        super::send(&output, json!({"jsonrpc":"2.0","id":request,"result":structured(value)}));
+        super::send(
+            &output,
+            json!({"jsonrpc":"2.0","id":request,"result":structured(value)}),
+        );
         return;
     }
     std::thread::spawn(move || {
@@ -122,7 +143,15 @@ pub fn call(root: PathBuf, output: Arc<Mutex<io::Stdout>>, message: Value) {
         let error = loop {
             if cancel.exists() {
                 std::fs::remove_file(&cancel).ok();
-                set(&root, &id, if before == "installed" { "installed" } else { "not_installed" });
+                set(
+                    &root,
+                    &id,
+                    if before == "installed" {
+                        "installed"
+                    } else {
+                        "not_installed"
+                    },
+                );
                 outcome(&root, &id, "install", "cancelled", Value::Null);
                 break json!({"code":"cancelled","message":"Cancelled; nothing was changed."});
             }
@@ -134,6 +163,9 @@ pub fn call(root: PathBuf, output: Arc<Mutex<io::Stdout>>, message: Value) {
             std::thread::sleep(std::time::Duration::from_millis(10));
         };
         let value = result(&root, &id, error);
-        super::send(&output, json!({"jsonrpc":"2.0","id":request,"result":structured(value)}));
+        super::send(
+            &output,
+            json!({"jsonrpc":"2.0","id":request,"result":structured(value)}),
+        );
     });
 }

@@ -96,10 +96,9 @@ pub(super) async fn call(client: &ToolClient, control: Control, arguments: Value
                     control.name()
                 )));
             }
-            let body = response
-                .get("structuredContent")
-                .cloned()
-                .ok_or_else(|| Error::Invalid("Install control omitted structuredContent".into()))?;
+            let body = response.get("structuredContent").cloned().ok_or_else(|| {
+                Error::Invalid("Install control omitted structuredContent".into())
+            })?;
             validator(&json!({"$ref":"urn:table-manners:core:install-result"}))?
                 .validate(&body)
                 .map_err(|error| Error::Invalid(format!("Invalid install result: {error}")))?;
@@ -114,7 +113,9 @@ pub(super) async fn call(client: &ToolClient, control: Control, arguments: Value
                 .map_err(|error| Error::Invalid(format!("Invalid install refusal: {error}")))?;
             Err(Error::Invalid(match data["reason"].as_str() {
                 Some("unknown_installable") => "The tool does not know this installable".into(),
-                Some("not_ready") => "The tool cannot install this yet; see its requirements".into(),
+                Some("not_ready") => {
+                    "The tool cannot install this yet; see its requirements".into()
+                }
                 _ => "The tool refused the install control".into(),
             }))
         }

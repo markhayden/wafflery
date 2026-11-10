@@ -100,7 +100,7 @@ export function encodeBindings(
   slots: ImageSlot[],
   selected: Record<string, string[]>,
 ): Record<string, string[]> {
-  if (version !== "0.5.0") throw new Error("Unsupported contract version.");
+  if (version !== "0.6.0") throw new Error("Unsupported contract version.");
   const result: Record<string, string[]> = {};
   for (const slot of slots) {
     const value = selected[slot.slot] ?? [];

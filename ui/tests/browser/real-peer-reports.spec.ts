@@ -3,7 +3,7 @@ import { chooseReport } from "./report-fixture";
 
 test.use({ hostKind: "squint", hostScenario: "references", viewport: { width: 1440, height: 1000 } });
 test.skip(!process.env.WAFFLERY_RASCAL_BIN || !process.env.WAFFLERY_SQUINT_BIN,
-  "Select the approved contract 0.5.0 Rascal and Squint testkit binaries");
+  "Select the approved contract 0.6.0 Rascal and Squint testkit binaries");
 
 for (const tool of ["rascal", "squint"] as const) {
   test(`real ${tool} reports use saved evidence after draft edits and host restart`, async ({ page, host }) => {

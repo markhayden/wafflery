@@ -25,7 +25,7 @@ pub fn readiness(state: &str) -> Value {
 
 pub fn description(tool: &str, state: &str) -> Value {
     json!({
-        "contract":"0.5.0", "profiles":["images"],
+        "contract":"0.6.0", "profiles":["images"],
         "tool":{"name":tool,"version":"0.1.0","purpose":"Independent offline contract test peer."},
         "actions":[
             {"name":"mark_band","kind":"task","title":"Add a test band","purpose":"Offline image fixture.",
@@ -49,7 +49,7 @@ pub fn description(tool: &str, state: &str) -> Value {
 }
 
 pub fn session(tool: &str) -> Value {
-    json!({"contract":"0.5.0","tool":{"name":tool,"version":"0.1.0"},
+    json!({"contract":"0.6.0","tool":{"name":tool,"version":"0.1.0"},
         "id":"22222222-2222-4222-8222-222222222222","started":"2026-11-01T00:00:00Z",
         "allowed_dirs":[],"budget_usd":2,"spent_usd":0,"unresolved_usd":0,"reserved_usd":0,"remaining_usd":2})
 }
@@ -61,7 +61,7 @@ pub fn estimate(tool: &str, session: &Value, refused: Option<&str>) -> Value {
         observation["remaining_usd"] = json!(0.05);
     }
     let blocked = refused == Some("readiness");
-    json!({"contract":"0.5.0","tool":{"name":tool,"version":"0.1.0"},"action":"price_test",
+    json!({"contract":"0.6.0","tool":{"name":tool,"version":"0.1.0"},"action":"price_test",
         "binding":format!("sha256:{}","a".repeat(64)),"session_id":observation["id"],
         "effective":{"model":if blocked {Value::Null} else {json!("offline-script")},
                      "config_identity":if blocked {Value::Null} else {json!(format!("sha256:{}","1".repeat(64)))}},

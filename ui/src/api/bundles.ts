@@ -12,7 +12,7 @@ const hash=(v:unknown):v is string=>typeof v==="string"&&/^[a-f0-9]{64}$/.test(v
 const size=(v:unknown):v is number=>typeof v==="number"&&Number.isSafeInteger(v)&&v>=0;
 const tool=(v:unknown):v is BundleStep["tool"]=>object(v)&&typeof v.name==="string"&&/^[a-z][a-z0-9-]*$/.test(v.name)&&typeof v.version==="string";
 function step(v:unknown):v is BundleStep {
- if(!object(v)||v.contract!=="0.5.0"||!tool(v.tool)||!object(v.invocation)||!object(v.result))return false;
+ if(!object(v)||v.contract!=="0.6.0"||!tool(v.tool)||!object(v.invocation)||!object(v.result))return false;
  const invocation=v.invocation;
  if(typeof invocation.action!=="string"||!object(invocation.arguments)||!object(invocation.effective)||!Array.isArray(invocation.requirements)||!invocation.requirements.every(v=>typeof v==="string"))return false;
  return Array.isArray(v.inputs)&&v.inputs.every(v=>object(v)&&typeof v.member==="string"&&object(v.image)&&(typeof v.slot==="string"||typeof v.port==="string"))&&

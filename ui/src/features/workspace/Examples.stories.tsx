@@ -18,7 +18,7 @@ const example: Example = {
     images: {},
   },
   inputs: {},
-  declaration:{document:{contract:"0.5.0",tool:{name:"sample-lab",version:"0.1.0",purpose:"Story"},actions:[]},revision:"fixture",generation:0,schemas:{}},
+  declaration:{document:{contract:"0.6.0",tool:{name:"sample-lab",version:"0.1.0",purpose:"Story"},actions:[]},revision:"fixture",generation:0,schemas:{}},
   input_artifacts:[],workspace_dependent:false,
 };
 function Preview(args: ComponentProps<typeof Examples>) {

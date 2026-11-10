@@ -61,7 +61,11 @@ impl Harness {
             .unwrap(),
         );
         let auth = Auth::new().unwrap();
-        let token = auth.exchange(&auth.issue().unwrap()).unwrap().unwrap().token;
+        let token = auth
+            .exchange(&auth.issue().unwrap())
+            .unwrap()
+            .unwrap()
+            .token;
         let (quit, _) = tokio::sync::watch::channel(false);
         let app = api::router_with_tools(
             "http://127.0.0.1:45678",
@@ -70,7 +74,12 @@ impl Harness {
             assets,
             Some(coordinator.clone()),
         );
-        Self { root, coordinator, app, token }
+        Self {
+            root,
+            coordinator,
+            app,
+            token,
+        }
     }
     async fn post(&self, path: &str) -> (StatusCode, Value) {
         let request = Request::builder()
@@ -85,7 +94,10 @@ impl Harness {
         let response = self.app.clone().oneshot(request).await.unwrap();
         let status = response.status();
         let bytes = to_bytes(response.into_body(), 1_000_000).await.unwrap();
-        (status, serde_json::from_slice(&bytes).unwrap_or(Value::Null))
+        (
+            status,
+            serde_json::from_slice(&bytes).unwrap_or(Value::Null),
+        )
     }
     async fn installable(&self, id: &str) -> Value {
         let declaration = self.coordinator.refresh("fixture").await.unwrap();
@@ -123,11 +135,16 @@ async fn an_install_outlives_its_request_and_the_description_reports_it() {
     let (status, started) = host
         .post("/api/tools/fixture/installables/large/install")
         .await;
-    let installing = host.until("large", |item| item["state"] == "installing").await;
+    let installing = host
+        .until("large", |item| item["state"] == "installing")
+        .await;
     let declaration = host.coordinator.description("fixture").await.unwrap();
-    let readiness_before = declaration.document["actions"][0]["readiness"]["requirements"][1]["state"].clone();
+    let readiness_before =
+        declaration.document["actions"][0]["readiness"]["requirements"][1]["state"].clone();
     std::fs::write(host.root.path().join("tool/release-install"), "").unwrap();
-    let installed = host.until("large", |item| item["state"] == "installed").await;
+    let installed = host
+        .until("large", |item| item["state"] == "installed")
+        .await;
     let declaration = host.coordinator.description("fixture").await.unwrap();
     let attempts = host.coordinator.snapshot().await.unwrap()["attempts"].clone();
     host.close().await;
@@ -149,8 +166,10 @@ async fn an_install_outlives_its_request_and_the_description_reports_it() {
 #[tokio::test]
 async fn uninstall_cancels_an_install_in_progress_and_removes_an_installed_model() {
     let host = Harness::new().await;
-    host.post("/api/tools/fixture/installables/large/install").await;
-    host.until("large", |item| item["state"] == "installing").await;
+    host.post("/api/tools/fixture/installables/large/install")
+        .await;
+    host.until("large", |item| item["state"] == "installing")
+        .await;
     let (cancel_status, cancel) = host
         .post("/api/tools/fixture/installables/large/uninstall")
         .await;

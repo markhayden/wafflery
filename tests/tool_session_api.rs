@@ -89,7 +89,7 @@ async fn session_reads_are_authenticated_live_and_do_not_dispatch_or_wait_for_a_
     assert_eq!(response.status(), StatusCode::OK);
     let before: Value =
         serde_json::from_slice(&to_bytes(response.into_body(), 65536).await.unwrap()).unwrap();
-    assert_eq!(before["contract"], "0.5.0");
+    assert_eq!(before["contract"], "0.6.0");
     assert!(before["budget_usd"].is_null());
     assert_eq!(before["spent_usd"], 0);
     assert_eq!(coordinator.snapshot().await.unwrap()["attempts"], json!([]));

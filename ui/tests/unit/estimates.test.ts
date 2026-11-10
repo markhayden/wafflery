@@ -5,7 +5,7 @@ import type { Submission } from "../../src/api/workspace";
 
 const preparation = { id: "draft", tool: "registered", action: "price", revision: "revision", expires_ms: 20000, bytes: 123 };
 const session = {
-  contract: "0.5.0" as const, tool: { name: "peer", version: "1" },
+  contract: "0.6.0" as const, tool: { name: "peer", version: "1" },
   id: "22222222-2222-4222-8222-222222222222", started: "2026-11-01T00:00:00Z",
   budget_usd: 2, spent_usd: 0, reserved_usd: 0, unresolved_usd: 0, remaining_usd: 2,
   allowed_dirs: [],

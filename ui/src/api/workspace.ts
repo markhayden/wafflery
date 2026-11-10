@@ -95,7 +95,7 @@ function declaration(value: unknown): value is Declaration {
     !record(value) ||
     typeof value.revision !== "string" ||
     !record(value.document) ||
-    value.document.contract !== "0.5.0" ||
+    value.document.contract !== "0.6.0" ||
     !record(value.document.tool) ||
     typeof value.document.tool.name !== "string" ||
     !Array.isArray(value.document.actions) ||

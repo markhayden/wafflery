@@ -6,7 +6,7 @@ import { spawnSync } from "node:child_process";
 test.use({ hostKind: "squint", viewport: { width: 1440, height: 900 } });
 test.skip(
   !process.env.WAFFLERY_SQUINT_BIN || !process.env.WAFFLERY_RASCAL_BIN,
-  "Select stable contract 0.5.0 Rascal and Squint testkit executables explicitly",
+  "Select stable contract 0.6.0 Rascal and Squint testkit executables explicitly",
 );
 
 test("Squint scripted evidence survives export, examples, tool switching and restart", async ({

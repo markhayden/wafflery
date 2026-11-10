@@ -141,7 +141,10 @@ async fn installable_control(
         "uninstall" => (StatusCode::OK, Control::Uninstall),
         _ => return Err(crate::tools::Error::Missing("Unknown installable control").into()),
     };
-    Ok((status, Json(c.installable_control(&id, &installable, control).await?)))
+    Ok((
+        status,
+        Json(c.installable_control(&id, &installable, control).await?),
+    ))
 }
 async fn submit(
     State(c): State<Arc<Coordinator>>,

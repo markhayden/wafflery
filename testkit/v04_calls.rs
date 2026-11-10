@@ -75,7 +75,7 @@ impl Calls {
             &json!({"tool":self.tool,"version":"0.1.0","action":action,"arguments":prepared.arguments,"session":session["id"],"effective":effective}),
         );
         Ok(
-            json!({"contract":"0.5.0","tool":{"name":self.tool,"version":"0.1.0"},"action":action,
+            json!({"contract":"0.6.0","tool":{"name":self.tool,"version":"0.1.0"},"action":action,
             "binding":binding,"session_id":session["id"],"effective":effective,"worst_case_usd":0,"cap_usd":cap,
             "allowed":true,"refused":null,"readiness":{"state":"ready","requirements":[]},"session":session,
             "expires":(time::OffsetDateTime::now_utc()+time::Duration::seconds(60)).format(&time::format_description::well_known::Rfc3339).unwrap()}),

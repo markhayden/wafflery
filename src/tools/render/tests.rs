@@ -24,7 +24,7 @@ fn setup() -> (tempfile::TempDir, Descriptor, Attempt) {
     }
     .validate()
     .unwrap();
-    let mut document = fixtures::description("0.5.0");
+    let mut document = fixtures::description("0.6.0");
     document["actions"][0]["renders"] = json!([
       {"name":"report", "kind":"server", "ready_timeout_s":7,
        "command":["sample-lab","view","{run.dir}","--frame-ancestor","{frame_ancestor}","$(not-a-shell); literal"]},
@@ -109,7 +109,7 @@ fn saved_v03_evidence_cannot_launch_a_live_renderer() {
             Ok(_) => panic!("old saved evidence must not launch a live renderer"),
             Err(error) => error,
         };
-        assert!(error.to_string().contains("0.5.0"), "{error}");
+        assert!(error.to_string().contains("0.6.0"), "{error}");
     }
 }
 #[test]

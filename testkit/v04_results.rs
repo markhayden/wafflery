@@ -28,7 +28,7 @@ fn digest(value: &Value) -> String {
     format!("sha256:{hash}")
 }
 fn base(info: &RunInfo, action: &str, invocation: Value, input_identity: String) -> Value {
-    json!({"contract":"0.5.0","tool":{"name":info.tool,"version":"0.1.0"},"action":action,
+    json!({"contract":"0.6.0","tool":{"name":info.tool,"version":"0.1.0"},"action":action,
         "run":info.reference,"status":"completed","error":null,"started":info.started,"finished":info.started,"duration_ms":0,
         "input_identity":input_identity,"invocation":invocation,
         "spend":{"usd":0,"unresolved_usd":0,"basis":"measured"},"cache":"off","notes":[],
