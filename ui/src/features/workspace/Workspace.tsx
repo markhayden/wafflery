@@ -34,6 +34,7 @@ import { parseToolSession, usd } from "../../api/tool-session";
 import { RestartTool } from "./RestartTool";
 import { ToolSetup } from "./ToolSetup";
 import { Installables } from "./Installables";
+import { chosenChoices } from "../actions/choices";
 import { readToolSession } from "../../api/tool-session";
 import { Cleanup } from "./Cleanup";
 import { Pipeline } from "./Pipeline";
@@ -567,7 +568,8 @@ export function Workspace({
                   setSavedImages(await assets.list());
                   return asset;
                 }}
-                preview={assets.thumbnail}
+onOpenSetup={opener => setDrawer({opener,view:"setup"})}
+                                preview={assets.thumbnail}
                 locations={action.kind!=="operation"&&inputPorts.length>0?portEditor:undefined}
                 saved={savedImages}
               />
@@ -637,6 +639,8 @@ export function Workspace({
             )}
             {selected ? (
               <>
+                {chosenChoices(selected.declaration, selected.request.action, selected.request.params).map(choice =>
+                  <p key={choice.label} className={styles.chosen}>{choice.label}: <strong>{choice.value}</strong></p>)}
                 {!running && <RunOutcome attempt={selected}
                   paid={selectedPaid}
                   onSetup={event => setDrawer({opener:event.currentTarget,

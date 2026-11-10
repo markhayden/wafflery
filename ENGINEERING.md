@@ -537,6 +537,23 @@ neither may execute with host-session authority.
   derived-cache repair/cleanup and separate original/thumbnail endpoints. The [import review](docs/reviews/2026-11-03-image-import.md)
   records codec memory limits and release measurements.
 
+### v0.6 draft: installables and per-choice readiness
+
+A description may list `installables` (models a tool installs on request) and give an `enum`
+parameter `x-requirements`, with readiness requirements carrying `for_choice`. A description with
+installables must expose the reserved `install` and `uninstall` controls. `POST
+/api/tools/{id}/installables/{installable}/install` checks the installable is listed, then starts
+the control in a task the HTTP request does not own and answers 202; the tool owns the install
+from then on, so closing the page does not stop it. `.../uninstall` waits for the tool's result
+(removing an installed one, or cancelling one that is installing). Neither is an action: no
+attempt, no history, no spend, no execution permit (the dispatch gate exempts both, as it does
+`describe`, `estimate`, `export` and `import`). Results are checked against `install-result`,
+refusals against `refusal`. The page follows an install by rereading the description while
+anything is `installing` (state, `progress` and `last_outcome` come from the tool); an
+installable's `progress` is left out of the declaration revision so polling does not invalidate
+preparations. The action form shows each choice's state, lists the default first, disables a
+choice that is not installed and links to setup; a result names the choice it ran with.
+
 ### v0.3 readiness controls
 
 `POST /api/tools/{id}/refresh` is an authenticated same-origin control. It rereads description

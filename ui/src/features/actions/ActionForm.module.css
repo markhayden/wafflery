@@ -76,3 +76,6 @@
 .segment input:checked + span { background: var(--color-fill); color: var(--color-text); box-shadow: 0 0 0 1px var(--color-line); }
 .segment input:focus-visible + span { outline: 2px solid var(--color-focus); outline-offset: 1px; }
 .segment:hover input:not(:checked) + span { color: var(--color-text); }
+
+.choiceNote { display: grid; gap: .5rem; justify-items: start; }
+.choiceNote p { margin: 0; font-size: .875rem; color: var(--color-muted); line-height: 1.5; }
