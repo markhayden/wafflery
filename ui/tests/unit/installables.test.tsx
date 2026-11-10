@@ -1,6 +1,6 @@
 import { expect, test } from "bun:test";
 import { renderToStaticMarkup } from "react-dom/server";
-import { Installables, bytes } from "../../src/features/workspace/Installables";
+import { Installables, bytes, shownState } from "../../src/features/workspace/Installables";
 import type { Installable } from "../../src/features/actions/model";
 
 test("sizes read as download sizes are quoted", () => {
@@ -32,4 +32,19 @@ test("a failed or cancelled last outcome is said; a success is not", () => {
   expect(failed).toContain("The last install failed: digest mismatch");
   const succeeded = renderToStaticMarkup(<Installables installables={[{ ...item, state: "installed", last_outcome: { action: "install", state: "succeeded", at: "2026-11-09T12:00:00Z", error: null } }]} onInstall={noop} onUninstall={noop} onRefresh={noop} />);
   expect(succeeded).not.toContain("The last install");
+});
+
+test("a Get just started reads as installing until the tool reports it", () => {
+  const at = 1_000;
+  const started = { large: { outcome: JSON.stringify(item.last_outcome), since: at } };
+  // The tool has not written its installing state yet: still installing, so the page polls.
+  expect(shownState(item, started, at + 500)).toBe("installing");
+  // The tool's own state wins once it reports one.
+  expect(shownState({ ...item, state: "installed" }, started, at + 500)).toBe("installed");
+  // An install that failed before it was ever seen installing: its new outcome ends the wait.
+  const failed = { ...item, last_outcome: { action: "install", state: "failed", at: "2026-11-10T12:00:00Z", error: { code: "failed", message: "x" } } } as Installable;
+  expect(shownState(failed, started, at + 500)).toBe("not_installed");
+  // And the wait has a limit.
+  expect(shownState(item, started, at + 31_000)).toBe("not_installed");
+  expect(shownState(item, {}, at)).toBe("not_installed");
 });

@@ -34,6 +34,20 @@ function outcomeLine(item: Installable): string | undefined {
     : `${what} failed${outcome.error ? `: ${outcome.error.message}` : "."}`;
 }
 
+/** A Get the page started, until the tool reports it: the outcome seen when it started, and when. */
+export type Started = Record<string, { outcome: string; since: number }>;
+/** How long a started Get waits for the tool to say it is installing before the page believes the tool. */
+const STARTED_WAIT_MS = 30_000;
+/** The state to show: the tool's, except that a Get the page has just started reads as installing
+ * until the tool reports anything but not_installed, records a new outcome, or the wait runs out.
+ * The install runs in the background, so the first reread can land before the tool marks it. */
+export function shownState(item: Installable, started: Started, now: number): Installable["state"] {
+  const mark = started[item.id];
+  if (!mark || item.state !== "not_installed") return item.state;
+  if (JSON.stringify(item.last_outcome) !== mark.outcome || now - mark.since > STARTED_WAIT_MS) return item.state;
+  return "installing";
+}
+
 type Props = {
   installables: Installable[];
   /** Starts an install; the tool owns it from then on. */
@@ -51,12 +65,20 @@ export function Installables({ installables, onInstall, onUninstall, onRefresh, 
   const [confirming, setConfirming] = useState<string>();
   const [pending, setPending] = useState<string>();
   const [error, setError] = useState<string>();
-  const installing = installables.some(item => item.state === "installing");
+  const [started, setStarted] = useState<Started>({});
+  const now = Date.now();
+  const states = new Map(installables.map(item => [item.id, shownState(item, started, now)]));
+  const installing = [...states.values()].some(state => state === "installing");
   useEffect(() => {
     if (!installing) return;
     const timer = setInterval(() => { void onRefresh().catch(() => undefined); }, pollMs);
     return () => clearInterval(timer);
   }, [installing, onRefresh, pollMs]);
+  const get = async (id: string) => {
+    const item = installables.find(each => each.id === id);
+    await onInstall(id);
+    setStarted(marks => ({ ...marks, [id]: { outcome: JSON.stringify(item?.last_outcome ?? null), since: Date.now() } }));
+  };
   const run = async (id: string, work: (id: string) => Promise<void>) => {
     setPending(id); setError(undefined); setConfirming(undefined);
     try { await work(id); await onRefresh(); }
@@ -71,15 +93,16 @@ export function Installables({ installables, onInstall, onUninstall, onRefresh, 
       const lab = labLine(item);
       const outcome = outcomeLine(item);
       const busy = pending === item.id;
+      const state = states.get(item.id) ?? item.state;
       return <li key={item.id} className={styles.row} aria-label={item.title}>
         <div className={styles.head}>
           <strong>{item.title}</strong>
-          <span className={styles.state} data-state={item.state}>{stateLabel[item.state]}</span>
+          <span className={styles.state} data-state={state}>{stateLabel[state]}</span>
         </div>
         {lab && <p>{lab}</p>}
         {item.notes && <p>{item.notes}</p>}
         <p className={styles.facts}>{bytes(item.download_bytes)} download · {item.licence}</p>
-        {item.state === "installing" && <div className={styles.track} role="progressbar" aria-label={`${item.title} install progress`}
+        {state === "installing" && <div className={styles.track} role="progressbar" aria-label={`${item.title} install progress`}
           aria-valuemin={0} aria-valuemax={100} aria-valuenow={item.progress === undefined ? undefined : Math.round(item.progress * 100)}>
           <span className={styles.bar} style={{ width: `${Math.round((item.progress ?? 0) * 100)}%` }} />
         </div>}
@@ -87,13 +110,13 @@ export function Installables({ installables, onInstall, onUninstall, onRefresh, 
         {confirming === item.id ? <div className={styles.confirm} role="group" aria-label={`Confirm getting ${item.title}`}>
           <p>Download {bytes(item.download_bytes)} ({bytes(item.installed_bytes)} on disk) under the {item.licence} licence?</p>
           <div className={styles.actions}>
-            <Button variant="primary" onClick={() => void run(item.id, onInstall)}>Get {item.title}</Button>
+            <Button variant="primary" onClick={() => void run(item.id, get)}>Get {item.title}</Button>
             <Button onClick={() => setConfirming(undefined)}>Not now</Button>
           </div>
         </div> : <div className={styles.actions}>
-          {item.state === "not_installed" && <Button busy={busy} onClick={() => setConfirming(item.id)}>Get</Button>}
-          {item.state === "installing" && <Button busy={busy} onClick={() => void run(item.id, onUninstall)}>Cancel</Button>}
-          {item.state === "installed" && <Button variant="destructive" busy={busy} onClick={() => void run(item.id, onUninstall)}>Remove</Button>}
+          {state === "not_installed" && <Button busy={busy} onClick={() => setConfirming(item.id)}>Get</Button>}
+          {state === "installing" && <Button busy={busy} onClick={() => void run(item.id, onUninstall)}>Cancel</Button>}
+          {state === "installed" && <Button variant="destructive" busy={busy} onClick={() => void run(item.id, onUninstall)}>Remove</Button>}
         </div>}
       </li>;
     })}</ul>
