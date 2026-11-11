@@ -68,17 +68,24 @@ pub fn describe(root: &Path, mut document: Value) -> Value {
         "type":"string","title":"Model","enum":IDS,"default":"small",
         "x-requirements":{"small":["model:small"],"large":["model:large"]}
     });
-    let requirements: Vec<Value> = IDS
-        .iter()
-        .map(|id| {
-            json!({
-                "kind":"file","name":format!("model:{id}"),
-                "state": if state(root, id) == "installed" { "present" } else { "missing" },
-                "for_choice":{"param":"model","value":id},"installable":id,
-                "setup":format!("Get the {id} model in the tool's setup.")
-            })
+    // Like rascal's remove_prompt: settings every call needs, one requirement per model choice,
+    // and an optional key for a part of the action.
+    let mut requirements = vec![
+        json!({"kind":"config","name":"sample-lab.toml","state":"present"}),
+        json!({"kind":"env","name":"SAMPLE_MODELS","state":"present"}),
+    ];
+    requirements.extend(IDS.iter().map(|id| {
+        json!({
+            "kind":"file","name":format!("model:{id}"),
+            "state": if state(root, id) == "installed" { "present" } else { "missing" },
+            "for_choice":{"param":"model","value":id},"installable":id,
+            "setup":format!("Get the {id} model in the tool's setup.")
         })
-        .collect();
+    }));
+    requirements.push(json!({
+        "kind":"credential","name":"SAMPLE_CHECK_KEY","state":"missing","optional":true,"for":"checking the result",
+        "setup":"Set SAMPLE_CHECK_KEY where the sample tool starts, then refresh."
+    }));
     let default_ready = state(root, "small") == "installed";
     action["readiness"] = json!({
         "state": if default_ready { "ready" } else { "needs_setup" },

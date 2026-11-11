@@ -185,6 +185,10 @@ live contracts are refused, while saved historical evidence stays readable. The 
 exercises generic task/operation/utility discovery, scalar/list ports, image/location/native
 bindings, indexed refusals, session grants, cancellation, invocation capture and portable bundles.
 Approved real Rascal/Squint snapshots pass [M5.21](docs/integration-sources.md).
+Per-choice readiness (0.6 draft, 3.1) is shown for the current inputs: a requirement for one choice
+counts and is listed only when the form picks that choice (its default when blank), and an optional
+choice the requirements depend on is promoted into the main settings. Tool setup reads "Ready" with
+its requirements collapsed until something required is missing. See [INTERFACE.md](INTERFACE.md#implemented-workspace).
 
 C1 readiness/estimates, C2 resolved invocation and declared native portability, and R3 typed-operation
 integration are implemented within their advertised capabilities. C3 report address/framing/lifetime

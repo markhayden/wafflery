@@ -1,6 +1,6 @@
 import { Fragment, useId, useState, type ReactNode } from "react";
 import { Button } from "../../components/Button";
-import { choiceStates, hasChoiceRequirements, orderedChoices } from "./choices";
+import { choiceStates, hasChoiceRequirements, orderedChoices, promotedInputs } from "./choices";
 import { InfoTip } from "../../components/InfoTip";
 import { FieldTag } from "../../components/FieldTag";
 import { imageHelp, imageLabel, paramHelp, paramLabel } from "./help";
@@ -160,7 +160,11 @@ export function ActionForm({
   const spendFields = fieldEntries.filter(([key]) => key === "max_spend_usd");
   const exclusiveFields = exclusive.map((key) => fieldEntries.find(([name]) => name === key)).filter((entry): entry is [string, Json] => !!entry);
   const requiredFields = fieldEntries.filter(([key]) => key !== "max_spend_usd" && required.includes(key));
-  const optionalFields = fieldEntries.filter(([key]) => key !== "max_spend_usd" && !required.includes(key) && !exclusive.includes(key))
+  // An optional choice the readiness depends on (a model to use) is part of the main settings,
+  // right after the required ones, showing the choice a run will use.
+  const promoted = simple ? promotedInputs(action) : [];
+  const promotedFields = fieldEntries.filter(([key]) => promoted.includes(key) && !exclusive.includes(key));
+  const optionalFields = fieldEntries.filter(([key]) => key !== "max_spend_usd" && !required.includes(key) && !exclusive.includes(key) && !promoted.includes(key))
     .sort((a, b) => Number(isJson(a)) - Number(isJson(b)));
   // What an empty field means, shown in it.
   const emptyText = (key: string, field: Schema) => key === "max_spend_usd"
@@ -176,6 +180,9 @@ export function ActionForm({
           // A choice with its own requirements (a model to install) shows each option's state.
           const choices = mode === "enum" && hasChoiceRequirements(field) ? choiceStates(action, key) : undefined;
           const chosen = choices?.get(String(value ?? field.default));
+          // A promoted choice always shows the one a run will use: the input's, else the default.
+          const alwaysChosen = promoted.includes(key) && field.default !== undefined;
+          const shown = alwaysChosen ? value ?? field.default : value;
           // Free-form JSON settings need the tool's own syntax: they sort last, marked advanced.
           if (mode === "json")
             return (
@@ -204,7 +211,7 @@ export function ActionForm({
                   id={`${id}-${key}`}
                   aria-labelledby={`${id}-${key}-label`}
                   required={required.includes(key)}
-                  value={value === undefined ? "" : JSON.stringify(value)}
+                  value={shown === undefined ? "" : JSON.stringify(shown)}
                   disabled={disabled}
                   onChange={(event) =>
                     set(
@@ -215,7 +222,7 @@ export function ActionForm({
                     )
                   }
                 >
-                  <option value="">{emptyText(key, field)}</option>
+                  {!alwaysChosen && <option value="">{emptyText(key, field)}</option>}
                   {(choices ? orderedChoices(field) : field.enum as Json[]).map((option, index) => {
                     const state = choices?.get(String(option));
                     return <option key={index} value={JSON.stringify(option)} disabled={state ? !state.ready : undefined}>
@@ -325,12 +332,13 @@ export function ActionForm({
       {locations && <section className={styles.step}>{locations}</section>}
       {simple ? (<>
         {/* One step, every setting shown: required first, then optional, each marked. */}
-        {(requiredFields.length > 0 || exclusiveFields.length > 1 || optionalFields.length > 0) && <section className={styles.step}><h3 className={styles.stepTitle}>Settings</h3>
+        {(requiredFields.length > 0 || exclusiveFields.length > 1 || promotedFields.length > 0 || optionalFields.length > 0) && <section className={styles.step}><h3 className={styles.stepTitle}>Settings</h3>
           {exclusiveFields.length > 1 && <ExclusiveChoice id={`${id}-choice`} fields={exclusiveFields} params={params} disabled={disabled}
             label={(key, field) => paramLabel(key, object(field) ?? {})}
             onChoose={(key) => { const next = { ...params }; for (const [other] of exclusiveFields) if (other !== key) delete next[other]; onChange(next); }}
             render={renderField} />}
           {requiredFields.map(renderField)}
+          {promotedFields.map(renderField)}
           {optionalFields.map(renderField)}</section>}
         {spendFields.length > 0 && <section className={styles.step}><h3 className={styles.stepTitle}>Spending limit</h3>{spendFields.map(renderField)}</section>}
       </>) : (

@@ -128,6 +128,17 @@ impl Harness {
     }
 }
 
+/// The first action's requirement for the `large` model choice.
+fn large_requirement(document: &Value) -> Value {
+    document["actions"][0]["readiness"]["requirements"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|item| item["name"] == "model:large")
+        .unwrap()
+        .clone()
+}
+
 #[tokio::test]
 async fn an_install_outlives_its_request_and_the_description_reports_it() {
     let host = Harness::new().await;
@@ -139,8 +150,7 @@ async fn an_install_outlives_its_request_and_the_description_reports_it() {
         .until("large", |item| item["state"] == "installing")
         .await;
     let declaration = host.coordinator.description("fixture").await.unwrap();
-    let readiness_before =
-        declaration.document["actions"][0]["readiness"]["requirements"][1]["state"].clone();
+    let readiness_before = large_requirement(&declaration.document)["state"].clone();
     std::fs::write(host.root.path().join("tool/release-install"), "").unwrap();
     let installed = host
         .until("large", |item| item["state"] == "installed")
@@ -155,10 +165,7 @@ async fn an_install_outlives_its_request_and_the_description_reports_it() {
     assert_eq!(readiness_before, "missing");
     assert_eq!(installed["last_outcome"]["action"], "install");
     assert_eq!(installed["last_outcome"]["state"], "succeeded");
-    assert_eq!(
-        declaration.document["actions"][0]["readiness"]["requirements"][1]["state"],
-        "present"
-    );
+    assert_eq!(large_requirement(&declaration.document)["state"], "present");
     // A control is never a run: nothing is saved to history.
     assert_eq!(attempts.as_array().unwrap().len(), 0);
 }

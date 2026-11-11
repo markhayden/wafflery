@@ -46,3 +46,16 @@ export const OptionalRequirement: Story = { args: { action: { ...meta.args.actio
       setup: "Set EXAMPLE_CHECK_KEY where the tool starts, then refresh. Without it the result is not checked." },
   ],
 } } } };
+/** Like rascal's remove_prompt: settings every call needs, one model requirement per choice and an
+ * optional checking key. Only the chosen model's requirement is listed; picking one that is not
+ * installed lists it as needed. */
+export const ChoiceRequirements: Story = { args: { params: { model: "birefnet" }, action: { ...meta.args.action,
+  params_schema: { type: "object", properties: { model: { type: "string", enum: ["tiny", "birefnet"], default: "tiny" } } },
+  readiness: { state: "ready", requirements: [
+    { kind: "config", name: "rascal.toml", state: "present" },
+    { kind: "env", name: "RASCAL_TOOLS_MODELS", state: "present" },
+    { kind: "model", name: "segmenter:tiny", state: "present", for_choice: { param: "model", value: "tiny" } },
+    { kind: "model", name: "segmenter:birefnet", state: "missing", for_choice: { param: "model", value: "birefnet" },
+      setup: "BiRefNet is not installed. Get it in the tool's setup." },
+    { kind: "credential", name: "ANTHROPIC_API_KEY", state: "missing", optional: true, for: "checking the result" },
+  ] } } } };

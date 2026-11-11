@@ -23,8 +23,11 @@ test("a missing optional key leaves the action ready and the result says it was 
   await page.getByRole("button", { name: "Tool setup", exact: true }).click();
   const drawer = page.getByRole("dialog", { name: "Tool setup", exact: true });
   await expect(drawer.getByText("Ready", { exact: true })).toBeVisible();
+  // A missing optional key is not listed as needed: it waits behind the disclosure.
+  await expect(drawer.getByRole("list", { name: "Missing requirements" })).toHaveCount(0);
+  await drawer.getByText("Show requirements (1)", { exact: true }).click();
   await expect(drawer.getByText("EXAMPLE_CHECK_KEY", { exact: true })).toBeVisible();
-  await expect(drawer.getByText("Missing", { exact: true })).toBeVisible();
+  await expect(drawer.getByText("Missing · optional", { exact: true })).toBeVisible();
   await expect(drawer.getByText("Needed for checking the result (optional)", { exact: true })).toBeVisible();
   await page.screenshot({ path: "test-results/checks-setup-optional.png" });
   await page.keyboard.press("Escape");

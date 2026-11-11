@@ -46,8 +46,14 @@ back to evidence or closing inspection releases the viewer. Inactive viewers exp
 that will not close offers a separately confirmed **Force stop report**. Reports do not change
 the saved run's outcome or become part of its evidence archive.
 
-**Tool setup** opens the shared drawer with the selected action's declared credential requirements
-and live session spending: limit, remaining allowance, reported spend and active reservations.
+**Tool setup** opens the shared drawer with the selected action's declared requirements for the
+current settings and live session spending: limit, remaining allowance, reported spend and active
+reservations. A requirement for one choice (a model the tool can install) is listed only when the
+form picks that choice, its default when left blank. When nothing required is missing setup reads
+**Ready** with the list behind **Show requirements (N)**; a missing one is listed open with the rest
+collapsed. **Present** means the tool found it, not that it was validated; that is said once below
+the list. A choice the requirements depend on, such as Rascal's segmenter `model`, sits in the main
+settings beside the required ones, showing its default selected.
 Refresh reads the running tool without executing an action or resetting its budget. Credential
 names do not prove a key is configured or valid. **Restart tool session** requires confirmation
 and an idle tool; it reprobes the selected config and starts a new spending ledger. Earlier runs
@@ -69,8 +75,8 @@ The result summary explains stale estimates, credential rejection, caps and sess
 When a tool checks its own result (an action that answers with a verdict), the result says so in
 plain words: **Check passed**, or **The check still sees it** with the places it named drawn on
 the result; a result the tool did not check shows the tool's reason ("Not checked: …"). A
-requirement the tool marks optional shows in Tool setup as "Needed for … (optional)" and never
-makes the action need setup. The **Show** menu names each output by the tool's label when it
+requirement the tool marks optional shows in Tool setup as "Missing · optional", "Needed for … (optional)"
+and never makes the action need setup. The **Show** menu names each output by the tool's label when it
 gives one ("Try 2 · result"), else by its role, and a reopened run keeps the same names.
 Failed and cancelled runs retain their reported spend; unresolved charges are shown as “at most,”
 not zero. **Review tool setup** opens setup for that saved run’s tool and action.

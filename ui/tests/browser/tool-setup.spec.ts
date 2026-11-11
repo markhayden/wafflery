@@ -7,9 +7,13 @@ test("setup shows reported allowances and never promotes a credential name to re
   await page.goto("http://127.0.0.1:6006/iframe.html?id=workspace-toolsetup--capped&viewMode=story");
   await expect(page.getByRole("region", { name: "Session spending" })).toContainText("$1.80");
   await expect(page.getByText(/final charge is unknown/)).toContainText("$0.04");
+  // A ready action reads as ready: its requirements wait behind one disclosure.
+  await expect(page.getByText("Ready", { exact: true })).toBeVisible();
+  await expect(page.getByText("EXAMPLE_API_KEY", { exact: true })).not.toBeVisible();
+  await page.getByText("Show requirements (1)", { exact: true }).click();
   await expect(page.getByText("EXAMPLE_API_KEY", { exact: true })).toBeVisible();
-  await expect(page.getByText("Present · not validated", { exact: true })).toBeVisible();
-  await expect(page.getByText(/A present credential has not necessarily been validated/)).toBeVisible();
+  await expect(page.getByText("Present", { exact: true })).toBeVisible();
+  await expect(page.getByText(/Present means the tool found it; it has not checked that it works/)).toBeVisible();
   await expect(page.getByText(/^This action may cost money\./)).toContainText("The tool applies its own spending limits; you can set a lower one, or check the cost, before Run.");
   for (const width of [320, 768, 1024, 1440]) {
     await page.setViewportSize({ width, height: 900 });
@@ -116,7 +120,12 @@ test("an unavailable tool never replaces setup with a saved-run inspector", asyn
 test("setup explains every requirement state and kind", async ({ page }, testInfo) => {
   await page.goto("http://127.0.0.1:6006/iframe.html?id=workspace-toolsetup--requirements&viewMode=story");
   const setup = page.getByRole("region", { name: "Provider setup" });
-  for (const text of ["Setup may be needed", "Missing", "Present · not validated", "Validated", "Invalid", "Unknown", "Configuration", "Credential", "Environment variable", "Model", "File", "Dependency"]) {
+  // What is missing is listed open; the rest wait behind the disclosure.
+  await expect(setup.getByRole("list", { name: "Missing requirements" })).toContainText("settings.toml");
+  await expect(setup.getByRole("list", { name: "Missing requirements" })).not.toContainText("MODEL_DIR");
+  await expect(setup.getByText("MODEL_DIR", { exact: true })).not.toBeVisible();
+  await setup.getByText("Show other requirements (3)", { exact: true }).click();
+  for (const text of ["Setup needed", "Missing", "Present", "Validated", "Invalid", "Unknown", "Configuration", "Credential", "Environment variable", "Model", "File", "Dependency"]) {
     await expect(setup.getByText(text, { exact: true }).first()).toBeVisible();
   }
   await expect(setup).toContainText("Choose a configuration file outside the playground.");
@@ -139,7 +148,9 @@ test.describe("live readiness", () => {
     await page.getByRole("button", { name: "Tool setup", exact: true }).click();
     let previous = (await (await opening).json()).revision;
     const drawer = page.getByRole("dialog", { name: "Tool setup", exact: true });
-    await expect(drawer.getByText("Present · not validated", { exact: true })).toBeVisible();
+    // Opened once, the requirements stay shown across refreshes.
+    await drawer.getByText("Show requirements (1)", { exact: true }).click();
+    await expect(drawer.getByText("Present", { exact: true })).toBeVisible();
     for (const [state, label] of [["valid", "Validated"], ["invalid", "Invalid"], ["missing", "Missing"], ["unknown", "Unknown"]] as const) {
       await writeFile(join(host.root, "..", "tool", "credential-state"), state);
       const response = page.waitForResponse(response => new URL(response.url()).pathname === "/api/tools/sample/refresh");
@@ -161,7 +172,8 @@ test.describe("live readiness", () => {
     await page.getByRole("dialog", {name:"Choose action"}).getByRole("button", { name: /^Price a scripted call/ }).click();
     await page.getByRole("button", { name: "Tool setup", exact: true }).click();
     const drawer = page.getByRole("dialog", { name: "Tool setup", exact: true });
-    await expect(drawer.getByText("Present · not validated", { exact: true })).toBeVisible();
+    await drawer.getByText("Show requirements (1)", { exact: true }).click();
+    await expect(drawer.getByText("Present", { exact: true })).toBeVisible();
     await expect(drawer.getByRole("button", { name: "Refresh", exact: true })).toBeEnabled();
     let release: () => void = () => {};
     let held: () => void = () => {};
@@ -179,12 +191,13 @@ test.describe("live readiness", () => {
       await other.getByRole("button", { name: "Action Add a test band" }).click();
       await other.getByRole("dialog", {name:"Choose action"}).getByRole("button", { name: /^Price a scripted call/ }).click();
       await other.getByRole("button", { name: "Tool setup", exact: true }).click();
+      await other.getByRole("dialog").getByText("Show requirements (1)", { exact: true }).click();
       await expect(other.getByRole("dialog").getByText("Validated", { exact: true })).toBeVisible();
       await expect(drawer.getByText("Validated", { exact: true })).toBeVisible();
       release();
       await expect(drawer.getByRole("button", { name: "Refresh", exact: true })).toBeEnabled();
       await expect(drawer.getByText("Validated", { exact: true })).toBeVisible();
-      await expect(drawer.getByText("Present · not validated", { exact: true })).not.toBeVisible();
+      await expect(drawer.getByText("Present", { exact: true })).not.toBeVisible();
     } finally {
       release(); await page.unrouteAll({ behavior: "wait" }); await other.close();
     }

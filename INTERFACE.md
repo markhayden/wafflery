@@ -7,7 +7,11 @@ shared drawer against the original studies. The mock interactions remain illustr
 ## Implemented workspace
 
 The application header owns Tool; the selected tool name/purpose heads the workspace. The form is "Config": numbered steps in fill-in order (images, locations drawn on the image, required
-settings, optional settings folded, spending limit last); every input has an ⓘ in plain words. The
+settings, then promoted choices, then the other optional settings, spending limit last); every input has
+an ⓘ in plain words. A promoted choice is an optional `enum` input that the action's readiness depends on
+(the schema gives it `x-requirements`, or a readiness requirement names it in `for_choice`): it sits
+with the required settings and always shows the choice a run will use, its default when the input is blank,
+never "Not set". The rule is derived from the description; no tool or parameter name is special. The
 result is one comparison with a Mask overlay switch, outputs as rows (Details opens a drawer). Pickers are dropdowns anchored to their control (a popover: search pinned, list scrolling, outside
 click or Escape closes, flips above when below is short). One matching
 focused picker chooses Playground, Operations or Utilities where declared, followed by a searchable,
@@ -16,8 +20,19 @@ grouped activity picker. Each workspace option says what it offers in plain word
 the closed control shows a compact count ("7 complete jobs"). The heading shows a known tool's longer
 description and a "Learn more" link to its wafflehammock.com page; other tools show their declared
 purpose. Running text never ends on a lone word (`text-wrap: pretty`; headings `balance`). Task-only tools omit unavailable workspace kinds. Both selectors use the
-same control. Desktop input/result panes scroll independently with fixed headers/footers; narrow and
-short windows use page scrolling.
+same control. On a desktop-width window at least 32rem tall, the input and result panes fill the window's
+height exactly and each scrolls its own content between its fixed header and footer; the page itself does
+not scroll. A phone-width window stacks the panes and scrolls the page, and a window shorter than 32rem
+scrolls the page with the side-by-side panes ending on one line, so there is never empty page below a
+shorter pane.
+
+Tool setup lists an action's requirements for the current inputs: a requirement with `for_choice` shows
+only when the inputs pick that choice (a blank input picks its default), and the readiness shown, in
+setup, the action picker and Run's reason, is computed the same way. With nothing required missing it
+reads "Ready" with the list behind "Show requirements (N)"; otherwise the missing ones are listed open
+and the rest stay behind "Show other requirements (N)". A missing optional requirement reads
+"Missing · optional" and never makes the action look unready. "Present" (found, not validated) is
+explained once below the list rather than on every line.
 
 Choose tool rows show a decorative 64 px logo on the left (48 px on narrow screens; 128 px WebP files under 16 KB), the name and right-aligned version
 on the first line, then the description. Known-tool presentation comes from a small local map;
@@ -103,10 +118,11 @@ closing, scrolling, and keyboard behavior consistent. On narrow screens the draw
 available width. Keep navigation compact; stack the main input/result sections when needed.
 An image result gets substantial space; an empty screen explains which input is needed.
 
-In a sufficiently wide and tall desktop window, keep the workspace within the viewport. Input
-and Result scroll independently, with Run and the saved-result actions outside their scroll
-areas. Keep the header compact. Narrow or short windows use ordinary page scrolling so controls
-remain reachable at larger text sizes. Scroll regions are named and keyboard-focusable.
+In a desktop-width window at least 32rem tall, keep the workspace within the viewport: the panes
+fill its height and the page does not scroll. Input and Result scroll independently, with Run and
+the saved-result actions outside their scroll areas. Keep the header compact. Phone-width and very
+short windows use ordinary page scrolling so controls remain reachable at larger text sizes, and
+side-by-side panes end on one line. Scroll regions are named and keyboard-focusable.
 
 Opening an example restores input settings into a new draft. Result explicitly confirms which
 example loaded, explains that Run creates a new result, and links to history for previous results.
