@@ -554,6 +554,15 @@ installable's `progress` is left out of the declaration revision so polling does
 preparations. The action form shows each choice's state, lists the default first, disables a
 choice that is not installed and links to setup; a result names the choice it ran with.
 
+The tool states readiness for its defaults and lists every choice's requirement. The UI derives the
+readiness of the current draft (`readinessFor` in `ui/src/features/actions/choices.ts`): a
+requirement with `for_choice` applies only when the draft's value for that parameter, or its declared
+default when blank, is that choice. A required applicable requirement that is missing or invalid makes
+the draft need setup; one that applies only to another choice never does, so a tool that needs setup
+only for another model is ready for this one. `unavailable` stays the tool's to say, and an optional
+requirement never counts. Tool setup, the action picker's status and Run's reason all use this
+readiness; setup opened for a saved run uses that run's parameters.
+
 ### v0.3 readiness controls
 
 `POST /api/tools/{id}/refresh` is an authenticated same-origin control. It rereads description

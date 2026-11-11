@@ -1,4 +1,4 @@
-import { object, type Action, type Json, type Requirement, type Schema } from "./model";
+import { object, type Action, type Json, type Readiness, type Requirement, type Schema } from "./model";
 
 /** Where a choice stands (table-manners 0.6 draft, 3.1): ready unless one of its requirements is
  * missing or invalid; the installable that would satisfy it, and the tool's setup line. */
@@ -47,4 +47,35 @@ export function chosenChoices(declaration: unknown, actionName: string, params: 
     if (value === undefined || value === null) return [];
     return [{ label: typeof field.title === "string" ? field.title : key, value: String(value) }];
   });
+}
+
+/** The value a call with these inputs runs with for `key`: the input's, else its declared default. */
+export function chosenValue(schema: Schema, params: Schema, key: string): string | undefined {
+  const value = params[key] ?? object(object(schema.properties)?.[key])?.default;
+  return value === undefined || value === null ? undefined : String(value);
+}
+/** Whether a requirement applies to a call with these inputs: always, unless it is for one choice
+ * (`for_choice`), when only a call that picks that choice needs it. */
+export function applies(requirement: Requirement, schema: Schema, params: Schema): boolean {
+  const choice = requirement.for_choice;
+  return !choice || chosenValue(schema, params, choice.param) === choice.value;
+}
+/** Missing or invalid, and not optional: what stands in the way of a call (an optional
+ * requirement limits a part of the action, never the action, table-manners 3.1). */
+export function unmet(requirement: Requirement): boolean {
+  return !requirement.optional && (requirement.state === "missing" || requirement.state === "invalid");
+}
+/** The action's readiness for a call with these inputs (table-manners 0.6 draft, 3.1): only the
+ * requirements that apply to it. The tool states readiness for its defaults, so a choice's missing
+ * requirement makes setup needed only when the inputs pick that choice, and a tool that needs setup
+ * only for another choice is ready for this one. `unavailable` is the tool's to say. */
+export function readinessFor(action: Pick<Action, "readiness" | "params_schema">, params: Schema): Readiness {
+  const all = action.readiness.requirements;
+  const requirements = all.filter(item => applies(item, action.params_schema, params));
+  let state = action.readiness.state;
+  if (state !== "unavailable") {
+    if (requirements.some(unmet)) state = "needs_setup";
+    else if (all.some(item => unmet(item) && !requirements.includes(item))) state = "ready";
+  }
+  return { state, requirements };
 }

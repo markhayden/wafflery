@@ -34,7 +34,7 @@ import { parseToolSession, usd } from "../../api/tool-session";
 import { RestartTool } from "./RestartTool";
 import { ToolSetup } from "./ToolSetup";
 import { Installables } from "./Installables";
-import { chosenChoices } from "../actions/choices";
+import { chosenChoices, readinessFor } from "../actions/choices";
 import { readToolSession } from "../../api/tool-session";
 import { Cleanup } from "./Cleanup";
 import { Pipeline } from "./Pipeline";
@@ -459,6 +459,8 @@ export function Workspace({
   const setupDeclaration = setupTool?.declaration;
   const setupAction = setupDeclaration?.document.actions.find(action => action.name === (drawer?.action ?? actionId));
   const setupRestarting = restartingTools.has(setupToolId);
+  // The inputs setup's requirements are for: a saved run's when setup was opened for it, else the draft's.
+  const setupParams = drawer?.action ? object(selected?.request.params as Schema | undefined) ?? {} : params;
   const selectedPaid = selected?.declaration?.document?.actions?.some(action => action.name === selected.request.action && action.cost.may_spend) ?? false;
   // A run that has not finished: its progress replaces the outcome and the comparison until it does.
   const running = !!selected && ["submitted", "running", "cancelling"].includes(selected.execution);
@@ -483,7 +485,7 @@ export function Workspace({
   // button out and says, beside it, what to resolve.
   const blocker=action?runBlocker({tool:declaration?.document.tool.name??toolId??"The tool",chainClaimed,
     importing:portImporting,unresolved:unresolvedImport.length,submitting:!!cost.submission,restarting,
-    readiness:action.readiness,
+    readiness:readinessFor(action,params),
     selected:selected?{execution:selected.execution,saving:selected.preservation.contract==="pending"}:undefined,
     toolBusy:!!tool?.busy,
     toolHeld:!!tool?.busy&&!snapshot.attempts.some(attempt=>attempt.tool===toolId&&["submitted","running","cancelling","unconfirmed"].includes(attempt.execution)),
@@ -513,6 +515,7 @@ export function Workspace({
       </div>
       <ActivityPicker actions={declaration?.document.actions ?? []} tool={declaration?.document.tool.name ?? "this tool"}
         groups={declaration?.document.vocabulary?.group ?? []} kind={activityKind} value={actionId}
+        readiness={action ? readinessFor(action, params) : undefined}
         disabled={!declaration} onAction={chooseAction} onKind={kind=>{
           setEmptyKind(kind);
           chooseAction(declaration?.document.actions.find(action=>action.kind===kind)?.name ?? "");
@@ -782,6 +785,7 @@ export function Workspace({
                 key={`${setupToolId}:${setupAction.name}:${object(setupDeclaration.tool_session)?.id}`}
                 tool={setupDeclaration.document.tool}
                 action={setupAction}
+                params={setupParams}
                 loadSession={loadToolSession}
                 directoryGrants={setupTool?.directory_grants ?? null}
               />

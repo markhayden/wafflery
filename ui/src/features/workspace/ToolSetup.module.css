@@ -18,3 +18,5 @@
 
 .restart { margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid var(--color-line); }
 .setup p.optional { color: var(--color-text); }
+.requirements { display: grid; gap: .75rem; }
+.requirements[open] > summary { margin-bottom: .25rem; }

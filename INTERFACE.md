@@ -22,6 +22,14 @@ not scroll. A phone-width window stacks the panes and scrolls the page, and a wi
 scrolls the page with the side-by-side panes ending on one line, so there is never empty page below a
 shorter pane.
 
+Tool setup lists an action's requirements for the current inputs: a requirement with `for_choice` shows
+only when the inputs pick that choice (a blank input picks its default), and the readiness shown, in
+setup, the action picker and Run's reason, is computed the same way. With nothing required missing it
+reads "Ready" with the list behind "Show requirements (N)"; otherwise the missing ones are listed open
+and the rest stay behind "Show other requirements (N)". A missing optional requirement reads
+"Missing · optional" and never makes the action look unready. "Present" (found, not validated) is
+explained once below the list rather than on every line.
+
 Choose tool rows show a decorative 64 px logo on the left (48 px on narrow screens; 128 px WebP files under 16 KB), the name and right-aligned version
 on the first line, then the description. Known-tool presentation comes from a small local map;
 other tools use their declared purpose with the same reserved logo space. An error replaces the
