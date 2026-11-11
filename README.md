@@ -52,7 +52,8 @@ reservations. A requirement for one choice (a model the tool can install) is lis
 form picks that choice, its default when left blank. When nothing required is missing setup reads
 **Ready** with the list behind **Show requirements (N)**; a missing one is listed open with the rest
 collapsed. **Present** means the tool found it, not that it was validated; that is said once below
-the list.
+the list. A choice the requirements depend on, such as Rascal's segmenter `model`, sits in the main
+settings beside the required ones, showing its default selected.
 Refresh reads the running tool without executing an action or resetting its budget. Credential
 names do not prove a key is configured or valid. **Restart tool session** requires confirmation
 and an idle tool; it reprobes the selected config and starts a new spending ledger. Earlier runs

@@ -1,6 +1,6 @@
 import { expect, test } from "bun:test";
-import { choiceStates, chosenChoices, hasChoiceRequirements, orderedChoices, readinessFor } from "../../src/features/actions/choices";
-import type { Action } from "../../src/features/actions/model";
+import { choiceStates, chosenChoices, hasChoiceRequirements, orderedChoices, promotedInputs, readinessFor } from "../../src/features/actions/choices";
+import { object, type Action } from "../../src/features/actions/model";
 
 const field = { type: "string", enum: ["small", "large"], default: "large", "x-requirements": { small: ["model:small"], large: ["model:large"] } };
 const action: Pick<Action, "readiness"> = { readiness: { state: "needs_setup", requirements: [
@@ -72,4 +72,14 @@ test("the tool's own state stands when nothing conditional is involved, and unav
   const plain = { params_schema: {}, readiness: { state: "needs_setup" as const, requirements: [{ kind: "env" as const, name: "DIR", state: "present" as const }] } };
   expect(readinessFor(plain, {}).state).toBe("needs_setup");
   expect(readinessFor({ ...remove, readiness: { ...remove.readiness, state: "unavailable" } }, {}).state).toBe("unavailable");
+});
+
+test("a choice the requirements depend on is promoted to the main settings; other optional enums are not", () => {
+  expect(promotedInputs(remove)).toEqual(["model"]);
+  // Derived from the readiness alone, when the schema carries no x-requirements.
+  const bare = { ...remove, params_schema: { ...remove.params_schema, properties: { ...object(remove.params_schema.properties), model: { type: "string", enum: ["small", "large"], default: "small" } } } };
+  expect(promotedInputs(bare)).toEqual(["model"]);
+  // Required inputs are in the main settings already; a non-enum is not a choice.
+  expect(promotedInputs({ ...remove, params_schema: { ...remove.params_schema, required: ["prompt", "model"] } })).toEqual([]);
+  expect(promotedInputs({ ...remove, params_schema: { properties: { model: { type: "string" } } } })).toEqual([]);
 });

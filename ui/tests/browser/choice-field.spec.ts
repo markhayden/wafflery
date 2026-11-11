@@ -10,8 +10,16 @@ test.describe("a choice with installable models", () => {
     let dispatched = 0;
     page.on("request", request => { if (request.method() === "POST" && new URL(request.url()).pathname === "/api/attempts") dispatched++; });
     const model = page.getByLabel("Model", { exact: true });
+    // The choice the readiness depends on is in the main settings, right after the required
+    // label, with the default selected rather than "Not set".
+    await expect(model).toHaveValue(JSON.stringify("small"));
+    await expect(model.locator("option", { hasText: "Not set" })).toHaveCount(0);
+    const settings = page.getByRole("region", { name: "Config settings", exact: true });
+    const order = await settings.locator("[aria-labelledby]").evaluateAll(nodes =>
+      nodes.map(node => document.getElementById(node.getAttribute("aria-labelledby") ?? "")?.textContent ?? ""));
+    expect(order.slice(order.indexOf("Label"), order.indexOf("Label") + 2)).toEqual(["Label", "Model"]);
     // The default first; the one not installed is marked and cannot be picked yet.
-    await expect(model.locator("option").nth(1)).toHaveText("small");
+    await expect(model.locator("option").nth(0)).toHaveText("small");
     await expect(model.locator("option", { hasText: "large" })).toHaveText("large · not installed");
     await expect(model.locator("option", { hasText: "large" })).toHaveAttribute("disabled", "");
 

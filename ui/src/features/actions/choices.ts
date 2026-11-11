@@ -1,4 +1,4 @@
-import { object, type Action, type Json, type Readiness, type Requirement, type Schema } from "./model";
+import { fieldMode, object, type Action, type Json, type Readiness, type Requirement, type Schema } from "./model";
 
 /** Where a choice stands (table-manners 0.6 draft, 3.1): ready unless one of its requirements is
  * missing or invalid; the installable that would satisfy it, and the tool's setup line. */
@@ -78,4 +78,17 @@ export function readinessFor(action: Pick<Action, "readiness" | "params_schema">
     else if (all.some(item => unmet(item) && !requirements.includes(item))) state = "ready";
   }
   return { state, requirements };
+}
+/** The optional inputs shown in the main settings beside the required ones: an `enum` whose
+ * choices the readiness depends on (`x-requirements`, or a requirement's `for_choice`). A person
+ * should see which one a run will use, and change it, without looking for it. */
+export function promotedInputs(action: Pick<Action, "readiness" | "params_schema">): string[] {
+  const schema = action.params_schema;
+  const required = Array.isArray(schema.required) ? schema.required : [];
+  const conditional = new Set(action.readiness.requirements.flatMap(item => item.for_choice ? [item.for_choice.param] : []));
+  return Object.entries(object(schema.properties) ?? {}).flatMap(([key, entry]) => {
+    const field = object(entry);
+    if (!field || required.includes(key) || fieldMode(field) !== "enum") return [];
+    return hasChoiceRequirements(field) || conditional.has(key) ? [key] : [];
+  });
 }

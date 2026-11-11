@@ -7,7 +7,11 @@ shared drawer against the original studies. The mock interactions remain illustr
 ## Implemented workspace
 
 The application header owns Tool; the selected tool name/purpose heads the workspace. The form is "Config": numbered steps in fill-in order (images, locations drawn on the image, required
-settings, optional settings folded, spending limit last); every input has an ⓘ in plain words. The
+settings, then promoted choices, then the other optional settings, spending limit last); every input has
+an ⓘ in plain words. A promoted choice is an optional `enum` input that the action's readiness depends on
+(the schema gives it `x-requirements`, or a readiness requirement names it in `for_choice`): it sits
+with the required settings and always shows the choice a run will use, its default when the input is blank,
+never "Not set". The rule is derived from the description; no tool or parameter name is special. The
 result is one comparison with a Mask overlay switch, outputs as rows (Details opens a drawer). Pickers are dropdowns anchored to their control (a popover: search pinned, list scrolling, outside
 click or Escape closes, flips above when below is short). One matching
 focused picker chooses Playground, Operations or Utilities where declared, followed by a searchable,

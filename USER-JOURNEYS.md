@@ -56,9 +56,10 @@ configuration in my own pipeline.
 4. Choose a complete task such as Create a mask when its dependencies are ready, or choose
    Operations → Line for a simple independent experiment. Choose an image and provide the
    relevant prompt or parameters. The UI explains any missing configuration for this action.
-   Tool setup lists what the chosen segmenter needs, not every segmenter's requirement, and a
-   ready action reads "Ready" with its requirements one click away. Picking a model that is not
-   installed lists it as missing in setup.
+   Prompt removal's segmenter choice sits beside the prompt with its default selected; Tool setup
+   lists what that choice needs, not every segmenter's requirement, and a ready action reads
+   "Ready" with its requirements one click away. Picking a model that is not installed lists it
+   as missing in setup.
 5. Run and inspect the actual output type. Line returns geometry shown as an overlay and data;
    it does not find a seam or paint pixels. Mask-producing actions show the mask and its inputs.
    When the task checks its own result (Rascal's remove with a checker configured), the result

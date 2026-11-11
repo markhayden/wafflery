@@ -561,7 +561,9 @@ default when blank, is that choice. A required applicable requirement that is mi
 the draft need setup; one that applies only to another choice never does, so a tool that needs setup
 only for another model is ready for this one. `unavailable` stays the tool's to say, and an optional
 requirement never counts. Tool setup, the action picker's status and Run's reason all use this
-readiness; setup opened for a saved run uses that run's parameters.
+readiness; setup opened for a saved run uses that run's parameters. An optional `enum` input the
+readiness depends on (`x-requirements`, or named by a `for_choice`) is promoted to the main settings
+beside the required ones and shows its default as selected (`promotedInputs`).
 
 ### v0.3 readiness controls
 
