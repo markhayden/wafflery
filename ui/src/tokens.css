@@ -90,7 +90,7 @@ summary { cursor: pointer; }
 }
 
 /* Long forms share the available desktop height; small/short windows use page scrolling. */
-@media (min-width: 60.01rem) and (min-height: 48rem) {
+@media (min-width: 60.01rem) and (min-height: 32rem) {
   #root:has(.workspace-main[data-connected="true"]) {
     height: 100dvh;
     display: flex;

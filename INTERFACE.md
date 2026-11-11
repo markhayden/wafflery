@@ -16,8 +16,11 @@ grouped activity picker. Each workspace option says what it offers in plain word
 the closed control shows a compact count ("7 complete jobs"). The heading shows a known tool's longer
 description and a "Learn more" link to its wafflehammock.com page; other tools show their declared
 purpose. Running text never ends on a lone word (`text-wrap: pretty`; headings `balance`). Task-only tools omit unavailable workspace kinds. Both selectors use the
-same control. Desktop input/result panes scroll independently with fixed headers/footers; narrow and
-short windows use page scrolling.
+same control. On a desktop-width window at least 32rem tall, the input and result panes fill the window's
+height exactly and each scrolls its own content between its fixed header and footer; the page itself does
+not scroll. A phone-width window stacks the panes and scrolls the page, and a window shorter than 32rem
+scrolls the page with the side-by-side panes ending on one line, so there is never empty page below a
+shorter pane.
 
 Choose tool rows show a decorative 64 px logo on the left (48 px on narrow screens; 128 px WebP files under 16 KB), the name and right-aligned version
 on the first line, then the description. Known-tool presentation comes from a small local map;
@@ -103,10 +106,11 @@ closing, scrolling, and keyboard behavior consistent. On narrow screens the draw
 available width. Keep navigation compact; stack the main input/result sections when needed.
 An image result gets substantial space; an empty screen explains which input is needed.
 
-In a sufficiently wide and tall desktop window, keep the workspace within the viewport. Input
-and Result scroll independently, with Run and the saved-result actions outside their scroll
-areas. Keep the header compact. Narrow or short windows use ordinary page scrolling so controls
-remain reachable at larger text sizes. Scroll regions are named and keyboard-focusable.
+In a desktop-width window at least 32rem tall, keep the workspace within the viewport: the panes
+fill its height and the page does not scroll. Input and Result scroll independently, with Run and
+the saved-result actions outside their scroll areas. Keep the header compact. Phone-width and very
+short windows use ordinary page scrolling so controls remain reachable at larger text sizes, and
+side-by-side panes end on one line. Scroll regions are named and keyboard-focusable.
 
 Opening an example restores input settings into a new draft. Result explicitly confirms which
 example loaded, explains that Run creates a new result, and links to history for previous results.

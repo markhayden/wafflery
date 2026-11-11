@@ -147,7 +147,7 @@
     "ui/src/features/workspace/ToolSetup.module.css": "53c17da410d359ef4bda7cfa74c27b6551376c5d5904689cbb55308643df50d9",
     "ui/src/features/workspace/ToolSetup.stories.tsx": "7a4d6302a50e9881e35389a431a1c2646b8d5096031555f6010994e2c8d22815",
     "ui/src/features/workspace/ToolSetup.tsx": "a23f070a7f23e3b4a162d360ec0fcbedd941d54e76e9db0d5c564cdbaedddf33",
-    "ui/src/features/workspace/Workspace.module.css": "a1737a721b5f043c8c6339f8fa020a6833b993996e322fc5843873b354cb266d",
+    "ui/src/features/workspace/Workspace.module.css": "0372f694a2da5d8dfa3442b8704bf7876cab52ecd7a9c52022275e425e08be6b",
     "ui/src/features/workspace/Workspace.tsx": "0a992235b2c666a5aab0ca1b01f8389577d5c8a4ac752789dfe23f53773e0f39",
     "ui/src/features/workspace/activities.ts": "1786d4d3e5b77efca1c108e524fa36776817e54401664f22cf83b7166921e820",
     "ui/src/features/workspace/artifact-transfer.ts": "1580167bef0f5acc46967f6a1258d356419d9bde39ca39bce0b867443aef9995",
@@ -164,16 +164,16 @@
     "ui/src/features/workspace/useEstimateDraft.ts": "7da8f6f766c23916925c2cb045223fe8e52d5c314c164470cb2fdb43632462cc",
     "ui/src/features/workspace/useSavedArtifacts.ts": "ec42ccbc8b8a76dcde0ffaba45a7f76cdd8292150a403765cb156595d01defb9",
     "ui/src/main.tsx": "03b2482769b6e395650dff286faa5e047805a68788a2d0c019ca79ca59b5cadf",
-    "ui/src/tokens.css": "3044461bb4607efb57bd3ee2242c03cfc2b5196539ef39856ec984a91e9c7615",
+    "ui/src/tokens.css": "3b6bf5487d112438a93a02b54738db49cb70e299f3a5347a158793bb2bc07fa0",
     "ui/tsconfig.json": "3fcd89fe837f1fe4d42988ab28bdbd534d231128c02705d0702f6812a05627ce",
     "ui/vite.config.ts": "1c784d406690c7e5b859cc459f02c6d69451c8c79fa77bd43babffdb9fdee5d8"
   },
   "outputs": {
-    "assets/index-CxlLJo7k.css": "1c82f05e47ad8887434d487dfbd250b509257b7f32620c6eda8eef29c045eeca",
-    "assets/index-DYcKtl0W.js": "857cee7fd4db07cf1afe8ec5b1eea792dda8265d7ddb1183cea2a29d0a975e88",
+    "assets/index-CsXO2jDr.js": "ddc63408339c1343d233fe847f3a1b1806de60a6408de53b873ce49d3f0b0705",
+    "assets/index-DnBfDmSy.css": "23ac7d5675610d1c452e0cc80d21136f0512d993feea626278f44c35b8328712",
     "assets/rascal-sticker-CmExR_HL.webp": "f1cc408f231167aee5543f0f8c0683f3594a0e447c51dcccc4fb413913e0a803",
     "assets/squint-sticker-CLmixeCt.webp": "3986ab96e919e338a7f8e8d64b552912baa3f79774c863d1e5d14f6a9f02f173",
     "assets/wafflery-mark-CML0EpfM.svg": "51bc8a040e26b897a948238598b8cabdf69bf4687c2b1a70613b542de1c99f1f",
-    "index.html": "c58821c4c6327c8c13a19daeb237412e6fd725f6959b4b831c6792fe742c37a5"
+    "index.html": "35694dfeaae6e94be7439e1ff47e656649551191c90baf0d493e58156ce0c3df"
   }
 }
